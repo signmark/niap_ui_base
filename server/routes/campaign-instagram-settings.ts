@@ -1,0 +1,85 @@
+import express from 'express';
+import { isUserAdmin } from '../routes';
+import { log } from '../utils/logger';
+import axios from 'axios';
+
+const router = express.Router();
+
+/**
+ * Сохранение Instagram настроек в JSON кампании
+ */
+router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
+  const { campaignId } = req.params;
+  const { appId, appSecret, instagramId, setupCompletedAt } = req.body;
+  const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+  try {
+    console.log('🔥 INSTAGRAM SETTINGS ENDPOINT');
+    console.log('🔥 Campaign ID:', campaignId);
+    console.log('🔥 Instagram settings:', { appId: appId ? 'present' : 'missing', appSecret: appSecret ? 'present' : 'missing', instagramId });
+
+    if (!appId || !appSecret) {
+      return res.status(400).json({
+        success: false,
+        error: 'App ID и App Secret обязательны'
+      });
+    }
+
+    // Получим существующие настройки кампании
+    const getCampaignResponse = await axios.get(
+      `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const campaign = getCampaignResponse.data.data;
+    const existingSettings = campaign.social_media_settings || {};
+
+    // Обновляем Instagram настройки
+    const updatedSettings = {
+      ...existingSettings,
+      instagram: {
+        appId,
+        appSecret,
+        instagramId: instagramId || '',
+        setupCompletedAt: setupCompletedAt || new Date().toISOString(),
+        configured: true
+      }
+    };
+
+    // Сохраняем обновленные настройки
+    const updateResponse = await axios.patch(
+      `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+      {
+        social_media_settings: updatedSettings
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('🔥 Instagram settings saved successfully');
+
+    res.json({
+      success: true,
+      data: updatedSettings.instagram
+    });
+
+  } catch (error: any) {
+    console.error('❌ Error saving Instagram settings:', error?.response?.data || error.message);
+    
+    res.status(500).json({
+      success: false,
+      error: error?.response?.data?.errors?.[0]?.message || 'Ошибка сохранения настроек Instagram'
+    });
+  }
+});
+
+export default router;

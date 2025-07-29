@@ -136,6 +136,11 @@ log('User API keys routes registered early to avoid Vite middleware interception
 app.use('/api/instagram-setup', instagramSetupRoutes);
 log('Instagram Setup Wizard routes registered');
 
+// Регистрируем Instagram Campaign Settings маршруты
+const campaignInstagramRoutes = (await import('./routes/campaign-instagram-settings')).default;
+app.use('/api', campaignInstagramRoutes);
+log('Campaign Instagram settings routes registered');
+
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
   try {

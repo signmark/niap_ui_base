@@ -31,6 +31,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
+import InstagramSetupWizard from "./InstagramSetupWizardSimple";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -79,6 +80,9 @@ export function SocialMediaSettings({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  // Состояние для показа Instagram wizard
+  const [showInstagramWizard, setShowInstagramWizard] = useState(false);
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -538,21 +542,39 @@ export function SocialMediaSettings({
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API Setup Wizard</h4>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      Автоматическая настройка Instagram Business API за 5-10 минут
+                      Настройте Instagram API для этой кампании
                     </p>
                   </div>
                   <Button 
                     type="button" 
-                    variant="outline"
+                    variant={initialSettings?.instagram?.token ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setLocation('/settings/instagram-setup')}
+                    onClick={() => setShowInstagramWizard(!showInstagramWizard)}
                   >
-                    Запустить Wizard
+                    {initialSettings?.instagram?.token ? 'Настроено' : 'Настроить Instagram'}
                   </Button>
                 </div>
               </div>
+              
+              {showInstagramWizard && (
+                <InstagramSetupWizard 
+                  campaignId={campaignId}
+                  instagramSettings={{
+                    appId: initialSettings?.instagram?.token || '',
+                    appSecret: initialSettings?.instagram?.accessToken || '',
+                    instagramId: initialSettings?.instagram?.businessAccountId || ''
+                  }}
+                  onSettingsUpdate={(settings) => {
+                    // Обновляем состояние после сохранения
+                    if (onSettingsUpdated) {
+                      onSettingsUpdated();
+                    }
+                    setShowInstagramWizard(false);
+                  }}
+                />
+              )}
               
               <FormField
                 control={form.control}

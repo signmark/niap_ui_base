@@ -22,53 +22,52 @@ interface InstagramAccount {
 
 interface InstagramSetupData {
   connected: boolean;
-  expired?: boolean;
-  instagramAccounts?: InstagramAccount[];
+  appId?: string;
+  appSecret?: string;
+  instagramId?: string;
   setupCompletedAt?: string;
-  tokenExpiresAt?: string;
 }
 
-const InstagramSetupWizard: React.FC = () => {
-  const [step, setStep] = useState<'instructions' | 'form' | 'callback' | 'loading' | 'success'>('instructions');
+interface InstagramSetupWizardProps {
+  campaignId: string;
+  instagramSettings?: {
+    appId?: string;
+    appSecret?: string;
+    instagramId?: string;
+  };
+  onSettingsUpdate?: (settings: any) => void;
+}
+
+const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ 
+  campaignId, 
+  instagramSettings = {}, 
+  onSettingsUpdate 
+}) => {
   const [formData, setFormData] = useState({
-    appId: '',
-    appSecret: '',
-    instagramId: ''
+    appId: instagramSettings.appId || '',
+    appSecret: instagramSettings.appSecret || '',
+    instagramId: instagramSettings.instagramId || ''
   });
-  const [callbackData, setCallbackData] = useState({
-    code: '',
-    state: ''
-  });
-  const [instagramData, setInstagramData] = useState<InstagramSetupData | null>(null);
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
   const { userId } = useAuthStore();
 
-  // Проверяем статус подключения при загрузке
+  // Инициализация формы из переданных настроек
   useEffect(() => {
-    if (userId) {
-      checkInstagramStatus();
+    if (instagramSettings) {
+      setFormData({
+        appId: instagramSettings.appId || '',
+        appSecret: instagramSettings.appSecret || '',
+        instagramId: instagramSettings.instagramId || ''
+      });
     }
-  }, [userId]);
+  }, [instagramSettings]);
 
-  const checkInstagramStatus = async () => {
-    try {
-      const response = await apiRequest(`/api/instagram-setup/status/${userId}`);
-      setInstagramData(response);
-      
-      if (response.connected && !response.expired) {
-        setStep('success');
-      }
-    } catch (error) {
-      console.error('Error checking Instagram status:', error);
-    }
-  };
-
-  const handleStartOAuth = async () => {
-    console.log('🔥 START OAUTH CALLED');
+  const handleSaveSettings = async () => {
+    console.log('🔥 SAVE INSTAGRAM SETTINGS CALLED');
     console.log('🔥 FORM DATA:', formData);
-    console.log('🔥 USER ID:', userId);
+    console.log('🔥 CAMPAIGN ID:', campaignId);
     
     if (!formData.appId || !formData.appSecret) {
       console.log('🔥 VALIDATION FAILED - missing fields');
@@ -84,232 +83,49 @@ const InstagramSetupWizard: React.FC = () => {
     setLoading(true);
 
     try {
-      // Facebook OAuth redirect должен быть на наш домен, не на N8N
-      const redirectUri = `${window.location.origin}/instagram-callback`;
-      const scopes = [
-        'pages_manage_posts',
-        'pages_read_engagement', 
-        'pages_show_list',
-        'instagram_basic',
-        'instagram_content_publish',
-        'business_management',
-        'pages_manage_metadata',
-        'instagram_manage_insights',
-        'publish_to_groups',
-        'user_posts'
-      ];
-      
-      // Генерируем state для безопасности
-      const state = `${userId}_${Math.random().toString(36).substring(2, 15)}`;
-      
-      // Формируем URL авторизации Facebook напрямую
-      const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +
-        `client_id=${formData.appId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scopes.join(','))}&` +
-        `response_type=code&` +
-        `state=${state}`;
-
-      // Сохраняем данные для последующей обработки в N8N
-      const requestData = {
+      // Сохраняем настройки Instagram в JSON кампании
+      const instagramConfig = {
         appId: formData.appId,
         appSecret: formData.appSecret,
-        instagramId: formData.instagramId,
-        userId: userId,
-        state: state
+        instagramId: formData.instagramId || '',
+        setupCompletedAt: new Date().toISOString()
       };
-      
-      console.log('🔥 CLIENT SENDING DATA:', requestData);
-      
-      const response = await fetch('/api/instagram-setup/save-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${useAuthStore.getState().token}`,
-          'x-user-id': userId || ''
-        },
-        body: JSON.stringify(requestData)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Request failed');
-      }
 
-      // Открываем Facebook OAuth
-      window.open(authUrl, '_blank', 'width=600,height=700');
-      
-      setStep('success');
-      toast({
-        title: "Настройка завершена",
-        description: "Перейдите в открывшееся окно Facebook для завершения авторизации",
-        variant: "default"
+      // Отправляем данные на сервер для сохранения в social_media_settings
+      const response = await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
+        method: 'PATCH',
+        data: instagramConfig
       });
+
+      if (response) {
+        // Обновляем родительский компонент
+        if (onSettingsUpdate) {
+          onSettingsUpdate({ instagram: instagramConfig });
+        }
+
+        toast({
+          title: "Успешно сохранено",
+          description: "Настройки Instagram сохранены в кампании",
+          variant: "default"
+        });
+      }
       
     } catch (error) {
-      console.error('Error starting OAuth:', error);
+      console.error('Error saving Instagram settings:', error);
       toast({
         title: "Ошибка",
-        description: (error as any)?.message || "Ошибка инициализации авторизации",
+        description: (error as any)?.message || "Ошибка сохранения настроек",
         variant: "destructive"
       });
-      setStep('form');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleProcessCallback = async () => {
-    if (!callbackData.code) {
-      toast({
-        title: "Ошибка",
-        description: "Введите код авторизации",
-        variant: "destructive"
-      });
-      return;
-    }
 
-    setLoading(true);
-    setStep('loading');
 
-    try {
-      const response = await apiRequest('/api/instagram-setup/callback', {
-        method: 'POST'
-      }, {
-        code: callbackData.code,
-        state: callbackData.state,
-        userId: user?.id
-      });
-
-      if (response.success) {
-        setInstagramData(response.data);
-        setStep('success');
-        
-        toast({
-          title: "Успешно!",
-          description: `Instagram подключен. Найдено аккаунтов: ${response.data.instagramAccounts?.length || 0}`
-        });
-      } else {
-        throw new Error(response.error || 'Ошибка обработки авторизации');
-      }
-    } catch (error) {
-      console.error('Error processing callback:', error);
-      toast({
-        title: "Ошибка",
-        description: (error as any)?.message || "Ошибка обработки авторизации",
-        variant: "destructive"
-      });
-      setStep('callback');
-      setLoading(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    try {
-      await apiRequest(`/api/instagram-setup/disconnect/${user?.id}`, {
-        method: 'DELETE'
-      });
-      
-      setInstagramData(null);
-      setStep('instructions');
-      
-      toast({
-        title: "Успешно",
-        description: "Instagram отключен"
-      });
-    } catch (error) {
-      console.error('Error disconnecting Instagram:', error);
-      toast({
-        title: "Ошибка",
-        description: "Ошибка отключения Instagram",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleRefreshToken = async () => {
-    try {
-      await apiRequest(`/api/instagram-setup/refresh-token/${user?.id}`, {
-        method: 'POST'
-      });
-      
-      await checkInstagramStatus();
-      
-      toast({
-        title: "Успешно",
-        description: "Токен обновлен"
-      });
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-      toast({
-        title: "Ошибка",
-        description: "Ошибка обновления токена",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (step === 'callback') {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Instagram className="h-6 w-6 text-pink-600" />
-            <span>Шаг 2: Обработка авторизации</span>
-          </CardTitle>
-          <CardDescription>
-            Скопируйте код авторизации из адресной строки браузера
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                После авторизации в Facebook вас перенаправит на страницу с кодом в URL. 
-                Скопируйте значение параметра <code>code=...</code> из адресной строки.
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="authCode">Код авторизации</Label>
-                <Input
-                  id="authCode"
-                  placeholder="Введите код из параметра code=... в URL"
-                  value={callbackData.code}
-                  onChange={(e) => setCallbackData({ ...callbackData, code: e.target.value })}
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Пример: AQAB...xyz (длинная строка символов после code=)
-                </p>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button onClick={handleProcessCallback} disabled={loading} className="flex-1">
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Обработка...
-                    </>
-                  ) : (
-                    'Подключить Instagram'
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setStep('form')}
-                  disabled={loading}
-                >
-                  Назад
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Определяем есть ли уже сохраненные настройки
+  const hasSettings = formData.appId && formData.appSecret;
 
   if (step === 'loading') {
     return (
