@@ -169,9 +169,12 @@ router.get('/instagram/auth/callback', async (req, res) => {
       // Подготавливаем данные для сохранения в кампанию
       const instagramSettings = {
         appId: session.appId,
+        appSecret: session.appSecret, // Сохраняем App Secret в БД
         longLivedToken,
         expiresIn,
-        tokenExpiresAt: expiresIn ? new Date(Date.now() + (parseInt(expiresIn) * 1000)).toISOString() : null,
+        tokenExpiresAt: (expiresIn && expiresIn !== 'never' && !isNaN(parseInt(expiresIn))) 
+          ? new Date(Date.now() + (parseInt(expiresIn) * 1000)).toISOString() 
+          : null,
         user: userResponse.data,
         instagramAccounts: webhookData.instagramAccounts,
         authTimestamp: new Date().toISOString(),
@@ -193,9 +196,22 @@ router.get('/instagram/auth/callback', async (req, res) => {
 
       // Обновляем social_media_settings с данными Instagram
       const currentSettings = currentCampaignResponse.data.data.social_media_settings || {};
+      const existingInstagram = currentSettings.instagram || {};
+      
+      // Объединяем существующие настройки с новыми OAuth данными
+      const updatedInstagramSettings = {
+        ...existingInstagram,
+        ...instagramSettings,
+        // Сохраняем важные поля из существующих настроек
+        token: existingInstagram.token || instagramSettings.longLivedToken,
+        businessAccountId: existingInstagram.businessAccountId || 
+          (instagramSettings.instagramAccounts && instagramSettings.instagramAccounts[0] ? 
+            instagramSettings.instagramAccounts[0].instagramId : null)
+      };
+      
       const updatedSettings = {
         ...currentSettings,
-        instagram: instagramSettings
+        instagram: updatedInstagramSettings
       };
 
       // Сохраняем обновленные настройки в кампанию
@@ -213,6 +229,7 @@ router.get('/instagram/auth/callback', async (req, res) => {
       );
 
       log('instagram-oauth', `Instagram настройки успешно сохранены в кампанию ${session.campaignId}`);
+      log('instagram-oauth', `Сохраненные настройки: ${JSON.stringify(updatedInstagramSettings, null, 2)}`);
 
       // Дополнительно отправляем в N8N webhook если указан
       if (session.webhookUrl) {

@@ -38,13 +38,15 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
     const campaign = getCampaignResponse.data.data;
     const existingSettings = campaign.social_media_settings || {};
 
-    // Обновляем Instagram настройки
+    // Обновляем Instagram настройки (сохраняем и объединяем с существующими)
+    const existingInstagram = existingSettings.instagram || {};
     const updatedSettings = {
       ...existingSettings,
       instagram: {
+        ...existingInstagram, // Сохраняем существующие данные (токены, аккаунты)
         appId,
-        appSecret,
-        instagramId: instagramId || '',
+        appSecret, // App Secret тоже сохраняется в БД
+        instagramId: instagramId || existingInstagram.instagramId || '',
         setupCompletedAt: setupCompletedAt || new Date().toISOString(),
         configured: true
       }
@@ -65,6 +67,7 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
     );
 
     console.log('🔥 Instagram settings saved successfully');
+    console.log('🔥 Final Instagram settings:', JSON.stringify(updatedSettings.instagram, null, 2));
 
     res.json({
       success: true,
