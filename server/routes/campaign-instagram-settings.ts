@@ -1,5 +1,4 @@
 import express from 'express';
-import { isUserAdmin } from '../routes';
 import { log } from '../utils/logger';
 import axios from 'axios';
 

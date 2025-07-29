@@ -146,11 +146,9 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     try {
       await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
         method: 'PATCH',
-        instagram: {
-          appId: formData.appId,
-          appSecret: formData.appSecret,
-          instagramId: formData.instagramId
-        }
+        appId: formData.appId,
+        appSecret: formData.appSecret,
+        instagramId: formData.instagramId
       });
 
       toast({
@@ -324,31 +322,46 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Найдите App ID и App Secret в разделе "Basic Settings" вашего Facebook приложения
+            <strong>Важно:</strong> Это НЕ токены Instagram! Нужны именно App ID и App Secret из настроек Facebook приложения в разделе "Basic Settings"
           </AlertDescription>
         </Alert>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="appId">App ID *</Label>
+            <Label htmlFor="appId">Facebook App ID *</Label>
             <Input
               id="appId"
               type="text"
-              placeholder="Например: 1234567890123456"
+              placeholder="Только цифры, например: 1234567890123456"
               value={formData.appId}
-              onChange={(e) => setFormData(prev => ({ ...prev, appId: e.target.value }))}
+              onChange={(e) => {
+                // Оставляем только цифры
+                const value = e.target.value.replace(/\D/g, '');
+                setFormData(prev => ({ ...prev, appId: value }));
+              }}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              15-16 цифр из настроек Facebook приложения (НЕ Instagram токен!)
+            </p>
+            {formData.appId && formData.appId.length < 10 && (
+              <p className="text-xs text-red-500 mt-1">
+                Слишком короткий App ID - проверьте правильность
+              </p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="appSecret">App Secret *</Label>
+            <Label htmlFor="appSecret">Facebook App Secret *</Label>
             <Input
               id="appSecret"
               type="password"
-              placeholder="Введите App Secret"
+              placeholder="Строка из букв и цифр, начинается с цифр"
               value={formData.appSecret}
               onChange={(e) => setFormData(prev => ({ ...prev, appSecret: e.target.value }))}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Секретный ключ из настроек Facebook приложения
+            </p>
           </div>
 
           <div>

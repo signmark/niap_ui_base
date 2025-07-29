@@ -171,7 +171,7 @@ router.get('/instagram/auth/callback', async (req, res) => {
         appId: session.appId,
         longLivedToken,
         expiresIn,
-        tokenExpiresAt: new Date(Date.now() + (expiresIn * 1000)).toISOString(),
+        tokenExpiresAt: expiresIn ? new Date(Date.now() + (parseInt(expiresIn) * 1000)).toISOString() : null,
         user: userResponse.data,
         instagramAccounts: webhookData.instagramAccounts,
         authTimestamp: new Date().toISOString(),
