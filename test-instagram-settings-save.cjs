@@ -9,7 +9,8 @@ async function testInstagramSettingsSave() {
   const testSettings = {
     appId: '1234567890123456',
     appSecret: 'test_app_secret_12345',
-    instagramId: '17841422578516105'
+    instagramId: '17841422578516105',
+    accessToken: 'test_access_token_12345'
   };
   
   try {
@@ -80,6 +81,12 @@ async function testInstagramSettingsSave() {
     
     if (afterInstagram?.businessAccountId) {
       console.log('✅ Business Account ID сохранен:', afterInstagram.businessAccountId);
+    }
+    
+    if (afterInstagram?.accessToken === testSettings.accessToken) {
+      console.log('✅ Access Token сохранен правильно:', afterInstagram.accessToken);
+    } else {
+      console.log('❌ Access Token не сохранен или неправильный');
     }
     
     console.log('\n✅ Тест завершен успешно');

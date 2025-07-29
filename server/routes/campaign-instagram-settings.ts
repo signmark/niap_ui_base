@@ -9,13 +9,19 @@ const router = express.Router();
  */
 router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
   const { campaignId } = req.params;
-  const { appId, appSecret, instagramId, setupCompletedAt } = req.body;
+  const { appId, appSecret, instagramId, accessToken, setupCompletedAt } = req.body;
   const userToken = req.headers.authorization?.replace('Bearer ', '');
 
   try {
     console.log('🔥 INSTAGRAM SETTINGS ENDPOINT');
     console.log('🔥 Campaign ID:', campaignId);
-    console.log('🔥 Instagram settings:', { appId: appId ? 'present' : 'missing', appSecret: appSecret ? 'present' : 'missing', instagramId });
+    console.log('🔥 Full request body:', JSON.stringify(req.body, null, 2));
+    console.log('🔥 Instagram settings:', { 
+      appId: appId ? 'present' : 'missing', 
+      appSecret: appSecret ? 'present' : 'missing', 
+      instagramId,
+      accessToken: accessToken ? 'present' : 'missing'
+    });
 
     if (!appId || !appSecret) {
       return res.status(400).json({
@@ -47,6 +53,7 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
         appId,
         appSecret, // App Secret тоже сохраняется в БД
         instagramId: instagramId || existingInstagram.instagramId || '',
+        accessToken: accessToken || existingInstagram.accessToken, // Сохраняем accessToken
         setupCompletedAt: setupCompletedAt || new Date().toISOString(),
         configured: true
       }

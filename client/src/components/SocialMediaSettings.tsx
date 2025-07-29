@@ -47,6 +47,8 @@ const socialMediaSettingsSchema = z.object({
     token: z.string().nullable(),
     accessToken: z.string().nullable(),
     businessAccountId: z.string().nullable(),
+    appId: z.string().nullable(),
+    appSecret: z.string().nullable(),
   }),
   facebook: z.object({
     token: z.string().nullable(),
@@ -562,9 +564,10 @@ export function SocialMediaSettings({
                 <InstagramSetupWizard 
                   campaignId={campaignId}
                   instagramSettings={{
-                    appId: initialSettings?.instagram?.token || '',
-                    appSecret: initialSettings?.instagram?.accessToken || '',
-                    instagramId: initialSettings?.instagram?.businessAccountId || ''
+                    appId: initialSettings?.instagram?.appId || '',
+                    appSecret: initialSettings?.instagram?.appSecret || '',
+                    instagramId: initialSettings?.instagram?.businessAccountId || '',
+                    accessToken: initialSettings?.instagram?.token || ''
                   }}
                   onSettingsUpdate={(settings) => {
                     // Обновляем состояние после сохранения

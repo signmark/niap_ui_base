@@ -41,6 +41,14 @@ const InstagramCallback: React.FC = () => {
           setMessage(data.message || 'Instagram успешно авторизован!');
           setAccountData(data.data);
           
+          // Отправляем сообщение родительскому окну об успешной авторизации
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'INSTAGRAM_OAUTH_SUCCESS',
+              data: data.data
+            }, window.location.origin);
+          }
+          
           // Закрываем окно через 3 секунды
           setTimeout(() => {
             window.close();

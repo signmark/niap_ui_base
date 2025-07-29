@@ -44,7 +44,8 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
   const [formData, setFormData] = useState({
     appId: instagramSettings.appId || '',
     appSecret: instagramSettings.appSecret || '',
-    instagramId: instagramSettings.instagramId || ''
+    instagramId: instagramSettings.instagramId || '',
+    accessToken: instagramSettings.accessToken || ''
   });
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
@@ -61,7 +62,8 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
       setFormData({
         appId: instagramSettings.appId || '',
         appSecret: instagramSettings.appSecret || '',
-        instagramId: instagramSettings.instagramId || ''
+        instagramId: instagramSettings.instagramId || '',
+        accessToken: instagramSettings.accessToken || ''
       });
       
       // Если уже есть настройки, переходим к шагу 4
@@ -70,6 +72,42 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
       }
     }
   }, [instagramSettings]);
+
+  // Слушатель сообщений из OAuth callback окна
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data.type === 'INSTAGRAM_OAUTH_SUCCESS') {
+        console.log('Получены данные OAuth:', event.data.data);
+        
+        // Обновляем локальное состояние с полученным токеном
+        if (event.data.data.token) {
+          setFormData(prev => ({
+            ...prev,
+            accessToken: event.data.data.token
+          }));
+        }
+        
+        // Обновляем настройки через callback
+        if (onSettingsUpdate && event.data.data) {
+          onSettingsUpdate(event.data.data);
+        }
+        
+        toast({
+          title: "Instagram авторизован!",
+          description: "Токен получен и сохранен в настройки кампании"
+        });
+        
+        setOauthLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onSettingsUpdate, toast]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -146,9 +184,12 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     try {
       await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
         method: 'PATCH',
-        appId: formData.appId,
-        appSecret: formData.appSecret,
-        instagramId: formData.instagramId
+        data: {
+          appId: formData.appId,
+          appSecret: formData.appSecret,
+          instagramId: formData.instagramId,
+          accessToken: formData.accessToken
+        }
       });
 
       toast({
@@ -364,6 +405,21 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
             </p>
           </div>
 
+          <div>
+            <Label htmlFor="accessToken">Access Token</Label>
+            <Input
+              id="accessToken"
+              type="text"
+              placeholder="Будет получен автоматически после OAuth авторизации"
+              value={formData.accessToken}
+              onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+              readOnly
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.accessToken ? 'Токен получен ✓' : 'Для получения токена перейдите к шагу 4'}
+            </p>
+          </div>
+          
           <div>
             <Label htmlFor="instagramId">Instagram Business Account ID (опционально)</Label>
             <Input
