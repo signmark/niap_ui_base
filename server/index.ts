@@ -138,8 +138,11 @@ log('Instagram Setup Wizard routes registered');
 
 // Регистрируем Instagram Campaign Settings маршруты
 const campaignInstagramRoutes = (await import('./routes/campaign-instagram-settings')).default;
+const instagramOAuthRoutes = (await import('./routes/instagram-oauth')).default;
 app.use('/api', campaignInstagramRoutes);
+app.use('/api', instagramOAuthRoutes);
 log('Campaign Instagram settings routes registered');
+log('Instagram OAuth routes registered');
 
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {

@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertCircle, Loader2, Instagram } from 'lucide-react';
 import { useLocation } from 'wouter';
 
-export default function InstagramCallback() {
+const InstagramCallback: React.FC = () => {
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
-  const [message, setMessage] = useState('Обработка ответа от Facebook...');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('');
+  const [accountData, setAccountData] = useState<any>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -15,93 +20,156 @@ export default function InstagramCallback() {
         const state = urlParams.get('state');
         const error = urlParams.get('error');
 
-        console.log('🔥 CALLBACK RECEIVED:', { code, state, error });
-
         if (error) {
-          throw new Error(`Facebook OAuth error: ${error}`);
+          setStatus('error');
+          setMessage(`Ошибка авторизации: ${error}`);
+          return;
         }
 
         if (!code || !state) {
-          throw new Error('Missing authorization code or state parameter');
+          setStatus('error');
+          setMessage('Отсутствуют необходимые параметры авторизации');
+          return;
         }
 
-        // Отправляем данные в N8N webhook для обработки
-        const response = await fetch('https://n8n.roboflow.space/webhook/authorize-ig', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code,
-            state,
-            callback_type: 'facebook_oauth'
-          })
-        });
+        // Отправляем данные на сервер для обработки
+        const response = await fetch(`/api/instagram/auth/callback?code=${code}&state=${state}`);
+        const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(`N8N processing failed: ${response.status}`);
+        if (data.success) {
+          setStatus('success');
+          setMessage(data.message || 'Instagram успешно авторизован!');
+          setAccountData(data.data);
+          
+          // Закрываем окно через 3 секунды
+          setTimeout(() => {
+            window.close();
+          }, 3000);
+        } else {
+          setStatus('error');
+          setMessage(data.error || 'Произошла ошибка при обработке авторизации');
         }
-
-        setStatus('success');
-        setMessage('Авторизация Instagram успешно завершена!');
-        
-        // Перенаправляем обратно в настройки через 3 секунды
-        setTimeout(() => {
-          window.close(); // Закрываем popup окно
-        }, 3000);
-
       } catch (error) {
-        console.error('Callback processing error:', error);
+        console.error('Callback error:', error);
         setStatus('error');
-        setMessage((error as Error).message || 'Произошла ошибка при обработке авторизации');
+        setMessage('Произошла ошибка при обработке авторизации');
       }
     };
 
     handleCallback();
   }, []);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Instagram OAuth Callback
-          </h2>
-          
-          <div className="mt-6">
-            {status === 'processing' && (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="text-gray-600">{message}</span>
-              </div>
-            )}
-            
-            {status === 'success' && (
-              <div className="text-green-600">
-                <div className="text-5xl mb-4">✅</div>
-                <p className="text-lg font-medium">{message}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Окно закроется автоматически через несколько секунд
-                </p>
-              </div>
-            )}
-            
-            {status === 'error' && (
-              <div className="text-red-600">
-                <div className="text-5xl mb-4">❌</div>
-                <p className="text-lg font-medium">Ошибка авторизации</p>
-                <p className="text-sm text-gray-700 mt-2">{message}</p>
-                <button 
-                  onClick={() => window.close()}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                >
-                  Закрыть окно
-                </button>
-              </div>
-            )}
+  const renderContent = () => {
+    switch (status) {
+      case 'loading':
+        return (
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-center">Обрабатываем авторизацию Instagram...</p>
+            <p className="text-sm text-muted-foreground text-center">
+              Получаем долгосрочный токен и сохраняем настройки
+            </p>
           </div>
-        </div>
-      </div>
+        );
+
+      case 'success':
+        return (
+          <div className="flex flex-col items-center space-y-4">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="text-center">
+              <h3 className="font-semibold text-green-800">Успешно!</h3>
+              <p className="text-green-700">{message}</p>
+            </div>
+            
+            {accountData?.instagramAccounts && accountData.instagramAccounts.length > 0 && (
+              <div className="w-full space-y-2">
+                <h4 className="font-medium text-sm">Найденные Instagram аккаунты:</h4>
+                {accountData.instagramAccounts.map((account: any, index: number) => (
+                  <div key={index} className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-sm">
+                    <div className="font-medium">@{account.username}</div>
+                    <div className="text-muted-foreground">{account.name}</div>
+                    <div className="text-xs text-muted-foreground">ID: {account.instagramId}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <p className="text-sm text-muted-foreground text-center">
+              Это окно закроется автоматически через несколько секунд
+            </p>
+            
+            <Button 
+              onClick={() => window.close()} 
+              size="sm"
+              className="mt-2"
+            >
+              Закрыть окно
+            </Button>
+          </div>
+        );
+
+      case 'error':
+        return (
+          <div className="flex flex-col items-center space-y-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <div className="text-center">
+              <h3 className="font-semibold text-red-800">Ошибка</h3>
+              <p className="text-red-700">{message}</p>
+            </div>
+            
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Проверьте настройки приложения в Facebook Developers и убедитесь, что:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Redirect URI корректно настроен</li>
+                  <li>App ID и App Secret правильные</li>
+                  <li>Все необходимые разрешения добавлены</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => window.close()} 
+                size="sm"
+                variant="outline"
+              >
+                Закрыть окно
+              </Button>
+              <Button 
+                onClick={() => setLocation('/settings')} 
+                size="sm"
+              >
+                Вернуться к настройкам
+              </Button>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
+            <Instagram className="h-5 w-5" />
+            Instagram Авторизация
+          </CardTitle>
+          <CardDescription>
+            Обработка OAuth ответа от Facebook/Instagram
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderContent()}
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default InstagramCallback;

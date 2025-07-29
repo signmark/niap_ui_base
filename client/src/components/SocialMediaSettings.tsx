@@ -31,7 +31,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
-import InstagramSetupWizard from "./InstagramSetupWizardSimple";
+import InstagramSetupWizard from "./InstagramSetupWizardComplete";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({

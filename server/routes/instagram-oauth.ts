@@ -1,254 +1,222 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth';
-import { log } from '../utils/logger';
 import axios from 'axios';
+import { log } from '../utils/logger';
 
 const router = express.Router();
 
-// Получить статус OAuth авторизации для кампании
-router.get('/status/:campaignId', authMiddleware, async (req, res) => {
+// Временное хранение для OAuth flow (в продакшене можно использовать Redis)
+const oauthSessions = new Map();
+
+// Эндпоинт для начала OAuth flow
+router.post('/instagram/auth/start', async (req, res) => {
   try {
-    const { campaignId } = req.params;
-    const userId = (req as any).user?.id;
+    const { appId, appSecret, redirectUri, webhookUrl, instagramId } = req.body;
 
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Не авторизован' });
-    }
-
-    log(`[Instagram OAuth] Проверка статуса для кампании ${campaignId}`, 'instagram-oauth');
-
-    // Получаем данные кампании из Directus
-    const directusUrl = process.env.DIRECTUS_URL;
-    const token = req.headers.authorization?.replace('Bearer ', '');
-
-    const campaignResponse = await axios.get(`${directusUrl}/items/user_campaigns/${campaignId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const campaign = campaignResponse.data?.data;
-    if (!campaign) {
-      return res.status(404).json({ success: false, error: 'Кампания не найдена' });
-    }
-
-    // Проверяем настройки Instagram в social_media_settings
-    const socialSettings = campaign.social_media_settings;
-    const instagramSettings = socialSettings?.instagram;
-
-    if (!instagramSettings?.accessToken && !instagramSettings?.oauthToken) {
-      return res.json({
-        success: true,
-        status: {
-          isConnected: false
-        }
+    if (!appId || !appSecret || !redirectUri) {
+      return res.status(400).json({
+        error: 'Требуются: appId, appSecret, redirectUri'
       });
     }
 
-    // Проверяем валидность токена (если есть)
-    let isValid = false;
-    let username = '';
-    let profilePicture = '';
+    // Используем зашитый webhook URL если не передан
+    const finalWebhookUrl = webhookUrl || 'https://n8n.roboflow.space/webhook/instagram-auth';
 
-    if (instagramSettings.accessToken || instagramSettings.oauthToken) {
-      try {
-        // Пытаемся проверить токен через Instagram API
-        const tokenToCheck = instagramSettings.accessToken || instagramSettings.oauthToken;
-        
-        // Базовая проверка через Graph API
-        const testResponse = await axios.get(`https://graph.instagram.com/me?fields=id,username&access_token=${tokenToCheck}`);
-        
-        if (testResponse.data?.id) {
-          isValid = true;
-          username = testResponse.data.username || 'Instagram аккаунт';
-          
-          // Пытаемся получить фото профиля
-          try {
-            const profileResponse = await axios.get(`https://graph.instagram.com/me?fields=profile_picture_url&access_token=${tokenToCheck}`);
-            profilePicture = profileResponse.data?.profile_picture_url || '';
-          } catch (profileError) {
-            log(`[Instagram OAuth] Не удалось получить фото профиля: ${profileError}`, 'instagram-oauth');
-          }
-        }
-      } catch (tokenError: any) {
-        log(`[Instagram OAuth] Токен недействителен: ${tokenError.message}`, 'instagram-oauth');
-        isValid = false;
+    // Генерируем уникальный state для безопасности
+    const state = Math.random().toString(36).substring(2, 15);
+
+    // Сохраняем данные сессии
+    oauthSessions.set(state, {
+      appId,
+      appSecret,
+      redirectUri,
+      webhookUrl: finalWebhookUrl,
+      instagramId,
+      timestamp: Date.now()
+    });
+
+    // Формируем URL для авторизации Facebook
+    const scopes = [
+      'pages_manage_posts',
+      'pages_read_engagement', 
+      'pages_show_list',
+      'instagram_basic',
+      'instagram_content_publish'
+    ].join(',');
+
+    const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +
+      `client_id=${appId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `scope=${encodeURIComponent(scopes)}&` +
+      `response_type=code&` +
+      `state=${state}`;
+
+    log('instagram-oauth', `OAuth поток запущен для App ID: ${appId}`);
+    
+    res.json({ authUrl, state });
+  } catch (error) {
+    log('instagram-oauth', `Ошибка запуска OAuth: ${error}`);
+    res.status(500).json({ error: 'Ошибка сервера при запуске OAuth' });
+  }
+});
+
+// Callback эндпоинт для обработки ответа от Facebook
+router.get('/instagram/auth/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+
+  if (error) {
+    log('instagram-oauth', `Facebook error: ${error}`);
+    return res.status(400).json({ error: `Facebook error: ${error}` });
+  }
+
+  if (!code || !state) {
+    return res.status(400).json({ error: 'Отсутствует код авторизации или state' });
+  }
+
+  // Получаем данные сессии
+  const session = oauthSessions.get(state);
+  if (!session) {
+    return res.status(400).json({ error: 'Недействительная сессия' });
+  }
+
+  try {
+    // Настройки для axios с увеличенным timeout
+    const axiosConfig = {
+      timeout: 30000, // 30 секунд
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
+    };
+
+    log('instagram-oauth', 'Шаг 1: Получаем краткосрочный токен...');
+    // Шаг 1: Обмениваем код на краткосрочный токен
+    const tokenResponse = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+      params: {
+        client_id: session.appId,
+        client_secret: session.appSecret,  
+        redirect_uri: session.redirectUri,
+        code: code
+      },
+      ...axiosConfig
+    });
+
+    const shortLivedToken = tokenResponse.data.access_token;
+
+    log('instagram-oauth', 'Шаг 2: Получаем долгосрочный токен...');
+    // Шаг 2: Обмениваем краткосрочный токен на долгосрочный
+    const longLivedResponse = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+      params: {
+        grant_type: 'fb_exchange_token',
+        client_id: session.appId,
+        client_secret: session.appSecret,
+        fb_exchange_token: shortLivedToken
+      },
+      ...axiosConfig
+    });
+
+    const longLivedToken = longLivedResponse.data.access_token;
+    const expiresIn = longLivedResponse.data.expires_in;
+
+    log('instagram-oauth', 'Шаг 3: Получаем информацию о пользователе...');
+    // Шаг 3: Получаем информацию о пользователе
+    const userResponse = await axios.get('https://graph.facebook.com/v23.0/me', {
+      params: {
+        access_token: longLivedToken,
+        fields: 'id,name,email'
+      },
+      ...axiosConfig
+    });
+
+    log('instagram-oauth', 'Шаг 4: Получаем страницы пользователя...');
+    // Шаг 4: Получаем страницы с Instagram аккаунтами
+    const pagesResponse = await axios.get('https://graph.facebook.com/v23.0/me/accounts', {
+      params: {
+        access_token: longLivedToken,
+        fields: 'id,name,access_token,instagram_business_account{id,name,username,profile_picture_url}',
+        limit: 100
+      },
+      ...axiosConfig
+    });
+
+    // Фильтруем только страницы с подключенным Instagram
+    const pagesWithInstagram = pagesResponse.data.data?.filter(page =>
+      page.instagram_business_account
+    ) || [];
+
+    log('instagram-oauth', `Найдено страниц с Instagram: ${pagesWithInstagram.length}`);
+
+    // Подготавливаем данные для отправки в N8N webhook
+    const webhookData = {
+      success: true,
+      appId: session.appId,
+      longLivedToken,
+      expiresIn,
+      user: userResponse.data,
+      pages: pagesWithInstagram,
+      instagramAccounts: pagesWithInstagram.map(page => ({
+        instagramId: page.instagram_business_account.id,
+        username: page.instagram_business_account.username,
+        name: page.instagram_business_account.name,
+        pageId: page.id,
+        pageName: page.name,
+        pageAccessToken: page.access_token
+      })),
+      timestamp: new Date().toISOString()
+    };
+
+    // Отправляем данные в N8N webhook
+    try {
+      await axios.post(session.webhookUrl, webhookData, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      });
+      
+      log('instagram-oauth', `Данные успешно отправлены в N8N webhook: ${session.webhookUrl}`);
+    } catch (webhookError) {
+      log('instagram-oauth', `Ошибка отправки в N8N webhook: ${webhookError}`);
     }
 
+    // Очищаем сессию
+    oauthSessions.delete(state);
+
+    // Возвращаем успешный ответ с данными
     res.json({
       success: true,
-      status: {
-        isConnected: isValid,
-        username: username,
-        profilePicture: profilePicture,
-        lastConnected: instagramSettings.lastConnected || new Date().toISOString()
+      message: 'Instagram авторизация завершена успешно',
+      data: {
+        instagramAccounts: webhookData.instagramAccounts,
+        user: userResponse.data
       }
     });
 
-  } catch (error: any) {
-    log(`[Instagram OAuth] Ошибка проверки статуса: ${error.message}`, 'instagram-oauth');
-    res.status(500).json({ success: false, error: 'Ошибка сервера' });
+  } catch (error) {
+    log('instagram-oauth', `Ошибка OAuth callback: ${error}`);
+    
+    // Очищаем сессию при ошибке
+    oauthSessions.delete(state);
+    
+    res.status(500).json({
+      error: 'Ошибка при обработке OAuth callback',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
-// Обработчик callback от OAuth сервиса
-router.post('/callback', authMiddleware, async (req, res) => {
-  try {
-    const { campaignId, accessToken, refreshToken, username, profilePicture, expiresIn } = req.body;
-    const userId = (req as any).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Не авторизован' });
-    }
-
-    if (!campaignId || !accessToken) {
-      return res.status(400).json({ success: false, error: 'Отсутствуют обязательные параметры' });
-    }
-
-    log(`[Instagram OAuth] Обработка callback для кампании ${campaignId}`, 'instagram-oauth');
-
-    // Получаем текущие данные кампании
-    const directusUrl = process.env.DIRECTUS_URL;
-    const token = req.headers.authorization?.replace('Bearer ', '');
-
-    const campaignResponse = await axios.get(`${directusUrl}/items/user_campaigns/${campaignId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const campaign = campaignResponse.data?.data;
-    if (!campaign) {
-      return res.status(404).json({ success: false, error: 'Кампания не найдена' });
-    }
-
-    // Проверяем, что кампания принадлежит пользователю
-    if (campaign.user_id !== userId) {
-      return res.status(403).json({ success: false, error: 'Нет доступа к кампании' });
-    }
-
-    // Обновляем настройки Instagram в social_media_settings
-    const currentSettings = campaign.social_media_settings || {};
-    const updatedSettings = {
-      ...currentSettings,
-      instagram: {
-        ...currentSettings.instagram,
-        oauthToken: accessToken,
-        accessToken: accessToken, // Сохраняем также в accessToken для совместимости
-        refreshToken: refreshToken || null,
-        username: username || null,
-        profilePicture: profilePicture || null,
-        expiresIn: expiresIn || null,
-        lastConnected: new Date().toISOString(),
-        authMethod: 'oauth' // Отмечаем, что используется OAuth
-      }
-    };
-
-    // Сохраняем обновленные настройки
-    const updateResponse = await axios.patch(`${directusUrl}/items/user_campaigns/${campaignId}`, {
-      social_media_settings: updatedSettings
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (updateResponse.status === 200) {
-      log(`[Instagram OAuth] Настройки успешно сохранены для кампании ${campaignId}`, 'instagram-oauth');
-      
-      res.json({
-        success: true,
-        message: 'Instagram OAuth авторизация завершена успешно'
-      });
-    } else {
-      throw new Error('Не удалось сохранить настройки');
-    }
-
-  } catch (error: any) {
-    log(`[Instagram OAuth] Ошибка callback: ${error.message}`, 'instagram-oauth');
-    res.status(500).json({ success: false, error: 'Ошибка сохранения настроек' });
+// Эндпоинт для проверки статуса OAuth сессии
+router.get('/instagram/auth/status/:state', (req, res) => {
+  const { state } = req.params;
+  const session = oauthSessions.get(state);
+  
+  if (!session) {
+    return res.json({ exists: false });
   }
-});
-
-// Отключить Instagram OAuth
-router.delete('/disconnect/:campaignId', authMiddleware, async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-    const userId = (req as any).user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Не авторизован' });
-    }
-
-    log(`[Instagram OAuth] Отключение для кампании ${campaignId}`, 'instagram-oauth');
-
-    // Получаем текущие данные кампании
-    const directusUrl = process.env.DIRECTUS_URL;
-    const token = req.headers.authorization?.replace('Bearer ', '');
-
-    const campaignResponse = await axios.get(`${directusUrl}/items/user_campaigns/${campaignId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const campaign = campaignResponse.data?.data;
-    if (!campaign) {
-      return res.status(404).json({ success: false, error: 'Кампания не найдена' });
-    }
-
-    // Проверяем, что кампания принадлежит пользователю
-    if (campaign.user_id !== userId) {
-      return res.status(403).json({ success: false, error: 'Нет доступа к кампании' });
-    }
-
-    // Очищаем настройки Instagram
-    const currentSettings = campaign.social_media_settings || {};
-    const updatedSettings = {
-      ...currentSettings,
-      instagram: {
-        ...currentSettings.instagram,
-        oauthToken: null,
-        accessToken: currentSettings.instagram?.token || null, // Сохраняем старый API токен если был
-        refreshToken: null,
-        username: null,
-        profilePicture: null,
-        expiresIn: null,
-        lastConnected: null,
-        authMethod: null
-      }
-    };
-
-    // Сохраняем обновленные настройки
-    const updateResponse = await axios.patch(`${directusUrl}/items/user_campaigns/${campaignId}`, {
-      social_media_settings: updatedSettings
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (updateResponse.status === 200) {
-      log(`[Instagram OAuth] Instagram отключен для кампании ${campaignId}`, 'instagram-oauth');
-      
-      res.json({
-        success: true,
-        message: 'Instagram OAuth отключен'
-      });
-    } else {
-      throw new Error('Не удалось обновить настройки');
-    }
-
-  } catch (error: any) {
-    log(`[Instagram OAuth] Ошибка отключения: ${error.message}`, 'instagram-oauth');
-    res.status(500).json({ success: false, error: 'Ошибка отключения' });
-  }
+  
+  res.json({
+    exists: true,
+    timestamp: session.timestamp,
+    appId: session.appId
+  });
 });
 
 export default router;
