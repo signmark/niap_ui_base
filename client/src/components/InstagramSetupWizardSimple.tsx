@@ -252,7 +252,7 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-bold">Настройка Instagram интеграции</h2>
+          <h2 className="text-lg font-bold">Настройка Instagram интеграции</h2>
           <p className="text-sm text-gray-600">Простая настройка Instagram для публикации контента</p>
         </div>
         <Button 
@@ -265,8 +265,8 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
         </Button>
       </div>
       
-      <div className="space-y-6">
       <div className="space-y-4">
+      <div className="space-y-3">
         <Alert>
           <AlertDescription>
             <div className="space-y-2">
@@ -283,16 +283,16 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
         </Alert>
         
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Instagram className="h-5 w-5" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Instagram className="h-4 w-4" />
               Настройка Instagram API
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Простая настройка Instagram для публикации контента
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {/* App ID и App Secret */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
