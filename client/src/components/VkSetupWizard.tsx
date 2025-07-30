@@ -15,6 +15,7 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [accessToken, setAccessToken] = useState<string>('');
+  const [showIframe, setShowIframe] = useState(false);
   const [availableGroups, setAvailableGroups] = useState<Array<{
     id: string;
     name: string;
@@ -45,15 +46,7 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
 
   const handleVkAuth = () => {
     setIsProcessing(true);
-    
-    // Открываем VK OAuth в новом окне
-    window.open(
-      getVkOAuthUrl(),
-      'vk_auth',
-      'width=600,height=600,scrollbars=yes,resizable=yes'
-    );
-    
-    // Показываем инструкции пользователю для ручного копирования токена
+    setShowIframe(true);
   };
 
   const fetchVkGroups = async (token: string) => {
@@ -129,61 +122,77 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                   VK OAuth Авторизация
                 </CardTitle>
                 <CardDescription>
-                  Откроется новое окно для авторизации в VK API
+                  {showIframe ? 'Авторизуйтесь в VK в окне ниже и скопируйте токен' : 'Авторизация в VK API для получения токена доступа'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  onClick={handleVkAuth}
-                  disabled={isProcessing}
-                  className="w-full"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Обработка...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Авторизоваться в VK
-                    </>
-                  )}
-                </Button>
-                
-                {isProcessing && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>После авторизации:</strong><br/>
-                      1. Скопируйте access_token из URL (после #access_token=)<br/>
-                      2. Вставьте токен в поле ниже<br/>
-                      3. Нажмите "Продолжить"
-                    </AlertDescription>
-                  </Alert>
+                {!showIframe && (
+                  <Button 
+                    onClick={handleVkAuth}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Авторизоваться в VK
+                  </Button>
                 )}
                 
-                {isProcessing && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">VK Access Token:</label>
-                    <input 
-                      type="text"
-                      placeholder="Вставьте access_token сюда"
-                      value={accessToken}
-                      onChange={(e) => setAccessToken(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <Button 
-                      onClick={() => {
-                        if (accessToken.trim()) {
-                          setIsProcessing(false);
-                          fetchVkGroups(accessToken.trim());
-                        }
-                      }}
-                      disabled={!accessToken.trim()}
-                      className="w-full"
-                    >
-                      Продолжить с токеном
-                    </Button>
+                {showIframe && (
+                  <div className="space-y-4">
+                    <Alert>
+                      <AlertDescription>
+                        <strong>Пройдите авторизацию в VK ниже:</strong><br/>
+                        После успешной авторизации URL изменится и будет содержать<br/>
+                        <code>#access_token=ДЛИННЫЙ_ТОКЕН&expires_in=0&user_id=...</code><br/>
+                        Скопируйте только токен (между = и &) в поле ниже.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="border rounded-lg">
+                      <iframe 
+                        src={getVkOAuthUrl()}
+                        width="100%" 
+                        height="400"
+                        className="rounded-lg"
+                        title="VK OAuth"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">VK Access Token:</label>
+                      <input 
+                        type="text"
+                        placeholder="Вставьте сюда только access_token (длинная строка символов)"
+                        value={accessToken}
+                        onChange={(e) => setAccessToken(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => {
+                            if (accessToken.trim()) {
+                              setIsProcessing(false);
+                              setShowIframe(false);
+                              fetchVkGroups(accessToken.trim());
+                            }
+                          }}
+                          disabled={!accessToken.trim()}
+                          className="flex-1"
+                        >
+                          Продолжить с токеном
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            setShowIframe(false);
+                            setIsProcessing(false);
+                            setAccessToken('');
+                          }}
+                        >
+                          Отмена
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
