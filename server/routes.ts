@@ -69,6 +69,7 @@ import socialPublishingRouter from './api/social-publishing-router';
 import { forceUpdateStatusRouter } from './api/force-update-status';
 import * as instagramCarouselHandler from './api/instagram-carousel-webhook';
 import youtubeAuthRouter from './routes/youtube-auth';
+import instagramSettingsRouter from './routes/campaign-instagram-settings';
 // import { getFeatureFlags, DEFAULT_FEATURE_FLAGS, FEATURE_DESCRIPTIONS } from './utils/feature-flags.js';
 
 
@@ -2221,12 +2222,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Получаем данные кампании из Directus
+      // Получаем данные кампании системным токеном (более надежно)
       const getCampaignResponse = await axios.get(
         `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
         {
           headers: {
-            Authorization: `Bearer ${userToken}`,
+            Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`,
             'Content-Type': 'application/json'
           }
         }
@@ -4021,6 +4022,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTestInstagramRoute(app);
   registerTestInstagramCarouselRoute(app);
   console.log('Test Instagram routes registered');
+  
+  // Регистрируем Instagram настройки кампаний
+  app.use('/api/campaigns', instagramSettingsRouter);
+  console.log('Instagram settings routes registered');
+  
   console.log('Social platform webhook routes registered successfully');
   
   // Регистрируем маршруты для работы с админским токеном

@@ -14,19 +14,24 @@ router.get('/campaigns/:campaignId/instagram-settings', async (req, res) => {
   try {
     console.log('📋 GET Instagram settings for campaign:', campaignId);
 
-    if (!userToken) {
+    // Используем системный токен как fallback для доступа к базе данных
+    const tokenToUse = userToken || process.env.DIRECTUS_TOKEN;
+    
+    if (!tokenToUse) {
       return res.status(401).json({
         success: false,
-        error: 'Токен авторизации не предоставлен'
+        error: 'Токен авторизации не доступен'
       });
     }
+
+    console.log('📋 Using token type:', userToken ? 'user' : 'system');
 
     // Получаем настройки кампании
     const getCampaignResponse = await axios.get(
       `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
       {
         headers: {
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${tokenToUse}`,
           'Content-Type': 'application/json'
         }
       }
@@ -203,12 +208,12 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
     // Сохраняем Instagram Business Account ID в кампанию
     console.log('💾 Saving Instagram Business Account ID to campaign...');
     
-    // Получаем текущие настройки кампании
+    // Получаем текущие настройки кампании используя системный токен
     const getCampaignResponse = await axios.get(
       `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
       {
         headers: {
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`,
           'Content-Type': 'application/json'
         }
       }
@@ -230,7 +235,10 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
       instagram: updatedInstagramSettings
     };
 
-    // Сохраняем обновленные настройки
+    console.log('💾 Saving with Business Account ID:', instagramBusinessAccountId);
+    console.log('💾 Full Instagram settings to save:', JSON.stringify(updatedInstagramSettings, null, 2));
+
+    // Сохраняем обновленные настройки используя системный токен
     const updateResponse = await axios.patch(
       `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
       {
@@ -238,7 +246,7 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
       },
       {
         headers: {
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`,
           'Content-Type': 'application/json'
         }
       }
