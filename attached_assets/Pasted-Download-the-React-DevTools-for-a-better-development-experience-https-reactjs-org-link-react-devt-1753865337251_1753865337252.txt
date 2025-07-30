@@ -1,0 +1,34 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+SocialMediaSettings.tsx:121 🔥 Loading Instagram settings for campaign: fde4ae82-e492-4c94-965d-902bfe721d97
+SocialMediaSettings.tsx:128 🔥 Instagram settings response data: {success: true, settings: {…}}
+SocialMediaSettings.tsx:132 🔥 Instagram settings loaded successfully
+SocialMediaSettings.tsx:162 🔥 Updating form with Instagram settings: {}
+SocialMediaSettings.tsx:163 🔥 Current form values before update: {token: null, accessToken: null, businessAccountId: null, appId: null, appSecret: null}
+SocialMediaSettings.tsx:174 🔥 Formatted Instagram data for form: {token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: ''}
+SocialMediaSettings.tsx:183 🔥 Form values after update: {token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: ''}
+SocialMediaSettings.tsx:184 🔥 Form state dirty? false
+SocialMediaSettings.tsx:185 🔥 Form field values individual check:
+SocialMediaSettings.tsx:186   - token: 
+SocialMediaSettings.tsx:187   - accessToken: 
+SocialMediaSettings.tsx:188   - businessAccountId: 
+SocialMediaSettings.tsx:189   - appId: 
+SocialMediaSettings.tsx:190   - appSecret: 
+InstagramSetupWizardComplete.tsx:207 OAuth error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+startOAuthFlow @ InstagramSetupWizardComplete.tsx:207
+await in startOAuthFlow
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449

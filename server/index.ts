@@ -345,9 +345,13 @@ app.use((req, res, next) => {
     console.log("YouTube OAuth routes registered");
     log("YouTube OAuth routes registered successfully");
     
-    // Instagram OAuth маршруты уже зарегистрированы вместе с Campaign Settings
-    console.log("Instagram OAuth routes already registered with Campaign Settings");
-    log("Instagram OAuth routes already registered with Campaign Settings");
+    // Регистрируем Instagram OAuth маршруты
+    console.log("Registering Instagram OAuth routes...");
+    log("Registering Instagram OAuth routes...");
+    const instagramOAuthRouter = (await import('./routes/instagram-oauth')).default;
+    app.use('/api', instagramOAuthRouter);
+    console.log("Instagram OAuth routes registered");
+    log("Instagram OAuth routes registered successfully");
     
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
