@@ -108,6 +108,15 @@ export function SocialMediaSettings({
 
   // Состояние для переключения Instagram аккаунтов
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
+
+  // Функция для получения имени Instagram аккаунта
+  const getInstagramAccountName = (accountId: string) => {
+    const knownAccounts: Record<string, string> = {
+      '17841422578516105': 'Дмитрий Жданов',
+      '17841422577074562': 'Сметоматика'
+    };
+    return knownAccounts[accountId] || 'Instagram Business Account';
+  };
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   
   // Состояние для доступных Instagram аккаунтов
@@ -963,7 +972,7 @@ export function SocialMediaSettings({
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
                       {instagramSettings?.businessAccountId 
-                        ? `Аккаунт ID: ${instagramSettings.businessAccountId}` 
+                        ? `Аккаунт: ${getInstagramAccountName(instagramSettings.businessAccountId)} (${instagramSettings.businessAccountId})` 
                         : 'Настройте Instagram API для этой кампании'
                       }
                     </p>
@@ -974,7 +983,7 @@ export function SocialMediaSettings({
                         type="button" 
                         variant="outline"
                         size="sm"
-                        onClick={handleSwitchInstagramAccount}
+                        onClick={() => setShowAccountSwitcher(true)}
                         disabled={loadingAccounts || loadingInstagramSettings}
                       >
                         {loadingAccounts ? (
@@ -1261,10 +1270,12 @@ export function SocialMediaSettings({
       {showInstagramWizard && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
-            <InstagramSetupWizard
-              isOpen={showInstagramWizard}
-              onClose={() => setShowInstagramWizard(false)}
+            <InstagramSetupWizardSimple
               campaignId={campaignId}
+              onCancel={() => {
+                console.log('Instagram wizard: Принудительное закрытие через onCancel');
+                setShowInstagramWizard(false);
+              }}
               onComplete={() => {
                 console.log('🔄 Instagram setup completed, refreshing Instagram settings...');
                 setShowInstagramWizard(false);
@@ -1306,7 +1317,10 @@ export function SocialMediaSettings({
                   description: "VK интеграция успешно настроена для этой кампании",
                 });
               }}
-              onCancel={() => setShowVkWizard(false)}
+              onCancel={() => {
+                console.log('VK wizard: Закрытие через onCancel');
+                setShowVkWizard(false);
+              }}
             />
           </div>
         </div>
