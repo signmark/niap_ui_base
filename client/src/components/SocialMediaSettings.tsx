@@ -95,6 +95,10 @@ export function SocialMediaSettings({
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
   const [loadingInstagramSettings, setLoadingInstagramSettings] = useState(false);
   
+  // Состояние для VK настроек из базы данных
+  const [vkSettings, setVkSettings] = useState<any>(null);
+  const [loadingVkSettings, setLoadingVkSettings] = useState(false);
+  
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
   const [vkStatus, setVkStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -121,6 +125,48 @@ export function SocialMediaSettings({
     }
   });
 
+  // Функция загрузки VK настроек из базы данных
+  const loadVkSettings = async () => {
+    setLoadingVkSettings(true);
+    try {
+      console.log('🔄 Loading VK settings from database...');
+      
+      const response = await fetch(`/api/campaigns/${campaignId}/vk-settings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ VK settings loaded:', data);
+        
+        if (data.success && data.settings) {
+          setVkSettings(data.settings);
+          
+          // Обновляем поля формы с полученными данными
+          if (data.settings.token) {
+            form.setValue('vk.token', data.settings.token);
+          }
+          if (data.settings.groupId) {
+            form.setValue('vk.groupId', data.settings.groupId);
+          }
+          
+          console.log('🔄 VK form fields updated with database values');
+        } else {
+          console.log('ℹ️ No VK settings found in database');
+          setVkSettings(null);
+        }
+      } else {
+        console.error('❌ Failed to load VK settings:', response.statusText);
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading VK settings:', error);
+    } finally {
+      setLoadingVkSettings(false);
+    }
+  };
+
   // Функция загрузки Instagram настроек из базы данных
   const loadInstagramSettings = async () => {
     setLoadingInstagramSettings(true);
@@ -142,10 +188,11 @@ export function SocialMediaSettings({
     }
   };
 
-  // Загружаем Instagram настройки при монтировании компонента
+  // Загружаем Instagram и VK настройки при монтировании компонента
   useEffect(() => {
     if (campaignId) {
       loadInstagramSettings();
+      loadVkSettings();
     }
   }, [campaignId]);
 
@@ -181,7 +228,29 @@ export function SocialMediaSettings({
     }
   }, [instagramSettings, form]);
 
-
+  // Обновляем форму когда VK настройки загружены
+  useEffect(() => {
+    if (vkSettings) {
+      console.log('🔄 Updating VK form fields with database values:', vkSettings);
+      
+      // Обновляем поля формы с данными из базы
+      if (vkSettings.token) {
+        form.setValue('vk.token', vkSettings.token);
+      }
+      if (vkSettings.groupId) {
+        form.setValue('vk.groupId', vkSettings.groupId);
+      }
+      
+      console.log('✅ VK form fields updated:', {
+        token: form.getValues('vk.token'),
+        groupId: form.getValues('vk.groupId'),
+        groupName: vkSettings.groupName
+      });
+      
+      // Принудительно обновляем отображение формы
+      form.trigger('vk');
+    }
+  }, [vkSettings, form]);
 
   // Функции проверки API ключей
   const validateTelegramToken = async () => {
@@ -717,16 +786,22 @@ export function SocialMediaSettings({
                   <div>
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">VK OAuth настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      Настройте VK OAuth для этой кампании
+                      {vkSettings?.groupName ? `Группа: ${vkSettings.groupName}` : 'Настройте VK OAuth для этой кампании'}
                     </p>
                   </div>
                   <Button 
                     type="button" 
-                    variant="outline"
+                    variant={vkSettings?.configured ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowVkWizard(true)}
+                    disabled={loadingVkSettings}
                   >
-                    Настроить VK
+                    {loadingVkSettings ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Загрузка...
+                      </>
+                    ) : (vkSettings?.configured ? 'Настроено' : 'Настроить VK')}
                   </Button>
                 </div>
               </div>
@@ -1182,7 +1257,12 @@ export function SocialMediaSettings({
             <VkSetupWizard
               campaignId={campaignId}
               onComplete={() => {
+                console.log('🔄 VK setup completed, refreshing VK settings...');
                 setShowVkWizard(false);
+                
+                // Перезагружаем VK настройки из базы данных
+                loadVkSettings();
+                
                 if (onSettingsUpdated) {
                   onSettingsUpdated();
                 }
