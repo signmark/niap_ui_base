@@ -1299,7 +1299,23 @@ export function SocialMediaSettings({
           <Button 
             type="submit" 
             disabled={isLoading}
-
+            onClick={async () => {
+              console.log('🔍 SAVE BUTTON CLICKED');
+              console.log('🔍 Form isValid:', form.formState.isValid);
+              console.log('🔍 Form errors:', form.formState.errors);
+              console.log('🔍 Form values:', form.getValues());
+              
+              // Принудительная валидация для диагностики
+              const isValid = await form.trigger();
+              console.log('🔍 Form trigger result:', isValid);
+              
+              if (!isValid) {
+                console.log('❌ FORM VALIDATION FAILED');
+                console.log('❌ Form errors after trigger:', form.formState.errors);
+              } else {
+                console.log('✅ FORM VALIDATION PASSED');
+              }
+            }}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
