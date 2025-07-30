@@ -1,80 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { ExternalLink, CheckCircle, AlertCircle, Instagram, Facebook, X } from 'lucide-react';
+import { CheckCircle, ExternalLink, ArrowRight, Loader2, Facebook } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { useAuthStore } from '@/lib/store';
-
-interface InstagramAccount {
-  instagramId: string;
-  username: string;
-  name: string;
-  profilePicture?: string;
-  pageId: string;
-  pageName: string;
-}
-
-interface InstagramSetupData {
-  connected: boolean;
-  appId?: string;
-  appSecret?: string;
-  instagramId?: string;
-  setupCompletedAt?: string;
-}
 
 interface InstagramSetupWizardProps {
   campaignId: string;
-  instagramSettings?: {
-    appId?: string;
-    appSecret?: string;
-    instagramId?: string;
-  };
-  onSettingsUpdate?: (settings: any) => void;
-  isOpen?: boolean;
-  onClose?: () => void;
+  onComplete: () => void;
+  onCancel: () => void;
 }
 
-const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ 
-  campaignId, 
-  instagramSettings = {}, 
-  onSettingsUpdate,
-  isOpen = true,
-  onClose
-}) => {
+const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId, onComplete, onCancel }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
-    appId: instagramSettings.appId || '',
-    appSecret: instagramSettings.appSecret || '',
-    instagramId: instagramSettings.instagramId || ''
+    appId: '',
+    appSecret: ''
   });
-  const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
-  const { userId } = useAuthStore();
 
-  // Инициализация формы из переданных настроек
-  useEffect(() => {
-    if (instagramSettings) {
-      setFormData({
-        appId: instagramSettings.appId || '',
-        appSecret: instagramSettings.appSecret || '',
-        instagramId: instagramSettings.instagramId || ''
-      });
+  const steps = [
+    {
+      title: "Создание Facebook App",
+      description: "Создание Facebook приложения для Instagram API"
+    },
+    {
+      title: "OAuth авторизация",
+      description: "Авторизация и получение токенов доступа"
+    },
+    {
+      title: "Завершение настройки",
+      description: "Сохранение настроек Instagram в кампанию"
     }
-  }, [instagramSettings]);
+  ];
 
-  const handleSaveSettings = async () => {
-    console.log('🔥 SAVE INSTAGRAM SETTINGS CALLED');
-    console.log('🔥 FORM DATA:', formData);
-    console.log('🔥 CAMPAIGN ID:', campaignId);
-    
+  const handleStartOAuth = async () => {
     if (!formData.appId || !formData.appSecret) {
-      console.log('🔥 VALIDATION FAILED - missing fields');
       toast({
         title: "Ошибка",
         description: "Введите App ID и App Secret",
@@ -83,324 +48,201 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
       return;
     }
 
-    console.log('🔥 VALIDATION PASSED');
-    setLoading(true);
-
+    setIsProcessing(true);
     try {
-      // Сохраняем настройки Instagram в JSON кампании
-      const instagramConfig = {
-        appId: formData.appId,
-        appSecret: formData.appSecret,
-        instagramId: formData.instagramId || '',
-        setupCompletedAt: new Date().toISOString()
-      };
-
-      // Отправляем данные на сервер для сохранения в social_media_settings
-      const response = await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
-        method: 'PATCH',
-        data: instagramConfig
+      const response = await fetch(`/api/instagram/auth/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          appId: formData.appId,
+          appSecret: formData.appSecret,
+          campaignId: campaignId
+        })
       });
 
-      if (response) {
-        // Обновляем родительский компонент
-        if (onSettingsUpdate) {
-          onSettingsUpdate({ instagram: instagramConfig });
-        }
-
-        toast({
-          title: "Успешно сохранено",
-          description: "Настройки Instagram сохранены в кампании",
-          variant: "default"
-        });
-      }
+      const data = await response.json();
       
-    } catch (error) {
-      console.error('Error saving Instagram settings:', error);
+      if (data.success && data.authUrl) {
+        // Открываем окно авторизации
+        window.open(data.authUrl, 'instagram-auth', 'width=600,height=600');
+        setCurrentStep(2);
+      } else {
+        throw new Error(data.error || 'Ошибка создания ссылки авторизации');
+      }
+    } catch (error: any) {
+      console.error('Error starting Instagram OAuth:', error);
       toast({
         title: "Ошибка",
-        description: (error as any)?.message || "Ошибка сохранения настроек",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsProcessing(false);
     }
   };
 
+  const handleCompleteSetup = () => {
+    setCurrentStep(3);
+    toast({
+      title: "Успех",
+      description: "Instagram настроен успешно!",
+      variant: "default"
+    });
+    setTimeout(() => {
+      onComplete();
+    }, 2000);
+  };
 
-
-  // Определяем есть ли уже сохраненные настройки
-  const hasSettings = formData.appId && formData.appSecret;
-
-  if (step === 'loading') {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Подключение к Instagram...</CardTitle>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center space-x-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span>Загрузка...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === 'success' && instagramData?.connected) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-              <span>Instagram подключен</span>
-            </CardTitle>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <CardDescription>
-            Ваш Instagram Business аккаунт успешно подключен к SMM Manager
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {instagramData.expired && (
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Токен доступа истек. Обновите токен для продолжения работы.
-                <Button onClick={handleRefreshToken} className="ml-2" size="sm">
-                  Обновить токен
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
           <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Подключенные аккаунты Instagram:</Label>
-              <div className="mt-2 space-y-2">
-                {instagramData.instagramAccounts?.map((account) => (
-                  <div key={account.instagramId} className="flex items-center space-x-3 p-3 border rounded-lg">
-                    {account.profilePicture && (
-                      <img 
-                        src={account.profilePicture} 
-                        alt={account.username}
-                        className="w-10 h-10 rounded-full"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <Instagram className="h-4 w-4 text-pink-600" />
-                        <span className="font-medium">@{account.username}</span>
-                        <Badge variant="secondary">{account.name}</Badge>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        ID: {account.instagramId}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                Подключено: {new Date(instagramData.setupCompletedAt!).toLocaleString('ru-RU')}
-                {instagramData.tokenExpiresAt && (
-                  <div>Токен истекает: {new Date(instagramData.tokenExpiresAt).toLocaleString('ru-RU')}</div>
-                )}
-              </div>
-              <Button onClick={handleDisconnect} variant="outline" size="sm">
-                Отключить Instagram
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === 'instructions') {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <Instagram className="h-6 w-6 text-pink-600" />
-              <span>Instagram API Setup Wizard</span>
-            </CardTitle>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <CardDescription>
-            Настройте публикацию в Instagram через Facebook Business API
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
             <Alert>
-              <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Важно:</strong> Для публикации в Instagram требуется Instagram Business аккаунт, 
-                подключенный к Facebook странице, и Facebook приложение с соответствующими разрешениями.
+                Сначала создайте Facebook приложение и введите App ID и App Secret.
+              </AlertDescription>
+            </Alert>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Facebook className="h-5 w-5" />
+                  Facebook App данные
+                </CardTitle>
+                <CardDescription>
+                  Введите App ID и App Secret вашего Facebook приложения
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="appId">App ID *</Label>
+                  <Input
+                    id="appId"
+                    type="text"
+                    value={formData.appId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, appId: e.target.value }))}
+                    placeholder="Введите App ID"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="appSecret">App Secret *</Label>
+                  <Input
+                    id="appSecret"
+                    type="password"
+                    value={formData.appSecret}
+                    onChange={(e) => setFormData(prev => ({ ...prev, appSecret: e.target.value }))}
+                    placeholder="Введите App Secret"
+                    required
+                  />
+                </div>
+
+                <Button 
+                  onClick={handleStartOAuth}
+                  disabled={isProcessing || !formData.appId || !formData.appSecret}
+                  className="w-full"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Запуск авторизации...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Начать OAuth авторизацию
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Окно авторизации Instagram должно открыться в новой вкладке. Пройдите авторизацию и закройте окно.
               </AlertDescription>
             </Alert>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold">Шаг 1: Создайте Facebook Business страницу</h3>
-              <p className="text-sm text-gray-600">
-                Если у вас нет Facebook Business страницы, создайте её и подключите к ней ваш Instagram Business аккаунт.
-              </p>
-              <Button variant="outline" asChild>
-                <a href="https://business.facebook.com/pages/create" target="_blank" rel="noopener noreferrer">
-                  <Facebook className="h-4 w-4 mr-2" />
-                  Создать Facebook страницу
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </a>
-              </Button>
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p>Ожидание завершения авторизации...</p>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold">Шаг 2: Создайте Facebook приложение</h3>
-              <p className="text-sm text-gray-600">
-                Создайте приложение Facebook для получения App ID и App Secret.
-              </p>
-              <Button variant="outline" asChild>
-                <a href="https://developers.facebook.com/apps/create/" target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Создать Facebook App
-                </a>
-              </Button>
-              
-              <div className="bg-gray-50 p-4 rounded-lg text-sm">
-                <p><strong>При создании приложения:</strong></p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Выберите тип "Consumer" или "Business"</li>
-                  <li>Добавьте продукт "Facebook Login"</li>
-                  <li>Добавьте продукт "Instagram Basic Display" (если доступно)</li>
-                  <li>В настройках OAuth добавьте Redirect URI: <code className="bg-white px-1 rounded">https://n8n.roboflow.space/webhook/authorize-ig</code></li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-semibold">Шаг 3: Получите разрешения</h3>
-              <p className="text-sm text-gray-600">
-                В Facebook App Dashboard запросите следующие разрешения:
-              </p>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <ul className="text-sm space-y-1">
-                  <li>• <code>pages_manage_posts</code> - для публикации постов</li>
-                  <li>• <code>pages_read_engagement</code> - для чтения статистики</li>
-                  <li>• <code>pages_show_list</code> - для получения списка страниц</li>
-                  <li>• <code>instagram_basic</code> - базовый доступ к Instagram</li>
-                  <li>• <code>instagram_content_publish</code> - публикация в Instagram</li>
-                </ul>
-              </div>
-            </div>
-
-            <Button onClick={() => setStep('form')} className="w-full">
-              Продолжить настройку
+            <Button 
+              onClick={handleCompleteSetup}
+              className="w-full"
+            >
+              Авторизация завершена
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        );
 
-  return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Введите данные Facebook приложения</CardTitle>
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <CardDescription>
-          Введите App ID и App Secret вашего Facebook приложения
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={(e) => { e.preventDefault(); handleStartOAuth(); }} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="appId">App ID *</Label>
-            <Input
-              id="appId"
-              type="text"
-              value={formData.appId}
-              onChange={(e) => setFormData(prev => ({ ...prev, appId: e.target.value }))}
-              placeholder="Введите App ID из Facebook Developer Console"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="appSecret">App Secret *</Label>
-            <Input
-              id="appSecret"
-              type="password"
-              value={formData.appSecret}
-              onChange={(e) => setFormData(prev => ({ ...prev, appSecret: e.target.value }))}
-              placeholder="Введите App Secret из Facebook Developer Console"
-              required
-            />
-          </div>
-
-
-
-          <div className="space-y-2">
-            <Label htmlFor="instagramId">Instagram Business Account ID (опционально)</Label>
-            <Input
-              id="instagramId"
-              type="text"
-              value={formData.instagramId}
-              onChange={(e) => setFormData(prev => ({ ...prev, instagramId: e.target.value }))}
-              placeholder="17841400455970028"
-            />
-            <p className="text-xs text-gray-500">
-              Если знаете ID вашего Instagram Business аккаунта, введите его
+      case 3:
+        return (
+          <div className="text-center space-y-4">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <h3 className="text-xl font-semibold">Настройка Instagram завершена!</h3>
+            <p className="text-gray-600">
+              Instagram интеграция успешно настроена. Теперь вы можете публиковать контент в Instagram.
             </p>
           </div>
+        );
 
-          <div className="flex space-x-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setStep('instructions')}
-              className="flex-1"
-            >
-              Назад
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.appId || !formData.appSecret}
-              className="flex-1"
-            >
-              {loading ? 'Подключение...' : 'Подключить Instagram'}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">Настройка Instagram интеграции</h2>
+        <div className="flex space-x-2">
+          {steps.map((step, index) => (
+            <div key={index} className="flex items-center">
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                ${currentStep > index + 1 ? 'bg-green-500 text-white' : 
+                  currentStep === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'}
+              `}>
+                {currentStep > index + 1 ? <CheckCircle className="h-4 w-4" /> : index + 1}
+              </div>
+              {index < steps.length - 1 && (
+                <div className={`w-16 h-1 mx-2 ${currentStep > index + 1 ? 'bg-green-500' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <h3 className="font-semibold">{steps[currentStep - 1]?.title}</h3>
+          <p className="text-sm text-gray-600">{steps[currentStep - 1]?.description}</p>
+        </div>
+      </div>
+
+      {renderStep()}
+
+      <div className="mt-6 flex justify-between">
+        <Button variant="outline" onClick={onCancel}>
+          Отмена
+        </Button>
+        {currentStep === 3 && (
+          <Button onClick={onComplete}>
+            Завершить
+          </Button>
+        )}
+      </div>
+    </div>
   );
 };
 
