@@ -1,0 +1,42 @@
+SocialMediaSettings.tsx:920 🔥 [BUTTON CLICK] Кнопка "Сохранить настройки" нажата
+SocialMediaSettings.tsx:921 🔥 [BUTTON CLICK] Event: SyntheticBaseEvent {_reactName: 'onClick', _targetInst: null, type: 'click', nativeEvent: PointerEvent, target: button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medi…, …}
+SocialMediaSettings.tsx:922 🔥 [BUTTON CLICK] Form valid: false
+SocialMediaSettings.tsx:923 🔥 [BUTTON CLICK] Form errors: {}
+SocialMediaSettings.tsx:924 🔥 [BUTTON CLICK] Instagram errors: undefined
+SocialMediaSettings.tsx:925 🔥 [BUTTON CLICK] Form values: {telegram: {…}, vk: {…}, instagram: {…}, facebook: {…}, youtube: {…}}
+SocialMediaSettings.tsx:926 🔥 [BUTTON CLICK] Instagram form values: {token: 'it.signmark', accessToken: null, businessAccountId: null, appId: '3459501544192396', appSecret: '50df248e9dae8af129403334c0ec28b9'}
+SocialMediaSettings.tsx:466 🔥 [FORM SUBMIT] Form onSubmit triggered
+SocialMediaSettings.tsx:467 🔥 [FORM SUBMIT] Event: SyntheticBaseEvent {_reactName: 'onSubmit', _targetInst: null, type: 'submit', nativeEvent: SubmitEvent, target: form.space-y-4, …}
+SocialMediaSettings.tsx:428 🔥 [SAVE SETTINGS] Отправляем настройки: {telegram: {…}, vk: {…}, instagram: {…}, facebook: {…}, youtube: {…}}
+SocialMediaSettings.tsx:429 🔥 [SAVE SETTINGS] Campaign ID: cb3757df-c684-4809-9b13-49862c108db8
+SocialMediaSettings.tsx:430 🔥 [SAVE SETTINGS] Form data: {
+  "telegram": {
+    "token": null,
+    "chatId": null
+  },
+  "vk": {
+    "token": null,
+    "groupId": null
+  },
+  "instagram": {
+    "token": "it.signmark",
+    "accessToken": null,
+    "businessAccountId": null,
+    "appId": "3459501544192396",
+    "appSecret": "50df248e9dae8af129403334c0ec28b9"
+  },
+  "facebook": {
+    "token": null,
+    "pageId": null
+  },
+  "youtube": {
+    "apiKey": null,
+    "channelId": null,
+    "accessToken": null,
+    "refreshToken": null
+  }
+}
+SocialMediaSettings.tsx:436 🔥 [SAVE SETTINGS] Отправляем PATCH запрос к /api/campaigns/ cb3757df-c684-4809-9b13-49862c108db8
+SocialMediaSettings.tsx:158 🔥 [DEBUG] Current form state: {formValid: false, errors: {…}, values: {…}}
+SocialMediaSettings.tsx:441 🔥 [SAVE SETTINGS] Ответ сервера: {data: '<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <sty…rT_D9htleTM1JzvU2MeI">\x3C/script>\n  </body>\n</html>', status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+SocialMediaSettings.tsx:158 🔥 [DEBUG] Current form state: {formValid: false, errors: {…}, values: {…}}

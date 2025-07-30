@@ -155,11 +155,7 @@ export function SocialMediaSettings({
     }
   }, [instagramSettings, form]);
 
-  console.log('🔥 [DEBUG] Current form state:', {
-    formValid: form.formState.isValid,
-    errors: form.formState.errors,
-    values: form.getValues()
-  });
+
 
   // Функции проверки API ключей
   const validateTelegramToken = async () => {
@@ -461,14 +457,7 @@ export function SocialMediaSettings({
 
   return (
     <Form {...form}>
-      <form 
-        onSubmit={(e) => {
-          console.log('🔥 [FORM SUBMIT] Form onSubmit triggered');
-          console.log('🔥 [FORM SUBMIT] Event:', e);
-          return form.handleSubmit(onSubmit)(e);
-        }} 
-        className="space-y-4"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Accordion type="multiple" className="space-y-2">
           {/* Telegram Settings */}
           <AccordionItem value="telegram">
@@ -916,16 +905,6 @@ export function SocialMediaSettings({
           <Button 
             type="submit" 
             disabled={isLoading}
-            onClick={(e) => {
-              console.log('🔥 [BUTTON CLICK] Кнопка "Сохранить настройки" нажата');
-              console.log('🔥 [BUTTON CLICK] Event:', e);
-              console.log('🔥 [BUTTON CLICK] Form valid:', form.formState.isValid);
-              console.log('🔥 [BUTTON CLICK] Form errors:', form.formState.errors);
-              console.log('🔥 [BUTTON CLICK] Instagram errors:', form.formState.errors.instagram);
-              console.log('🔥 [BUTTON CLICK] Form values:', form.getValues());
-              console.log('🔥 [BUTTON CLICK] Instagram form values:', form.getValues().instagram);
-              // Не предотвращаем событие по умолчанию, чтобы форма отправилась
-            }}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
