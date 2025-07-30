@@ -42,10 +42,11 @@ global['directusApiManager'] = directusApiManager;
 const app = express();
 const server = createServer(app);
 
-// WebSocket server для real-time уведомлений
-const wss = new WebSocketServer({ server });
+// Временно отключаем WebSocket для диагностики
+// const wss = new WebSocketServer({ server });
 
-// Обработка WebSocket подключений
+// Временно отключаем WebSocket обработчики для диагностики
+/*
 wss.on('connection', (ws) => {
   log('WebSocket клиент подключен', 'websocket');
   
@@ -62,20 +63,21 @@ wss.on('connection', (ws) => {
     log('WebSocket клиент отключен', 'websocket');
   });
 });
+*/
 
-// Функция для отправки уведомлений всем подключенным клиентам
+// Временно отключаем WebSocket broadcast для диагностики
 export function broadcastNotification(type: string, data: any) {
-  const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
-  
-  wss.clients.forEach((client) => {
-    if (client.readyState === client.OPEN) {
-      client.send(message);
-    }
-  });
+  // const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
+  // wss.clients.forEach((client) => {
+  //   if (client.readyState === client.OPEN) {
+  //     client.send(message);
+  //   }
+  // });
+  console.log(`Broadcast (отключен): ${type}`, data);
 }
 
-// Экспортируем WebSocket server для использования в других модулях
-export { wss };
+// Временно отключаем экспорт WebSocket
+// export { wss };
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
