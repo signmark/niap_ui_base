@@ -875,14 +875,24 @@ export function SocialMediaSettings({
                   <div>
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      Настройте Instagram API для этой кампании
+                      {instagramSettings?.token || instagramSettings?.configured 
+                        ? `Настроено: аккаунт ${instagramSettings.user?.name || 'Instagram Business'}` 
+                        : 'Настройте Instagram API для этой кампании'
+                      }
                     </p>
                   </div>
                   <Button 
                     type="button" 
-                    variant={instagramSettings?.configured || initialSettings?.instagram?.token ? "default" : "outline"}
+                    variant={instagramSettings?.configured || instagramSettings?.token ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setShowInstagramWizard(!showInstagramWizard)}
+                    onClick={() => {
+                      // Если Instagram уже настроен, показываем статус, иначе открываем мастер
+                      if (instagramSettings?.configured || instagramSettings?.token) {
+                        console.log('Instagram уже настроен:', instagramSettings);
+                        return; // Не открываем мастер если уже настроен
+                      }
+                      setShowInstagramWizard(true);
+                    }}
                     disabled={loadingInstagramSettings}
                   >
                     {loadingInstagramSettings ? (
@@ -890,12 +900,12 @@ export function SocialMediaSettings({
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Загрузка...
                       </>
-                    ) : (instagramSettings?.configured || initialSettings?.instagram?.token) ? 'Настроено' : 'Настроить Instagram'}
+                    ) : (instagramSettings?.configured || instagramSettings?.token) ? 'Настроено' : 'Настроить Instagram'}
                   </Button>
                 </div>
               </div>
               
-              {showInstagramWizard && (
+              {showInstagramWizard && !(instagramSettings?.token || instagramSettings?.configured) && (
                 <InstagramSetupWizard 
                   campaignId={campaignId}
                   instagramSettings={instagramSettings ? {
