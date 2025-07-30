@@ -119,31 +119,19 @@ export function SocialMediaSettings({
 
   // Функция загрузки Instagram настроек из базы данных
   const loadInstagramSettings = async () => {
-    console.log('🔥 Loading Instagram settings for campaign:', campaignId);
     setLoadingInstagramSettings(true);
     try {
       // Используем API client с авторизацией 
       const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
-      
       const data = response.data;
-      console.log('🔥 Instagram settings response data:', data);
       
       if (data.success && data.settings) {
         setInstagramSettings(data.settings);
-        console.log('🔥 Instagram settings loaded successfully');
-      } else {
-        console.log('🔥 No Instagram settings found or request failed');
-        console.log('🔥 Response data:', data);
       }
     } catch (error: any) {
-      console.error('🔥 Error loading Instagram settings:', error);
-      console.error('🔥 Error response:', error.response?.data);
-      console.error('🔥 Error status:', error.response?.status);
-      console.error('🔥 Error message:', error.message);
-      
       // Если ошибка авторизации, попробуем обновить страницу
       if (error.response?.status === 401) {
-        console.log('🔥 Authorization error - need to refresh token');
+        // Обработка ошибки авторизации
       }
     } finally {
       setLoadingInstagramSettings(false);
@@ -160,8 +148,6 @@ export function SocialMediaSettings({
   // Обновляем форму когда Instagram настройки загружены
   useEffect(() => {
     if (instagramSettings) {
-      console.log('🔥 Updating form with Instagram settings:', instagramSettings);
-      console.log('🔥 Current form values before update:', form.getValues('instagram'));
       
       // Приводим данные из базы к формату схемы формы
       const formattedInstagramData = {
@@ -172,7 +158,6 @@ export function SocialMediaSettings({
         appSecret: instagramSettings.appSecret || '',
       };
       
-      console.log('🔥 Formatted Instagram data for form:', formattedInstagramData);
       
       // Обновляем каждое поле отдельно для уверенности
       form.setValue('instagram.token', formattedInstagramData.token);
@@ -181,9 +166,6 @@ export function SocialMediaSettings({
       form.setValue('instagram.appId', formattedInstagramData.appId);
       form.setValue('instagram.appSecret', formattedInstagramData.appSecret);
       
-      console.log('🔥 Form values after update:', form.getValues('instagram'));
-      console.log('🔥 Form state dirty?', form.formState.isDirty);
-      console.log('🔥 Form field values individual check:');
       console.log('  - token:', form.getValues('instagram.token'));
       console.log('  - accessToken:', form.getValues('instagram.accessToken')); 
       console.log('  - businessAccountId:', form.getValues('instagram.businessAccountId'));
@@ -225,7 +207,6 @@ export function SocialMediaSettings({
 
       // Если валидация успешна, автоматически сохраняем настройки
       if (response.data.success) {
-        console.log('🔥 Telegram валиден, автосохранение...');
         await onSubmit(form.getValues());
       }
     } catch (error) {
@@ -272,7 +253,6 @@ export function SocialMediaSettings({
 
       // Если валидация успешна, автоматически сохраняем настройки
       if (response.data.success) {
-        console.log('🔥 VK валиден, автосохранение...');
         await onSubmit(form.getValues());
       }
     } catch (error) {
@@ -318,7 +298,6 @@ export function SocialMediaSettings({
 
       // Если валидация успешна, автоматически сохраняем настройки
       if (response.data.success) {
-        console.log('🔥 Instagram валиден, автосохранение...');
         await onSubmit(form.getValues());
       }
     } catch (error) {
@@ -526,7 +505,6 @@ export function SocialMediaSettings({
 
       // Если валидация успешна, автоматически сохраняем настройки
       if (response.data.success) {
-        console.log('🔥 Facebook валиден, автосохранение...');
         await onSubmit(form.getValues());
       }
     } catch (error) {
@@ -573,7 +551,6 @@ export function SocialMediaSettings({
 
       // Если валидация успешна, автоматически сохраняем настройки
       if (response.data.success) {
-        console.log('🔥 YouTube валиден, автосохранение...');
         await onSubmit(form.getValues());
       }
     } catch (error) {
@@ -627,7 +604,6 @@ export function SocialMediaSettings({
       setIsLoading(true);
 
       // Используем apiRequest для правильной авторизации
-      console.log('🔥 [SAVE SETTINGS] Отправляем PATCH запрос к /api/campaigns/', campaignId);
       const response = await apiRequest(`/api/campaigns/${campaignId}`, {
         method: 'PATCH',
         data: {
@@ -635,7 +611,6 @@ export function SocialMediaSettings({
         }
       });
 
-      console.log('🔥 [SAVE SETTINGS] Ответ сервера:', response);
 
       toast({
         title: "Успешно!",
@@ -644,8 +619,6 @@ export function SocialMediaSettings({
 
       onSettingsUpdated?.();
     } catch (error: any) {
-      console.error('🔥 [SAVE SETTINGS] Ошибка при обновлении настроек:', error);
-      console.error('🔥 [SAVE SETTINGS] Детали ошибки:', error.response?.data);
       toast({
         variant: "destructive",
         title: "Ошибка!",

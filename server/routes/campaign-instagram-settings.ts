@@ -12,7 +12,6 @@ router.get('/campaigns/:campaignId/instagram-settings', async (req, res) => {
   const userToken = req.headers.authorization?.replace('Bearer ', '');
 
   try {
-    console.log('📋 GET Instagram settings for campaign:', campaignId);
 
     // Используем системный токен как fallback для доступа к базе данных
     const tokenToUse = userToken || process.env.DIRECTUS_TOKEN;
@@ -24,7 +23,6 @@ router.get('/campaigns/:campaignId/instagram-settings', async (req, res) => {
       });
     }
 
-    console.log('📋 Using token type:', userToken ? 'user' : 'system');
 
     // Получаем настройки кампании
     const getCampaignResponse = await axios.get(
@@ -40,12 +38,6 @@ router.get('/campaigns/:campaignId/instagram-settings', async (req, res) => {
     const campaign = getCampaignResponse.data.data;
     const socialMediaSettings = campaign.social_media_settings || {};
     const instagramSettings = socialMediaSettings.instagram || null;
-
-    console.log('📋 Instagram settings found:', {
-      hasSettings: !!instagramSettings,
-      appId: instagramSettings?.appId,
-      configured: instagramSettings?.configured
-    });
 
     res.json({
       success: true,
@@ -71,15 +63,6 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
   const userToken = req.headers.authorization?.replace('Bearer ', '');
 
   try {
-    console.log('🔥 INSTAGRAM SETTINGS ENDPOINT');
-    console.log('🔥 Campaign ID:', campaignId);
-    console.log('🔥 Full request body:', JSON.stringify(req.body, null, 2));
-    console.log('🔥 Instagram settings:', { 
-      appId: appId ? 'present' : 'missing', 
-      appSecret: appSecret ? 'present' : 'missing', 
-      instagramId,
-      accessToken: accessToken ? 'present' : 'missing'
-    });
 
     if (!appId || !appSecret) {
       return res.status(400).json({
@@ -131,8 +114,6 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
       }
     );
 
-    console.log('🔥 Instagram settings saved successfully');
-    console.log('🔥 Final Instagram settings:', JSON.stringify(updatedSettings.instagram, null, 2));
 
     res.json({
       success: true,
@@ -179,12 +160,10 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
     }
 
     // Получаем страницы Facebook пользователя
-    console.log('📋 Getting Facebook pages...');
     const pagesResponse = await axios.get(
       `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
     );
 
-    console.log('📋 Facebook pages response:', JSON.stringify(pagesResponse.data, null, 2));
 
     const pages = pagesResponse.data.data || [];
     let instagramBusinessAccountId = null;
@@ -219,7 +198,6 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
       }
     }
 
-    console.log('📋 Available Facebook pages:', availablePages);
 
     if (!instagramBusinessAccountId) {
       return res.status(404).json({
@@ -323,13 +301,11 @@ router.post('/campaigns/:campaignId/check-facebook-page', async (req, res) => {
     }
 
     // Проверяем конкретную страницу
-    console.log('📋 Checking Facebook page:', pageId);
     try {
       const pageResponse = await axios.get(
         `https://graph.facebook.com/v23.0/${pageId}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
       );
 
-      console.log('📋 Page response:', JSON.stringify(pageResponse.data, null, 2));
 
       const page = pageResponse.data;
       const hasBusinessAccount = !!(page.instagram_business_account && page.instagram_business_account.id);
@@ -357,7 +333,6 @@ router.post('/campaigns/:campaignId/check-facebook-page', async (req, res) => {
         connectedInstagramId: page.connected_instagram_account?.id || null
       };
 
-      console.log('📋 Page check result:', result);
 
       if (instagramAccountId) {
         // Сохраняем найденный Instagram Account ID в кампанию
@@ -478,17 +453,14 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
     }> = [];
 
     // Шаг 1: Получаем все Facebook страницы пользователя
-    console.log('📋 Getting user Facebook pages...');
     const pagesResponse = await axios.get(
       `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name`
     );
 
-    console.log('📋 Facebook pages found:', pagesResponse.data.data.length);
 
     // Шаг 2: Для каждой страницы проверяем Instagram аккаунты
     for (const page of pagesResponse.data.data) {
       try {
-        console.log(`📋 Checking Instagram for page: ${page.name} (${page.id})`);
         
         const pageInstagramResponse = await axios.get(
           `https://graph.facebook.com/v23.0/${page.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
@@ -535,11 +507,9 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
         // Проверяем если эта страница уже найдена
         const alreadyFound = discoveredAccounts.some(acc => acc.pageId === knownPage.id);
         if (alreadyFound) {
-          console.log(`📋 Known page ${knownPage.name} already discovered`);
           continue;
         }
 
-        console.log(`📋 Checking known page: ${knownPage.name} (${knownPage.id})`);
         
         const knownPageResponse = await axios.get(
           `https://graph.facebook.com/v23.0/${knownPage.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
