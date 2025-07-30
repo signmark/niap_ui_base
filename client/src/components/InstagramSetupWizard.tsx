@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, CheckCircle, AlertCircle, Instagram, Facebook } from 'lucide-react';
+import { ExternalLink, CheckCircle, AlertCircle, Instagram, Facebook, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuthStore } from '@/lib/store';
@@ -36,12 +36,16 @@ interface InstagramSetupWizardProps {
     instagramId?: string;
   };
   onSettingsUpdate?: (settings: any) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ 
   campaignId, 
   instagramSettings = {}, 
-  onSettingsUpdate 
+  onSettingsUpdate,
+  isOpen = true,
+  onClose
 }) => {
   const [formData, setFormData] = useState({
     appId: instagramSettings.appId || '',
@@ -130,10 +134,20 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
   if (step === 'loading') {
     return (
       <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="pt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Подключение к Instagram...</CardTitle>
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
           <div className="flex items-center justify-center space-x-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span>Подключение к Instagram...</span>
+            <span>Загрузка...</span>
           </div>
         </CardContent>
       </Card>
@@ -144,10 +158,17 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CheckCircle className="h-6 w-6 text-green-600" />
-            <span>Instagram подключен</span>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <span>Instagram подключен</span>
+            </CardTitle>
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <CardDescription>
             Ваш Instagram Business аккаунт успешно подключен к SMM Manager
           </CardDescription>
@@ -216,10 +237,17 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Instagram className="h-6 w-6 text-pink-600" />
-            <span>Подключение Instagram Business</span>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center space-x-2">
+              <Instagram className="h-6 w-6 text-pink-600" />
+              <span>Instagram API Setup Wizard</span>
+            </CardTitle>
+            {onClose && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <CardDescription>
             Настройте публикацию в Instagram через Facebook Business API
           </CardDescription>
@@ -299,7 +327,14 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Введите данные Facebook приложения</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Введите данные Facebook приложения</CardTitle>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <CardDescription>
           Введите App ID и App Secret вашего Facebook приложения
         </CardDescription>
