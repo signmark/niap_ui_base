@@ -942,7 +942,7 @@ export function SocialMediaSettings({
                         type="button" 
                         variant="outline" 
                         size="sm"
-                        onClick={fetchInstagramBusinessId}
+                        onClick={discoverInstagramAccounts}
                         disabled={instagramStatus.isLoading}
                       >
                         {instagramStatus.isLoading ? 
@@ -952,63 +952,42 @@ export function SocialMediaSettings({
                       </Button>
                     </div>
                     <div className="text-xs text-muted-foreground mb-2">
-                      Нажмите 🔍 для автоматического получения Business Account ID через Graph API
+                      Нажмите 🔍 для поиска всех доступных Instagram аккаунтов
                     </div>
                     
-                    {/* Поиск доступных Instagram аккаунтов */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Или найдите все ваши Instagram аккаунты:
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={discoverInstagramAccounts}
-                        disabled={instagramStatus.isLoading}
-                        className="text-xs"
-                      >
-                        {instagramStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 
-                          <span className="mr-2">🔍</span>
-                        }
-                        Найти все Instagram аккаунты
-                      </Button>
-                      
-                      {/* Показать найденные аккаунты */}
-                      {availableInstagramAccounts.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="text-xs font-medium text-muted-foreground">
-                            Выберите Instagram аккаунт:
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {availableInstagramAccounts.map((account) => (
-                              <Button 
-                                key={account.instagramId}
-                                type="button" 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => selectKnownInstagramAccount(
-                                  account.pageId, 
-                                  account.instagramId, 
-                                  account.pageName
-                                )}
-                                disabled={instagramStatus.isLoading}
-                                className="text-xs"
-                              >
-                                📱 {account.pageName}
-                                <span className="ml-1 text-muted-foreground">
-                                  ({account.accountType === 'business_account' ? 'Business' : 'Connected'})
-                                </span>
-                              </Button>
-                            ))}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Найдено {availableInstagramAccounts.length} Instagram аккаунтов
-                          </div>
+                    {/* Показать найденные аккаунты после поиска */}
+                    {availableInstagramAccounts.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground">
+                          Выберите Instagram аккаунт:
                         </div>
-                      )}
-                    </div>
+                        <div className="flex flex-wrap gap-2">
+                          {availableInstagramAccounts.map((account) => (
+                            <Button 
+                              key={account.instagramId}
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => selectKnownInstagramAccount(
+                                account.pageId, 
+                                account.instagramId, 
+                                account.pageName
+                              )}
+                              disabled={instagramStatus.isLoading}
+                              className="text-xs"
+                            >
+                              📱 {account.pageName}
+                              <span className="ml-1 text-muted-foreground">
+                                ({account.accountType === 'business_account' ? 'Business' : 'Connected'})
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Найдено {availableInstagramAccounts.length} Instagram аккаунтов
+                        </div>
+                      </div>
+                    )}
                     
                     <FormMessage />
                   </FormItem>
