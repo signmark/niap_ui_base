@@ -141,32 +141,39 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                   <div className="space-y-4">
                     <Alert>
                       <AlertDescription>
-                        <strong>Пройдите авторизацию в VK ниже:</strong><br/>
-                        После успешной авторизации URL изменится и будет содержать<br/>
-                        <code>#access_token=ДЛИННЫЙ_ТОКЕН&expires_in=0&user_id=...</code><br/>
-                        Скопируйте только токен (между = и &) в поле ниже.
+                        <strong>Пошаговая инструкция:</strong><br/>
+                        1. Нажмите кнопку "Открыть VK OAuth" ниже<br/>
+                        2. В новом окне пройдите авторизацию VK<br/>
+                        3. После авторизации URL изменится на что-то вроде:<br/>
+                        <code className="text-xs bg-gray-100 p-1 rounded">
+                          https://oauth.vk.com/blank.html#access_token=<strong>vk1.a.ДЛИННЫЙ_ТОКЕН</strong>&expires_in=0&user_id=123456
+                        </code><br/>
+                        4. Скопируйте только токен (от vk1.a. до &expires) и вставьте ниже
                       </AlertDescription>
                     </Alert>
                     
-                    <div className="border rounded-lg">
-                      <iframe 
-                        src={getVkOAuthUrl()}
-                        width="100%" 
-                        height="400"
-                        className="rounded-lg"
-                        title="VK OAuth"
-                      />
+                    <div className="text-center">
+                      <Button 
+                        onClick={() => window.open(getVkOAuthUrl(), '_blank', 'width=600,height=600')}
+                        className="w-full mb-4"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Открыть VK OAuth в новом окне
+                      </Button>
                     </div>
                     
                     <div className="space-y-2">
                       <label className="text-sm font-medium">VK Access Token:</label>
                       <input 
                         type="text"
-                        placeholder="Вставьте сюда только access_token (длинная строка символов)"
+                        placeholder="Например: vk1.a.abcDEF123xyz789..."
                         value={accessToken}
                         onChange={(e) => setAccessToken(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                       />
+                      <div className="text-xs text-gray-500">
+                        Токен должен начинаться с "vk1.a." и быть довольно длинным (100+ символов)
+                      </div>
                       <div className="flex gap-2">
                         <Button 
                           onClick={() => {
