@@ -47,61 +47,13 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
     setIsProcessing(true);
     
     // Открываем VK OAuth в новом окне
-    const authWindow = window.open(
+    window.open(
       getVkOAuthUrl(),
       'vk_auth',
       'width=600,height=600,scrollbars=yes,resizable=yes'
     );
-
-    // Проверяем изменения URL в окне авторизации (для blank.html)
-    const checkAuth = setInterval(() => {
-      try {
-        if (authWindow?.closed) {
-          clearInterval(checkAuth);
-          setIsProcessing(false);
-          return;
-        }
-
-        const currentUrl = authWindow?.location.href;
-        if (currentUrl && currentUrl.includes('access_token=')) {
-          // Извлекаем токен из URL hash
-          const hashParts = currentUrl.split('#')[1];
-          if (hashParts) {
-            const urlParams = new URLSearchParams(hashParts);
-            const token = urlParams.get('access_token');
-            const userId = urlParams.get('user_id');
-            
-            console.log('VK OAuth success:', { token: token?.substring(0, 20) + '...', userId });
-            
-            if (token) {
-              setAccessToken(token);
-              authWindow?.close();
-              clearInterval(checkAuth);
-              setIsProcessing(false);
-              fetchVkGroups(token);
-            }
-          }
-        }
-      } catch (error) {
-        // Игнорируем CORS ошибки - это нормально для OAuth
-      }
-    }, 1000);
-
-    // Проверяем, если окно закрыто без авторизации
-    const checkClosed = setInterval(() => {
-      if (authWindow?.closed) {
-        clearInterval(checkAuth);
-        clearInterval(checkClosed);
-        setIsProcessing(false);
-      }
-    }, 1000);
-
-    // Автоматически очищаем через 5 минут
-    setTimeout(() => {
-      clearInterval(checkAuth);
-      clearInterval(checkClosed);
-      setIsProcessing(false);
-    }, 300000);
+    
+    // Показываем инструкции пользователю для ручного копирования токена
   };
 
   const fetchVkGroups = async (token: string) => {
@@ -180,7 +132,7 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                   Откроется новое окно для авторизации в VK API
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button 
                   onClick={handleVkAuth}
                   disabled={isProcessing}
@@ -198,6 +150,42 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                     </>
                   )}
                 </Button>
+                
+                {isProcessing && (
+                  <Alert>
+                    <AlertDescription>
+                      <strong>После авторизации:</strong><br/>
+                      1. Скопируйте access_token из URL (после #access_token=)<br/>
+                      2. Вставьте токен в поле ниже<br/>
+                      3. Нажмите "Продолжить"
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {isProcessing && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">VK Access Token:</label>
+                    <input 
+                      type="text"
+                      placeholder="Вставьте access_token сюда"
+                      value={accessToken}
+                      onChange={(e) => setAccessToken(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <Button 
+                      onClick={() => {
+                        if (accessToken.trim()) {
+                          setIsProcessing(false);
+                          fetchVkGroups(accessToken.trim());
+                        }
+                      }}
+                      disabled={!accessToken.trim()}
+                      className="w-full"
+                    >
+                      Продолжить с токеном
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
