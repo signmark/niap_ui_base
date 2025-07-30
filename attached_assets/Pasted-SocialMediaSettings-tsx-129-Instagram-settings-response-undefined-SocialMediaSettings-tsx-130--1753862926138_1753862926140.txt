@@ -1,0 +1,132 @@
+SocialMediaSettings.tsx:129 🔥 Instagram settings response: undefined
+SocialMediaSettings.tsx:130 🔥 Response status: 200
+SocialMediaSettings.tsx:131 🔥 Response headers: Headers {}
+SocialMediaSettings.tsx:141 🔥 Error loading Instagram settings: TypeError: Cannot read properties of undefined (reading 'success')
+    at loadInstagramSettings (SocialMediaSettings.tsx:133:25)
+loadInstagramSettings @ SocialMediaSettings.tsx:141
+await in loadInstagramSettings
+(anonymous) @ SocialMediaSettings.tsx:158
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+flushSync @ chunk-276SZO74.js?v=a627230e:18959
+scheduleRefresh @ chunk-276SZO74.js?v=a627230e:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ SocialMediaSettings.tsx?t=1753862908230:1748
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+SocialMediaSettings.tsx:142 🔥 Error response: undefined
+loadInstagramSettings @ SocialMediaSettings.tsx:142
+await in loadInstagramSettings
+(anonymous) @ SocialMediaSettings.tsx:158
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+flushSync @ chunk-276SZO74.js?v=a627230e:18959
+scheduleRefresh @ chunk-276SZO74.js?v=a627230e:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ SocialMediaSettings.tsx?t=1753862908230:1748
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+SocialMediaSettings.tsx:143 🔥 Error status: undefined
+loadInstagramSettings @ SocialMediaSettings.tsx:143
+await in loadInstagramSettings
+(anonymous) @ SocialMediaSettings.tsx:158
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+flushSync @ chunk-276SZO74.js?v=a627230e:18959
+scheduleRefresh @ chunk-276SZO74.js?v=a627230e:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ SocialMediaSettings.tsx?t=1753862908230:1748
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550
+SocialMediaSettings.tsx:144 🔥 Error message: Cannot read properties of undefined (reading 'success')
+loadInstagramSettings @ SocialMediaSettings.tsx:144
+await in loadInstagramSettings
+(anonymous) @ SocialMediaSettings.tsx:158
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+flushSync @ chunk-276SZO74.js?v=a627230e:18959
+scheduleRefresh @ chunk-276SZO74.js?v=a627230e:20004
+(anonymous) @ @react-refresh:267
+performReactRefresh @ @react-refresh:256
+(anonymous) @ @react-refresh:677
+setTimeout
+(anonymous) @ @react-refresh:666
+validateRefreshBoundaryAndEnqueueUpdate @ @react-refresh:728
+(anonymous) @ SocialMediaSettings.tsx?t=1753862908230:1748
+(anonymous) @ client:34
+(anonymous) @ client:218
+(anonymous) @ client:193
+queueUpdate @ client:193
+await in queueUpdate
+(anonymous) @ client:642
+handleMessage @ client:640
+(anonymous) @ client:550

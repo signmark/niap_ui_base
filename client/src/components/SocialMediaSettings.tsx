@@ -113,15 +113,40 @@ export function SocialMediaSettings({
     console.log('🔥 Loading Instagram settings for campaign:', campaignId);
     setLoadingInstagramSettings(true);
     try {
-      const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
-      console.log('🔥 Instagram settings response:', response.data);
+      // Попробуем запрос напрямую без авторизации, так как роутер имеет fallback на системный токен
+      const response = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
-      if (response.data.success && response.data.settings) {
-        setInstagramSettings(response.data.settings);
-        console.log('🔥 Instagram settings loaded successfully');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
-      console.error('Error loading Instagram settings:', error);
+      
+      const data = await response.json();
+      console.log('🔥 Instagram settings response:', data);
+      console.log('🔥 Response status:', response.status);
+      console.log('🔥 Response headers:', response.headers);
+      
+      if (data.success && data.settings) {
+        setInstagramSettings(data.settings);
+        console.log('🔥 Instagram settings loaded successfully');
+      } else {
+        console.log('🔥 No Instagram settings found or request failed');
+        console.log('🔥 Response data:', data);
+      }
+    } catch (error: any) {
+      console.error('🔥 Error loading Instagram settings:', error);
+      console.error('🔥 Error response:', error.response?.data);
+      console.error('🔥 Error status:', error.response?.status);
+      console.error('🔥 Error message:', error.message);
+      
+      // Если ошибка авторизации, попробуем обновить страницу
+      if (error.response?.status === 401) {
+        console.log('🔥 Authorization error - need to refresh token');
+      }
     } finally {
       setLoadingInstagramSettings(false);
     }
@@ -138,6 +163,7 @@ export function SocialMediaSettings({
   useEffect(() => {
     if (instagramSettings) {
       console.log('🔥 Updating form with Instagram settings:', instagramSettings);
+      console.log('🔥 Current form values before update:', form.getValues('instagram'));
       
       // Приводим данные из базы к формату схемы формы
       const formattedInstagramData = {
@@ -158,6 +184,16 @@ export function SocialMediaSettings({
       form.setValue('instagram.appSecret', formattedInstagramData.appSecret);
       
       console.log('🔥 Form values after update:', form.getValues('instagram'));
+      console.log('🔥 Form state dirty?', form.formState.isDirty);
+      console.log('🔥 Form field values individual check:');
+      console.log('  - token:', form.getValues('instagram.token'));
+      console.log('  - accessToken:', form.getValues('instagram.accessToken')); 
+      console.log('  - businessAccountId:', form.getValues('instagram.businessAccountId'));
+      console.log('  - appId:', form.getValues('instagram.appId'));
+      console.log('  - appSecret:', form.getValues('instagram.appSecret'));
+      
+      // Принудительно обновляем отображение формы
+      form.trigger('instagram');
     }
   }, [instagramSettings, form]);
 
