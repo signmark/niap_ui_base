@@ -114,7 +114,7 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
   };
 
   // Функция выбора Instagram аккаунта
-  const handleSelectAccount = (accountId: string, accountName: string) => {
+  const handleSelectAccount = async (accountId: string, accountName: string) => {
     console.log('🔍 Selecting Instagram account:', { accountId, accountName });
     setFormData(prev => {
       const newData = { ...prev, businessAccountId: accountId };
@@ -122,10 +122,48 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
       return newData;
     });
     setShowAccountSelection(false);
-    toast({
-      title: "Аккаунт выбран",
-      description: `Выбран аккаунт: ${accountName} (ID: ${accountId})`
-    });
+    
+    // Сразу сохраняем выбранный аккаунт в базу данных
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          social_media_settings: {
+            instagram: {
+              appId: formData.appId,
+              appSecret: formData.appSecret,
+              accessToken: formData.accessToken,
+              businessAccountId: accountId, // Используем новый ID
+              longLivedToken: formData.accessToken,
+              setupCompletedAt: new Date().toISOString()
+            }
+          }
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Аккаунт выбран",
+          description: `Выбран аккаунт: ${accountName} (ID: ${accountId})`
+        });
+        
+        // Уведомляем родительский компонент об изменениях
+        if (onComplete) {
+          onComplete();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving selected account:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить выбранный аккаунт",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleGetToken = async () => {
