@@ -134,6 +134,33 @@ export function SocialMediaSettings({
     }
   }, [campaignId]);
 
+  // Обновляем форму когда Instagram настройки загружены
+  useEffect(() => {
+    if (instagramSettings) {
+      console.log('🔥 Updating form with Instagram settings:', instagramSettings);
+      
+      // Приводим данные из базы к формату схемы формы
+      const formattedInstagramData = {
+        token: instagramSettings.username || null,
+        accessToken: instagramSettings.accessToken || null,
+        businessAccountId: instagramSettings.businessAccountId || null,
+        appId: instagramSettings.appId || null,
+        appSecret: instagramSettings.appSecret || null,
+      };
+      
+      console.log('🔥 Formatted Instagram data for form:', formattedInstagramData);
+      
+      // Обновляем только Instagram часть формы
+      form.setValue('instagram', formattedInstagramData);
+    }
+  }, [instagramSettings, form]);
+
+  console.log('🔥 [DEBUG] Current form state:', {
+    formValid: form.formState.isValid,
+    errors: form.formState.errors,
+    values: form.getValues()
+  });
+
   // Функции проверки API ключей
   const validateTelegramToken = async () => {
     const token = form.getValues("telegram.token");
