@@ -5,6 +5,59 @@ import axios from 'axios';
 const router = express.Router();
 
 /**
+ * Получение Instagram настроек из JSON кампании
+ */
+router.get('/campaigns/:campaignId/instagram-settings', async (req, res) => {
+  const { campaignId } = req.params;
+  const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+  try {
+    console.log('📋 GET Instagram settings for campaign:', campaignId);
+
+    if (!userToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Токен авторизации не предоставлен'
+      });
+    }
+
+    // Получаем настройки кампании
+    const getCampaignResponse = await axios.get(
+      `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const campaign = getCampaignResponse.data.data;
+    const socialMediaSettings = campaign.social_media_settings || {};
+    const instagramSettings = socialMediaSettings.instagram || null;
+
+    console.log('📋 Instagram settings found:', {
+      hasSettings: !!instagramSettings,
+      appId: instagramSettings?.appId,
+      configured: instagramSettings?.configured
+    });
+
+    res.json({
+      success: true,
+      settings: instagramSettings
+    });
+
+  } catch (error: any) {
+    console.error('❌ Error retrieving Instagram settings:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка при получении Instagram настроек',
+      details: error.message
+    });
+  }
+});
+
+/**
  * Сохранение Instagram настроек в JSON кампании
  */
 router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {

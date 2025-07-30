@@ -20,29 +20,48 @@ const InstagramCallback: React.FC = () => {
         const state = urlParams.get('state');
         const error = urlParams.get('error');
 
+        console.log('🌟 INSTAGRAM CALLBACK CLIENT - URL PARAMS:');
+        console.log('📋 Code:', code?.substring(0, 20) + '...');
+        console.log('📋 State:', state);
+        console.log('📋 Error:', error);
+
         if (error) {
+          console.log('❌ OAuth error detected:', error);
           setStatus('error');
           setMessage(`Ошибка авторизации: ${error}`);
           return;
         }
 
         if (!code || !state) {
+          console.log('❌ Missing code or state parameter');
           setStatus('error');
           setMessage('Отсутствуют необходимые параметры авторизации');
           return;
         }
 
+        console.log('🔄 Sending callback request to server...');
         // Отправляем данные на сервер для обработки
         const response = await fetch(`/api/instagram/auth/callback?code=${code}&state=${state}`);
         const data = await response.json();
+        
+        console.log('📡 Server response:', {
+          success: data.success,
+          hasData: !!data.data,
+          message: data.message,
+          error: data.error
+        });
 
         if (data.success) {
+          console.log('✅ OAuth callback successful!');
+          console.log('📋 Account data received:', data.data);
+          
           setStatus('success');
           setMessage(data.message || 'Instagram успешно авторизован!');
           setAccountData(data.data);
           
           // Отправляем сообщение родительскому окну об успешной авторизации
           if (window.opener) {
+            console.log('📡 Sending success message to parent window:', data.data);
             window.opener.postMessage({
               type: 'INSTAGRAM_OAUTH_SUCCESS',
               data: data.data

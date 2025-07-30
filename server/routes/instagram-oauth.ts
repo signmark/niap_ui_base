@@ -62,22 +62,39 @@ router.post('/instagram/auth/start', async (req, res) => {
 
 // Callback эндпоинт для обработки ответа от Facebook
 router.get('/instagram/auth/callback', async (req, res) => {
+  console.log('🚀 INSTAGRAM OAUTH CALLBACK STARTED');
+  console.log('📋 Query parameters:', JSON.stringify(req.query, null, 2));
+  
   const { code, state, error } = req.query;
 
   if (error) {
+    console.log('❌ Facebook OAuth error:', error);
     log('instagram-oauth', `Facebook error: ${error}`);
     return res.status(400).json({ error: `Facebook error: ${error}` });
   }
 
   if (!code || !state) {
+    console.log('❌ Missing required parameters - code or state');
     return res.status(400).json({ error: 'Отсутствует код авторизации или state' });
   }
+
+  console.log('✅ OAuth code received:', code?.toString().substring(0, 20) + '...');
+  console.log('✅ State parameter:', state);
 
   // Получаем данные сессии
   const session = oauthSessions.get(state);
   if (!session) {
+    console.log('❌ Invalid session for state:', state);
+    console.log('📋 Available sessions:', Array.from(oauthSessions.keys()));
     return res.status(400).json({ error: 'Недействительная сессия' });
   }
+
+  console.log('✅ Session found:', {
+    appId: session.appId,
+    campaignId: session.campaignId,
+    instagramId: session.instagramId,
+    timestamp: new Date(session.timestamp).toISOString()
+  });
 
   try {
     // Настройки для axios с увеличенным timeout
@@ -101,8 +118,10 @@ router.get('/instagram/auth/callback', async (req, res) => {
     });
 
     const shortLivedToken = tokenResponse.data.access_token;
+    console.log('✅ Short-lived token received:', shortLivedToken.substring(0, 20) + '...');
 
     log('instagram-oauth', 'Шаг 2: Получаем долгосрочный токен...');
+    console.log('🔄 Converting to long-lived token...');
     // Шаг 2: Обмениваем краткосрочный токен на долгосрочный
     const longLivedResponse = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
       params: {
@@ -116,6 +135,8 @@ router.get('/instagram/auth/callback', async (req, res) => {
 
     const longLivedToken = longLivedResponse.data.access_token;
     const expiresIn = longLivedResponse.data.expires_in;
+    console.log('✅ Long-lived token received:', longLivedToken.substring(0, 20) + '...');
+    console.log('⏰ Token expires in:', expiresIn, 'seconds');
 
     log('instagram-oauth', 'Шаг 3: Получаем информацию о пользователе...');
     // Шаг 3: Получаем информацию о пользователе
@@ -198,6 +219,15 @@ router.get('/instagram/auth/callback', async (req, res) => {
       const currentSettings = currentCampaignResponse.data.data.social_media_settings || {};
       const existingInstagram = currentSettings.instagram || {};
       
+      console.log('💾 Preparing to save Instagram OAuth data to campaign:', session.campaignId);
+      console.log('📋 Instagram settings to save:', {
+        appId: instagramSettings.appId,
+        hasAppSecret: !!instagramSettings.appSecret,
+        hasLongLivedToken: !!instagramSettings.longLivedToken,
+        userInfo: instagramSettings.user,
+        instagramAccountsCount: instagramSettings.instagramAccounts?.length || 0
+      });
+      
       // Объединяем существующие настройки с новыми OAuth данными
       const updatedInstagramSettings = {
         ...existingInstagram,
@@ -215,7 +245,10 @@ router.get('/instagram/auth/callback', async (req, res) => {
       };
 
       // Сохраняем обновленные настройки в кампанию
-      await axios.patch(
+      console.log('💾 Saving to Directus campaign:', session.campaignId);
+      console.log('📋 Settings being saved:', JSON.stringify(updatedSettings, null, 2));
+      
+      const saveResponse = await axios.patch(
         `${DIRECTUS_URL}/items/user_campaigns/${session.campaignId}`,
         {
           social_media_settings: updatedSettings
@@ -228,6 +261,10 @@ router.get('/instagram/auth/callback', async (req, res) => {
         }
       );
 
+      console.log('✅ Instagram settings saved to database successfully!');
+      console.log('📋 Save response status:', saveResponse.status);
+      console.log('💾 Final settings saved:', JSON.stringify(updatedInstagramSettings, null, 2));
+      
       log('instagram-oauth', `Instagram настройки успешно сохранены в кампанию ${session.campaignId}`);
       log('instagram-oauth', `Сохраненные настройки: ${JSON.stringify(updatedInstagramSettings, null, 2)}`);
 
@@ -254,14 +291,28 @@ router.get('/instagram/auth/callback', async (req, res) => {
     oauthSessions.delete(state);
 
     // Возвращаем успешный ответ с данными
-    res.json({
+    const responseData = {
       success: true,
       message: 'Instagram авторизация завершена успешно',
       data: {
+        token: longLivedToken, // Добавляем токен в ответ для frontend
         instagramAccounts: webhookData.instagramAccounts,
-        user: userResponse.data
+        user: userResponse.data,
+        longLivedToken,
+        expiresIn
       }
+    };
+    
+    console.log('📡 CALLBACK RESPONSE - Sending to client:', {
+      success: responseData.success,
+      message: responseData.message,
+      hasToken: !!responseData.data.token,
+      tokenPreview: responseData.data.token?.substring(0, 20) + '...',
+      userInfo: responseData.data.user,
+      accountsCount: responseData.data.instagramAccounts?.length || 0
     });
+    
+    res.json(responseData);
 
   } catch (error) {
     log('instagram-oauth', `Ошибка OAuth callback: ${error}`);

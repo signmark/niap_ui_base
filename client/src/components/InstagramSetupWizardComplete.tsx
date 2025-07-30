@@ -76,15 +76,20 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
   // Слушатель сообщений из OAuth callback окна
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      console.log('📡 WIZARD - Message received from callback:', event.data);
+      
       if (event.origin !== window.location.origin) {
+        console.log('❌ WIZARD - Origin mismatch, ignoring message');
         return;
       }
 
       if (event.data.type === 'INSTAGRAM_OAUTH_SUCCESS') {
-        console.log('Получены данные OAuth:', event.data.data);
+        console.log('✅ WIZARD - OAuth success message received!');
+        console.log('📋 WIZARD - OAuth data:', event.data.data);
         
         // Обновляем локальное состояние с полученным токеном
         if (event.data.data.token) {
+          console.log('🔑 WIZARD - Updating accessToken in form:', event.data.data.token.substring(0, 20) + '...');
           setFormData(prev => ({
             ...prev,
             accessToken: event.data.data.token
@@ -93,6 +98,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         
         // Обновляем настройки через callback
         if (onSettingsUpdate && event.data.data) {
+          console.log('🔄 WIZARD - Calling onSettingsUpdate callback');
           onSettingsUpdate(event.data.data);
         }
         
@@ -101,6 +107,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
           description: "Токен получен и сохранен в настройки кампании"
         });
         
+        console.log('✅ WIZARD - OAuth processing complete, stopping loading state');
         setOauthLoading(false);
       }
     };

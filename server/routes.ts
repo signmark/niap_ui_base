@@ -9058,10 +9058,30 @@ ${commentTexts}`;
       }
       
       const token = authHeader.replace('Bearer ', '');
-      const directusAuth = directusApiManager.instance;
       
-      // Получаем данные кампании через Directus
-      const campaignData = await directusAuth.directusCrud.readItem('user_campaigns', id, token);
+      // Используем прямой запрос к Directus API
+      const directusUrl = process.env.DIRECTUS_URL;
+      if (!directusUrl) {
+        return res.status(500).json({
+          success: false,
+          error: 'DIRECTUS_URL не настроен'
+        });
+      }
+      
+      const directusApi = axios.create({
+        baseURL: directusUrl,
+        timeout: 10000
+      });
+      
+      // Получаем данные кампании через Directus API
+      const campaignResponse = await directusApi.get(`/items/user_campaigns/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const campaignData = campaignResponse.data?.data;
       
       if (!campaignData) {
         return res.status(404).json({
