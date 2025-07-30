@@ -801,7 +801,7 @@ export function SocialMediaSettings({
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Загрузка...
                       </>
-                    ) : (vkSettings?.configured ? 'Настроено' : 'Настроить VK')}
+                    ) : (vkSettings?.configured ? 'Пересконфигурировать' : 'Настроить VK')}
                   </Button>
                 </div>
               </div>
@@ -886,11 +886,7 @@ export function SocialMediaSettings({
                     variant={instagramSettings?.configured || instagramSettings?.token ? "default" : "outline"}
                     size="sm"
                     onClick={() => {
-                      // Если Instagram уже настроен, показываем статус, иначе открываем мастер
-                      if (instagramSettings?.configured || instagramSettings?.token) {
-                        console.log('Instagram уже настроен:', instagramSettings);
-                        return; // Не открываем мастер если уже настроен
-                      }
+                      console.log('Открываем Instagram мастер для настройки/пересконфигурации');
                       setShowInstagramWizard(true);
                     }}
                     disabled={loadingInstagramSettings}
@@ -900,12 +896,12 @@ export function SocialMediaSettings({
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Загрузка...
                       </>
-                    ) : (instagramSettings?.configured || instagramSettings?.token) ? 'Настроено' : 'Настроить Instagram'}
+                    ) : (instagramSettings?.configured || instagramSettings?.token) ? 'Пересконфигурировать' : 'Настроить Instagram'}
                   </Button>
                 </div>
               </div>
               
-              {showInstagramWizard && !(instagramSettings?.token || instagramSettings?.configured) && (
+              {showInstagramWizard && (
                 <InstagramSetupWizard 
                   campaignId={campaignId}
                   instagramSettings={instagramSettings ? {
