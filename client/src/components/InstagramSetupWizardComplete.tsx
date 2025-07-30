@@ -73,6 +73,43 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     }
   }, [instagramSettings]);
 
+  // Обработчик postMessage от OAuth callback
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'INSTAGRAM_OAUTH_SUCCESS') {
+        console.log('🎉 OAUTH SUCCESS - Received from callback:', event.data.data);
+        
+        // Обновляем форму с полученными данными
+        if (event.data.data.token) {
+          setFormData(prev => ({
+            ...prev,
+            accessToken: event.data.data.token
+          }));
+          
+          toast({
+            title: "Успешно!",
+            description: "Instagram авторизован и токен получен",
+            variant: "default"
+          });
+          
+          // Вызываем callback для обновления родительского компонента
+          // Этот callback должен перезагрузить данные из базы
+          if (onSettingsUpdate) {
+            onSettingsUpdate({
+              ...event.data.data,
+              needsRefresh: true // Флаг для перезагрузки данных
+            });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onSettingsUpdate, toast]);
+
   // Слушатель сообщений из OAuth callback окна
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

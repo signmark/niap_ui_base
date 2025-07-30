@@ -599,15 +599,31 @@ export function SocialMediaSettings({
               {showInstagramWizard && (
                 <InstagramSetupWizard 
                   campaignId={campaignId}
-                  instagramSettings={instagramSettings || {
+                  instagramSettings={instagramSettings ? {
+                    appId: (instagramSettings as any).appId || '',
+                    appSecret: (instagramSettings as any).appSecret || '',
+                    instagramId: (instagramSettings as any).businessAccountId || (instagramSettings as any).instagramId || '',
+                    accessToken: (instagramSettings as any).longLivedToken || (instagramSettings as any).token || ''
+                  } : {
                     appId: initialSettings?.instagram?.appId || '',
                     appSecret: initialSettings?.instagram?.appSecret || '',
                     instagramId: initialSettings?.instagram?.businessAccountId || '',
                     accessToken: initialSettings?.instagram?.token || ''
                   }}
                   onSettingsUpdate={(settings) => {
-                    // Обновляем состояние после сохранения
-                    loadInstagramSettings(); // Перезагружаем настройки
+                    console.log('🔄 Instagram settings updated:', settings);
+                    
+                    // Перезагружаем настройки из базы данных
+                    loadInstagramSettings();
+                    
+                    // Если получен флаг needsRefresh, делаем дополнительную задержку для обновления
+                    if (settings.needsRefresh) {
+                      setTimeout(() => {
+                        console.log('🔄 Delayed refresh of Instagram settings...');
+                        loadInstagramSettings();
+                      }, 1000);
+                    }
+                    
                     if (onSettingsUpdated) {
                       onSettingsUpdated();
                     }
