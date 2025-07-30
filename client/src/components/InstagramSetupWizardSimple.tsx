@@ -249,10 +249,20 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Настройка Instagram интеграции</h2>
-        <p className="text-sm text-gray-600">Простая настройка Instagram для публикации контента</p>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-xl font-bold">Настройка Instagram интеграции</h2>
+          <p className="text-sm text-gray-600">Простая настройка Instagram для публикации контента</p>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onCancel}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </Button>
       </div>
       
       <div className="space-y-6">
