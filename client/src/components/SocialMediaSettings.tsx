@@ -901,41 +901,7 @@ export function SocialMediaSettings({
                 </div>
               </div>
               
-              {showInstagramWizard && (
-                <InstagramSetupWizard 
-                  campaignId={campaignId}
-                  instagramSettings={instagramSettings ? {
-                    appId: (instagramSettings as any).appId || '',
-                    appSecret: (instagramSettings as any).appSecret || '',
-                    instagramId: (instagramSettings as any).businessAccountId || (instagramSettings as any).instagramId || '',
-                    accessToken: (instagramSettings as any).longLivedToken || (instagramSettings as any).token || ''
-                  } : {
-                    appId: initialSettings?.instagram?.appId || '',
-                    appSecret: initialSettings?.instagram?.appSecret || '',
-                    instagramId: initialSettings?.instagram?.businessAccountId || '',
-                    accessToken: initialSettings?.instagram?.token || ''
-                  }}
-                  onSettingsUpdate={(settings) => {
-                    console.log('🔄 Instagram settings updated:', settings);
-                    
-                    // Перезагружаем настройки из базы данных
-                    loadInstagramSettings();
-                    
-                    // Если получен флаг needsRefresh, делаем дополнительную задержку для обновления
-                    if (settings.needsRefresh) {
-                      setTimeout(() => {
-                        console.log('🔄 Delayed refresh of Instagram settings...');
-                        loadInstagramSettings();
-                      }, 1000);
-                    }
-                    
-                    if (onSettingsUpdated) {
-                      onSettingsUpdated();
-                    }
-                    setShowInstagramWizard(false);
-                  }}
-                />
-              )}
+
               
               <FormField
                 control={form.control}
@@ -1242,19 +1208,33 @@ export function SocialMediaSettings({
         </form>
       </Form>
       
-      {/* Instagram Setup Wizard */}
-      <InstagramSetupWizard
-        isOpen={showInstagramWizard}
-        onClose={() => setShowInstagramWizard(false)}
-        campaignId={campaignId}
-        onComplete={() => {
-          setShowInstagramWizard(false);
-          loadInstagramSettings();
-          if (onSettingsUpdated) {
-            onSettingsUpdated();
-          }
-        }}
-      />
+      {/* Instagram Setup Wizard Dialog */}
+      {showInstagramWizard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <InstagramSetupWizard
+              isOpen={showInstagramWizard}
+              onClose={() => setShowInstagramWizard(false)}
+              campaignId={campaignId}
+              onComplete={() => {
+                console.log('🔄 Instagram setup completed, refreshing Instagram settings...');
+                setShowInstagramWizard(false);
+                
+                // Перезагружаем Instagram настройки из базы данных
+                loadInstagramSettings();
+                
+                if (onSettingsUpdated) {
+                  onSettingsUpdated();
+                }
+                toast({
+                  title: "Instagram OAuth настройка завершена",
+                  description: "Instagram интеграция успешно настроена для этой кампании",
+                });
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* VK Setup Wizard Dialog */}
       {showVkWizard && (
