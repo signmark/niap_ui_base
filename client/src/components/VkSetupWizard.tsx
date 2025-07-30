@@ -22,7 +22,11 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
     members_count: number;
   }>>([]);
 
-  const VK_OAUTH_URL = "https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1";
+  const getVkOAuthUrl = () => {
+    const currentDomain = window.location.origin;
+    const redirectUri = `${currentDomain}/vk-callback`;
+    return `https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=${encodeURIComponent(redirectUri)}&display=page&response_type=token&revoke=1`;
+  };
 
   const steps = [
     {
@@ -40,42 +44,54 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
   ];
 
   const handleVkAuth = () => {
+    setIsProcessing(true);
+    
     // Открываем VK OAuth в новом окне
     const authWindow = window.open(
-      VK_OAUTH_URL,
+      getVkOAuthUrl(),
       'vk_auth',
       'width=600,height=600,scrollbars=yes,resizable=yes'
     );
 
-    // Проверяем изменения URL в окне авторизации
-    const checkAuth = setInterval(() => {
-      try {
-        if (authWindow?.closed) {
-          clearInterval(checkAuth);
-          return;
-        }
+    // Слушаем сообщения от callback страницы
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'VK_OAUTH_SUCCESS') {
+        console.log('VK OAuth success:', event.data.data);
+        const { accessToken, userId } = event.data.data;
+        
+        setAccessToken(accessToken);
+        setIsProcessing(false);
+        fetchVkGroups(accessToken);
+        
+        // Убираем слушатель
+        window.removeEventListener('message', handleMessage);
+      } else if (event.data.type === 'VK_OAUTH_ERROR') {
+        console.error('VK OAuth error:', event.data.error);
+        alert('Ошибка VK OAuth: ' + event.data.error);
+        setIsProcessing(false);
+        
+        // Убираем слушатель
+        window.removeEventListener('message', handleMessage);
+      }
+    };
 
-        const currentUrl = authWindow?.location.href;
-        if (currentUrl && currentUrl.includes('access_token=')) {
-          // Извлекаем токен из URL
-          const urlParams = new URLSearchParams(currentUrl.split('#')[1]);
-          const token = urlParams.get('access_token');
-          
-          if (token) {
-            setAccessToken(token);
-            authWindow?.close();
-            clearInterval(checkAuth);
-            fetchVkGroups(token);
-          }
-        }
-      } catch (error) {
-        // Игнорируем CORS ошибки - это нормально для OAuth
+    // Добавляем слушатель сообщений
+    window.addEventListener('message', handleMessage);
+
+    // Проверяем, если окно закрыто без авторизации
+    const checkClosed = setInterval(() => {
+      if (authWindow?.closed) {
+        clearInterval(checkClosed);
+        setIsProcessing(false);
+        window.removeEventListener('message', handleMessage);
       }
     }, 1000);
 
-    // Автоматически закрываем проверку через 5 минут
+    // Автоматически очищаем через 5 минут
     setTimeout(() => {
-      clearInterval(checkAuth);
+      clearInterval(checkClosed);
+      setIsProcessing(false);
+      window.removeEventListener('message', handleMessage);
     }, 300000);
   };
 

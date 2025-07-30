@@ -65,6 +65,7 @@ import StoriesPage from "@/pages/stories";
 import VideoEditor from "@/pages/video";
 import YouTubeCallback from "@/pages/youtube-callback";
 import InstagramCallback from "@/pages/instagram-callback";
+import VkCallback from "@/pages/vk-callback";
 import StoryEditor from "@/components/stories/StoryEditor";
 
 // Создаем обертки для компонентов с Layout
@@ -150,6 +151,7 @@ function Router() {
       {/* OAuth callbacks */}
       <Route path="/api/auth/youtube/callback" component={YouTubeCallback} />
       <Route path="/instagram-callback" component={InstagramCallback} />
+      <Route path="/vk-callback" component={VkCallback} />
       
       {/* Stories routes */}
       <Route path="/campaigns/:campaignId/stories/new">
