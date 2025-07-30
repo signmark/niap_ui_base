@@ -188,20 +188,34 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
 
     const pages = pagesResponse.data.data || [];
     let instagramBusinessAccountId = null;
+    let availablePages = [];
 
-    // Ищем Instagram Business Account среди страниц
+    // Ищем Instagram Business Account среди страниц и собираем информацию о доступных страницах
     for (const page of pages) {
+      availablePages.push({
+        id: page.id,
+        name: page.name,
+        hasInstagramBusiness: !!(page.instagram_business_account && page.instagram_business_account.id)
+      });
+      
       if (page.instagram_business_account && page.instagram_business_account.id) {
         instagramBusinessAccountId = page.instagram_business_account.id;
         console.log('✅ Found Instagram Business Account ID:', instagramBusinessAccountId);
+        console.log('✅ From Facebook page:', page.name, '(ID:', page.id, ')');
         break;
       }
     }
 
+    console.log('📋 Available Facebook pages:', availablePages);
+
     if (!instagramBusinessAccountId) {
       return res.status(404).json({
         success: false,
-        error: 'Instagram Business Account не найден. Убедитесь, что ваша Facebook страница связана с Instagram Business аккаунтом.'
+        error: 'Instagram Business Account не найден. Убедитесь, что ваша Facebook страница связана с Instagram Business аккаунтом.',
+        details: {
+          availablePages: availablePages,
+          message: 'Ни одна из ваших Facebook страниц не связана с Instagram Business аккаунтом. Необходимо подключить Instagram Business аккаунт к одной из Facebook страниц.'
+        }
       });
     }
 

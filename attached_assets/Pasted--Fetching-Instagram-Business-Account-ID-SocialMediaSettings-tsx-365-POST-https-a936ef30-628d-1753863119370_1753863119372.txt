@@ -1,0 +1,50 @@
+🔍 Fetching Instagram Business Account ID...
+SocialMediaSettings.tsx:365  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/campaigns/cb3757df-c684-4809-9b13-49862c108db8/fetch-instagram-business-id 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=a627230e:1637
+xhr @ axios.js?v=a627230e:1517
+dispatchRequest @ axios.js?v=a627230e:1992
+Promise.then
+_request @ axios.js?v=a627230e:2195
+request @ axios.js?v=a627230e:2104
+httpMethod @ axios.js?v=a627230e:2242
+wrap @ axios.js?v=a627230e:8
+fetchInstagramBusinessId @ SocialMediaSettings.tsx:365
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+api.ts:143 API Error: 404 for POST /campaigns/cb3757df-c684-4809-9b13-49862c108db8/fetch-instagram-business-id {success: false, error: 'Instagram Business Account не найден. Убедитесь, ч… страница связана с Instagram Business аккаунтом.'}
+(anonymous) @ api.ts:143
+Promise.then
+_request @ axios.js?v=a627230e:2195
+request @ axios.js?v=a627230e:2104
+httpMethod @ axios.js?v=a627230e:2242
+wrap @ axios.js?v=a627230e:8
+fetchInstagramBusinessId @ SocialMediaSettings.tsx:365
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+SocialMediaSettings.tsx:391 Error fetching Instagram Business ID: AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}

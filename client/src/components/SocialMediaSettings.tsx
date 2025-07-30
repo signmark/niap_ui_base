@@ -391,9 +391,18 @@ export function SocialMediaSettings({
       console.error('Error fetching Instagram Business ID:', error);
       setInstagramStatus({ isLoading: false });
       
+      let errorMessage = error.response?.data?.error || "Ошибка при получении Instagram Business Account ID";
+      
+      // Если есть детали с доступными страницами, покажем их пользователю
+      if (error.response?.data?.details?.availablePages) {
+        const pages = error.response.data.details.availablePages;
+        const pageInfo = pages.map((p: any) => `${p.name} (${p.hasInstagramBusiness ? 'есть Instagram' : 'нет Instagram'})`).join(', ');
+        errorMessage += `\n\nВаши Facebook страницы: ${pageInfo}`;
+      }
+      
       toast({
         variant: "destructive",
-        description: error.response?.data?.error || "Ошибка при получении Instagram Business Account ID"
+        description: errorMessage
       });
     }
   };
