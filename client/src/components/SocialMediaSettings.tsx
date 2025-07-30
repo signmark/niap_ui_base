@@ -1305,6 +1305,14 @@ export function SocialMediaSettings({
               console.log('🔍 Form errors:', form.formState.errors);
               console.log('🔍 Form values:', form.getValues());
               
+              // Детальный анализ ошибок
+              if (form.formState.errors.telegram) {
+                console.log('❌ TELEGRAM ERRORS:', form.formState.errors.telegram);
+              }
+              if (form.formState.errors.facebook) {
+                console.log('❌ FACEBOOK ERRORS:', form.formState.errors.facebook);
+              }
+              
               // Принудительная валидация для диагностики
               const isValid = await form.trigger();
               console.log('🔍 Form trigger result:', isValid);
