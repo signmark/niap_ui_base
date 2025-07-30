@@ -622,9 +622,11 @@ export function SocialMediaSettings({
   };
 
   const onSubmit = async (data: SocialMediaSettings) => {
+    console.log('🔥 [SAVE SETTINGS] onSubmit функция вызвана!');
     console.log('🔥 [SAVE SETTINGS] Отправляем настройки:', data);
     console.log('🔥 [SAVE SETTINGS] Campaign ID:', campaignId);
     console.log('🔥 [SAVE SETTINGS] Form data:', JSON.stringify(data, null, 2));
+    console.log('🔥 [SAVE SETTINGS] Form errors:', form.formState.errors);
     
     try {
       setIsLoading(true);
@@ -1158,6 +1160,12 @@ export function SocialMediaSettings({
           <Button 
             type="submit" 
             disabled={isLoading}
+            onClick={() => {
+              console.log('🔥 [SAVE SETTINGS] Кнопка "Сохранить" нажата!');
+              console.log('🔥 [SAVE SETTINGS] isLoading:', isLoading);
+              console.log('🔥 [SAVE SETTINGS] Form isValid:', form.formState.isValid);
+              console.log('🔥 [SAVE SETTINGS] Form errors:', form.formState.errors);
+            }}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
