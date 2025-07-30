@@ -404,7 +404,9 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
           variant="outline" 
           onClick={() => {
             console.log('Instagram wizard: Отмена нажата');
-            onCancel();
+            if (onCancel) {
+              onCancel();
+            }
           }}
           disabled={isProcessing}
         >

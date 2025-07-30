@@ -1,0 +1,74 @@
+ Error starting Instagram OAuth: Error: Ошибка создания ссылки авторизации
+    at handleGetToken (/src/components/Inst…rdSimple.tsx:148:15)
+handleGetToken @ /src/components/Inst…izardSimple.tsx:151
+await in handleGetToken
+callCallback2 @ /@fs/home/runner/wor….js?v=a627230e:3674
+invokeGuardedCallbackDev @ /@fs/home/runner/wor….js?v=a627230e:3699
+invokeGuardedCallback @ /@fs/home/runner/wor….js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/home/runner/wor….js?v=a627230e:3736
+executeDispatch @ /@fs/home/runner/wor….js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ /@fs/home/runner/wor….js?v=a627230e:7034
+processDispatchQueue @ /@fs/home/runner/wor….js?v=a627230e:7043
+dispatchEventsForPlugins @ /@fs/home/runner/wor….js?v=a627230e:7051
+(anonymous) @ /@fs/home/runner/wor….js?v=a627230e:7174
+batchedUpdates$1 @ /@fs/home/runner/wor…js?v=a627230e:18913
+batchedUpdates @ /@fs/home/runner/wor….js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ /@fs/home/runner/wor….js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/home/runner/wor….js?v=a627230e:5478
+dispatchEvent @ /@fs/home/runner/wor….js?v=a627230e:5472
+dispatchDiscreteEvent @ /@fs/home/runner/wor….js?v=a627230e:5449
+ Instagram wizard: Отмена нажата
+/src/components/Inst…izardSimple.tsx:639 Uncaught TypeError: onCancel is not a function
+    at onClick (/src/components/Inst…rdSimple.tsx:639:15)
+    at HTMLUnknownElement.callCallback2 (/@fs/home/runner/wor…?v=a627230e:3674:22)
+    at Object.invokeGuardedCallbackDev (/@fs/home/runner/wor…?v=a627230e:3699:24)
+    at invokeGuardedCallback (/@fs/home/runner/wor…?v=a627230e:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (/@fs/home/runner/wor…?v=a627230e:3736:33)
+    at executeDispatch (/@fs/home/runner/wor…?v=a627230e:7014:11)
+    at processDispatchQueueItemsInOrder (/@fs/home/runner/wor…?v=a627230e:7034:15)
+    at processDispatchQueue (/@fs/home/runner/wor…?v=a627230e:7043:13)
+    at dispatchEventsForPlugins (/@fs/home/runner/wor…?v=a627230e:7051:11)
+    at /@fs/home/runner/wor…?v=a627230e:7174:20
+onClick @ /src/components/Inst…izardSimple.tsx:639
+callCallback2 @ /@fs/home/runner/wor….js?v=a627230e:3674
+invokeGuardedCallbackDev @ /@fs/home/runner/wor….js?v=a627230e:3699
+invokeGuardedCallback @ /@fs/home/runner/wor….js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/home/runner/wor….js?v=a627230e:3736
+executeDispatch @ /@fs/home/runner/wor….js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ /@fs/home/runner/wor….js?v=a627230e:7034
+processDispatchQueue @ /@fs/home/runner/wor….js?v=a627230e:7043
+dispatchEventsForPlugins @ /@fs/home/runner/wor….js?v=a627230e:7051
+(anonymous) @ /@fs/home/runner/wor….js?v=a627230e:7174
+batchedUpdates$1 @ /@fs/home/runner/wor…js?v=a627230e:18913
+batchedUpdates @ /@fs/home/runner/wor….js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ /@fs/home/runner/wor….js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/home/runner/wor….js?v=a627230e:5478
+dispatchEvent @ /@fs/home/runner/wor….js?v=a627230e:5472
+dispatchDiscreteEvent @ /@fs/home/runner/wor….js?v=a627230e:5449
+/@fs/home/runner/wor….js?v=a627230e:3750 Uncaught TypeError: onCancel is not a function
+    at onClick (/src/components/Inst…rdSimple.tsx:639:15)
+    at HTMLUnknownElement.callCallback2 (/@fs/home/runner/wor…?v=a627230e:3674:22)
+    at Object.invokeGuardedCallbackDev (/@fs/home/runner/wor…?v=a627230e:3699:24)
+    at invokeGuardedCallback (/@fs/home/runner/wor…?v=a627230e:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (/@fs/home/runner/wor…?v=a627230e:3736:33)
+    at executeDispatch (/@fs/home/runner/wor…?v=a627230e:7014:11)
+    at processDispatchQueueItemsInOrder (/@fs/home/runner/wor…?v=a627230e:7034:15)
+    at processDispatchQueue (/@fs/home/runner/wor…?v=a627230e:7043:13)
+    at dispatchEventsForPlugins (/@fs/home/runner/wor…?v=a627230e:7051:11)
+    at /@fs/home/runner/wor…?v=a627230e:7174:20
+onClick @ /src/components/Inst…izardSimple.tsx:639
+callCallback2 @ /@fs/home/runner/wor….js?v=a627230e:3674
+invokeGuardedCallbackDev @ /@fs/home/runner/wor….js?v=a627230e:3699
+invokeGuardedCallback @ /@fs/home/runner/wor….js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/home/runner/wor….js?v=a627230e:3736
+executeDispatch @ /@fs/home/runner/wor….js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ /@fs/home/runner/wor….js?v=a627230e:7034
+processDispatchQueue @ /@fs/home/runner/wor….js?v=a627230e:7043
+dispatchEventsForPlugins @ /@fs/home/runner/wor….js?v=a627230e:7051
+(anonymous) @ /@fs/home/runner/wor….js?v=a627230e:7174
+batchedUpdates$1 @ /@fs/home/runner/wor…js?v=a627230e:18913
+batchedUpdates @ /@fs/home/runner/wor….js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ /@fs/home/runner/wor….js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/home/runner/wor….js?v=a627230e:5478
+dispatchEvent @ /@fs/home/runner/wor….js?v=a627230e:5472
+dispatchDiscreteEvent @ /@fs/home/runner/wor….js?v=a627230e:5449

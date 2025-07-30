@@ -12,11 +12,15 @@ router.post('/instagram/auth/start', async (req, res) => {
   try {
     const { appId, appSecret, redirectUri, webhookUrl, instagramId, campaignId } = req.body;
 
-    if (!appId || !appSecret || !redirectUri || !campaignId) {
+    if (!appId || !appSecret || !campaignId) {
       return res.status(400).json({
-        error: 'Требуются: appId, appSecret, redirectUri, campaignId'
+        success: false,
+        error: 'Требуются: appId, appSecret, campaignId'
       });
     }
+
+    // Используем дефолтный redirectUri если не передан
+    const finalRedirectUri = redirectUri || `${req.protocol}://${req.get('host')}/instagram-callback`;
 
     // Используем зашитый webhook URL если не передан
     const finalWebhookUrl = webhookUrl || 'https://n8n.roboflow.space/webhook/instagram-auth';
@@ -28,7 +32,7 @@ router.post('/instagram/auth/start', async (req, res) => {
     oauthSessions.set(state, {
       appId,
       appSecret,
-      redirectUri,
+      redirectUri: finalRedirectUri,
       webhookUrl: finalWebhookUrl,
       instagramId,
       campaignId, // Добавляем campaignId для последующего сохранения
@@ -46,17 +50,25 @@ router.post('/instagram/auth/start', async (req, res) => {
 
     const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +
       `client_id=${appId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `redirect_uri=${encodeURIComponent(finalRedirectUri)}&` +
       `scope=${encodeURIComponent(scopes)}&` +
       `response_type=code&` +
       `state=${state}`;
 
     log('instagram-oauth', `OAuth поток запущен для App ID: ${appId}, Campaign ID: ${campaignId}`);
     
-    res.json({ authUrl, state });
+    res.json({ 
+      success: true,
+      authUrl, 
+      state,
+      redirectUri: finalRedirectUri
+    });
   } catch (error) {
     log('instagram-oauth', `Ошибка запуска OAuth: ${error}`);
-    res.status(500).json({ error: 'Ошибка сервера при запуске OAuth' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Ошибка сервера при запуске OAuth' 
+    });
   }
 });
 
