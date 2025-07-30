@@ -125,10 +125,20 @@ export function SocialMediaSettings({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('🔥 Instagram settings response:', data);
+      const responseText = await response.text();
+      console.log('🔥 Raw response text:', responseText);
       console.log('🔥 Response status:', response.status);
       console.log('🔥 Response headers:', response.headers);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('🔥 Parsed JSON data:', data);
+      } catch (e) {
+        console.error('🔥 Failed to parse JSON:', e);
+        console.log('🔥 Response is not valid JSON');
+        return;
+      }
       
       if (data.success && data.settings) {
         setInstagramSettings(data.settings);

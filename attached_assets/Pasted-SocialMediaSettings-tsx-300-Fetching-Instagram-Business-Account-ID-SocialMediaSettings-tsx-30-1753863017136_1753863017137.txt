@@ -1,0 +1,95 @@
+SocialMediaSettings.tsx:300 🔍 Fetching Instagram Business Account ID...
+SocialMediaSettings.tsx:301  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/campaigns/cb3757df-c684-4809-9b13-49862c108db8/fetch-instagram-business-id 404 (Not Found)
+dispatchXhrRequest @ axios.js?v=a627230e:1637
+xhr @ axios.js?v=a627230e:1517
+dispatchRequest @ axios.js?v=a627230e:1992
+Promise.then
+_request @ axios.js?v=a627230e:2195
+request @ axios.js?v=a627230e:2104
+httpMethod @ axios.js?v=a627230e:2242
+wrap @ axios.js?v=a627230e:8
+fetchInstagramBusinessId @ SocialMediaSettings.tsx:301
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+api.ts:143 API Error: 404 for POST /campaigns/cb3757df-c684-4809-9b13-49862c108db8/fetch-instagram-business-id {success: false, error: 'Instagram Business Account не найден. Убедитесь, ч… страница связана с Instagram Business аккаунтом.'}
+(anonymous) @ api.ts:143
+Promise.then
+_request @ axios.js?v=a627230e:2195
+request @ axios.js?v=a627230e:2104
+httpMethod @ axios.js?v=a627230e:2242
+wrap @ axios.js?v=a627230e:8
+fetchInstagramBusinessId @ SocialMediaSettings.tsx:301
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+SocialMediaSettings.tsx:320 Error fetching Instagram Business ID: AxiosError {message: 'Request failed with status code 404', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchInstagramBusinessId @ SocialMediaSettings.tsx:320
+await in fetchInstagramBusinessId
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+SocialMediaSettings.tsx:113 🔥 Loading Instagram settings for campaign: cb3757df-c684-4809-9b13-49862c108db8
+SocialMediaSettings.tsx:175 🔥 Updating form with Instagram settings: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:176 🔥 Current form values before update: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:187 🔥 Formatted Instagram data for form: {token: 'EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIq…ZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9', accessToken: 'EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIq…ZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9', businessAccountId: '', appId: '3459501544192396', appSecret: '50df248e9dae8af129403334c0ec28b9'}
+SocialMediaSettings.tsx:196 🔥 Form values after update: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:197 🔥 Form state dirty? false
+SocialMediaSettings.tsx:198 🔥 Form field values individual check:
+SocialMediaSettings.tsx:199   - token: EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9
+SocialMediaSettings.tsx:200   - accessToken: EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9
+SocialMediaSettings.tsx:201   - businessAccountId: 
+SocialMediaSettings.tsx:202   - appId: 3459501544192396
+SocialMediaSettings.tsx:203   - appSecret: 50df248e9dae8af129403334c0ec28b9
+SocialMediaSettings.tsx:129 🔥 Raw response text: {"success":true,"settings":{"username":"it.signmark","password":"QtpZ3dh7","isAuthenticated":true,"status":"active","lastAuthDate":"2025-07-22T10:50:25.300Z","userId":"75806346276","fullName":"Dmitry Zhdanov","timestamp":1753181425300,"expiresAt":1753786047881,"sessionId":null,"csrfToken":null,"deviceId":"android-40d7a3b2b2ea416f","userAgent":"Instagram 222.0.0.13.114 Android (25/7.1.1; 440dpi; 1080x1920; Xiaomi; Mi Note 3; jason; qcom; en_US; 350696709)","cookies":{"authorization":"Bearer IGT:2:eyJkc191c2VyX2lkIjoiNzU4MDYzNDYyNzYiLCJzZXNzaW9uaWQiOiI3NTgwNjM0NjI3NiUzQWwxZmdGTWNFNUZzVlpkJTNBMTIlM0FBWWUwQWQwX2I2R1M4b2prOFJWQnVuaGx6MjZYUHZqUDRaVnlNTEVTTGcifQ=="},"authMethod":"private-api","appId":"3459501544192396","appSecret":"50df248e9dae8af129403334c0ec28b9","longLivedToken":"EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9","tokenExpiresAt":null,"user":{"id":"30968234576125885","name":"Dmitry Zhdanov"},"instagramAccounts":[],"authTimestamp":"2025-07-30T07:34:02.812Z","token":"EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9","businessAccountId":null}}
+SocialMediaSettings.tsx:130 🔥 Response status: 200
+SocialMediaSettings.tsx:131 🔥 Response headers: Headers {}
+SocialMediaSettings.tsx:136 🔥 Parsed JSON data: {success: true, settings: {…}}
+SocialMediaSettings.tsx:145 🔥 Instagram settings loaded successfully
+SocialMediaSettings.tsx:175 🔥 Updating form with Instagram settings: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:176 🔥 Current form values before update: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:187 🔥 Formatted Instagram data for form: {token: 'EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIq…ZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9', accessToken: 'EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIq…ZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9', businessAccountId: '', appId: '3459501544192396', appSecret: '50df248e9dae8af129403334c0ec28b9'}
+SocialMediaSettings.tsx:196 🔥 Form values after update: {username: 'it.signmark', password: 'QtpZ3dh7', isAuthenticated: true, status: 'active', lastAuthDate: '2025-07-22T10:50:25.300Z', …}
+SocialMediaSettings.tsx:197 🔥 Form state dirty? true
+SocialMediaSettings.tsx:198 🔥 Form field values individual check:
+SocialMediaSettings.tsx:199   - token: EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9
+SocialMediaSettings.tsx:200   - accessToken: EAAxKZAfikOYwBPMOziivyGpD0R9Pp90BUAZA5EzbOznZC5xIqZB4erxpWZCs3gixhLBtZCv4yEUYDYFe0fUkm9C30zKdDtZAd0aYASWXIYFIIcnBX85kQbf2vwpYQTPoSoJo2evxQZCh6Yfq7q6ItfAZCcjDBUOP4ZBjSNRZBwnyPhg7iGHZAU11QPRB2TAxEOj4SSs9
+SocialMediaSettings.tsx:201   - businessAccountId: 
+SocialMediaSettings.tsx:202   - appId: 3459501544192396
+SocialMediaSettings.tsx:203   - appSecret: 50df248e9dae8af129403334c0ec28b9
