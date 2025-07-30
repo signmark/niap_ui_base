@@ -97,6 +97,14 @@ export function SocialMediaSettings({
   const [facebookStatus, setFacebookStatus] = useState<ValidationStatus>({ isLoading: false });
   const [youtubeStatus, setYoutubeStatus] = useState<ValidationStatus>({ isLoading: false });
 
+  // Состояние для доступных Instagram аккаунтов
+  const [availableInstagramAccounts, setAvailableInstagramAccounts] = useState<Array<{
+    pageId: string;
+    pageName: string;
+    instagramId: string;
+    accountType: string;
+  }>>([]);
+
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
     defaultValues: initialSettings || {
@@ -408,6 +416,115 @@ export function SocialMediaSettings({
       toast({
         variant: "destructive",
         description: errorMessage
+      });
+    }
+  };
+
+  const discoverInstagramAccounts = async () => {
+    const accessToken = form.getValues("instagram.token");
+    if (!accessToken) {
+      toast({
+        variant: "destructive",
+        description: "Сначала введите Access Token"
+      });
+      return;
+    }
+
+    try {
+      setInstagramStatus({ isLoading: true });
+      console.log('🔍 Discovering all Instagram accounts...');
+      
+      const response = await api.post(`/campaigns/${campaignId}/discover-instagram-accounts`, {
+        accessToken
+      });
+      
+      if (response.data.success && response.data.accounts) {
+        setAvailableInstagramAccounts(response.data.accounts);
+        console.log('✅ Instagram accounts discovered:', response.data.accounts);
+        
+        if (response.data.accounts.length === 0) {
+          toast({
+            variant: "destructive",
+            description: "Не найдено Facebook страниц с подключенными Instagram аккаунтами"
+          });
+        } else {
+          toast({
+            variant: "default",
+            description: `Найдено ${response.data.accounts.length} Instagram аккаунтов`
+          });
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          description: response.data.error || "Ошибка при поиске Instagram аккаунтов"
+        });
+      }
+      
+      setInstagramStatus({ isLoading: false });
+    } catch (error: any) {
+      console.error('Error discovering Instagram accounts:', error);
+      setInstagramStatus({ isLoading: false });
+      
+      toast({
+        variant: "destructive",
+        description: "Ошибка при поиске Instagram аккаунтов"
+      });
+    }
+  };
+
+  const selectKnownInstagramAccount = async (pageId: string, instagramId: string, pageName: string) => {
+    const accessToken = form.getValues("instagram.token");
+    if (!accessToken) {
+      toast({
+        variant: "destructive",
+        description: "Сначала введите Access Token"
+      });
+      return;
+    }
+
+    try {
+      setInstagramStatus({ isLoading: true });
+      console.log(`🔍 Selecting known Instagram account: ${instagramId} from page ${pageName}`);
+      
+      // Прямое сохранение известного Instagram Account ID
+      form.setValue('instagram.businessAccountId', instagramId);
+      
+      // Сохраняем в базу данных
+      const response = await api.patch(`/campaigns/${campaignId}`, {
+        social_media_settings: {
+          ...form.getValues(),
+          instagram: {
+            ...form.getValues("instagram"),
+            businessAccountId: instagramId,
+            businessAccountIdFetchedAt: new Date().toISOString(),
+            pageId,
+            pageName,
+            accountType: 'business_account'
+          }
+        }
+      });
+
+      if (response.status === 200) {
+        toast({
+          variant: "default",
+          description: `Instagram аккаунт "${pageName}" выбран (ID: ${instagramId})`
+        });
+        
+        // Перезагружаем настройки
+        await loadInstagramSettings();
+        console.log('✅ Known Instagram account selected successfully');
+      } else {
+        throw new Error('Failed to save Instagram account selection');
+      }
+      
+      setInstagramStatus({ isLoading: false });
+    } catch (error: any) {
+      console.error('Error selecting known Instagram account:', error);
+      setInstagramStatus({ isLoading: false });
+      
+      toast({
+        variant: "destructive",
+        description: "Ошибка при выборе Instagram аккаунта"
       });
     }
   };
@@ -834,9 +951,65 @@ export function SocialMediaSettings({
                         }
                       </Button>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground mb-2">
                       Нажмите 🔍 для автоматического получения Business Account ID через Graph API
                     </div>
+                    
+                    {/* Поиск доступных Instagram аккаунтов */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">
+                        Или найдите все ваши Instagram аккаунты:
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={discoverInstagramAccounts}
+                        disabled={instagramStatus.isLoading}
+                        className="text-xs"
+                      >
+                        {instagramStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 
+                          <span className="mr-2">🔍</span>
+                        }
+                        Найти все Instagram аккаунты
+                      </Button>
+                      
+                      {/* Показать найденные аккаунты */}
+                      {availableInstagramAccounts.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Выберите Instagram аккаунт:
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {availableInstagramAccounts.map((account) => (
+                              <Button 
+                                key={account.instagramId}
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => selectKnownInstagramAccount(
+                                  account.pageId, 
+                                  account.instagramId, 
+                                  account.pageName
+                                )}
+                                disabled={instagramStatus.isLoading}
+                                className="text-xs"
+                              >
+                                📱 {account.pageName}
+                                <span className="ml-1 text-muted-foreground">
+                                  ({account.accountType === 'business_account' ? 'Business' : 'Connected'})
+                                </span>
+                              </Button>
+                            ))}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Найдено {availableInstagramAccounts.length} Instagram аккаунтов
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <FormMessage />
                   </FormItem>
                 )}

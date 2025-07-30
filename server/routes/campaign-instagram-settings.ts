@@ -297,4 +297,298 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
   }
 });
 
+/**
+ * Проверка конкретной Facebook страницы на наличие Instagram аккаунта
+ */
+router.post('/campaigns/:campaignId/check-facebook-page', async (req, res) => {
+  const { campaignId } = req.params;
+  const { accessToken, pageId } = req.body;
+  const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+  try {
+    console.log('🔍 Checking specific Facebook page:', pageId);
+    
+    if (!accessToken || !pageId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access Token и Page ID обязательны'
+      });
+    }
+
+    if (!userToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Токен авторизации не предоставлен'
+      });
+    }
+
+    // Проверяем конкретную страницу
+    console.log('📋 Checking Facebook page:', pageId);
+    try {
+      const pageResponse = await axios.get(
+        `https://graph.facebook.com/v23.0/${pageId}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
+      );
+
+      console.log('📋 Page response:', JSON.stringify(pageResponse.data, null, 2));
+
+      const page = pageResponse.data;
+      const hasBusinessAccount = !!(page.instagram_business_account && page.instagram_business_account.id);
+      const hasConnectedAccount = !!(page.connected_instagram_account && page.connected_instagram_account.id);
+
+      let instagramAccountId = null;
+      let accountType = null;
+
+      if (hasBusinessAccount) {
+        instagramAccountId = page.instagram_business_account.id;
+        accountType = 'business_account';
+      } else if (hasConnectedAccount) {
+        instagramAccountId = page.connected_instagram_account.id;
+        accountType = 'connected_account';
+      }
+
+      const result = {
+        pageId: page.id,
+        pageName: page.name,
+        hasInstagramBusiness: hasBusinessAccount,
+        hasConnectedInstagram: hasConnectedAccount,
+        instagramAccountId,
+        accountType,
+        instagramBusinessId: page.instagram_business_account?.id || null,
+        connectedInstagramId: page.connected_instagram_account?.id || null
+      };
+
+      console.log('📋 Page check result:', result);
+
+      if (instagramAccountId) {
+        // Сохраняем найденный Instagram Account ID в кампанию
+        const getCampaignResponse = await axios.get(
+          `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        const campaign = getCampaignResponse.data.data;
+        const currentSocialMediaSettings = campaign.social_media_settings || {};
+        const currentInstagramSettings = currentSocialMediaSettings.instagram || {};
+
+        const updatedInstagramSettings = {
+          ...currentInstagramSettings,
+          businessAccountId: instagramAccountId,
+          businessAccountIdFetchedAt: new Date().toISOString(),
+          pageId: page.id,
+          pageName: page.name,
+          accountType
+        };
+
+        const updatedSocialMediaSettings = {
+          ...currentSocialMediaSettings,
+          instagram: updatedInstagramSettings
+        };
+
+        await axios.patch(
+          `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+          {
+            social_media_settings: updatedSocialMediaSettings
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.DIRECTUS_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        console.log('✅ Instagram Account ID saved from specific page check');
+
+        res.json({
+          success: true,
+          result,
+          businessAccountId: instagramAccountId,
+          message: `Instagram аккаунт найден на странице ${page.name} и сохранен`
+        });
+      } else {
+        res.json({
+          success: false,
+          result,
+          error: `На странице ${page.name} не найден подключенный Instagram аккаунт`
+        });
+      }
+
+    } catch (pageError: any) {
+      console.error('❌ Error checking specific page:', pageError.response?.data || pageError.message);
+      
+      if (pageError.response?.status === 403) {
+        res.status(403).json({
+          success: false,
+          error: `Нет доступа к Facebook странице ${pageId}. Возможно у токена нет прав или страница не существует.`
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Ошибка при проверке Facebook страницы',
+          details: pageError.response?.data || pageError.message
+        });
+      }
+    }
+
+  } catch (error: any) {
+    console.error('❌ Error in page check:', error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка при проверке страницы',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
+/**
+ * Поиск всех доступных Instagram аккаунтов пользователя
+ */
+router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, res) => {
+  const { campaignId } = req.params;
+  const { accessToken } = req.body;
+  const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+  try {
+    console.log('🔍 Discovering Instagram accounts for campaign:', campaignId);
+    
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access Token обязателен'
+      });
+    }
+
+    if (!userToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Токен авторизации не предоставлен'
+      });
+    }
+
+    const discoveredAccounts: Array<{
+      pageId: string;
+      pageName: string;
+      instagramId: string;
+      accountType: string;
+    }> = [];
+
+    // Шаг 1: Получаем все Facebook страницы пользователя
+    console.log('📋 Getting user Facebook pages...');
+    const pagesResponse = await axios.get(
+      `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name`
+    );
+
+    console.log('📋 Facebook pages found:', pagesResponse.data.data.length);
+
+    // Шаг 2: Для каждой страницы проверяем Instagram аккаунты
+    for (const page of pagesResponse.data.data) {
+      try {
+        console.log(`📋 Checking Instagram for page: ${page.name} (${page.id})`);
+        
+        const pageInstagramResponse = await axios.get(
+          `https://graph.facebook.com/v23.0/${page.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
+        );
+
+        const pageData = pageInstagramResponse.data;
+        const hasBusinessAccount = !!(pageData.instagram_business_account && pageData.instagram_business_account.id);
+        const hasConnectedAccount = !!(pageData.connected_instagram_account && pageData.connected_instagram_account.id);
+
+        if (hasBusinessAccount) {
+          discoveredAccounts.push({
+            pageId: pageData.id,
+            pageName: pageData.name,
+            instagramId: pageData.instagram_business_account.id,
+            accountType: 'business_account'
+          });
+          console.log(`✅ Found Business Account: ${pageData.name} -> ${pageData.instagram_business_account.id}`);
+        } else if (hasConnectedAccount) {
+          discoveredAccounts.push({
+            pageId: pageData.id,
+            pageName: pageData.name,
+            instagramId: pageData.connected_instagram_account.id,
+            accountType: 'connected_account'
+          });
+          console.log(`✅ Found Connected Account: ${pageData.name} -> ${pageData.connected_instagram_account.id}`);
+        } else {
+          console.log(`❌ No Instagram account for page: ${pageData.name}`);
+        }
+
+      } catch (pageError: any) {
+        console.error(`❌ Error checking page ${page.name}:`, pageError.response?.data || pageError.message);
+        // Продолжаем проверку других страниц даже если одна не работает
+      }
+    }
+
+    // Шаг 3: Дополнительно проверяем известные страницы которые могут не появляться в /me/accounts
+    const knownPages = [
+      { id: '749727828220432', name: 'Дмитрий Жданов' },
+      { id: '1195760570469812', name: 'Сметоматика' }
+    ];
+
+    for (const knownPage of knownPages) {
+      try {
+        // Проверяем если эта страница уже найдена
+        const alreadyFound = discoveredAccounts.some(acc => acc.pageId === knownPage.id);
+        if (alreadyFound) {
+          console.log(`📋 Known page ${knownPage.name} already discovered`);
+          continue;
+        }
+
+        console.log(`📋 Checking known page: ${knownPage.name} (${knownPage.id})`);
+        
+        const knownPageResponse = await axios.get(
+          `https://graph.facebook.com/v23.0/${knownPage.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
+        );
+
+        const pageData = knownPageResponse.data;
+        const hasBusinessAccount = !!(pageData.instagram_business_account && pageData.instagram_business_account.id);
+        const hasConnectedAccount = !!(pageData.connected_instagram_account && pageData.connected_instagram_account.id);
+
+        if (hasBusinessAccount) {
+          discoveredAccounts.push({
+            pageId: pageData.id,
+            pageName: pageData.name,
+            instagramId: pageData.instagram_business_account.id,
+            accountType: 'business_account'
+          });
+          console.log(`✅ Found known Business Account: ${pageData.name} -> ${pageData.instagram_business_account.id}`);
+        } else if (hasConnectedAccount) {
+          discoveredAccounts.push({
+            pageId: pageData.id,
+            pageName: pageData.name,
+            instagramId: pageData.connected_instagram_account.id,
+            accountType: 'connected_account'
+          });
+          console.log(`✅ Found known Connected Account: ${pageData.name} -> ${pageData.connected_instagram_account.id}`);
+        }
+
+      } catch (knownPageError: any) {
+        console.log(`❌ Known page ${knownPage.name} not accessible:`, knownPageError.response?.status);
+        // Это нормально - не все известные страницы доступны каждому токену
+      }
+    }
+
+    console.log(`🎉 Discovery complete! Found ${discoveredAccounts.length} Instagram accounts`);
+
+    res.json({
+      success: true,
+      accounts: discoveredAccounts,
+      totalFound: discoveredAccounts.length
+    });
+
+  } catch (error: any) {
+    console.error('❌ Error in Instagram discovery:', error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка при поиске Instagram аккаунтов',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 export default router;
