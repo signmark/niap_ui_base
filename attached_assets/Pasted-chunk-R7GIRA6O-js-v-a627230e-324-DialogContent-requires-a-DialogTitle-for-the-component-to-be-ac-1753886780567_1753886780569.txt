@@ -1,0 +1,49 @@
+chunk-R7GIRA6O.js?v=a627230e:324 `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+(anonymous) @ chunk-R7GIRA6O.js?v=a627230e:324
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
+chunk-R7GIRA6O.js?v=a627230e:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=a627230e:338
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
+SocialMediaSettings.tsx:145 🔄 Loading VK settings from database...
+SocialMediaSettings.tsx:155 ✅ VK settings loaded: {success: true, settings: {…}}
+SocialMediaSettings.tsx:168 🔄 VK form fields updated with database values
+SocialMediaSettings.tsx:340 🔄 Updating VK form fields with database values: {token: 'vk1.a.o0IumvkZD1lD7qz-Qxw9XGDDjA5Utea68-VlyJzEiJ4v…F1_kSb84DT8ZK5JXR9E4PWpA72TI_h1S5vBd5ScZthKZFRn1g', groupId: '-176171231', groupName: 'Онлайн бизнес - ПРОСТО', setupCompletedAt: '2025-07-30T09:47:45.679Z', configured: true}
+SocialMediaSettings.tsx:350 ✅ VK form fields updated: {token: 'vk1.a.o0IumvkZD1lD7qz-Qxw9XGDDjA5Utea68-VlyJzEiJ4v…F1_kSb84DT8ZK5JXR9E4PWpA72TI_h1S5vBd5ScZthKZFRn1g', groupId: '-176171231', groupName: 'Онлайн бизнес - ПРОСТО'}
+SocialMediaSettings.tsx:326   - token: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+SocialMediaSettings.tsx:327   - accessToken: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+SocialMediaSettings.tsx:328   - businessAccountId: 17841422577074562
+SocialMediaSettings.tsx:329   - appId: 3459501544192396
+SocialMediaSettings.tsx:330   - appSecret: 50df248e9dae8af129403334c0ec28b9
+SocialMediaSettings.tsx:1303 🔍 SAVE BUTTON CLICKED
+SocialMediaSettings.tsx:1304 🔍 Form isValid: false
+SocialMediaSettings.tsx:1305 🔍 Form errors: {}
+SocialMediaSettings.tsx:1306 🔍 Form values: {instagram: {…}, vk: {…}}
+SocialMediaSettings.tsx:1310 🔍 Form trigger result: false
+SocialMediaSettings.tsx:1313 ❌ FORM VALIDATION FAILED
+SocialMediaSettings.tsx:1314 ❌ Form errors after trigger: {telegram: {…}, facebook: {…}}

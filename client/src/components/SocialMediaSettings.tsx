@@ -39,24 +39,24 @@ import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
   telegram: z.object({
-    token: z.string().nullable(),
-    chatId: z.string().nullable(),
-  }),
+    token: z.string().nullable().optional(),
+    chatId: z.string().nullable().optional(),
+  }).optional(),
   vk: z.object({
-    token: z.string().nullable(),
-    groupId: z.string().nullable(),
-  }),
+    token: z.string().nullable().optional(),
+    groupId: z.string().nullable().optional(),
+  }).optional(),
   instagram: z.object({
-    token: z.string().nullable(),
-    accessToken: z.string().nullable(),
-    businessAccountId: z.string().nullable(),
-    appId: z.string().nullable(),
-    appSecret: z.string().nullable(),
-  }),
+    token: z.string().nullable().optional(),
+    accessToken: z.string().nullable().optional(),
+    businessAccountId: z.string().nullable().optional(),
+    appId: z.string().nullable().optional(),
+    appSecret: z.string().nullable().optional(),
+  }).optional(),
   facebook: z.object({
-    token: z.string().nullable(),
-    pageId: z.string().nullable(),
-  }),
+    token: z.string().nullable().optional(),
+    pageId: z.string().nullable().optional(),
+  }).optional(),
   youtube: z.object({
     apiKey: z.string().nullable().optional(),
     channelId: z.string().nullable().optional(),
@@ -130,11 +130,11 @@ export function SocialMediaSettings({
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
     defaultValues: initialSettings || {
-      telegram: { token: null, chatId: null },
-      vk: { token: null, groupId: null },
-      instagram: { token: null, accessToken: null, businessAccountId: null, appId: null, appSecret: null },
-      facebook: { token: null, pageId: null },
-      youtube: { apiKey: null, channelId: null, accessToken: null, refreshToken: null }
+      telegram: { token: '', chatId: '' },
+      vk: { token: '', groupId: '' },
+      instagram: { token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' },
+      facebook: { token: '', pageId: '' },
+      youtube: { apiKey: '', channelId: '', accessToken: '', refreshToken: '' }
     }
   });
 
