@@ -14,31 +14,17 @@ interface InstagramSetupWizardProps {
 }
 
 const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId, onComplete, onCancel }) => {
-  const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     appId: '',
-    appSecret: ''
+    appSecret: '',
+    accessToken: '',
+    businessAccountId: ''
   });
   
   const { toast } = useToast();
 
-  const steps = [
-    {
-      title: "Создание Facebook App",
-      description: "Создание Facebook приложения для Instagram API"
-    },
-    {
-      title: "OAuth авторизация",
-      description: "Авторизация и получение токенов доступа"
-    },
-    {
-      title: "Завершение настройки",
-      description: "Сохранение настроек Instagram в кампанию"
-    }
-  ];
-
-  const handleStartOAuth = async () => {
+  const handleGetToken = async () => {
     if (!formData.appId || !formData.appSecret) {
       toast({
         title: "Ошибка",
@@ -66,9 +52,13 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId,
       const data = await response.json();
       
       if (data.success && data.authUrl) {
-        // Открываем окно авторизации
+        // Открываем окно авторизации точно как VK
         window.open(data.authUrl, 'instagram-auth', 'width=600,height=600');
-        setCurrentStep(2);
+        
+        toast({
+          title: "Авторизация Instagram",
+          description: "Скопируйте полученный токен и вставьте в поле ниже"
+        });
       } else {
         throw new Error(data.error || 'Ошибка создания ссылки авторизации');
       }
@@ -143,7 +133,7 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId,
                 </div>
 
                 <Button 
-                  onClick={handleStartOAuth}
+                  onClick={handleGetToken}
                   disabled={isProcessing || !formData.appId || !formData.appSecret}
                   className="w-full"
                 >
@@ -155,7 +145,7 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId,
                   ) : (
                     <>
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Начать OAuth авторизацию
+                      Получить токен Instagram
                     </>
                   )}
                 </Button>

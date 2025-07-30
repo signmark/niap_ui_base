@@ -4,53 +4,58 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { CheckCircle, AlertCircle, Instagram } from 'lucide-react';
+import { CheckCircle, ExternalLink, Loader2, Instagram } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 
 interface InstagramSetupWizardProps {
   campaignId: string;
-  instagramSettings?: {
-    appId?: string;
-    appSecret?: string;
-    instagramId?: string;
-  };
-  onSettingsUpdate?: (settings: any) => void;
+  onComplete: () => void;
+  onCancel: () => void;
 }
 
-const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ 
-  campaignId, 
-  instagramSettings = {}, 
-  onSettingsUpdate 
-}) => {
+const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campaignId, onComplete, onCancel }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
-    appId: instagramSettings.appId || '',
-    appSecret: instagramSettings.appSecret || '',
-    instagramId: instagramSettings.instagramId || ''
+    appId: '',
+    appSecret: '',
+    accessToken: '',
+    businessAccountId: ''
   });
-  const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
 
-  // Инициализация формы из переданных настроек
+  // Загружаем существующие данные из кампании
   useEffect(() => {
-    if (instagramSettings) {
-      setFormData({
-        appId: instagramSettings.appId || '',
-        appSecret: instagramSettings.appSecret || '',
-        instagramId: instagramSettings.instagramId || ''
-      });
-    }
-  }, [instagramSettings]);
+    const loadExistingSettings = async () => {
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.settings) {
+            const settings = data.settings;
+            setFormData({
+              appId: settings.appId || '',
+              appSecret: settings.appSecret || '',
+              accessToken: settings.accessToken || settings.longLivedToken || settings.token || '',
+              businessAccountId: settings.businessAccountId || settings.instagramId || ''
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading Instagram settings:', error);
+      }
+    };
 
-  const handleSaveSettings = async () => {
-    console.log('🔥 SAVE INSTAGRAM SETTINGS CALLED');
-    console.log('🔥 FORM DATA:', formData);
-    console.log('🔥 CAMPAIGN ID:', campaignId);
-    
+    loadExistingSettings();
+  }, [campaignId]);
+
+  const handleGetToken = async () => {
     if (!formData.appId || !formData.appSecret) {
-      console.log('🔥 VALIDATION FAILED - missing fields');
       toast({
         title: "Ошибка",
         description: "Введите App ID и App Secret",
@@ -59,141 +64,235 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({
       return;
     }
 
-    console.log('🔥 VALIDATION PASSED');
-    setLoading(true);
-
+    setIsProcessing(true);
     try {
-      // Сохраняем настройки Instagram в JSON кампании
-      const instagramConfig = {
-        appId: formData.appId,
-        appSecret: formData.appSecret,
-        instagramId: formData.instagramId || '',
-        setupCompletedAt: new Date().toISOString()
-      };
-
-      // Отправляем данные на сервер для сохранения в social_media_settings
-      const response = await apiRequest(`/api/campaigns/${campaignId}/instagram-settings`, {
-        method: 'PATCH',
-        data: instagramConfig
+      const response = await fetch(`/api/instagram/auth/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          appId: formData.appId,
+          appSecret: formData.appSecret,
+          campaignId: campaignId
+        })
       });
 
-      if (response) {
-        // Обновляем родительский компонент
-        if (onSettingsUpdate) {
-          onSettingsUpdate({ instagram: instagramConfig });
-        }
-
-        toast({
-          title: "Успешно сохранено",
-          description: "Настройки Instagram сохранены в кампании",
-          variant: "default"
-        });
-      }
+      const data = await response.json();
       
-    } catch (error) {
-      console.error('Error saving Instagram settings:', error);
+      if (data.success && data.authUrl) {
+        // Открываем окно авторизации точно как VK
+        window.open(data.authUrl, 'instagram-auth', 'width=600,height=600');
+        
+        toast({
+          title: "Авторизация Instagram",
+          description: "Скопируйте полученный токен и Business Account ID в поля ниже"
+        });
+      } else {
+        throw new Error(data.error || 'Ошибка создания ссылки авторизации');
+      }
+    } catch (error: any) {
+      console.error('Error starting Instagram OAuth:', error);
       toast({
         title: "Ошибка",
-        description: (error as any)?.message || "Ошибка сохранения настроек",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsProcessing(false);
     }
   };
 
-  // Определяем есть ли уже сохраненные настройки
-  const hasSettings = formData.appId && formData.appSecret;
+  const handleSaveSettings = async () => {
+    if (!formData.accessToken || !formData.businessAccountId) {
+      toast({
+        title: "Ошибка",
+        description: "Введите Access Token и Business Account ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          social_media_settings: {
+            instagram: {
+              appId: formData.appId,
+              appSecret: formData.appSecret,
+              accessToken: formData.accessToken,
+              businessAccountId: formData.businessAccountId,
+              longLivedToken: formData.accessToken,
+              setupCompletedAt: new Date().toISOString()
+            }
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Успех",
+          description: "Instagram настроен успешно!",
+          variant: "default"
+        });
+        setTimeout(() => {
+          onComplete();
+        }, 1500);
+      } else {
+        throw new Error(data.error || 'Ошибка сохранения настроек');
+      }
+    } catch (error: any) {
+      console.error('Error saving Instagram settings:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Instagram className="h-6 w-6 text-pink-600" />
-          <span>Instagram API настройки</span>
-        </CardTitle>
-        <CardDescription>
-          Настройте API для публикации в Instagram через Facebook
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {hasSettings && (
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                Instagram API настроен для этой кампании
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="appId">App ID *</Label>
-              <Input
-                id="appId"
-                placeholder="Введите App ID из Facebook приложения"
-                value={formData.appId}
-                onChange={(e) => setFormData({ ...formData, appId: e.target.value })}
-              />
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">Настройка Instagram интеграции</h2>
+        <p className="text-sm text-gray-600">Простая настройка Instagram для публикации контента</p>
+      </div>
+      
+      <div className="space-y-6">
+      <div className="space-y-4">
+        <Alert>
+          <AlertDescription>
+            Настройка Instagram API в простом формате. Введите данные Facebook приложения, получите токен и сохраните настройки.
+          </AlertDescription>
+        </Alert>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Instagram className="h-5 w-5" />
+              Настройка Instagram API
+            </CardTitle>
+            <CardDescription>
+              Простая настройка Instagram для публикации контента
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* App ID и App Secret */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="appId">App ID *</Label>
+                <Input
+                  id="appId"
+                  type="text"
+                  value={formData.appId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, appId: e.target.value }))}
+                  placeholder="Введите App ID"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="appSecret">App Secret *</Label>
+                <Input
+                  id="appSecret"
+                  type="password"
+                  value={formData.appSecret}
+                  onChange={(e) => setFormData(prev => ({ ...prev, appSecret: e.target.value }))}
+                  placeholder="Введите App Secret"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="appSecret">App Secret *</Label>
-              <Input
-                id="appSecret"
-                type="password"
-                placeholder="Введите App Secret из Facebook приложения"
-                value={formData.appSecret}
-                onChange={(e) => setFormData({ ...formData, appSecret: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="instagramId">Instagram Business Account ID (опционально)</Label>
-              <Input
-                id="instagramId"
-                placeholder="ID Instagram Business аккаунта"
-                value={formData.instagramId}
-                onChange={(e) => setFormData({ ...formData, instagramId: e.target.value })}
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Можно оставить пустым, будет определен автоматически
-              </p>
-            </div>
-
+            {/* Кнопка получения токена */}
             <Button 
-              onClick={handleSaveSettings} 
-              disabled={loading}
+              onClick={handleGetToken}
+              disabled={isProcessing || !formData.appId || !formData.appSecret}
               className="w-full"
+              variant="outline"
             >
-              {loading ? (
+              {isProcessing ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Сохранение...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Получение токена...
                 </>
               ) : (
-                hasSettings ? 'Обновить настройки' : 'Сохранить настройки'
+                <>
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Получить токен Instagram
+                </>
               )}
             </Button>
-          </div>
 
-          <Separator />
+            {/* Access Token и Business Account ID */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="accessToken">Access Token *</Label>
+                <Input
+                  id="accessToken"
+                  type="text"
+                  value={formData.accessToken}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+                  placeholder="Вставьте полученный токен"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="businessAccountId">Business Account ID *</Label>
+                <Input
+                  id="businessAccountId"
+                  type="text"
+                  value={formData.businessAccountId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, businessAccountId: e.target.value }))}
+                  placeholder="Введите Business Account ID"
+                  required
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <strong>Как получить App ID и App Secret:</strong><br />
-              1. Перейдите в <a href="https://developers.facebook.com/" target="_blank" className="text-blue-600 hover:underline">Facebook Developers</a><br />
-              2. Создайте приложение типа "Business"<br />
-              3. Добавьте продукт "Instagram Basic Display"<br />
-              4. Скопируйте App ID и App Secret из настроек приложения
-            </AlertDescription>
-          </Alert>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Кнопки управления - точно как в VK wizard */}
+      <div className="mt-6 flex justify-between">
+        <Button 
+          variant="outline" 
+          onClick={onCancel}
+          disabled={isProcessing}
+        >
+          Отмена
+        </Button>
+        
+        <Button 
+          onClick={handleSaveSettings}
+          disabled={isProcessing || !formData.accessToken || !formData.businessAccountId}
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Сохранение...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Сохранить настройки
+            </>
+          )}
+        </Button>
+      </div>
+      </div>
+    </div>
   );
 };
 
-export default InstagramSetupWizard;
+export default InstagramSetupWizardSimple;

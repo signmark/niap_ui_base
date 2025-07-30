@@ -32,7 +32,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
-import InstagramSetupWizard from "./InstagramSetupWizardComplete";
+import InstagramSetupWizard from "./InstagramSetupWizardSimple";
 import VkSetupWizard from "./VkSetupWizard";
 import type { SocialMediaSettings } from "@shared/schema";
 
