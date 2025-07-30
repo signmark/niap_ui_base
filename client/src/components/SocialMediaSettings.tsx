@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/accordion";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 import InstagramSetupWizard from "./InstagramSetupWizardComplete";
+import VkSetupWizard from "./VkSetupWizard";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -86,6 +87,9 @@ export function SocialMediaSettings({
   
   // Состояние для показа Instagram wizard
   const [showInstagramWizard, setShowInstagramWizard] = useState(false);
+  
+  // Состояние для показа VK wizard
+  const [showVkWizard, setShowVkWizard] = useState(false);
   
   // Состояние для Instagram настроек из базы данных
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
@@ -630,7 +634,8 @@ export function SocialMediaSettings({
   };
 
   return (
-    <Form {...form}>
+    <div className="space-y-6">
+      <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Accordion type="multiple" className="space-y-2">
           {/* Telegram Settings */}
@@ -707,6 +712,25 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">VK OAuth настройки</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                      Настройте VK OAuth для этой кампании
+                    </p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowVkWizard(true)}
+                  >
+                    Настроить VK
+                  </Button>
+                </div>
+              </div>
+
               <FormField
                 control={form.control}
                 name="vk.token"
@@ -1134,7 +1158,44 @@ export function SocialMediaSettings({
             Сохранить настройки
           </Button>
         </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+      
+      {/* Instagram Setup Wizard */}
+      <InstagramSetupWizard
+        isOpen={showInstagramWizard}
+        onClose={() => setShowInstagramWizard(false)}
+        campaignId={campaignId}
+        onComplete={() => {
+          setShowInstagramWizard(false);
+          loadInstagramSettings();
+          if (onSettingsUpdated) {
+            onSettingsUpdated();
+          }
+        }}
+      />
+
+      {/* VK Setup Wizard Dialog */}
+      {showVkWizard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <VkSetupWizard
+              campaignId={campaignId}
+              onComplete={() => {
+                setShowVkWizard(false);
+                if (onSettingsUpdated) {
+                  onSettingsUpdated();
+                }
+                toast({
+                  title: "VK OAuth настройка завершена",
+                  description: "VK интеграция успешно настроена для этой кампании",
+                });
+              }}
+              onCancel={() => setShowVkWizard(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

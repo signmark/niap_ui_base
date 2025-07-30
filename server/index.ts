@@ -352,6 +352,22 @@ app.use((req, res, next) => {
     app.use('/api', instagramOAuthRouter);
     console.log("Instagram OAuth routes registered");
     log("Instagram OAuth routes registered successfully");
+
+    // Регистрируем VK OAuth маршруты
+    console.log("Registering VK OAuth routes...");
+    log("Registering VK OAuth routes...");
+    const vkOAuthRouter = (await import('./routes/vk-oauth')).default;
+    app.use('/api', vkOAuthRouter);
+    console.log("VK OAuth routes registered");
+    log("VK OAuth routes registered successfully");
+
+    // Регистрируем VK настройки кампании
+    console.log("Registering VK Campaign Settings routes...");
+    log("Registering VK Campaign Settings routes...");
+    const vkSettingsRouter = (await import('./routes/campaign-vk-settings')).default;
+    app.use('/api', vkSettingsRouter);
+    console.log("VK Campaign Settings routes registered");
+    log("VK Campaign Settings routes registered successfully");
     
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
