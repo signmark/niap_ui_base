@@ -102,7 +102,7 @@ export function SocialMediaSettings({
     defaultValues: initialSettings || {
       telegram: { token: null, chatId: null },
       vk: { token: null, groupId: null },
-      instagram: { token: null, accessToken: null, businessAccountId: null },
+      instagram: { token: null, accessToken: null, businessAccountId: null, appId: null, appSecret: null },
       facebook: { token: null, pageId: null },
       youtube: { apiKey: null, channelId: null, accessToken: null, refreshToken: null }
     }
@@ -434,7 +434,14 @@ export function SocialMediaSettings({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form 
+        onSubmit={(e) => {
+          console.log('🔥 [FORM SUBMIT] Form onSubmit triggered');
+          console.log('🔥 [FORM SUBMIT] Event:', e);
+          return form.handleSubmit(onSubmit)(e);
+        }} 
+        className="space-y-4"
+      >
         <Accordion type="multiple" className="space-y-2">
           {/* Telegram Settings */}
           <AccordionItem value="telegram">
@@ -879,7 +886,20 @@ export function SocialMediaSettings({
         </Accordion>
 
         <div className="flex justify-end space-x-2 pt-4">
-          <Button type="submit" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            onClick={(e) => {
+              console.log('🔥 [BUTTON CLICK] Кнопка "Сохранить настройки" нажата');
+              console.log('🔥 [BUTTON CLICK] Event:', e);
+              console.log('🔥 [BUTTON CLICK] Form valid:', form.formState.isValid);
+              console.log('🔥 [BUTTON CLICK] Form errors:', form.formState.errors);
+              console.log('🔥 [BUTTON CLICK] Instagram errors:', form.formState.errors.instagram);
+              console.log('🔥 [BUTTON CLICK] Form values:', form.getValues());
+              console.log('🔥 [BUTTON CLICK] Instagram form values:', form.getValues().instagram);
+              // Не предотвращаем событие по умолчанию, чтобы форма отправилась
+            }}
+          >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
           </Button>
