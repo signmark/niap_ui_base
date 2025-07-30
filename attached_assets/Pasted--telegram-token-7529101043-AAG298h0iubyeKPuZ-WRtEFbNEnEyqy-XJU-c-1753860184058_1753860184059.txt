@@ -1,0 +1,39 @@
+{
+    "telegram": {
+        "token": "7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU",
+        "chatId": "@ya_delayu_moschno"
+    },
+    "vk": {
+        "token": "vk1.a.UKOAoDRnG4khPrf2NwOwicRca0m5p1rRi6wD0I471GhfsMX9Eu627G1jhv_92EsHeuRH_yPF0OgIF0P0gKrRKNFjJIP18y_vWuSx1CCpspKXF7BZSDgURvTgU6xzIZWArQ3ZTqxow6kQxhrwzjIJ0r1Jimzp0EbA_Q6Aq8jRT-pZkYyChxHMcqFHLvcpxXU-STkreUCBLAk0x7-OzvyaTw",
+        "groupId": "club228626989"
+    },
+    "instagram": {
+        "appId": "1234567890123456",
+        "appSecret": "test_app_secret_12345",
+        "token": "EAA6a265xuGsBPALZCj8WmPNKZAhSb7KZBz3WxL3hPCEnws2jO1C0BrpUBipoK8oINrFZC0xClQROaZBjY9TZAo3iHgZBZCEKPJrIdVRzG4hkkI32j7DxqJbCXjL47kDLeLJ3WIgjB5n0LMe7sBTWRWHPLDxUeYNW3nxvI1qJc33FLflGzEdvzAv5hHaAQFS77SdGQO9ZB",
+        "businessAccountId": "17841422578516105",
+        "instagramId": "17841422578516105",
+        "setupCompletedAt": "2025-07-29T15:26:24.815Z",
+        "configured": true,
+        "longLivedToken": "EAAxKZAfikOYwBPMdufBpvjs0fOTMQPuh9MGIFC1ZBFnwxAUU0bMmxz0ZClsf1wGjHcwgyp26tD8NbmPfhUD6evqqT2IoUgZARLnUVnLaWkFThOCVEiGw64b3Yg7mkZCVJRKCYZArApJM9xiPP9IyZBOKwLcOcBpOKr20qsKeB1qOFCCiaZBnCwkTiZAshdqCv",
+        "tokenExpiresAt": null,
+        "user": {
+            "id": "30968234576125885",
+            "name": "Dmitry Zhdanov"
+        },
+        "instagramAccounts": [],
+        "authTimestamp": "2025-07-29T15:19:38.721Z",
+        "status": "active",
+        "accessToken": "test_access_token_12345"
+    },
+    "facebook": {
+        "token": "EAA520SFRtvcBO40ZAUoxBvuj2y8mOjJ3SUZBcwG7ZAQFQXZA8z5dde8dCbQCP5WZA6NqMcZCUi9qbZBIwC8aqWIvZBHGUeGmMmbdAipFdU0N1W5bPDe1E8GJ98W5YM9rC1B6uvIE7E96RDcEj6LC1XpriuzGSWXTeLfFsYZCLpkOrXhbxDm1hXWWmccBKwuAn8KUoSfMI38a5",
+        "pageId": "2120362494678794"
+    },
+    "youtube": {
+        "apiKey": "",
+        "channelId": "UCVRgBDrh8eSWbPsLHEdBARQ",
+        "accessToken": "ya29.a0AS3H6Nxg-ZKdRZHItoY8alWfKFzOyoCGCbnsIWQ PIjMyvA1p7-R8neZi2fum0wOWrN5VFy1THsGERod-qMFy-W0yEbLeiFQdfhdlxQb0B4VeRLgfJNj0iWkEjNPaFcgvwtfAeFEwttJUfl_MCI28ejmKW7u2nDePqpuf8l5QaCgYKAQESARYSFQHGX2Mis0XMVsQ5WOFeo84zk7gXMA0175",
+        "refreshToken": "1//0cIpHE3i6FzzzCgYIARAAGAwSNwF-L9Irlz4q734p75g42tzaJZcCdgjfONvhDFzj__ISPw3qpkxm3SZkXaAkJEyFYr7Au5PFuRo"
+    }
+}

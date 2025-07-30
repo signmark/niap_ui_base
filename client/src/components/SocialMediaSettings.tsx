@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -86,6 +86,10 @@ export function SocialMediaSettings({
   // Состояние для показа Instagram wizard
   const [showInstagramWizard, setShowInstagramWizard] = useState(false);
   
+  // Состояние для Instagram настроек из базы данных
+  const [instagramSettings, setInstagramSettings] = useState<any>(null);
+  const [loadingInstagramSettings, setLoadingInstagramSettings] = useState(false);
+  
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
   const [vkStatus, setVkStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -103,6 +107,32 @@ export function SocialMediaSettings({
       youtube: { apiKey: null, channelId: null, accessToken: null, refreshToken: null }
     }
   });
+
+  // Функция загрузки Instagram настроек из базы данных
+  const loadInstagramSettings = async () => {
+    console.log('🔥 Loading Instagram settings for campaign:', campaignId);
+    setLoadingInstagramSettings(true);
+    try {
+      const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
+      console.log('🔥 Instagram settings response:', response.data);
+      
+      if (response.data.success && response.data.settings) {
+        setInstagramSettings(response.data.settings);
+        console.log('🔥 Instagram settings loaded successfully');
+      }
+    } catch (error) {
+      console.error('Error loading Instagram settings:', error);
+    } finally {
+      setLoadingInstagramSettings(false);
+    }
+  };
+
+  // Загружаем Instagram настройки при монтировании компонента
+  useEffect(() => {
+    if (campaignId) {
+      loadInstagramSettings();
+    }
+  }, [campaignId]);
 
   // Функции проверки API ключей
   const validateTelegramToken = async () => {
@@ -551,11 +581,17 @@ export function SocialMediaSettings({
                   </div>
                   <Button 
                     type="button" 
-                    variant={initialSettings?.instagram?.token ? "default" : "outline"}
+                    variant={instagramSettings?.configured || initialSettings?.instagram?.token ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowInstagramWizard(!showInstagramWizard)}
+                    disabled={loadingInstagramSettings}
                   >
-                    {initialSettings?.instagram?.token ? 'Настроено' : 'Настроить Instagram'}
+                    {loadingInstagramSettings ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Загрузка...
+                      </>
+                    ) : (instagramSettings?.configured || initialSettings?.instagram?.token) ? 'Настроено' : 'Настроить Instagram'}
                   </Button>
                 </div>
               </div>
@@ -563,7 +599,7 @@ export function SocialMediaSettings({
               {showInstagramWizard && (
                 <InstagramSetupWizard 
                   campaignId={campaignId}
-                  instagramSettings={{
+                  instagramSettings={instagramSettings || {
                     appId: initialSettings?.instagram?.appId || '',
                     appSecret: initialSettings?.instagram?.appSecret || '',
                     instagramId: initialSettings?.instagram?.businessAccountId || '',
@@ -571,6 +607,7 @@ export function SocialMediaSettings({
                   }}
                   onSettingsUpdate={(settings) => {
                     // Обновляем состояние после сохранения
+                    loadInstagramSettings(); // Перезагружаем настройки
                     if (onSettingsUpdated) {
                       onSettingsUpdated();
                     }
