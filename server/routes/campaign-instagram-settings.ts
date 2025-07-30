@@ -544,11 +544,19 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
     }
 
     console.log(`🎉 Discovery complete! Found ${discoveredAccounts.length} Instagram accounts`);
+    
+    // Преобразуем структуру для клиента (id, name вместо pageId, pageName)
+    const formattedAccounts = discoveredAccounts.map(account => ({
+      id: account.instagramId,
+      name: account.pageName,
+      pageId: account.pageId,
+      accountType: account.accountType
+    }));
 
     res.json({
       success: true,
-      accounts: discoveredAccounts,
-      totalFound: discoveredAccounts.length
+      accounts: formattedAccounts,
+      totalFound: formattedAccounts.length
     });
 
   } catch (error: any) {
