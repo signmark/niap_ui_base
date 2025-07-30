@@ -1050,14 +1050,20 @@ export function SocialMediaSettings({
                         <CardContent className="p-3">
                           <div className="flex justify-between items-center">
                             <div>
-                              <h5 className="font-semibold">{account.name}</h5>
+                              <h5 className="font-semibold">{account.name || getInstagramAccountName(account.id)}</h5>
                               {account.username && (
                                 <p className="text-sm text-gray-600">@{account.username}</p>
                               )}
                               <span className="text-xs text-gray-500">ID: {account.id}</span>
+                              {instagramSettings?.businessAccountId === account.id && (
+                                <div className="flex items-center mt-1">
+                                  <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
+                                  <span className="text-xs text-green-600 font-medium">Активный аккаунт</span>
+                                </div>
+                              )}
                             </div>
                             <Button 
-                              onClick={() => handleSelectNewAccount(account.id, account.name)}
+                              onClick={() => handleSelectNewAccount(account.id, account.name || getInstagramAccountName(account.id))}
                               disabled={loadingAccounts}
                               size="sm"
                               variant={instagramSettings?.businessAccountId === account.id ? "default" : "outline"}
