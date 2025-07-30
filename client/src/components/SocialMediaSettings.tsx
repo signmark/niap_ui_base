@@ -106,12 +106,15 @@ export function SocialMediaSettings({
   const [facebookStatus, setFacebookStatus] = useState<ValidationStatus>({ isLoading: false });
   const [youtubeStatus, setYoutubeStatus] = useState<ValidationStatus>({ isLoading: false });
 
+  // Состояние для переключения Instagram аккаунтов
+  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  
   // Состояние для доступных Instagram аккаунтов
   const [availableInstagramAccounts, setAvailableInstagramAccounts] = useState<Array<{
-    pageId: string;
-    pageName: string;
-    instagramId: string;
-    accountType: string;
+    id: string;
+    name: string;
+    username?: string;
   }>>([]);
 
   const form = useForm<SocialMediaSettings>({
@@ -168,6 +171,90 @@ export function SocialMediaSettings({
   };
 
   // Функция загрузки Instagram настроек из базы данных
+  // Функция для переключения Instagram аккаунтов
+  const handleSwitchInstagramAccount = async () => {
+    if (!instagramSettings?.accessToken) {
+      toast({
+        variant: "destructive",
+        description: "Сначала настройте Instagram токен"
+      });
+      return;
+    }
+
+    setLoadingAccounts(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          accessToken: instagramSettings.accessToken
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success && data.accounts) {
+        setAvailableInstagramAccounts(data.accounts);
+        setShowAccountSwitcher(true);
+        toast({
+          title: "Аккаунты найдены",
+          description: `Найдено ${data.accounts.length} Instagram Business аккаунтов`
+        });
+      } else {
+        throw new Error(data.error || 'Аккаунты не найдены');
+      }
+    } catch (error: any) {
+      console.error('Error discovering Instagram accounts:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  // Функция выбора нового Instagram аккаунта
+  const handleSelectNewAccount = async (accountId: string, accountName: string) => {
+    try {
+      setLoadingAccounts(true);
+      
+      // Обновляем настройки в базе данных
+      const currentSettings = form.getValues();
+      const updatedSettings = {
+        ...currentSettings,
+        instagram: {
+          ...currentSettings.instagram,
+          businessAccountId: accountId
+        }
+      };
+      
+      await onSubmit(updatedSettings);
+      
+      // Перезагружаем настройки Instagram
+      await loadInstagramSettings();
+      
+      setShowAccountSwitcher(false);
+      toast({
+        title: "Аккаунт изменен",
+        description: `Выбран новый аккаунт: ${accountName}`
+      });
+    } catch (error: any) {
+      console.error('Error switching Instagram account:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить аккаунт",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
   const loadInstagramSettings = async () => {
     setLoadingInstagramSettings(true);
     try {
@@ -875,33 +962,96 @@ export function SocialMediaSettings({
                   <div>
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      {instagramSettings?.token || instagramSettings?.configured 
-                        ? `Настроено: аккаунт ${instagramSettings.user?.name || 'Instagram Business'}` 
+                      {instagramSettings?.businessAccountId 
+                        ? `Аккаунт ID: ${instagramSettings.businessAccountId}` 
                         : 'Настройте Instagram API для этой кампании'
                       }
                     </p>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant={instagramSettings?.configured || instagramSettings?.token ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      console.log('Открываем Instagram мастер для настройки/пересконфигурации');
-                      setShowInstagramWizard(true);
-                    }}
-                    disabled={loadingInstagramSettings}
-                  >
-                    {loadingInstagramSettings ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Загрузка...
-                      </>
-                    ) : (instagramSettings?.configured || instagramSettings?.token) ? 'Пересконфигурировать' : 'Настроить Instagram'}
-                  </Button>
+                  <div className="flex space-x-2">
+                    {instagramSettings?.accessToken && (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSwitchInstagramAccount}
+                        disabled={loadingAccounts || loadingInstagramSettings}
+                      >
+                        {loadingAccounts ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Поиск...
+                          </>
+                        ) : (
+                          <>
+                            🔄 Сменить аккаунт
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    <Button 
+                      type="button" 
+                      variant={instagramSettings?.configured || instagramSettings?.token ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        console.log('Открываем Instagram мастер для настройки/пересконфигурации');
+                        setShowInstagramWizard(true);
+                      }}
+                      disabled={loadingInstagramSettings}
+                    >
+                      {loadingInstagramSettings ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Загрузка...
+                        </>
+                      ) : (instagramSettings?.configured || instagramSettings?.token) ? 'Пересконфигурировать' : 'Настроить Instagram'}
+                    </Button>
+                  </div>
                 </div>
               </div>
               
 
+              
+              {/* Переключатель аккаунтов Instagram */}
+              {showAccountSwitcher && availableInstagramAccounts.length > 0 && (
+                <div className="space-y-3 p-4 border rounded-lg bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium">Выберите Instagram Business аккаунт:</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowAccountSwitcher(false)}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {availableInstagramAccounts.map((account) => (
+                      <Card key={account.id} className="cursor-pointer hover:bg-gray-100 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h5 className="font-semibold">{account.name}</h5>
+                              {account.username && (
+                                <p className="text-sm text-gray-600">@{account.username}</p>
+                              )}
+                              <span className="text-xs text-gray-500">ID: {account.id}</span>
+                            </div>
+                            <Button 
+                              onClick={() => handleSelectNewAccount(account.id, account.name)}
+                              disabled={loadingAccounts}
+                              size="sm"
+                              variant={instagramSettings?.businessAccountId === account.id ? "default" : "outline"}
+                            >
+                              {instagramSettings?.businessAccountId === account.id ? 'Текущий' : 'Выбрать'}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               {/* Instagram поля скрыты - используется только мастер настройки */}
             </AccordionContent>
