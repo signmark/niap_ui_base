@@ -181,7 +181,7 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
     // Получаем страницы Facebook пользователя
     console.log('📋 Getting Facebook pages...');
     const pagesResponse = await axios.get(
-      `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name,instagram_business_account`
+      `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
     );
 
     console.log('📋 Facebook pages response:', JSON.stringify(pagesResponse.data, null, 2));
@@ -192,16 +192,29 @@ router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, re
 
     // Ищем Instagram Business Account среди страниц и собираем информацию о доступных страницах
     for (const page of pages) {
+      // Проверяем оба типа подключений: instagram_business_account И connected_instagram_account
+      const hasBusinessAccount = !!(page.instagram_business_account && page.instagram_business_account.id);
+      const hasConnectedAccount = !!(page.connected_instagram_account && page.connected_instagram_account.id);
+      
       availablePages.push({
         id: page.id,
         name: page.name,
-        hasInstagramBusiness: !!(page.instagram_business_account && page.instagram_business_account.id)
+        hasInstagramBusiness: hasBusinessAccount,
+        hasConnectedInstagram: hasConnectedAccount,
+        instagramBusinessId: page.instagram_business_account?.id || null,
+        connectedInstagramId: page.connected_instagram_account?.id || null
       });
       
+      // Приоритет: сначала ищем instagram_business_account, потом connected_instagram_account
       if (page.instagram_business_account && page.instagram_business_account.id) {
         instagramBusinessAccountId = page.instagram_business_account.id;
         console.log('✅ Found Instagram Business Account ID:', instagramBusinessAccountId);
-        console.log('✅ From Facebook page:', page.name, '(ID:', page.id, ')');
+        console.log('✅ From Facebook page:', page.name, '(ID:', page.id, ') via instagram_business_account');
+        break;
+      } else if (page.connected_instagram_account && page.connected_instagram_account.id) {
+        instagramBusinessAccountId = page.connected_instagram_account.id;
+        console.log('✅ Found Instagram Account ID via connected_instagram_account:', instagramBusinessAccountId);
+        console.log('✅ From Facebook page:', page.name, '(ID:', page.id, ') via connected_instagram_account');
         break;
       }
     }

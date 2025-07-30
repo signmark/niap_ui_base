@@ -396,7 +396,12 @@ export function SocialMediaSettings({
       // Если есть детали с доступными страницами, покажем их пользователю
       if (error.response?.data?.details?.availablePages) {
         const pages = error.response.data.details.availablePages;
-        const pageInfo = pages.map((p: any) => `${p.name} (${p.hasInstagramBusiness ? 'есть Instagram' : 'нет Instagram'})`).join(', ');
+        const pageInfo = pages.map((p: any) => {
+          let status = 'нет Instagram';
+          if (p.hasInstagramBusiness) status = 'есть Business Account';
+          else if (p.hasConnectedInstagram) status = 'есть Connected Account';
+          return `${p.name} (${status})`;
+        }).join(', ');
         errorMessage += `\n\nВаши Facebook страницы: ${pageInfo}`;
       }
       
