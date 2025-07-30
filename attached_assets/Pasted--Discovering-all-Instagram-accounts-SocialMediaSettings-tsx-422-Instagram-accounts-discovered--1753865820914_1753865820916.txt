@@ -1,0 +1,33 @@
+ Discovering all Instagram accounts...
+SocialMediaSettings.tsx:422 ✅ Instagram accounts discovered: (2) [{…}, {…}]
+SocialMediaSettings.tsx:466 🔍 Selecting known Instagram account: 17841422578516105 from page Дмитрий Жданов
+SocialMediaSettings.tsx:624 🔥 [SAVE SETTINGS] Отправляем настройки: {telegram: {…}, vk: {…}, instagram: {…}, facebook: {…}, youtube: {…}}
+SocialMediaSettings.tsx:625 🔥 [SAVE SETTINGS] Campaign ID: 45daab2a-4c6f-4578-8665-3a049458c0c8
+SocialMediaSettings.tsx:626 🔥 [SAVE SETTINGS] Form data: {
+  "telegram": {
+    "token": "7529101043:AAG298h0iubyeKPuZ-WRtEFbNEnEyqy_XJU",
+    "chatId": "@futureland_ai"
+  },
+  "vk": {
+    "token": "vk1.a.p6TbnW94hXTWfo1idvHUVZyG5AI1uj78UwEzaAn7MNmoP-1yz5cWfKtV6SqBxsjKCkwW2qH78XwH48VMq5s-NQP9ATfMkcBxGWpgjsi7zH1oowwIUygTvuBv7HjJlg9zA6bMWv5Y6sM-06M8ZXRQZDgtGtHEwoONkv616FVnFI4AsXyx7C-La_qSV0phjYG4OTkz7xmOENdjAgmqD_W6OQ",
+    "groupId": "31533937"
+  },
+  "instagram": {
+    "token": "EAAxKZAfikOYwBPFgcGqLozJuZA3sBP7IvSghk5q5I4WkyBCzeuZAbML1WYthPfq3LusBZA0YjOaiQXybHgy3uiB1KL2bi4on9VyiN9mQTIVG28yoIcCKOvCkuxCspzspt6cA1u7rAq7deZAry1SKZBtuoOgraZCCaHfxu3H1XZAqUEQXHf9OhmswXjQ4jeld",
+    "accessToken": "EAAxKZAfikOYwBPFgcGqLozJuZA3sBP7IvSghk5q5I4WkyBCzeuZAbML1WYthPfq3LusBZA0YjOaiQXybHgy3uiB1KL2bi4on9VyiN9mQTIVG28yoIcCKOvCkuxCspzspt6cA1u7rAq7deZAry1SKZBtuoOgraZCCaHfxu3H1XZAqUEQXHf9OhmswXjQ4jeld",
+    "businessAccountId": "17841422578516105",
+    "appId": "3459501544192396",
+    "appSecret": "50df248e9dae8af129403334c0ec28b9"
+  },
+  "facebook": {
+    "token": "EAA520SFRtvcBO9Y7LhiiZBqwsqdZCP9JClMUoJZCvjsSc8qs9aheLdWefOqrZBLQhe5T0ZBerS6mZAZAP6D4i8Ln5UBfiIyVEif1LrzcAzG6JNrhW2DJeEzObpp9Mzoh8tDZA9I0HigkLnFZCaJVZCQcGDAkZBRxwnVimZBdbvokeg19i5RuGTbfuFs9UC9R",
+    "pageId": "2120362494678794"
+  },
+  "youtube": {
+    "apiKey": null,
+    "channelId": null
+  }
+}
+SocialMediaSettings.tsx:632 🔥 [SAVE SETTINGS] Отправляем PATCH запрос к /api/campaigns/ 45daab2a-4c6f-4578-8665-3a049458c0c8
+SocialMediaSettings.tsx:637 🔥 [SAVE SETTINGS] Ответ сервера: {data: '<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <sty…N_ip6alE6Z2HX-_LpYMn">\x3C/script>\n  </body>\n</html>', status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+SocialMediaSettings.tsx:486 ✅ Known Instagram account selected and saved successfully

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { api } from "@/lib/api";
+import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -628,10 +629,13 @@ export function SocialMediaSettings({
     try {
       setIsLoading(true);
 
-      // Используем наш API endpoint вместо прямого обращения к Directus
+      // Используем apiRequest для правильной авторизации
       console.log('🔥 [SAVE SETTINGS] Отправляем PATCH запрос к /api/campaigns/', campaignId);
-      const response = await api.patch(`/api/campaigns/${campaignId}`, {
-        social_media_settings: data
+      const response = await apiRequest(`/api/campaigns/${campaignId}`, {
+        method: 'PATCH',
+        data: {
+          social_media_settings: data
+        }
       });
 
       console.log('🔥 [SAVE SETTINGS] Ответ сервера:', response);
