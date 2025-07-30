@@ -398,30 +398,33 @@ export function SocialMediaSettings({
   };
 
   const onSubmit = async (data: SocialMediaSettings) => {
-    console.log('🔥 Отправляем настройки:', data);
-    console.log('🔥 Campaign ID:', campaignId);
+    console.log('🔥 [SAVE SETTINGS] Отправляем настройки:', data);
+    console.log('🔥 [SAVE SETTINGS] Campaign ID:', campaignId);
+    console.log('🔥 [SAVE SETTINGS] Form data:', JSON.stringify(data, null, 2));
     
     try {
       setIsLoading(true);
 
       // Используем наш API endpoint вместо прямого обращения к Directus
-      console.log('🔥 Отправляем PATCH запрос к /campaigns/', campaignId);
-      const response = await api.patch(`/campaigns/${campaignId}`, {
+      console.log('🔥 [SAVE SETTINGS] Отправляем PATCH запрос к /api/campaigns/', campaignId);
+      const response = await api.patch(`/api/campaigns/${campaignId}`, {
         social_media_settings: data
       });
 
-      console.log('🔥 Ответ сервера:', response);
+      console.log('🔥 [SAVE SETTINGS] Ответ сервера:', response);
 
       toast({
+        title: "Успешно!",
         description: "Настройки соцсетей обновлены"
       });
 
       onSettingsUpdated?.();
     } catch (error: any) {
-      console.error('🔥 Ошибка при обновлении настроек:', error);
-      console.error('🔥 Детали ошибки:', error.response?.data);
+      console.error('🔥 [SAVE SETTINGS] Ошибка при обновлении настроек:', error);
+      console.error('🔥 [SAVE SETTINGS] Детали ошибки:', error.response?.data);
       toast({
         variant: "destructive",
+        title: "Ошибка!",
         description: error.response?.data?.message || error.message || "Ошибка при обновлении настроек"
       });
     } finally {
