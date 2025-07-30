@@ -182,9 +182,14 @@ export function SocialMediaSettings({
   // Функция загрузки Instagram настроек из базы данных
   // Функция для переключения Instagram аккаунтов
   const handleSwitchInstagramAccount = async () => {
+    console.log('🔄 Instagram: Начинаем поиск аккаунтов для переключения');
+    console.log('🔄 Instagram: Текущие настройки:', instagramSettings);
+    
     if (!instagramSettings?.accessToken) {
+      console.log('❌ Instagram: Отсутствует accessToken');
       toast({
         variant: "destructive",
+        title: "Ошибка",
         description: "Сначала настройте Instagram токен"
       });
       return;
@@ -192,6 +197,7 @@ export function SocialMediaSettings({
 
     setLoadingAccounts(true);
     try {
+      console.log('🔍 Instagram: Отправляем запрос на поиск аккаунтов...');
       const response = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
         method: 'POST',
         headers: {
@@ -204,8 +210,10 @@ export function SocialMediaSettings({
       });
 
       const data = await response.json();
+      console.log('📊 Instagram: Ответ от сервера:', data);
       
       if (data.success && data.accounts) {
+        console.log('✅ Instagram: Найдены аккаунты:', data.accounts);
         setAvailableInstagramAccounts(data.accounts);
         setShowAccountSwitcher(true);
         toast({
@@ -213,10 +221,11 @@ export function SocialMediaSettings({
           description: `Найдено ${data.accounts.length} Instagram Business аккаунтов`
         });
       } else {
+        console.log('❌ Instagram: Аккаунты не найдены:', data);
         throw new Error(data.error || 'Аккаунты не найдены');
       }
     } catch (error: any) {
-      console.error('Error discovering Instagram accounts:', error);
+      console.error('❌ Instagram: Ошибка при поиске аккаунтов:', error);
       toast({
         title: "Ошибка",
         description: error.message,
@@ -983,7 +992,7 @@ export function SocialMediaSettings({
                         type="button" 
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowAccountSwitcher(true)}
+                        onClick={handleSwitchInstagramAccount}
                         disabled={loadingAccounts || loadingInstagramSettings}
                       >
                         {loadingAccounts ? (
