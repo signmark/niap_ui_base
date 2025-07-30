@@ -4023,9 +4023,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerTestInstagramCarouselRoute(app);
   console.log('Test Instagram routes registered');
   
-  // Регистрируем Instagram настройки кампаний
-  app.use('/api/campaigns', instagramSettingsRouter);
-  console.log('Instagram settings routes registered');
+  // Instagram настройки кампаний уже зарегистрированы в index.ts
+  // app.use('/api/campaigns', instagramSettingsRouter);
+  console.log('Instagram settings routes already registered in index.ts');
   
   console.log('Social platform webhook routes registered successfully');
   

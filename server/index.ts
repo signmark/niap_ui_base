@@ -136,13 +136,9 @@ log('User API keys routes registered early to avoid Vite middleware interception
 app.use('/api/instagram-setup', instagramSetupRoutes);
 log('Instagram Setup Wizard routes registered');
 
-// Регистрируем Instagram Campaign Settings маршруты
-const campaignInstagramRoutes = (await import('./routes/campaign-instagram-settings')).default;
-const instagramOAuthRoutes = (await import('./routes/instagram-oauth')).default;
-app.use('/api', campaignInstagramRoutes);
-app.use('/api', instagramOAuthRoutes);
-log('Campaign Instagram settings routes registered');
-log('Instagram OAuth routes registered');
+// Instagram Campaign Settings маршруты будут зарегистрированы ПОСЛЕ registerRoutes
+// чтобы иметь приоритет над конфликтующими маршрутами в routes.ts
+log('Instagram Campaign Settings routes will be registered after main routes');
 
 // Дополнительно дублируем маршрут is-admin с явными заголовками Content-Type
 app.get('/api/auth/is-admin', async (req, res) => {
@@ -332,6 +328,15 @@ app.use((req, res, next) => {
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
     
+    // Регистрируем Instagram Campaign Settings маршруты ПОСЛЕ registerRoutes
+    // чтобы они имели приоритет над конфликтующими маршрутами в routes.ts
+    console.log("Registering Instagram Campaign Settings routes...");
+    log("Registering Instagram Campaign Settings routes...");
+    const campaignInstagramRoutes = (await import('./routes/campaign-instagram-settings')).default;
+    app.use('/api', campaignInstagramRoutes);
+    console.log("Instagram Campaign Settings routes registered");
+    log('Instagram Campaign Settings routes registered with priority');
+    
     // Регистрируем YouTube OAuth маршруты
     console.log("Registering YouTube OAuth routes...");
     log("Registering YouTube OAuth routes...");
@@ -340,13 +345,9 @@ app.use((req, res, next) => {
     console.log("YouTube OAuth routes registered");
     log("YouTube OAuth routes registered successfully");
     
-    // Регистрируем Instagram OAuth маршруты
-    console.log("Registering Instagram OAuth routes...");
-    log("Registering Instagram OAuth routes...");
-    const instagramOAuthRouter = (await import('./routes/instagram-oauth')).default;
-    app.use('/api/social/instagram/oauth', instagramOAuthRouter);
-    console.log("Instagram OAuth routes registered");
-    log("Instagram OAuth routes registered successfully");
+    // Instagram OAuth маршруты уже зарегистрированы вместе с Campaign Settings
+    console.log("Instagram OAuth routes already registered with Campaign Settings");
+    log("Instagram OAuth routes already registered with Campaign Settings");
     
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
