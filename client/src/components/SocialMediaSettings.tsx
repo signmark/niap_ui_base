@@ -121,32 +121,11 @@ export function SocialMediaSettings({
     console.log('🔥 Loading Instagram settings for campaign:', campaignId);
     setLoadingInstagramSettings(true);
     try {
-      // Попробуем запрос напрямую без авторизации, так как роутер имеет fallback на системный токен
-      const response = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Используем API client с авторизацией 
+      const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const responseText = await response.text();
-      console.log('🔥 Raw response text:', responseText);
-      console.log('🔥 Response status:', response.status);
-      console.log('🔥 Response headers:', response.headers);
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log('🔥 Parsed JSON data:', data);
-      } catch (e) {
-        console.error('🔥 Failed to parse JSON:', e);
-        console.log('🔥 Response is not valid JSON');
-        return;
-      }
+      const data = response.data;
+      console.log('🔥 Instagram settings response data:', data);
       
       if (data.success && data.settings) {
         setInstagramSettings(data.settings);
