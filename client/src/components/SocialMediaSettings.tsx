@@ -141,17 +141,23 @@ export function SocialMediaSettings({
       
       // Приводим данные из базы к формату схемы формы
       const formattedInstagramData = {
-        token: instagramSettings.username || null,
-        accessToken: instagramSettings.accessToken || null,
-        businessAccountId: instagramSettings.businessAccountId || null,
-        appId: instagramSettings.appId || null,
-        appSecret: instagramSettings.appSecret || null,
+        token: instagramSettings.longLivedToken || instagramSettings.accessToken || instagramSettings.token || '',
+        accessToken: instagramSettings.longLivedToken || instagramSettings.accessToken || instagramSettings.token || '',
+        businessAccountId: instagramSettings.businessAccountId || instagramSettings.instagramId || '',
+        appId: instagramSettings.appId || '',
+        appSecret: instagramSettings.appSecret || '',
       };
       
       console.log('🔥 Formatted Instagram data for form:', formattedInstagramData);
       
-      // Обновляем только Instagram часть формы
-      form.setValue('instagram', formattedInstagramData);
+      // Обновляем каждое поле отдельно для уверенности
+      form.setValue('instagram.token', formattedInstagramData.token);
+      form.setValue('instagram.accessToken', formattedInstagramData.accessToken);
+      form.setValue('instagram.businessAccountId', formattedInstagramData.businessAccountId);
+      form.setValue('instagram.appId', formattedInstagramData.appId);
+      form.setValue('instagram.appSecret', formattedInstagramData.appSecret);
+      
+      console.log('🔥 Form values after update:', form.getValues('instagram'));
     }
   }, [instagramSettings, form]);
 
