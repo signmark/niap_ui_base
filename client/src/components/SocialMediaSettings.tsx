@@ -31,6 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 import InstagramSetupWizard from "./InstagramSetupWizardSimple";
 import VkSetupWizard from "./VkSetupWizard";

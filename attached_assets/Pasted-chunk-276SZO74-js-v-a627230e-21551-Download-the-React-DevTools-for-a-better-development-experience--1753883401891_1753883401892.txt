@@ -1,0 +1,177 @@
+chunk-276SZO74.js?v=a627230e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+SocialMediaSettings.tsx:144 🔄 Loading VK settings from database...
+SocialMediaSettings.tsx:154 ✅ VK settings loaded: {success: true, settings: {…}}
+SocialMediaSettings.tsx:167 🔄 VK form fields updated with database values
+SocialMediaSettings.tsx:339 🔄 Updating VK form fields with database values: {token: 'vk1.a.o0IumvkZD1lD7qz-Qxw9XGDDjA5Utea68-VlyJzEiJ4v…F1_kSb84DT8ZK5JXR9E4PWpA72TI_h1S5vBd5ScZthKZFRn1g', groupId: '-176171231', groupName: 'Онлайн бизнес - ПРОСТО', setupCompletedAt: '2025-07-30T09:47:45.679Z', configured: true}
+SocialMediaSettings.tsx:349 ✅ VK form fields updated: {token: 'vk1.a.o0IumvkZD1lD7qz-Qxw9XGDDjA5Utea68-VlyJzEiJ4v…F1_kSb84DT8ZK5JXR9E4PWpA72TI_h1S5vBd5ScZthKZFRn1g', groupId: '-176171231', groupName: 'Онлайн бизнес - ПРОСТО'}
+SocialMediaSettings.tsx:325   - token: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+SocialMediaSettings.tsx:326   - accessToken: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+SocialMediaSettings.tsx:327   - businessAccountId: 17841422578516105
+SocialMediaSettings.tsx:328   - appId: 3459501544192396
+SocialMediaSettings.tsx:329   - appSecret: 50df248e9dae8af129403334c0ec28b9
+SocialMediaSettings.tsx:185 🔄 Instagram: Начинаем поиск аккаунтов для переключения
+SocialMediaSettings.tsx:186 🔄 Instagram: Текущие настройки: {appId: '3459501544192396', appSecret: '50df248e9dae8af129403334c0ec28b9', accessToken: 'EAAxKZAfikOYwBPAxASLJzvZBIZCyn6XOaNrv6KrCXiO4Gk306…VmeD2tYLl1cg7Ia7bsYNX6WJd5SoMbSyGLYvSAgvhnbZAsAZC', businessAccountId: '17841422578516105', longLivedToken: 'EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfg…f8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs', …}
+SocialMediaSettings.tsx:200 🔍 Instagram: Отправляем запрос на поиск аккаунтов...
+SocialMediaSettings.tsx:213 📊 Instagram: Ответ от сервера: {success: true, accounts: Array(2), totalFound: 2}
+SocialMediaSettings.tsx:216 ✅ Instagram: Найдены аккаунты: (2) [{…}, {…}]
+SocialMediaSettings.tsx:1048 Uncaught ReferenceError: Card is not defined
+    at SocialMediaSettings.tsx:1048:24
+    at Array.map (<anonymous>)
+    at SocialMediaSettings (SocialMediaSettings.tsx:1047:49)
+    at renderWithHooks (chunk-276SZO74.js?v=a627230e:11548:26)
+    at updateFunctionComponent (chunk-276SZO74.js?v=a627230e:14582:28)
+    at beginWork (chunk-276SZO74.js?v=a627230e:15924:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=a627230e:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=a627230e:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=a627230e:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=a627230e:19765:15)
+(anonymous) @ SocialMediaSettings.tsx:1048
+SocialMediaSettings @ SocialMediaSettings.tsx:1047
+renderWithHooks @ chunk-276SZO74.js?v=a627230e:11548
+updateFunctionComponent @ chunk-276SZO74.js?v=a627230e:14582
+beginWork @ chunk-276SZO74.js?v=a627230e:15924
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+beginWork$1 @ chunk-276SZO74.js?v=a627230e:19765
+performUnitOfWork @ chunk-276SZO74.js?v=a627230e:19198
+workLoopSync @ chunk-276SZO74.js?v=a627230e:19137
+renderRootSync @ chunk-276SZO74.js?v=a627230e:19116
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18678
+workLoop @ chunk-276SZO74.js?v=a627230e:197
+flushWork @ chunk-276SZO74.js?v=a627230e:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=a627230e:384
+SocialMediaSettings.tsx:1048 Uncaught ReferenceError: Card is not defined
+    at SocialMediaSettings.tsx:1048:24
+    at Array.map (<anonymous>)
+    at SocialMediaSettings (SocialMediaSettings.tsx:1047:49)
+    at renderWithHooks (chunk-276SZO74.js?v=a627230e:11548:26)
+    at updateFunctionComponent (chunk-276SZO74.js?v=a627230e:14582:28)
+    at beginWork (chunk-276SZO74.js?v=a627230e:15924:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=a627230e:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=a627230e:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=a627230e:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=a627230e:19765:15)
+(anonymous) @ SocialMediaSettings.tsx:1048
+SocialMediaSettings @ SocialMediaSettings.tsx:1047
+renderWithHooks @ chunk-276SZO74.js?v=a627230e:11548
+updateFunctionComponent @ chunk-276SZO74.js?v=a627230e:14582
+beginWork @ chunk-276SZO74.js?v=a627230e:15924
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+beginWork$1 @ chunk-276SZO74.js?v=a627230e:19765
+performUnitOfWork @ chunk-276SZO74.js?v=a627230e:19198
+workLoopSync @ chunk-276SZO74.js?v=a627230e:19137
+renderRootSync @ chunk-276SZO74.js?v=a627230e:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=a627230e:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18684
+workLoop @ chunk-276SZO74.js?v=a627230e:197
+flushWork @ chunk-276SZO74.js?v=a627230e:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=a627230e:384
+chunk-276SZO74.js?v=a627230e:14032 The above error occurred in the <SocialMediaSettings> component:
+
+    at SocialMediaSettings (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/SocialMediaSettings.tsx:80:3)
+    at div
+    at div
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=a627230e:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:121:11
+    at Presence (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6JNF2OYQ.js?v=a627230e:24:11)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:114:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:445:13
+    at _c7 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/accordion.tsx:180:12)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=a627230e:41:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=a627230e:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:55:7
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=a627230e:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:363:13
+    at _c3 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/accordion.tsx:53:49)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=a627230e:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QJJ7OGIJ.js?v=a627230e:52:11
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QJJ7OGIJ.js?v=a627230e:33:11
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VBIYPK3A.js?v=a627230e:98:15
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=a627230e:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:267:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=a627230e:38:15)
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=a627230e:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:208:14
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VBIYPK3A.js?v=a627230e:28:15)
+    at CollectionProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VBIYPK3A.js?v=a627230e:89:13)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-accordion.js?v=a627230e:193:13
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/accordion.tsx:23:44)
+    at div
+    at CampaignDetails (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/campaigns/[id].tsx:42:18)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=AgS85a7Co_PJS2ROLnOf8:83:23)
+    at _c4
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a627230e:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a627230e:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a627230e:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=AgS85a7Co_PJS2ROLnOf8:513:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=a627230e:14032
+update.callback @ chunk-276SZO74.js?v=a627230e:14052
+callCallback @ chunk-276SZO74.js?v=a627230e:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=a627230e:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=a627230e:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=a627230e:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=a627230e:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=a627230e:17920
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19353
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=a627230e:18760
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18718
+workLoop @ chunk-276SZO74.js?v=a627230e:197
+flushWork @ chunk-276SZO74.js?v=a627230e:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=a627230e:384
+chunk-276SZO74.js?v=a627230e:19413 Uncaught ReferenceError: Card is not defined
+    at SocialMediaSettings.tsx:1048:24
+    at Array.map (<anonymous>)
+    at SocialMediaSettings (SocialMediaSettings.tsx:1047:49)
+    at renderWithHooks (chunk-276SZO74.js?v=a627230e:11548:26)
+    at updateFunctionComponent (chunk-276SZO74.js?v=a627230e:14582:28)
+    at beginWork (chunk-276SZO74.js?v=a627230e:15924:22)
+    at beginWork$1 (chunk-276SZO74.js?v=a627230e:19753:22)
+    at performUnitOfWork (chunk-276SZO74.js?v=a627230e:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=a627230e:19137:13)
+    at renderRootSync (chunk-276SZO74.js?v=a627230e:19116:15)
+(anonymous) @ SocialMediaSettings.tsx:1048
+SocialMediaSettings @ SocialMediaSettings.tsx:1047
+renderWithHooks @ chunk-276SZO74.js?v=a627230e:11548
+updateFunctionComponent @ chunk-276SZO74.js?v=a627230e:14582
+beginWork @ chunk-276SZO74.js?v=a627230e:15924
+beginWork$1 @ chunk-276SZO74.js?v=a627230e:19753
+performUnitOfWork @ chunk-276SZO74.js?v=a627230e:19198
+workLoopSync @ chunk-276SZO74.js?v=a627230e:19137
+renderRootSync @ chunk-276SZO74.js?v=a627230e:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=a627230e:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18684
+workLoop @ chunk-276SZO74.js?v=a627230e:197
+flushWork @ chunk-276SZO74.js?v=a627230e:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=a627230e:384
+use-websocket.ts:83 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: WebSocket is closed before the connection is established.
+(anonymous) @ use-websocket.ts:83
+safelyCallDestroy @ chunk-276SZO74.js?v=a627230e:16748
+commitHookEffectListUnmount @ chunk-276SZO74.js?v=a627230e:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-276SZO74.js?v=a627230e:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-276SZO74.js?v=a627230e:18245
+commitPassiveUnmountEffects_begin @ chunk-276SZO74.js?v=a627230e:18181
+commitPassiveUnmountEffects @ chunk-276SZO74.js?v=a627230e:18169
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19489
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
