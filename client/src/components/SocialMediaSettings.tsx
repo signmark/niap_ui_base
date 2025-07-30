@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
-import InstagramSetupWizard from "./InstagramSetupWizardSimple";
+import InstagramSetupWizardSimple from "./InstagramSetupWizardSimple";
 import VkSetupWizard from "./VkSetupWizard";
 import type { SocialMediaSettings } from "@shared/schema";
 

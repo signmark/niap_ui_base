@@ -28,8 +28,12 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
     accessToken: '',
     businessAccountId: ''
   });
+  const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  // Добавляем консольный лог для диагностики
+  console.log('Instagram Setup Wizard rendering with campaignId:', campaignId);
 
   // Загружаем существующие данные из кампании
   useEffect(() => {
@@ -227,6 +231,22 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
       setIsProcessing(false);
     }
   };
+
+  // Обработка ошибок рендеринга
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <Alert>
+          <AlertDescription>
+            Ошибка загрузки мастера настройки Instagram: {error}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={onCancel} className="mt-4">
+          Закрыть
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
