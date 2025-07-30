@@ -56,11 +56,11 @@ const socialMediaSettingsSchema = z.object({
     pageId: z.string().nullable(),
   }),
   youtube: z.object({
-    apiKey: z.string().nullable(),
-    channelId: z.string().nullable(),
-    accessToken: z.string().nullable(),
-    refreshToken: z.string().nullable(),
-  }),
+    apiKey: z.string().nullable().optional(),
+    channelId: z.string().nullable().optional(),
+    accessToken: z.string().nullable().optional(),
+    refreshToken: z.string().nullable().optional(),
+  }).optional(),
 });
 
 interface SocialMediaSettingsProps {
@@ -1165,6 +1165,7 @@ export function SocialMediaSettings({
               console.log('🔥 [SAVE SETTINGS] isLoading:', isLoading);
               console.log('🔥 [SAVE SETTINGS] Form isValid:', form.formState.isValid);
               console.log('🔥 [SAVE SETTINGS] Form errors:', form.formState.errors);
+              console.log('🔥 [SAVE SETTINGS] Detailed YouTube errors:', form.formState.errors.youtube);
             }}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
