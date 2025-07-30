@@ -115,11 +115,16 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
 
   // Функция выбора Instagram аккаунта
   const handleSelectAccount = (accountId: string, accountName: string) => {
-    setFormData(prev => ({ ...prev, businessAccountId: accountId }));
+    console.log('🔍 Selecting Instagram account:', { accountId, accountName });
+    setFormData(prev => {
+      const newData = { ...prev, businessAccountId: accountId };
+      console.log('🔍 Updated formData:', newData);
+      return newData;
+    });
     setShowAccountSelection(false);
     toast({
       title: "Аккаунт выбран",
-      description: `Выбран аккаунт: ${accountName}`
+      description: `Выбран аккаунт: ${accountName} (ID: ${accountId})`
     });
   };
 
@@ -254,6 +259,10 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
         <div>
           <h3 className="text-base font-semibold">Настройка Instagram API</h3>
           <p className="text-sm text-gray-600">Пошаговая настройка для публикации контента</p>
+          {/* Debug info */}
+          <p className="text-xs text-gray-400 mt-1">
+            Debug: businessAccountId = {formData.businessAccountId || 'не выбран'}
+          </p>
         </div>
         <Button 
           variant="ghost" 
@@ -396,18 +405,21 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
               </div>
             )}
 
-            {/* Business Account ID (отображается после выбора) */}
-            {formData.businessAccountId && (
+            {/* Business Account ID (всегда отображается если есть токен) */}
+            {formData.accessToken && (
               <div className="space-y-2">
                 <Label htmlFor="businessAccountId">Business Account ID</Label>
                 <Input
                   id="businessAccountId"
                   type="text"
-                  value={formData.businessAccountId}
+                  value={formData.businessAccountId || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, businessAccountId: e.target.value }))}
-                  placeholder="ID выбранного аккаунта"
-                  readOnly
+                  placeholder={formData.businessAccountId ? "ID выбранного аккаунта" : "Сначала найдите и выберите аккаунт"}
+                  readOnly={!!formData.businessAccountId}
                 />
+                {formData.businessAccountId && (
+                  <p className="text-xs text-green-600">✓ Аккаунт выбран</p>
+                )}
               </div>
             )}
           </CardContent>
