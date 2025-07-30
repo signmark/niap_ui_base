@@ -301,6 +301,56 @@ export function SocialMediaSettings({
       });
     }
   };
+
+  const fetchInstagramBusinessId = async () => {
+    const accessToken = form.getValues("instagram.token");
+    if (!accessToken) {
+      toast({
+        variant: "destructive",
+        description: "Сначала введите и проверьте Access Token"
+      });
+      return;
+    }
+    
+    try {
+      setInstagramStatus({ isLoading: true });
+      console.log('🔍 Fetching Instagram Business Account ID...');
+      
+      const response = await api.post(`/campaigns/${campaignId}/fetch-instagram-business-id`, {
+        accessToken
+      });
+      
+      if (response.data.success) {
+        // Обновляем поле формы с полученным Business Account ID
+        form.setValue('instagram.businessAccountId', response.data.businessAccountId);
+        
+        // Перезагружаем настройки из базы данных для синхронизации
+        await loadInstagramSettings();
+        
+        toast({
+          variant: "default",
+          description: `Business Account ID получен: ${response.data.businessAccountId}`
+        });
+        
+        console.log('✅ Instagram Business Account ID fetched:', response.data.businessAccountId);
+      } else {
+        toast({
+          variant: "destructive",
+          description: response.data.error || "Ошибка при получении Business Account ID"
+        });
+      }
+      
+      setInstagramStatus({ isLoading: false });
+    } catch (error: any) {
+      console.error('Error fetching Instagram Business ID:', error);
+      setInstagramStatus({ isLoading: false });
+      
+      toast({
+        variant: "destructive",
+        description: error.response?.data?.error || "Ошибка при получении Instagram Business Account ID"
+      });
+    }
+  };
   
   const validateFacebookToken = async () => {
     const token = form.getValues("facebook.token");
@@ -703,15 +753,29 @@ export function SocialMediaSettings({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ID бизнес-аккаунта</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: 17841409299499997" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input 
+                          placeholder="Например: 17841409299499997" 
+                          {...field} 
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={fetchInstagramBusinessId}
+                        disabled={instagramStatus.isLoading}
+                      >
+                        {instagramStatus.isLoading ? 
+                          <Loader2 className="h-4 w-4 animate-spin" /> : 
+                          <span>🔍</span>
+                        }
+                      </Button>
+                    </div>
                     <div className="text-xs text-muted-foreground">
-                      Получите через Graph API Explorer. Подключите Instagram к Facebook Business Suite.
+                      Нажмите 🔍 для автоматического получения Business Account ID через Graph API
                     </div>
                     <FormMessage />
                   </FormItem>

@@ -2203,6 +2203,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  /**
+   * Получение Instagram настроек кампании
+   */
+  app.get('/api/campaigns/:campaignId/instagram-settings', async (req, res) => {
+    const { campaignId } = req.params;
+    const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+    try {
+      console.log('📋 [INSTAGRAM-SETTINGS] Getting Instagram settings for campaign:', campaignId);
+      
+      if (!userToken) {
+        console.log('❌ [INSTAGRAM-SETTINGS] Missing user token');
+        return res.status(401).json({
+          success: false,
+          error: 'Токен авторизации не предоставлен'
+        });
+      }
+
+      // Получаем данные кампании из Directus
+      const getCampaignResponse = await axios.get(
+        `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const campaign = getCampaignResponse.data.data;
+      const socialMediaSettings = campaign.social_media_settings || {};
+      const instagramSettings = socialMediaSettings.instagram || {};
+
+      console.log('📋 [INSTAGRAM-SETTINGS] Instagram settings found:', JSON.stringify(instagramSettings, null, 2));
+
+      res.json({
+        success: true,
+        settings: instagramSettings
+      });
+
+    } catch (error: any) {
+      console.error('❌ [INSTAGRAM-SETTINGS] Error getting Instagram settings:', error.response?.data || error.message);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка при получении Instagram настроек',
+        details: error.response?.data || error.message
+      });
+    }
+  });
+
+  /**
+   * Получение Instagram Business Account ID через Graph API
+   */
+  app.post('/api/campaigns/:campaignId/fetch-instagram-business-id', async (req, res) => {
+    const { campaignId } = req.params;
+    const { accessToken } = req.body;
+    const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+    try {
+      console.log('🔍 [INSTAGRAM-FETCH] Starting Instagram Business Account ID fetch for campaign:', campaignId);
+      console.log('🔍 [INSTAGRAM-FETCH] Access Token provided:', accessToken ? 'YES' : 'NO');
+      console.log('🔍 [INSTAGRAM-FETCH] User Token provided:', userToken ? 'YES' : 'NO');
+      
+      if (!accessToken) {
+        console.log('❌ [INSTAGRAM-FETCH] Missing access token');
+        return res.status(400).json({
+          success: false,
+          error: 'Access Token обязателен для получения Business Account ID'
+        });
+      }
+
+      if (!userToken) {
+        console.log('❌ [INSTAGRAM-FETCH] Missing user token');
+        return res.status(401).json({
+          success: false,
+          error: 'Токен авторизации не предоставлен'
+        });
+      }
+
+      // Получаем страницы Facebook пользователя
+      console.log('📋 [INSTAGRAM-FETCH] Getting Facebook pages...');
+      const pagesResponse = await axios.get(
+        `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name,instagram_business_account`
+      );
+
+      console.log('📋 [INSTAGRAM-FETCH] Facebook pages response:', JSON.stringify(pagesResponse.data, null, 2));
+
+      const pages = pagesResponse.data.data || [];
+      let instagramBusinessAccountId = null;
+
+      // Ищем Instagram Business Account среди страниц
+      for (const page of pages) {
+        if (page.instagram_business_account && page.instagram_business_account.id) {
+          instagramBusinessAccountId = page.instagram_business_account.id;
+          console.log('✅ [INSTAGRAM-FETCH] Found Instagram Business Account ID:', instagramBusinessAccountId);
+          break;
+        }
+      }
+
+      if (!instagramBusinessAccountId) {
+        console.log('❌ [INSTAGRAM-FETCH] No Instagram Business Account found');
+        return res.status(404).json({
+          success: false,
+          error: 'Instagram Business Account не найден. Убедитесь, что ваша Facebook страница связана с Instagram Business аккаунтом.'
+        });
+      }
+
+      // Сохраняем Instagram Business Account ID в кампанию
+      console.log('💾 [INSTAGRAM-FETCH] Saving Instagram Business Account ID to campaign...');
+      
+      // Получаем текущие настройки кампании
+      const getCampaignResponse = await axios.get(
+        `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const campaign = getCampaignResponse.data.data;
+      const currentSocialMediaSettings = campaign.social_media_settings || {};
+      const currentInstagramSettings = currentSocialMediaSettings.instagram || {};
+
+      // Обновляем Instagram настройки с новым Business Account ID
+      const updatedInstagramSettings = {
+        ...currentInstagramSettings,
+        businessAccountId: instagramBusinessAccountId,
+        businessAccountIdFetchedAt: new Date().toISOString()
+      };
+
+      const updatedSocialMediaSettings = {
+        ...currentSocialMediaSettings,
+        instagram: updatedInstagramSettings
+      };
+
+      // Сохраняем обновленные настройки
+      const updateResponse = await axios.patch(
+        `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
+        {
+          social_media_settings: updatedSocialMediaSettings
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('✅ [INSTAGRAM-FETCH] Instagram Business Account ID saved successfully');
+
+      res.json({
+        success: true,
+        businessAccountId: instagramBusinessAccountId,
+        message: 'Instagram Business Account ID успешно получен и сохранен'
+      });
+
+    } catch (error: any) {
+      console.error('❌ [INSTAGRAM-FETCH] Error fetching Instagram Business Account ID:', error.response?.data || error.message);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка при получении Instagram Business Account ID',
+        details: error.response?.data || error.message
+      });
+    }
+  });
+
   // Маршрут для генерации контента с помощью AI сервисов
   app.post('/api/generate-content', async (req, res) => {
     try {
@@ -12547,6 +12716,8 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
   return contentPlan;
 }
+
+
 
 
 
