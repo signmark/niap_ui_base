@@ -93,6 +93,8 @@ const CRITICAL_ERROR_KEYWORDS = [
 function shouldDebug(source: string): boolean {
   if (DEBUG_LEVELS.GLOBAL) return true;
   
+  if (typeof source !== 'string') return false;
+  
   if (source === 'scheduler' && DEBUG_LEVELS.SCHEDULER) return true;
   if (source.includes('publish') && DEBUG_LEVELS.PUBLISHING) return true;
   if (['facebook', 'telegram', 'vk', 'instagram'].some(p => source.includes(p)) && DEBUG_LEVELS.SOCIAL) return true;
@@ -147,7 +149,7 @@ export function logMessage(message: string, source = "express", level = "info") 
   
   // Детальное логирование только в development
   if (envConfig.environment === 'development') {
-    const isDebug = source.endsWith('-debug') || level === "debug";
+    const isDebug = (typeof source === 'string' && source.endsWith('-debug')) || level === "debug";
     if (isDebug) {
       try {
         // Простое логирование в консоль для debug сообщений
