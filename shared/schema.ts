@@ -113,6 +113,8 @@ export interface SocialMediaSettings {
     token?: string | null;
     accessToken?: string | null;
     businessAccountId?: string | null;
+    appId?: string | null;
+    appSecret?: string | null;
   };
   facebook?: {
     token?: string | null;

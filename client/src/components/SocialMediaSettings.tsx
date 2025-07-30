@@ -486,37 +486,25 @@ export function SocialMediaSettings({
       setInstagramStatus({ isLoading: true });
       console.log(`🔍 Selecting known Instagram account: ${instagramId} from page ${pageName}`);
       
-      // Прямое сохранение известного Instagram Account ID
+      // Обновляем поля формы
       form.setValue('instagram.businessAccountId', instagramId);
       
-      // Сохраняем в базу данных
-      const response = await api.patch(`/campaigns/${campaignId}`, {
-        social_media_settings: {
-          ...form.getValues(),
-          instagram: {
-            ...form.getValues("instagram"),
-            businessAccountId: instagramId,
-            businessAccountIdFetchedAt: new Date().toISOString(),
-            pageId,
-            pageName,
-            accountType: 'business_account'
-          }
-        }
-      });
-
-      if (response.status === 200) {
-        toast({
-          variant: "default",
-          description: `Instagram аккаунт "${pageName}" выбран (ID: ${instagramId})`
-        });
-        
-        // Перезагружаем настройки
-        await loadInstagramSettings();
-        console.log('✅ Known Instagram account selected successfully');
-      } else {
-        throw new Error('Failed to save Instagram account selection');
-      }
+      // Получаем обновленные данные формы
+      const formData = form.getValues();
+      formData.instagram = {
+        ...formData.instagram,
+        businessAccountId: instagramId
+      };
       
+      // Используем основную функцию сохранения для consistency
+      await onSubmit(formData);
+      
+      toast({
+        variant: "default",
+        description: `Instagram аккаунт "${pageName}" выбран (ID: ${instagramId})`
+      });
+      
+      console.log('✅ Known Instagram account selected and saved successfully');
       setInstagramStatus({ isLoading: false });
     } catch (error: any) {
       console.error('Error selecting known Instagram account:', error);
