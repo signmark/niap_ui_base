@@ -249,11 +249,11 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
   }
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-bold">Настройка Instagram интеграции</h2>
-          <p className="text-sm text-gray-600">Простая настройка Instagram для публикации контента</p>
+          <h3 className="text-base font-semibold">Настройка Instagram API</h3>
+          <p className="text-sm text-gray-600">Пошаговая настройка для публикации контента</p>
         </div>
         <Button 
           variant="ghost" 
@@ -265,34 +265,20 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
         </Button>
       </div>
       
-      <div className="space-y-4">
-      <div className="space-y-3">
-        <Alert>
-          <AlertDescription>
-            <div className="space-y-2">
-              <p className="font-medium">Пошаговая настройка Instagram API:</p>
-              <ol className="list-decimal list-inside space-y-1 text-sm">
-                <li>Введите App ID и App Secret из Facebook приложения</li>
-                <li>Нажмите "Получить токен Instagram" для авторизации</li>
-                <li>Скопируйте полученный токен в поле "Access Token"</li>
-                <li>Выберите Instagram Business аккаунт из списка</li>
-                <li>Сохраните настройки</li>
-              </ol>
-            </div>
-          </AlertDescription>
-        </Alert>
+      <Alert className="py-3">
+        <AlertDescription>
+          <ol className="list-decimal list-inside space-y-1 text-sm">
+            <li>Введите App ID и App Secret из Facebook приложения</li>
+            <li>Нажмите "Получить токен Instagram" для авторизации</li>
+            <li>Скопируйте полученный токен в поле "Access Token"</li>
+            <li>Выберите Instagram Business аккаунт из списка</li>
+            <li>Сохраните настройки</li>
+          </ol>
+        </AlertDescription>
+      </Alert>
         
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Instagram className="h-4 w-4" />
-              Настройка Instagram API
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Простая настройка Instagram для публикации контента
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <Card>
+        <CardContent className="pt-4 space-y-3">
             {/* App ID и App Secret */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -426,9 +412,8 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Кнопки управления - точно как в VK wizard */}
+      
+      {/* Кнопки управления */}
       <div className="mt-6 flex justify-between">
         <Button 
           variant="outline" 
@@ -459,7 +444,6 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
             </>
           )}
         </Button>
-      </div>
       </div>
     </div>
   );

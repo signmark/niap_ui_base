@@ -1029,8 +1029,34 @@ export function SocialMediaSettings({
                 </div>
               </div>
               
+              {/* Instagram Setup Wizard Inline */}
+              {showInstagramWizard && (
+                <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                  <InstagramSetupWizardSimple
+                    campaignId={campaignId}
+                    onCancel={() => {
+                      console.log('Instagram wizard: Закрытие встроенного мастера');
+                      setShowInstagramWizard(false);
+                    }}
+                    onComplete={() => {
+                      console.log('🔄 Instagram setup completed, refreshing Instagram settings...');
+                      setShowInstagramWizard(false);
+                      
+                      // Перезагружаем Instagram настройки из базы данных
+                      loadInstagramSettings();
+                      
+                      if (onSettingsUpdated) {
+                        onSettingsUpdated();
+                      }
+                      toast({
+                        title: "Instagram OAuth настройка завершена",
+                        description: "Instagram интеграция успешно настроена для этой кампании",
+                      });
+                    }}
+                  />
+                </div>
+              )}
 
-              
               {/* Переключатель аккаунтов Instagram */}
               {showAccountSwitcher && availableInstagramAccounts.length > 0 && (
                 <div className="space-y-3 p-4 border rounded-lg bg-gray-50">
@@ -1282,37 +1308,7 @@ export function SocialMediaSettings({
         </form>
       </Form>
       
-      {/* Instagram Setup Wizard Dialog */}
-      {showInstagramWizard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto">
-              <InstagramSetupWizardSimple
-                campaignId={campaignId}
-                onCancel={() => {
-                  console.log('Instagram wizard: Принудительное закрытие через onCancel');
-                  setShowInstagramWizard(false);
-                }}
-                onComplete={() => {
-                  console.log('🔄 Instagram setup completed, refreshing Instagram settings...');
-                  setShowInstagramWizard(false);
-                  
-                  // Перезагружаем Instagram настройки из базы данных
-                  loadInstagramSettings();
-                  
-                  if (onSettingsUpdated) {
-                    onSettingsUpdated();
-                  }
-                  toast({
-                    title: "Instagram OAuth настройка завершена",
-                    description: "Instagram интеграция успешно настроена для этой кампании",
-                  });
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* VK Setup Wizard Dialog */}
       {showVkWizard && (
