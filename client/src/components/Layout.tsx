@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users, Video, Sparkles } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users, Video, Sparkles, Bot } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { DIRECTUS_URL } from "@/lib/directus";
@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { CampaignSelector } from "@/components/CampaignSelector";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AIAssistant } from "@/components/AIAssistantSimple";
 
 import { SmmLogo } from "./SmmLogo";
 import { SubscriptionExpiredBanner } from "./SubscriptionExpiredBanner";
@@ -25,6 +26,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isSmmAdmin, setIsSmmAdmin] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const token = useAuthStore((state) => state.token);
@@ -314,6 +316,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAIAssistantOpen(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:from-blue-600 hover:to-purple-600"
+              >
+                <Bot className="h-4 w-4" />
+                <span className="hidden sm:inline">AI Помощник</span>
+              </Button>
+            </div>
 
           </div>
           <main className="flex-1 p-4 lg:p-8">
@@ -333,6 +346,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
           <SettingsDialog />
         </Dialog>
+        
+        {/* AI Assistant */}
+        <AIAssistant 
+          isOpen={isAIAssistantOpen} 
+          onClose={() => setIsAIAssistantOpen(false)} 
+        />
       </div>
     </ThemeProvider>
   );
