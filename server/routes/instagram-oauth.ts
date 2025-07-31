@@ -49,13 +49,12 @@ router.post('/instagram/auth/start', async (req, res) => {
       timestamp: Date.now()
     });
 
-    // Формируем URL для авторизации Facebook
+    // Формируем URL для авторизации Facebook с обновленными разрешениями
     const scopes = [
-      'pages_manage_posts',       // Публикация в Facebook страницы
-      'pages_read_engagement',    // Чтение взаимодействий на страницах
-      'pages_show_list',          // Получение списка страниц
-      'instagram_basic',          // Базовые Instagram разрешения
-      'instagram_content_publish' // Публикация в Instagram
+      'instagram_graph_user_profile',  // Профиль Instagram пользователя
+      'instagram_graph_user_media',    // Медиа Instagram пользователя
+      'pages_show_list',               // Список Facebook страниц
+      'pages_read_engagement'          // Чтение данных страниц
     ].join(',');
 
     const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +

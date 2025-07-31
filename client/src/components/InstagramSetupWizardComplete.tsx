@@ -379,10 +379,30 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
           <div className="flex items-start gap-3">
             <Badge variant="outline" className="mt-1">4</Badge>
             <div>
-              <h4 className="font-medium">Добавьте Instagram Basic Display</h4>
-              <p className="text-sm text-muted-foreground">
-                В разделе "Products" добавьте <strong>"Instagram Basic Display"</strong>
+              <h4 className="font-medium">Добавьте продукты в приложение</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                В разделе "Products" добавьте:
               </p>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <li><strong>"Instagram Basic Display"</strong> - для доступа к Instagram</li>
+                <li><strong>"Facebook Login"</strong> - для авторизации</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <Badge variant="outline" className="mt-1">5</Badge>
+            <div>
+              <h4 className="font-medium">Настройте разрешения</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                В Instagram Basic Display → Settings добавьте разрешения:
+              </p>
+              <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs font-mono">
+                instagram_graph_user_profile,<br/>
+                instagram_graph_user_media,<br/>
+                pages_show_list,<br/>
+                pages_read_engagement
+              </div>
             </div>
           </div>
         </div>
