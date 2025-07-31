@@ -1698,6 +1698,7 @@ export function SocialMediaSettings({
                     onComplete={(data) => {
                       console.log('🎬 YouTube setup completed, updating form...');
                       handleYoutubeComplete(data);
+                      setShowYoutubeWizard(false);
                     }}
                   />
                 </div>
