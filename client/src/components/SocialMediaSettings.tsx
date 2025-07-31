@@ -129,12 +129,12 @@ export function SocialMediaSettings({
 
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
-    defaultValues: initialSettings || {
-      telegram: { token: '', chatId: '' },
-      vk: { token: '', groupId: '' },
-      instagram: { token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' },
-      facebook: { token: '', pageId: '' },
-      youtube: { apiKey: '', channelId: '', accessToken: '', refreshToken: '' }
+    defaultValues: {
+      telegram: initialSettings?.telegram || { token: '', chatId: '' },
+      vk: initialSettings?.vk || { token: '', groupId: '' },
+      instagram: initialSettings?.instagram || { token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' },
+      facebook: initialSettings?.facebook || { token: '', pageId: '' },
+      youtube: initialSettings?.youtube || { apiKey: '', channelId: '', accessToken: '', refreshToken: '' }
     }
   });
 
@@ -1312,6 +1312,10 @@ export function SocialMediaSettings({
               if (form.formState.errors.facebook) {
                 console.log('❌ FACEBOOK ERRORS:', form.formState.errors.facebook);
               }
+              
+              // Проверяем все поля формы
+              console.log('🔍 Form values detailed:', JSON.stringify(form.getValues(), null, 2));
+              console.log('🔍 Form errors detailed:', JSON.stringify(form.formState.errors, null, 2));
               
               // Принудительная валидация для диагностики
               const isValid = await form.trigger();
