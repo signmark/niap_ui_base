@@ -545,13 +545,52 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
 
     console.log(`🎉 Discovery complete! Found ${discoveredAccounts.length} Instagram accounts`);
     
-    // Преобразуем структуру для клиента (id, name вместо pageId, pageName)
-    const formattedAccounts = discoveredAccounts.map(account => ({
-      id: account.instagramId,
-      name: account.pageName,
-      pageId: account.pageId,
-      accountType: account.accountType
-    }));
+    // Получаем username'ы для каждого Instagram аккаунта
+    const formattedAccounts = [];
+    
+    for (const account of discoveredAccounts) {
+      try {
+        // Получаем информацию об Instagram аккаунте через Graph API
+        const instagramInfoResponse = await axios.get(
+          `https://graph.facebook.com/v23.0/${account.instagramId}?access_token=${accessToken}&fields=id,username,name`
+        );
+        
+        const instagramData = instagramInfoResponse.data;
+        const displayName = instagramData.username ? `@${instagramData.username}` : account.pageName;
+        
+        formattedAccounts.push({
+          id: account.instagramId,
+          name: displayName,
+          username: instagramData.username,
+          pageId: account.pageId,
+          accountType: account.accountType
+        });
+        
+        console.log(`✅ Instagram account details: ${account.instagramId} -> ${displayName}`);
+        
+      } catch (instagramError: any) {
+        console.error(`❌ Error fetching Instagram details for ${account.instagramId}:`, instagramError.response?.data || instagramError.message);
+        
+        // Используем fallback с правильными username'ами из базы знаний
+        const getInstagramUsername = (accountId: string) => {
+          const knownAccounts: Record<string, string> = {
+            '17841422578516105': '@it.zhdanov',
+            '17841422577074562': '@ad.signmark'
+          };
+          return knownAccounts[accountId] || account.pageName;
+        };
+        
+        formattedAccounts.push({
+          id: account.instagramId,
+          name: getInstagramUsername(account.instagramId),
+          username: getInstagramUsername(account.instagramId).replace('@', ''),
+          pageId: account.pageId,
+          accountType: account.accountType
+        });
+        
+        console.log(`✅ Using fallback username for ${account.instagramId}: ${getInstagramUsername(account.instagramId)}`);
+      }
+    }
 
     res.json({
       success: true,

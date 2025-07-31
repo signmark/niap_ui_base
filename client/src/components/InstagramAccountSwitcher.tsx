@@ -30,8 +30,8 @@ const InstagramAccountSwitcher: React.FC<InstagramAccountSwitcherProps> = ({
 
   const getInstagramAccountName = (accountId: string) => {
     const knownAccounts: Record<string, string> = {
-      '17841422578516105': 'Дмитрий Жданов',
-      '17841422577074562': 'Сметоматика'
+      '17841422578516105': '@it.zhdanov',
+      '17841422577074562': '@ad.signmark'
     };
     return knownAccounts[accountId] || 'Instagram Business Account';
   };
@@ -68,10 +68,11 @@ const InstagramAccountSwitcher: React.FC<InstagramAccountSwitcherProps> = ({
         if (accountsData.success && accountsData.accounts) {
           const accounts = accountsData.accounts.map((acc: any) => ({
             id: acc.id,
-            name: acc.name || getInstagramAccountName(acc.id),
+            name: acc.name || getInstagramAccountName(acc.id), // API теперь возвращает правильные @username
             username: acc.username
           }));
           setAvailableAccounts(accounts);
+          console.log('📱 Instagram accounts loaded:', accounts);
         }
       }
     } catch (error) {

@@ -136,8 +136,8 @@ export function SocialMediaSettings({
   // Функция для получения имени Instagram аккаунта
   const getInstagramAccountName = (accountId: string) => {
     const knownAccounts: Record<string, string> = {
-      '17841422578516105': 'Дмитрий Жданов',
-      '17841422577074562': 'Сметоматика'
+      '17841422578516105': '@it.zhdanov',
+      '17841422577074562': '@ad.signmark'
     };
     return knownAccounts[accountId] || 'Instagram Business Account';
   };
