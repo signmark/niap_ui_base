@@ -53,7 +53,7 @@ router.get('/facebook/debug-token', async (req, res) => {
       pages: pagesResponse.data.data
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [FB-DEBUG] Ошибка проверки токена:', error.response?.data || error.message);
     res.status(500).json({
       success: false,

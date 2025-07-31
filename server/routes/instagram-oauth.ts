@@ -54,7 +54,7 @@ router.post('/instagram/auth/start', async (req, res) => {
       'pages_manage_posts',       // Публикация в Facebook страницы
       'pages_read_engagement',    // Чтение взаимодействий на страницах
       'pages_show_list',          // Получение списка страниц
-      // 'publish_to_groups',     // Публикация в Facebook группы (требует настройки приложения)
+      'publish_to_groups',        // Публикация в Facebook группы
       'instagram_basic',          // Базовые Instagram разрешения
       'instagram_content_publish' // Публикация в Instagram
     ].join(',');

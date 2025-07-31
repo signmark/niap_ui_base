@@ -52,6 +52,73 @@ export default function FacebookSetupWizard({
     },
   });
 
+  // Функция для диагностики Facebook токена
+  const debugFacebookToken = async () => {
+    const formData = form.getValues();
+    const token = formData.token;
+    
+    if (!token || token.length < 10) {
+      toast({
+        title: "Ошибка",
+        description: "Введите действительный токен доступа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/facebook/debug-token?token=${encodeURIComponent(token)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        const permissions = data.permissions.map((p: any) => p.permission).join(', ');
+        const hasPublishToGroups = data.permissions.some((p: any) => p.permission === 'publish_to_groups');
+        const hasPagesPosts = data.permissions.some((p: any) => p.permission === 'pages_manage_posts');
+        const hasPagesEngagement = data.permissions.some((p: any) => p.permission === 'pages_read_engagement');
+        
+        console.log('🔍 Facebook токен разрешения:', {
+          permissions,
+          hasPublishToGroups,
+          hasPagesPosts,
+          hasPagesEngagement,
+          user: data.user,
+          pages: data.pages
+        });
+
+        const missingPermissions = [];
+        if (!hasPublishToGroups) missingPermissions.push('publish_to_groups');
+        if (!hasPagesPosts) missingPermissions.push('pages_manage_posts');
+        if (!hasPagesEngagement) missingPermissions.push('pages_read_engagement');
+
+        toast({
+          title: "Диагностика токена",
+          description: missingPermissions.length > 0 
+            ? `Отсутствуют разрешения: ${missingPermissions.join(', ')}. Необходимо повторно авторизоваться через Instagram Setup Wizard.`
+            : `Токен имеет все необходимые разрешения: ${permissions}`,
+          variant: missingPermissions.length > 0 ? "destructive" : "default"
+        });
+      } else {
+        toast({
+          title: "Ошибка диагностики",
+          description: data.error || "Не удалось проверить токен",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Debug token error:', error);
+      toast({
+        title: "Ошибка диагностики",
+        description: "Произошла ошибка при проверке токена",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Функция для получения Facebook страниц
   const fetchFacebookPages = async () => {
     const formData = form.getValues();
@@ -222,6 +289,15 @@ export default function FacebookSetupWizard({
                       ) : (
                         '📋 Получить страницы'
                       )}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={debugFacebookToken}
+                      disabled={loadingPages || !form.getValues('token')}
+                      size="sm"
+                    >
+                      🔍 Диагностика
                     </Button>
                   </div>
                   <FormMessage />
