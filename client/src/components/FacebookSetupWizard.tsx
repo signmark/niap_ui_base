@@ -194,7 +194,7 @@ export default function FacebookSetupWizard({
       
       console.log('Facebook Wizard: Используем Instagram токен для поиска связанных страниц...');
       
-      const response = await fetch(`/api/facebook/instagram-connected-pages?token=${encodeURIComponent(instagramToken)}&campaignId=${campaignId}`);
+      const response = await fetch(`/api/facebook/instagram-connected-pages?campaignId=${campaignId}`);
       const data = await response.json();
       
       console.log('Facebook Wizard: Ответ API Instagram связанных страниц:', data);

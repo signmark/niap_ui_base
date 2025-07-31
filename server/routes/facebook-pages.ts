@@ -211,15 +211,44 @@ router.get('/instagram-connected-pages', async (req, res) => {
   try {
     console.log('🟣 [FACEBOOK-IG-PAGES] === INSTAGRAM CONNECTED PAGES ENDPOINT CALLED ===');
     console.log('🟣 [FACEBOOK-IG-PAGES] Request received with query params:', req.query);
-    const { token, access_token, campaignId } = req.query;
-    const accessToken = token || access_token;
+    const { campaignId } = req.query;
 
-    if (!accessToken) {
-      console.log('❌ [FACEBOOK-IG-PAGES] No access token provided');
+    if (!campaignId) {
+      console.log('❌ [FACEBOOK-IG-PAGES] No campaignId provided');
       return res.status(400).json({
-        error: 'Access token is required'
+        error: 'Campaign ID is required'
       });
     }
+
+    // Получаем Instagram токен из настроек кампании
+    console.log('🔍 [FACEBOOK-IG-PAGES] Getting Instagram token from campaign settings...');
+    
+    const campaignResponse = await axios.get(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`
+      }
+    });
+
+    const campaignData = campaignResponse.data.data;
+    console.log('🔍 [FACEBOOK-IG-PAGES] Campaign data loaded:', {
+      id: campaignData.id,
+      hasSettings: !!campaignData.social_media_settings,
+      hasInstagram: !!campaignData.social_media_settings?.instagram
+    });
+
+    const instagramSettings = campaignData.social_media_settings?.instagram;
+    const accessToken = instagramSettings?.accessToken || 
+                       instagramSettings?.token ||
+                       instagramSettings?.longLivedToken;
+
+    if (!accessToken) {
+      console.log('❌ [FACEBOOK-IG-PAGES] No Instagram token found in campaign settings');
+      return res.status(400).json({
+        error: 'Instagram token not found in campaign settings. Please configure Instagram first.'
+      });
+    }
+
+    console.log('✅ [FACEBOOK-IG-PAGES] Instagram token found, length:', accessToken.length);
 
     console.log('🔵 [FACEBOOK-IG-PAGES] Using Instagram OAuth token to find connected pages...');
 
