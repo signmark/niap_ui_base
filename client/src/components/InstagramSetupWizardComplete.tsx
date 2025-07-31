@@ -19,10 +19,12 @@ import {
   ChevronRight,
   User,
   Key,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Users
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import FacebookGroupsSelector from './FacebookGroupsSelector';
 
 interface InstagramSetupWizardProps {
   campaignId: string;
@@ -50,6 +52,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
+  const [facebookToken, setFacebookToken] = useState('');
   
   const { toast } = useToast();
 
@@ -131,6 +134,10 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
             ...prev,
             accessToken: event.data.data.token
           }));
+          
+          // Сохраняем токен для Facebook групп и переходим к шагу 5
+          setFacebookToken(event.data.data.token);
+          setCurrentStep(5);
         }
         
         // Обновляем настройки через callback
@@ -542,16 +549,101 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         <Separator />
 
         <div className="space-y-3">
-          <h4 className="font-medium">Или сохраните текущие настройки:</h4>
-          <Button 
-            onClick={handleSaveSettings}
-            variant="outline"
-            disabled={loading}
-            className="w-full"
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Сохранить настройки
+          <h4 className="font-medium">Или сохраните настройки и перейдите к группам:</h4>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSaveSettings}
+              variant="outline"
+              disabled={loading}
+              className="flex-1"
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Сохранить настройки
+            </Button>
+            <Button 
+              onClick={() => {
+                setFacebookToken(formData.accessToken);
+                setCurrentStep(5);
+              }}
+              disabled={!formData.accessToken}
+              className="flex-1"
+            >
+              К группам Facebook <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderStep5 = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-purple-600" />
+          Шаг 5: Facebook Группы (Дополнительно)
+        </CardTitle>
+        <CardDescription>
+          Настройте автоматическую публикацию в Facebook группы через Pages API
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Alert>
+          <Facebook className="h-4 w-4" />
+          <AlertDescription>
+            Система автоматически найдет группы, связанные с вашими Facebook страницами. 
+            Это позволит публиковать в группы без App Review процесса.
+          </AlertDescription>
+        </Alert>
+
+        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+          <h4 className="font-medium text-purple-900 dark:text-purple-100 mb-2">Как работает интеграция с группами:</h4>
+          <ol className="text-sm text-purple-800 dark:text-purple-200 space-y-1 list-decimal list-inside">
+            <li>Система использует ваш Instagram/Facebook токен</li>
+            <li>Автоматически обнаруживает все доступные группы через Pages API</li>
+            <li>Позволяет выбрать группы для публикации</li>
+            <li>Сохраняет настройки в этой кампании</li>
+            <li>Публикация происходит через N8N без дополнительных разрешений</li>
+          </ol>
+        </div>
+
+        {facebookToken && (
+          <FacebookGroupsSelector 
+            campaignId={campaignId}
+            accessToken={facebookToken}
+            onGroupsSelected={(groups) => {
+              toast({
+                title: "Facebook группы настроены",
+                description: `Выбрано ${groups.length} групп для автоматической публикации`,
+              });
+            }}
+          />
+        )}
+
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCurrentStep(4)}>
+            Назад
           </Button>
+          <Button 
+            onClick={() => {
+              toast({
+                title: "Настройка завершена",
+                description: "Instagram и Facebook интеграция готова к использованию",
+              });
+              onSettingsUpdate?.(formData);
+            }}
+            className="flex-1"
+          >
+            Завершить настройку <CheckCircle className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+
+        <Separator />
+
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Настройка групп не обязательна. Вы можете пропустить этот шаг и настроить группы позже в настройках кампании.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -561,12 +653,12 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Instagram API Setup Wizard</h3>
-        <Badge variant="outline">Шаг {currentStep} из 4</Badge>
+        <Badge variant="outline">Шаг {currentStep} из 5</Badge>
       </div>
 
       {/* Progress indicator */}
       <div className="flex items-center space-x-2">
-        {[1, 2, 3, 4].map((step) => (
+        {[1, 2, 3, 4, 5].map((step) => (
           <div key={step} className="flex items-center">
             <div 
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -577,7 +669,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
             >
               {step < currentStep ? <CheckCircle className="h-4 w-4" /> : step}
             </div>
-            {step < 4 && (
+            {step < 5 && (
               <div className={`flex-1 h-1 ${step < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
             )}
           </div>
@@ -590,6 +682,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
       </div>
     </div>
   );

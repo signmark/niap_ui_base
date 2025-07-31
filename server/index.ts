@@ -419,6 +419,14 @@ app.use((req, res, next) => {
     console.log("Facebook Debug routes registered");
     log("Facebook Debug routes registered successfully");
 
+    // Регистрируем Facebook Groups Discovery маршруты
+    console.log("Registering Facebook Groups Discovery routes...");
+    log("Registering Facebook Groups Discovery routes...");
+    const facebookGroupsRouter = (await import('./routes/facebook-groups-discovery')).default;
+    app.use('/api', facebookGroupsRouter);
+    console.log("Facebook Groups Discovery routes registered");
+    log("Facebook Groups Discovery routes registered successfully");
+
     // Регистрируем YouTube настройки кампании
     console.log("Registering YouTube Campaign Settings routes...");
     log("Registering YouTube Campaign Settings routes...");
