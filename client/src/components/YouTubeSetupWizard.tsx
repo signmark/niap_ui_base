@@ -63,7 +63,7 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
     try {
       console.log('🚀 [YouTube Wizard] Starting OAuth process...');
       
-      const response = await fetch(`/api/auth/youtube/start?campaign_id=${campaignId}`, {
+      const response = await fetch(`/api/youtube/auth/start?campaign_id=${campaignId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
