@@ -206,4 +206,136 @@ router.get('/page-token/:pageId', async (req, res) => {
   }
 });
 
+// GET /api/facebook/instagram-connected-pages - получение Facebook страниц связанных с Instagram Business аккаунтами
+router.get('/instagram-connected-pages', async (req, res) => {
+  try {
+    console.log('🔵 [FACEBOOK-IG-PAGES] Request received with query params:', req.query);
+    const { token, access_token } = req.query;
+    const accessToken = token || access_token;
+
+    if (!accessToken) {
+      console.log('❌ [FACEBOOK-IG-PAGES] No access token provided');
+      return res.status(400).json({
+        error: 'Access token is required'
+      });
+    }
+
+    console.log('🔵 [FACEBOOK-IG-PAGES] Fetching Instagram connected pages...');
+
+    // Получаем user ID
+    const userResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+      params: {
+        access_token: accessToken,
+        fields: 'id,name'
+      },
+      timeout: 10000
+    });
+
+    const userId = userResponse.data.id;
+    console.log('🔵 [FACEBOOK-IG-PAGES] User ID obtained:', userId);
+
+    // Получаем все страницы пользователя
+    const response = await axios.get(`https://graph.facebook.com/v18.0/${userId}/accounts`, {
+      params: {
+        access_token: accessToken,
+        fields: 'id,name,access_token,category,tasks,instagram_business_account'
+      },
+      timeout: 10000
+    });
+
+    const allAccounts = response.data.data || [];
+    
+    console.log('🔵 [FACEBOOK-IG-PAGES] All accounts from API:', allAccounts.length);
+    
+    // Проверяем каждую страницу на наличие связанного Instagram Business аккаунта
+    const connectedPages = [];
+    
+    for (const account of allAccounts) {
+      try {
+        // Проверяем Instagram Business аккаунт для этой страницы
+        const igResponse = await axios.get(`https://graph.facebook.com/v18.0/${account.id}`, {
+          params: {
+            access_token: account.access_token || accessToken,
+            fields: 'id,name,instagram_business_account'
+          },
+          timeout: 5000
+        });
+
+        const pageData = igResponse.data;
+        
+        console.log(`🔍 [FACEBOOK-IG-PAGES] Checking page ${account.name} (${account.id}):`, {
+          hasInstagramAccount: !!pageData.instagram_business_account,
+          igAccountId: pageData.instagram_business_account?.id
+        });
+
+        if (pageData.instagram_business_account) {
+          // Получаем информацию об Instagram аккаунте
+          const igAccountResponse = await axios.get(`https://graph.facebook.com/v18.0/${pageData.instagram_business_account.id}`, {
+            params: {
+              access_token: account.access_token || accessToken,
+              fields: 'id,username,name,profile_picture_url,followers_count'
+            },
+            timeout: 5000
+          });
+
+          const igAccountData = igAccountResponse.data;
+          
+          connectedPages.push({
+            facebook_page: {
+              id: account.id,
+              name: account.name,
+              category: account.category,
+              access_token: account.access_token
+            },
+            instagram_account: {
+              id: igAccountData.id,
+              username: igAccountData.username,
+              name: igAccountData.name,
+              profile_picture_url: igAccountData.profile_picture_url,
+              followers_count: igAccountData.followers_count
+            }
+          });
+
+          console.log(`✅ [FACEBOOK-IG-PAGES] Connected page found: ${account.name} -> @${igAccountData.username}`);
+        }
+      } catch (igError: any) {
+        console.log(`⚠️ [FACEBOOK-IG-PAGES] No Instagram connection for page ${account.name}:`, igError.response?.data?.error?.message || 'Unknown error');
+      }
+    }
+    
+    console.log('🔵 [FACEBOOK-IG-PAGES] Instagram connected pages found:', {
+      count: connectedPages.length,
+      pages: connectedPages.map((p: any) => ({
+        facebook: p.facebook_page.name,
+        instagram: `@${p.instagram_account.username}`
+      }))
+    });
+
+    res.json({
+      success: true,
+      connected_pages: connectedPages
+    });
+
+  } catch (error: any) {
+    console.error('❌ [FACEBOOK-IG-PAGES] Error fetching Instagram connected pages:', error.response?.data || error.message);
+    
+    let errorMessage = 'Не удалось получить связанные Instagram страницы';
+    
+    if (error.response?.data?.error) {
+      const fbError = error.response.data.error;
+      if (fbError.code === 190) {
+        errorMessage = 'Недействительный токен доступа';
+      } else if (fbError.code === 104) {
+        errorMessage = 'Недостаточно прав для доступа к Instagram данным';
+      } else {
+        errorMessage = fbError.message || errorMessage;
+      }
+    }
+
+    res.status(400).json({
+      error: errorMessage
+    });
+  }
+});
+
 export default router;

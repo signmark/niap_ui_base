@@ -154,6 +154,68 @@ export default function FacebookSetupWizard({
     loadFacebookSettings();
   }, [campaignId]);
 
+  // Функция для получения Instagram связанных страниц
+  const handleFetchInstagramConnectedPages = async () => {
+    const token = form.getValues('token');
+    
+    if (!token) {
+      toast({
+        title: "Ошибка",
+        description: "Введите токен доступа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPagesLoading(true);
+    
+    try {
+      console.log('Facebook Wizard: Получение Instagram связанных страниц...');
+      
+      const response = await fetch(`/api/facebook/instagram-connected-pages?token=${encodeURIComponent(token)}`);
+      const data = await response.json();
+      
+      console.log('Facebook Wizard: Ответ API Instagram связанных страниц:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка при получении связанных страниц');
+      }
+      
+      if (data.success && data.connected_pages) {
+        // Преобразуем данные в формат, который ожидает интерфейс
+        const formattedPages = data.connected_pages.map((item: any) => ({
+          id: item.facebook_page.id,
+          name: `${item.facebook_page.name} → @${item.instagram_account.username}`,
+          access_token: item.facebook_page.access_token,
+          category: item.facebook_page.category,
+          instagram_info: item.instagram_account
+        }));
+        
+        setPages(formattedPages);
+        
+        toast({
+          title: "Instagram связанные страницы получены",
+          description: `Найдено ${formattedPages.length} страниц связанных с Instagram`,
+        });
+      } else {
+        toast({
+          title: "Страницы не найдены",
+          description: "У вас нет Facebook страниц связанных с Instagram Business аккаунтами",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Facebook Wizard: Ошибка при получении Instagram связанных страниц:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось получить Instagram связанные страницы",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
   // Функция для получения Facebook страниц
   const handleFetchPages = async () => {
     const formData = form.getValues();
@@ -339,7 +401,7 @@ export default function FacebookSetupWizard({
   };
 
   // Обработчик выбора Facebook страницы из списка
-  const handlePageSelect = (pageId: string, pageName: string) => {
+  const handlePageSelect = async (pageId: string, pageName: string) => {
     const token = form.getValues('token');
     
     // Проверяем что токен не содержит лог консоли перед передачей
@@ -358,18 +420,56 @@ export default function FacebookSetupWizard({
       tokenLength: token.length,
       tokenValid: token.length > 50 && !token.includes('Facebook Wizard:')
     });
+
+    // Получаем токен конкретной страницы
+    try {
+      const response = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(token)}`);
+      const data = await response.json();
+      
+      console.log('Facebook Wizard: Токен страницы получен:', data);
+      
+      if (data.success && data.page) {
+        onComplete({
+          token: data.page.access_token, // Используем токен страницы
+          pageId,
+          pageName,
+        });
+        
+        toast({
+          title: "Страница выбрана",
+          description: `Выбрана страница: ${pageName} с персональным токеном`,
+        });
+      } else {
+        // Если не удалось получить токен страницы, используем основной токен
+        onComplete({
+          token,
+          pageId,
+          pageName,
+        });
+        
+        toast({
+          title: "Страница выбрана",
+          description: `Выбрана страница: ${pageName} с основным токеном`,
+        });
+      }
+    } catch (error) {
+      console.error('Facebook Wizard: Ошибка получения токена страницы:', error);
+      
+      // В случае ошибки используем основной токен
+      onComplete({
+        token,
+        pageId,
+        pageName,
+      });
+      
+      toast({
+        title: "Страница выбрана",
+        description: `Выбрана страница: ${pageName} (токен страницы недоступен)`,
+      });
+    }
     
-    onComplete({
-      token,
-      pageId,
-      pageName,
-    });
     setPages([]); // Скрываем список страниц после выбора
     setShowManualInput(false); // Скрываем ручной ввод
-    toast({
-      title: "Страница выбрана",
-      description: `Выбрана страница: ${pageName}`,
-    });
   };
 
   return (
@@ -451,7 +551,22 @@ export default function FacebookSetupWizard({
                   Получение...
                 </>
               ) : (
-                <>📋 Получить мои страницы</>
+                <>📋 Все страницы</>
+              )}
+            </Button>
+            
+            <Button 
+              onClick={handleFetchInstagramConnectedPages}
+              disabled={isPagesLoading || !form.getValues('token')}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isPagesLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Получение...
+                </>
+              ) : (
+                <>📱 Instagram связанные</>
               )}
             </Button>
             
