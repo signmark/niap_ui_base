@@ -452,23 +452,56 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
       accountType: string;
     }> = [];
 
+    // Диагностика токена
+    console.log('🔍 [DISCOVER] Checking token permissions...');
+    try {
+      const tokenDebugResponse = await axios.get(
+        `https://graph.facebook.com/debug_token?input_token=${accessToken}&access_token=${accessToken}`
+      );
+      console.log('🔍 [DISCOVER] Token debug info:', {
+        app_id: tokenDebugResponse.data?.data?.app_id,
+        scopes: tokenDebugResponse.data?.data?.scopes,
+        user_id: tokenDebugResponse.data?.data?.user_id,
+        is_valid: tokenDebugResponse.data?.data?.is_valid
+      });
+    } catch (debugError) {
+      console.log('⚠️ [DISCOVER] Token debug failed:', debugError.message);
+    }
+
     // Шаг 1: Получаем все Facebook страницы пользователя
+    console.log('🔍 [DISCOVER] Fetching Facebook pages...');
     const pagesResponse = await axios.get(
-      `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name`
+      `https://graph.facebook.com/v23.0/me/accounts?access_token=${accessToken}&fields=id,name,access_token`
     );
+    
+    console.log('🔍 [DISCOVER] Found pages:', pagesResponse.data.data?.length || 0);
+    pagesResponse.data.data?.forEach((page: any, index: number) => {
+      console.log(`🔍 [DISCOVER] Page ${index + 1}: ${page.name} (ID: ${page.id})`);
+    });
 
 
     // Шаг 2: Для каждой страницы проверяем Instagram аккаунты
     for (const page of pagesResponse.data.data) {
       try {
+        console.log(`🔍 [DISCOVER] Checking page: ${page.name} (ID: ${page.id})`);
+        
+        // Используем page access token если доступен
+        const pageAccessToken = page.access_token || accessToken;
         
         const pageInstagramResponse = await axios.get(
-          `https://graph.facebook.com/v23.0/${page.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
+          `https://graph.facebook.com/v23.0/${page.id}?access_token=${pageAccessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
         );
 
         const pageData = pageInstagramResponse.data;
         const hasBusinessAccount = !!(pageData.instagram_business_account && pageData.instagram_business_account.id);
         const hasConnectedAccount = !!(pageData.connected_instagram_account && pageData.connected_instagram_account.id);
+
+        console.log(`🔍 [DISCOVER] Page ${page.name} analysis:`, {
+          hasBusinessAccount,
+          hasConnectedAccount,
+          businessAccountId: pageData.instagram_business_account?.id,
+          connectedAccountId: pageData.connected_instagram_account?.id
+        });
 
         if (hasBusinessAccount) {
           discoveredAccounts.push({
@@ -477,7 +510,7 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
             instagramId: pageData.instagram_business_account.id,
             accountType: 'business_account'
           });
-          console.log(`✅ Found Business Account: ${pageData.name} -> ${pageData.instagram_business_account.id}`);
+          console.log(`✅ [DISCOVER] Found Business Account: ${pageData.name} -> ${pageData.instagram_business_account.id}`);
         } else if (hasConnectedAccount) {
           discoveredAccounts.push({
             pageId: pageData.id,
@@ -485,13 +518,13 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
             instagramId: pageData.connected_instagram_account.id,
             accountType: 'connected_account'
           });
-          console.log(`✅ Found Connected Account: ${pageData.name} -> ${pageData.connected_instagram_account.id}`);
+          console.log(`✅ [DISCOVER] Found Connected Account: ${pageData.name} -> ${pageData.connected_instagram_account.id}`);
         } else {
-          console.log(`❌ No Instagram account for page: ${pageData.name}`);
+          console.log(`❌ [DISCOVER] No Instagram account for page: ${pageData.name}`);
         }
 
       } catch (pageError: any) {
-        console.error(`❌ Error checking page ${page.name}:`, pageError.response?.data || pageError.message);
+        console.error(`❌ [DISCOVER] Error checking page ${page.name}:`, pageError.response?.data || pageError.message);
         // Продолжаем проверку других страниц даже если одна не работает
       }
     }
