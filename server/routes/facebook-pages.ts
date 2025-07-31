@@ -25,8 +25,20 @@ router.get('/pages', async (req, res) => {
 
     console.log('🔵 [FACEBOOK-PAGES] Fetching Facebook pages with token:', (accessToken as string).substring(0, 20) + '...');
 
-    // Получаем страницы пользователя через Facebook Graph API
-    const response = await axios.get(`https://graph.facebook.com/v18.0/me/accounts`, {
+    // Сначала получаем user ID
+    const userResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+      params: {
+        access_token: accessToken,
+        fields: 'id,name'
+      },
+      timeout: 10000
+    });
+
+    const userId = userResponse.data.id;
+    console.log('🔵 [FACEBOOK-PAGES] User ID obtained:', userId);
+
+    // Теперь получаем страницы пользователя через /{user-id}/accounts
+    const response = await axios.get(`https://graph.facebook.com/v18.0/${userId}/accounts`, {
       params: {
         access_token: accessToken,
         fields: 'id,name,access_token,category,tasks'
@@ -34,7 +46,44 @@ router.get('/pages', async (req, res) => {
       timeout: 10000
     });
 
-    const pages = response.data.data || [];
+    const allAccounts = response.data.data || [];
+    
+    console.log('🔵 [FACEBOOK-PAGES] All accounts from Facebook API:', allAccounts.map((account: any) => ({
+      id: account.id,
+      name: account.name,
+      category: account.category,
+      tasks: account.tasks
+    })));
+    
+    // Фильтруем только Facebook СТРАНИЦЫ, исключаем группы
+    // Проверяем: есть ли у account поле tasks - это признак страницы
+    // Группы возвращаются через другой endpoint и не имеют tasks
+    const pages = allAccounts.filter((account: any) => {
+      console.log(`🔍 [FACEBOOK-PAGES] Checking account ${account.name} (${account.id}):`, {
+        category: account.category,
+        hasTasks: !!account.tasks,
+        tasks: account.tasks || 'none'
+      });
+      
+      // Проверяем что это страница, а не группа
+      // У страниц есть tasks, у групп их нет в этом endpoint
+      if (!account.tasks || !Array.isArray(account.tasks)) {
+        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - no tasks (likely group)`);
+        return false;
+      }
+      
+      // Дополнительно проверяем наличие нужных разрешений для публикации
+      const hasManagetasks = account.tasks.includes('MANAGE');
+      const hasCreateContent = account.tasks.includes('CREATE_CONTENT');
+      
+      if (!hasManagetasks || !hasCreateContent) {
+        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - insufficient permissions`);
+        return false;
+      }
+      
+      console.log(`✅ [FACEBOOK-PAGES] Valid page found: ${account.name}`);
+      return true;
+    });
     
     console.log('🔵 [FACEBOOK-PAGES] Facebook pages fetched successfully:', {
       count: pages.length,

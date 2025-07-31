@@ -135,6 +135,8 @@ import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
 import instagramSetupRoutes from './routes/instagram-setup-wizard';
 // Импортируем Facebook Pages router
 import facebookPagesRouter from './routes/facebook-pages';
+// Импортируем Facebook Debug router
+import facebookDebugRouter from './routes/facebook-debug';
 // Импортируем Facebook Groups Discovery router
 import facebookGroupsRouter from './routes/facebook-groups-discovery';
 registerGlobalApiKeysRoutes(app);
@@ -151,6 +153,10 @@ log('Instagram Setup Wizard routes registered');
 // Регистрируем Facebook Pages маршруты
 app.use('/api/facebook', facebookPagesRouter);
 log('Facebook Pages routes registered');
+
+// Регистрируем Facebook Debug маршруты
+app.use('/api/facebook', facebookDebugRouter);
+log('Facebook Debug routes registered');
 
 // Регистрируем Facebook Groups Discovery маршруты
 app.use('/api', facebookGroupsRouter);

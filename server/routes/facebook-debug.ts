@@ -3,62 +3,90 @@ import axios from 'axios';
 
 const router = express.Router();
 
-// Проверка разрешений Facebook токена
-router.get('/facebook/debug-token', async (req, res) => {
+// GET /api/facebook/debug-token - отладка токена и проверка разрешений
+router.get('/debug-token', async (req, res) => {
   try {
     const { token } = req.query;
-    
-    if (!token) {
+    const accessToken = token;
+
+    if (!accessToken) {
       return res.status(400).json({
-        success: false,
-        error: 'Token is required'
+        error: 'Access token is required'
       });
     }
 
-    console.log('🔍 [FB-DEBUG] Проверяем разрешения токена:', token.toString().substring(0, 20) + '...');
+    console.log('🔍 [FACEBOOK-DEBUG] Debugging token:', (accessToken as string).substring(0, 20) + '...');
+
+    // Проверяем информацию о токене
+    const tokenInfoResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+      params: {
+        access_token: accessToken,
+        fields: 'id,name,permissions'
+      },
+      timeout: 10000
+    });
+
+    console.log('🔍 [FACEBOOK-DEBUG] Token info:', tokenInfoResponse.data);
 
     // Проверяем разрешения токена
-    const debugResponse = await axios.get(`https://graph.facebook.com/me/permissions`, {
+    const permissionsResponse = await axios.get(`https://graph.facebook.com/v18.0/me/permissions`, {
       params: {
-        access_token: token
-      }
+        access_token: accessToken
+      },
+      timeout: 10000
     });
 
-    console.log('📋 [FB-DEBUG] Разрешения токена:', JSON.stringify(debugResponse.data, null, 2));
+    console.log('🔍 [FACEBOOK-DEBUG] Token permissions:', permissionsResponse.data);
 
-    // Проверяем информацию о пользователе
-    const meResponse = await axios.get(`https://graph.facebook.com/me`, {
-      params: {
-        access_token: token,
-        fields: 'id,name,email'
+    // Пробуем несколько разных endpoints для страниц
+    const endpoints = [
+      '/me/accounts',
+      '/me/pages',
+      `/${tokenInfoResponse.data.id}/accounts`,
+      `/${tokenInfoResponse.data.id}/pages`
+    ];
+
+    const results = {};
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`🔍 [FACEBOOK-DEBUG] Testing endpoint: ${endpoint}`);
+        
+        const response = await axios.get(`https://graph.facebook.com/v18.0${endpoint}`, {
+          params: {
+            access_token: accessToken,
+            fields: 'id,name,access_token,category,tasks'
+          },
+          timeout: 10000
+        });
+
+        results[endpoint] = {
+          success: true,
+          count: response.data.data?.length || 0,
+          data: response.data.data || []
+        };
+
+        console.log(`✅ [FACEBOOK-DEBUG] ${endpoint} success:`, results[endpoint]);
+      } catch (error: any) {
+        results[endpoint] = {
+          success: false,
+          error: error.response?.data?.error?.message || error.message
+        };
+        console.log(`❌ [FACEBOOK-DEBUG] ${endpoint} failed:`, results[endpoint]);
       }
-    });
-
-    console.log('👤 [FB-DEBUG] Информация о пользователе:', JSON.stringify(meResponse.data, null, 2));
-
-    // Получаем страницы пользователя
-    const pagesResponse = await axios.get(`https://graph.facebook.com/me/accounts`, {
-      params: {
-        access_token: token,
-        fields: 'id,name,access_token,category'
-      }
-    });
-
-    console.log('📄 [FB-DEBUG] Страницы пользователя:', JSON.stringify(pagesResponse.data, null, 2));
+    }
 
     res.json({
-      success: true,
-      permissions: debugResponse.data.data,
-      user: meResponse.data,
-      pages: pagesResponse.data.data
+      tokenInfo: tokenInfoResponse.data,
+      permissions: permissionsResponse.data.data,
+      endpointResults: results
     });
 
   } catch (error: any) {
-    console.error('❌ [FB-DEBUG] Ошибка проверки токена:', error.response?.data || error.message);
+    console.error('❌ [FACEBOOK-DEBUG] Debug failed:', error.response?.data || error.message);
     res.status(500).json({
-      success: false,
-      error: 'Ошибка проверки токена',
-      details: error.response?.data || error.message
+      error: 'Failed to debug Facebook token',
+      details: error.response?.data?.error?.message || error.message
     });
   }
 });

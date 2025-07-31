@@ -334,11 +334,38 @@ export default function FacebookSetupWizard({
           </div>
         </Form>
 
-        {/* Список страниц */}
-        {pages.length > 0 && (
+        {/* Инструкция по получению страниц */}
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-3">
+          <h4 className="font-medium text-blue-800">📋 Как получить Facebook страницы</h4>
+          <div className="bg-white border border-blue-200 rounded-md p-3">
+            <h5 className="font-medium text-blue-800 mb-2">Шаг 1: Создайте новую Facebook страницу</h5>
+            <p className="text-sm text-blue-700 mb-2">
+              Для публикации контента нужна именно страница (Page), а не группа (Group).
+            </p>
+            <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
+              <li>Откройте <a href="https://www.facebook.com/pages/create" target="_blank" className="underline font-medium">facebook.com/pages/create</a></li>
+              <li>Выберите тип "Бизнес или бренд"</li>
+              <li>Заполните: название, категория, описание</li>
+              <li>Сохраните страницу</li>
+              <li>Вернитесь сюда и нажмите "📋 Получить страницы"</li>
+            </ol>
+            <div className="mt-3">
+              <Button 
+                onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                🔗 Создать Facebook страницу
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Список страниц с предупреждением о группах */}
+        {pages.length > 0 ? (
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <h4 className="font-medium">Выберите Facebook страницу:</h4>
+              <h4 className="font-medium">Найденные аккаунты Facebook:</h4>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -347,6 +374,23 @@ export default function FacebookSetupWizard({
                 Скрыть
               </Button>
             </div>
+            
+            {/* Предупреждение о группах */}
+            <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
+              <h5 className="font-medium text-orange-800 mb-2">⚠️ Внимание: Проверьте тип аккаунта</h5>
+              <p className="text-sm text-orange-700">
+                Если найденный аккаунт - это группа, создайте отдельную Facebook страницу для публикации.
+              </p>
+              <Button 
+                onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
+                size="sm"
+                variant="outline"
+                className="mt-2"
+              >
+                📋 Создать Facebook страницу
+              </Button>
+            </div>
+            
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {pages.map((page) => (
                 <Card key={page.id} className="cursor-pointer hover:bg-gray-100 transition-colors">
@@ -362,22 +406,61 @@ export default function FacebookSetupWizard({
                           <h5 className="font-semibold">{page.name}</h5>
                           <p className="text-sm text-gray-600">{page.category}</p>
                           <span className="text-xs text-gray-500">ID: {page.id}</span>
+                          <div className="text-xs text-blue-600 mt-1">
+                            ℹ️ Убедитесь, что это страница, а не группа
+                          </div>
                         </div>
                       </div>
-                      <Button 
-                        onClick={() => handlePageSelect(page.id, page.name)}
-                        disabled={loadingPages}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Выбрать
-                      </Button>
+                      <div className="flex flex-col space-y-1">
+                        <Button 
+                          onClick={() => handlePageSelect(page.id, page.name)}
+                          disabled={loadingPages}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Выбрать
+                        </Button>
+                        <Button 
+                          onClick={() => window.open(`https://facebook.com/${page.id}`, '_blank')}
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs"
+                        >
+                          Проверить
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </div>
+        ) : (
+          // Если нажали "Получить страницы" но ничего не нашли
+          form.getValues('token') && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 space-y-3">
+              <h4 className="font-medium text-red-800">❌ Facebook страницы не найдены</h4>
+              <p className="text-sm text-red-700">
+                У вас нет доступных Facebook страниц для публикации.
+              </p>
+              <div className="bg-white border border-red-200 rounded-md p-3">
+                <h5 className="font-medium text-red-800 mb-2">Создайте Facebook страницу:</h5>
+                <ol className="text-sm text-red-700 list-decimal list-inside space-y-1">
+                  <li>Откройте <strong>facebook.com/pages/create</strong></li>
+                  <li>Выберите "Бизнес или бренд"</li>
+                  <li>Заполните информацию о компании</li>
+                  <li>После создания вернитесь и обновите список</li>
+                </ol>
+                <Button 
+                  onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
+                  size="sm"
+                  className="mt-3 bg-blue-600 hover:bg-blue-700"
+                >
+                  🔗 Создать страницу
+                </Button>
+              </div>
+            </div>
+          )
         )}
       </div>
     </div>
