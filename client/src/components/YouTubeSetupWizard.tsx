@@ -109,7 +109,10 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
             });
             
             // Автоматически получаем информацию о канале
-            fetchChannelInfo(event.data.accessToken);
+            fetchChannelInfo(event.data.accessToken, {
+              accessToken: event.data.accessToken,
+              refreshToken: event.data.refreshToken
+            });
           } else if (event.data.type === 'YOUTUBE_OAUTH_ERROR') {
             console.error('❌ [YouTube Wizard] OAuth error:', event.data.error);
             popup?.close();
@@ -149,7 +152,7 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
     }
   };
 
-  const fetchChannelInfo = async (accessToken: string) => {
+  const fetchChannelInfo = async (accessToken: string, tokens?: { accessToken: string; refreshToken: string }) => {
     try {
       console.log('📊 [YouTube Wizard] Fetching channel info...');
       
@@ -172,7 +175,8 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         });
         
         // Автоматически завершаем настройку без требования нажать кнопку
-        if (authTokens) {
+        const tokensToUse = tokens || authTokens;
+        if (tokensToUse) {
           console.log('✅ [YouTube Wizard] Auto-completing setup with data:', {
             channelId: data.channelInfo.channelId,
             channelTitle: data.channelInfo.channelTitle
@@ -181,8 +185,8 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
           onComplete({
             channelId: data.channelInfo.channelId,
             channelTitle: data.channelInfo.channelTitle,
-            accessToken: authTokens.accessToken,
-            refreshToken: authTokens.refreshToken,
+            accessToken: tokensToUse.accessToken,
+            refreshToken: tokensToUse.refreshToken,
             channelInfo: data.channelInfo
           });
         }
