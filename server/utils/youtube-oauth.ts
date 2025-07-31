@@ -48,27 +48,30 @@ export class YouTubeOAuth {
       // НЕ возвращаем process.env.YOUTUBE_REDIRECT_URI - продолжаем автоопределение
     }
     
-    // Определяем среду по URL Directus
+    // ИСПРАВЛЕНО: REPL_ID имеет приоритет над всем (Replit development)
+    if (process.env.REPL_ID) {
+      // Dev среда (Replit) - формируем URL из REPL_ID
+      const replId = process.env.REPL_ID;
+      const replUrl = `https://${replId}-00-m8pxe5e85z61.worf.replit.dev`;
+      
+      console.log('[getDefaultRedirectUri] Определена Replit среда (REPL_ID найден):');
+      console.log('[getDefaultRedirectUri] REPL_ID:', replId);
+      console.log('[getDefaultRedirectUri] Полный URL:', replUrl);
+      
+      return `${replUrl}/api/youtube/auth/callback`;
+    }
+    
+    // Определяем среду по URL Directus только если НЕТ REPL_ID
     const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
     console.log('[getDefaultRedirectUri] directusUrl для проверки:', directusUrl);
     
     if (directusUrl?.includes('roboflow.space')) {
-      // Стейдж среда
+      // Стейдж среда (только если нет REPL_ID)
+      console.log('[getDefaultRedirectUri] Определена staging среда (roboflow.space)');
       return 'https://smm.roboflow.space/api/youtube/auth/callback';
-    } else if (directusUrl?.includes('replit.dev') || process.env.REPL_ID) {
-      // Dev среда (Replit) - формируем URL из REPL_ID и REPL_SLUG
-      const replId = process.env.REPL_ID;
-      const replSlug = process.env.REPL_SLUG || 'workspace';
-      const replUrl = `https://${replId}-00-m8pxe5e85z61.worf.replit.dev`;
-      
-      console.log('[youtube-oauth] Формируем Replit URL:');
-      console.log('[youtube-oauth] REPL_ID:', replId);
-      console.log('[youtube-oauth] REPL_SLUG:', replSlug);
-      console.log('[youtube-oauth] Полный URL:', replUrl);
-      
-      return `${replUrl}/api/youtube/auth/callback`;
     } else {
       // Fallback для локальной разработки
+      console.log('[getDefaultRedirectUri] Используем localhost fallback');
       return 'http://localhost:5000/api/youtube/auth/callback';
     }
   }
