@@ -49,8 +49,33 @@ export default function InstagramCallback() {
 
       if (response.ok && data.success) {
         console.log('✅ Instagram OAuth успешно завершен');
+        console.log('📤 Отправляем новый токен в wizard через postMessage...');
+        
         setStatus('success');
         setMessage('Instagram авторизация успешно завершена! Данные сохранены в кампании.');
+        
+        // Отправляем данные в родительское окно
+        if (window.opener) {
+          const oauthData = {
+            type: 'INSTAGRAM_OAUTH_SUCCESS',
+            data: {
+              token: data.longLivedToken, // Новый токен из OAuth
+              appId: data.appId, // App ID из верхнего уровня ответа
+              instagramAccounts: data.instagramAccounts,
+              user: data.user,
+              success: true
+            }
+          };
+          
+          console.log('📤 Sending OAuth success data to parent window:', {
+            type: oauthData.type,
+            tokenPreview: data.longLivedToken?.substring(0, 20) + '...',
+            appId: data.appId,
+            accountsCount: data.instagramAccounts?.length || 0
+          });
+          
+          window.opener.postMessage(oauthData, window.location.origin);
+        }
         
         // Закрываем окно через 3 секунды
         setTimeout(() => {

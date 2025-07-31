@@ -88,9 +88,12 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         
         // Обновляем форму с полученными данными
         if (event.data.data.token) {
+          console.log('🔄 [WIZARD] Updating accessToken from OAuth:', event.data.data.token.substring(0, 20) + '...');
           setFormData(prev => ({
             ...prev,
-            accessToken: event.data.data.token
+            accessToken: event.data.data.token,
+            // Также обновляем App ID если он пришел
+            appId: event.data.data.appId || prev.appId
           }));
           
           toast({
@@ -145,7 +148,10 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         // Обновляем настройки через callback
         if (onSettingsUpdate && event.data.data) {
           console.log('🔄 WIZARD - Calling onSettingsUpdate callback');
-          onSettingsUpdate(event.data.data);
+          onSettingsUpdate({
+            ...event.data.data,
+            needsReload: true // Флаг для перезагрузки настроек
+          });
         }
         
         toast({
@@ -235,6 +241,8 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     setOauthLoading(true);
     
     try {
+      console.log('🔍 [WIZARD] Ищем Instagram аккаунты с токеном:', formData.accessToken.substring(0, 20) + '...');
+      
       const response = await apiRequest(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
         method: 'POST',
         data: {
@@ -242,20 +250,49 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         }
       });
 
-      if (response.success && response.accounts.length > 0) {
+      console.log('🔍 [WIZARD] Ответ сервера:', response);
+
+      if (response.success && response.accounts && response.accounts.length > 0) {
         setInstagramAccounts(response.accounts);
+        console.log('✅ [WIZARD] Найдено Instagram аккаунтов:', response.accounts.length);
+        
         toast({
           title: "Аккаунты найдены!",
           description: `Обнаружено ${response.accounts.length} Instagram аккаунтов`
         });
+        
+        // Автоматически извлекаем App ID из токена если он есть
+        // Для токенов Instagram можно получить App ID через Graph API
+        try {
+          const tokenInfoResponse = await fetch(`https://graph.facebook.com/app?access_token=${formData.accessToken}`);
+          const tokenInfo = await tokenInfoResponse.json();
+          
+          if (tokenInfo.id && !formData.appId) {
+            console.log('🔑 [WIZARD] Автоматически обнаружен App ID:', tokenInfo.id);
+            setFormData(prev => ({
+              ...prev,
+              appId: tokenInfo.id
+            }));
+            
+            toast({
+              title: "App ID обнаружен",
+              description: `Автоматически найден App ID: ${tokenInfo.id}`
+            });
+          }
+        } catch (appIdError) {
+          console.log('ℹ️ [WIZARD] Не удалось автоматически получить App ID:', appIdError);
+        }
+        
       } else {
+        console.log('❌ [WIZARD] Аккаунты не найдены или ошибка:', response);
+        setInstagramAccounts([]);
         toast({
           title: "Аккаунты не найдены",
-          description: "Токен не имеет доступа к Instagram Business аккаунтам"
+          description: response.error || "Токен не имеет доступа к Instagram Business аккаунтам"
         });
       }
     } catch (error: any) {
-      console.error('Error discovering Instagram accounts:', error);
+      console.error('❌ [WIZARD] Error discovering Instagram accounts:', error);
       toast({
         title: "Ошибка поиска",
         description: error.response?.data?.error || "Не удалось найти Instagram аккаунты"

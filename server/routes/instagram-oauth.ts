@@ -260,8 +260,9 @@ router.get('/instagram/auth/callback', async (req, res) => {
       const updatedInstagramSettings = {
         ...existingInstagram,
         ...instagramSettings,
-        // Сохраняем важные поля из существующих настроек
-        token: existingInstagram.token || instagramSettings.longLivedToken,
+        // КРИТИЧЕСКИ ВАЖНО: всегда используем НОВЫЙ токен из OAuth
+        token: instagramSettings.longLivedToken, // Заменяем старый токен на новый
+        accessToken: instagramSettings.longLivedToken, // Дублируем для совместимости
         businessAccountId: existingInstagram.businessAccountId || 
           (instagramSettings.instagramAccounts && instagramSettings.instagramAccounts[0] ? 
             instagramSettings.instagramAccounts[0].instagramId : null)
@@ -322,13 +323,11 @@ router.get('/instagram/auth/callback', async (req, res) => {
     const responseData = {
       success: true,
       message: 'Instagram авторизация завершена успешно',
-      data: {
-        token: longLivedToken, // Добавляем токен в ответ для frontend
-        instagramAccounts: webhookData.instagramAccounts,
-        user: userResponse.data,
-        longLivedToken,
-        expiresIn
-      }
+      appId: session.appId, // Важно! App ID должен быть на верхнем уровне
+      longLivedToken, // Токен на верхнем уровне для callback
+      instagramAccounts: webhookData.instagramAccounts,
+      user: userResponse.data,
+      expiresIn
     };
     
     console.log('📡 CALLBACK RESPONSE - Sending to client:', {

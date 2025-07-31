@@ -147,9 +147,9 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
 
     console.log('🔍 [INSTAGRAM-DISCOVERY] Ищем все доступные Instagram аккаунты через токен...');
 
-    // Сначала получаем все Facebook страницы пользователя
+    // Сначала получаем все Facebook страницы пользователя с расширенными полями
     const pagesResponse = await axios.get(
-      `https://graph.facebook.com/me/accounts?fields=id,name,access_token,instagram_business_account`,
+      `https://graph.facebook.com/me/accounts?fields=id,name,access_token,instagram_business_account,connected_instagram_account`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`
@@ -163,11 +163,20 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
 
     // Проходим по каждой странице и ищем связанные Instagram аккаунты
     for (const page of pagesResponse.data.data) {
-      if (page.instagram_business_account) {
+      console.log(`🔍 [INSTAGRAM-DISCOVERY] Проверяем страницу ${page.name} (${page.id})`);
+      console.log(`🔍 [INSTAGRAM-DISCOVERY] instagram_business_account:`, page.instagram_business_account);
+      console.log(`🔍 [INSTAGRAM-DISCOVERY] connected_instagram_account:`, page.connected_instagram_account);
+
+      // Проверяем оба типа подключений Instagram
+      const instagramId = page.instagram_business_account?.id || page.connected_instagram_account?.id;
+      
+      if (instagramId) {
         try {
+          console.log(`🔍 [INSTAGRAM-DISCOVERY] Получаем детали Instagram аккаунта ${instagramId}`);
+          
           // Получаем детали Instagram аккаунта
           const instagramResponse = await axios.get(
-            `https://graph.facebook.com/${page.instagram_business_account.id}?fields=id,name,username,followers_count,media_count,profile_picture_url`,
+            `https://graph.facebook.com/${instagramId}?fields=id,name,username,followers_count,media_count,profile_picture_url`,
             {
               headers: {
                 Authorization: `Bearer ${page.access_token}`
@@ -185,12 +194,16 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
             media_count: instagramResponse.data.media_count || 0,
             profile_picture_url: instagramResponse.data.profile_picture_url,
             facebook_page_id: page.id,
-            facebook_page_name: page.name
+            facebook_page_name: page.name,
+            connection_type: page.instagram_business_account?.id ? 'business' : 'connected'
           });
 
         } catch (error: any) {
-          console.error(`❌ [INSTAGRAM-DISCOVERY] Ошибка получения деталей для Instagram ${page.instagram_business_account.id}:`, error.message);
+          console.error(`❌ [INSTAGRAM-DISCOVERY] Ошибка получения деталей для Instagram ${instagramId}:`, error.message);
+          console.error(`❌ [INSTAGRAM-DISCOVERY] Полная ошибка:`, error.response?.data);
         }
+      } else {
+        console.log(`ℹ️ [INSTAGRAM-DISCOVERY] Страница ${page.name} не имеет связанного Instagram аккаунта`);
       }
     }
 
