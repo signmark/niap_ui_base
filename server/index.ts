@@ -338,7 +338,28 @@ app.use((req, res, next) => {
     console.log("Claude routes registered");
     log("Claude routes registered successfully");
 
-    log("Registering main routes first...");
+    // Регистрируем YouTube Channel Info маршруты ПЕРЕД основными маршрутами
+    console.log("Registering YouTube Channel routes EARLY...");
+    log("Registering YouTube Channel routes EARLY...");
+    const youtubeChannelRouter = (await import('./routes/youtube-channel')).default;
+    
+    // Добавляем отладочное логирование для проверки регистрации маршрута
+    console.log('📍 [YOUTUBE-ROUTER] Router imported successfully:', !!youtubeChannelRouter);
+    console.log('📍 [YOUTUBE-ROUTER] Registering at /api prefix EARLY');
+    
+    app.use('/api', youtubeChannelRouter);
+    console.log("YouTube Channel routes registered EARLY");
+    log("YouTube Channel routes registered successfully EARLY");
+    
+    // Регистрируем YouTube OAuth маршруты ПЕРЕД основными маршрутами
+    console.log("Registering YouTube OAuth routes EARLY...");
+    log("Registering YouTube OAuth routes EARLY...");
+    const youtubeAuthRouter = (await import('./routes/youtube-auth')).default;
+    app.use('/api/auth', youtubeAuthRouter);
+    console.log("YouTube OAuth routes registered EARLY");
+    log("YouTube OAuth routes registered successfully EARLY");
+
+    log("Registering main routes after YouTube routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
     
@@ -350,27 +371,6 @@ app.use((req, res, next) => {
     app.use('/api', campaignInstagramRoutes);
     console.log("Instagram Campaign Settings routes registered");
     log('Instagram Campaign Settings routes registered with priority');
-    
-    // Регистрируем YouTube OAuth маршруты
-    console.log("Registering YouTube OAuth routes...");
-    log("Registering YouTube OAuth routes...");
-    const youtubeAuthRouter = (await import('./routes/youtube-auth')).default;
-    app.use('/api/auth', youtubeAuthRouter);
-    console.log("YouTube OAuth routes registered");
-    log("YouTube OAuth routes registered successfully");
-    
-    // Регистрируем YouTube Channel Info маршруты
-    console.log("Registering YouTube Channel routes...");
-    log("Registering YouTube Channel routes...");
-    const youtubeChannelRouter = (await import('./routes/youtube-channel')).default;
-    
-    // Добавляем отладочное логирование для проверки регистрации маршрута
-    console.log('📍 [YOUTUBE-ROUTER] Router imported successfully:', !!youtubeChannelRouter);
-    console.log('📍 [YOUTUBE-ROUTER] Registering at /api prefix');
-    
-    app.use('/api', youtubeChannelRouter);
-    console.log("YouTube Channel routes registered");
-    log("YouTube Channel routes registered successfully");
     
     // Регистрируем Instagram OAuth маршруты
     console.log("Registering Instagram OAuth routes...");
