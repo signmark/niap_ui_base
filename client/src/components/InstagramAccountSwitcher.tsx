@@ -29,11 +29,7 @@ const InstagramAccountSwitcher: React.FC<InstagramAccountSwitcherProps> = ({
   const { toast } = useToast();
 
   const getInstagramAccountName = (accountId: string) => {
-    const knownAccounts: Record<string, string> = {
-      '17841422578516105': '@it.zhdanov',
-      '17841422577074562': '@d.signmark'
-    };
-    return knownAccounts[accountId] || 'Instagram Business Account';
+    return 'Instagram Business Account';
   };
 
   const loadAvailableAccounts = async () => {

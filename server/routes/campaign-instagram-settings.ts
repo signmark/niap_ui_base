@@ -496,52 +496,7 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
       }
     }
 
-    // Шаг 3: Дополнительно проверяем известные страницы которые могут не появляться в /me/accounts
-    const knownPages = [
-      { id: '749727828220432', name: 'Дмитрий Жданов' },
-      { id: '1195760570469812', name: 'Сметоматика' }
-    ];
-
-    for (const knownPage of knownPages) {
-      try {
-        // Проверяем если эта страница уже найдена
-        const alreadyFound = discoveredAccounts.some(acc => acc.pageId === knownPage.id);
-        if (alreadyFound) {
-          continue;
-        }
-
-        
-        const knownPageResponse = await axios.get(
-          `https://graph.facebook.com/v23.0/${knownPage.id}?access_token=${accessToken}&fields=id,name,instagram_business_account,connected_instagram_account`
-        );
-
-        const pageData = knownPageResponse.data;
-        const hasBusinessAccount = !!(pageData.instagram_business_account && pageData.instagram_business_account.id);
-        const hasConnectedAccount = !!(pageData.connected_instagram_account && pageData.connected_instagram_account.id);
-
-        if (hasBusinessAccount) {
-          discoveredAccounts.push({
-            pageId: pageData.id,
-            pageName: pageData.name,
-            instagramId: pageData.instagram_business_account.id,
-            accountType: 'business_account'
-          });
-          console.log(`✅ Found known Business Account: ${pageData.name} -> ${pageData.instagram_business_account.id}`);
-        } else if (hasConnectedAccount) {
-          discoveredAccounts.push({
-            pageId: pageData.id,
-            pageName: pageData.name,
-            instagramId: pageData.connected_instagram_account.id,
-            accountType: 'connected_account'
-          });
-          console.log(`✅ Found known Connected Account: ${pageData.name} -> ${pageData.connected_instagram_account.id}`);
-        }
-
-      } catch (knownPageError: any) {
-        console.log(`❌ Known page ${knownPage.name} not accessible:`, knownPageError.response?.status);
-        // Это нормально - не все известные страницы доступны каждому токену
-      }
-    }
+    // Шаг 3: Дополнительная проверка завершена - используем только API данные
 
     console.log(`🎉 Discovery complete! Found ${discoveredAccounts.length} Instagram accounts`);
     
@@ -571,24 +526,16 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
       } catch (instagramError: any) {
         console.error(`❌ Error fetching Instagram details for ${account.instagramId}:`, instagramError.response?.data || instagramError.message);
         
-        // Используем fallback с правильными username'ами из базы знаний
-        const getInstagramUsername = (accountId: string) => {
-          const knownAccounts: Record<string, string> = {
-            '17841422578516105': '@it.zhdanov',
-            '17841422577074562': '@d.signmark'
-          };
-          return knownAccounts[accountId] || account.pageName;
-        };
-        
+        // Используем fallback с именем страницы
         formattedAccounts.push({
           id: account.instagramId,
-          name: getInstagramUsername(account.instagramId),
-          username: getInstagramUsername(account.instagramId).replace('@', ''),
+          name: account.pageName,
+          username: null,
           pageId: account.pageId,
           accountType: account.accountType
         });
         
-        console.log(`✅ Using fallback username for ${account.instagramId}: ${getInstagramUsername(account.instagramId)}`);
+        console.log(`✅ Using fallback page name for ${account.instagramId}: ${account.pageName}`);
       }
     }
 

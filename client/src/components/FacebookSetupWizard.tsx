@@ -18,6 +18,8 @@ import { Loader2, CheckCircle } from "lucide-react";
 
 const facebookSetupSchema = z.object({
   token: z.string().min(1, "Токен обязателен"),
+  manualPageId: z.string().optional(),
+  manualPageName: z.string().optional(),
 });
 
 type FacebookSetupForm = z.infer<typeof facebookSetupSchema>;
@@ -41,8 +43,6 @@ export default function FacebookSetupWizard({
   onComplete,
   onCancel,
 }: FacebookSetupWizardProps) {
-  const [pageId, setPageId] = useState('');
-  const [pageName, setPageName] = useState('');
   const [pages, setPages] = useState<any[]>([]);
   const [isPagesLoading, setIsPagesLoading] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
@@ -52,6 +52,8 @@ export default function FacebookSetupWizard({
     resolver: zodResolver(facebookSetupSchema),
     defaultValues: {
       token: "",
+      manualPageId: "",
+      manualPageName: "",
     },
   });
 
@@ -142,7 +144,7 @@ export default function FacebookSetupWizard({
         if (data.social_media_settings?.facebook?.token) {
           form.setValue('token', data.social_media_settings.facebook.token);
           // Автоматически загружаем страницы если токен уже есть
-          fetchFacebookPages();
+          handleFetchPages();
         }
       } catch (error) {
         console.error('Ошибка загрузки Facebook настроек:', error);
@@ -250,7 +252,10 @@ export default function FacebookSetupWizard({
 
   // Обработчик ручного выбора страницы
   const handleManualPageSelect = () => {
-    const token = form.getValues('token');
+    const formData = form.getValues();
+    const token = formData.token;
+    const manualPageId = formData.manualPageId;
+    const manualPageName = formData.manualPageName;
     
     if (!token || token.length < 10) {
       toast({
@@ -261,7 +266,7 @@ export default function FacebookSetupWizard({
       return;
     }
 
-    if (!pageId) {
+    if (!manualPageId) {
       toast({
         title: "Ошибка", 
         description: "Введите ID страницы",
@@ -272,13 +277,13 @@ export default function FacebookSetupWizard({
 
     onComplete({
       token,
-      pageId,
-      pageName: pageName || `Facebook Page ${pageId}`,
+      pageId: manualPageId,
+      pageName: manualPageName || `Facebook Page ${manualPageId}`,
     });
 
     toast({
       title: "Страница выбрана",
-      description: `Используется страница: ${pageName || pageId}`,
+      description: `Используется страница: ${manualPageName || manualPageId}`,
     });
   };
 
@@ -345,11 +350,11 @@ export default function FacebookSetupWizard({
                     </FormControl>
                     <Button 
                       type="button" 
-                      onClick={fetchFacebookPages}
-                      disabled={loadingPages || !form.getValues('token')}
+                      onClick={handleFetchPages}
+                      disabled={isPagesLoading || !form.getValues('token')}
                       size="sm"
                     >
-                      {loadingPages ? (
+                      {isPagesLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Поиск...
@@ -362,7 +367,7 @@ export default function FacebookSetupWizard({
                       type="button" 
                       variant="outline"
                       onClick={debugFacebookToken}
-                      disabled={loadingPages || !form.getValues('token')}
+                      disabled={isPagesLoading || !form.getValues('token')}
                       size="sm"
                     >
                       🔍 Диагностика
@@ -412,37 +417,45 @@ export default function FacebookSetupWizard({
             <div className="bg-gray-50 border border-gray-200 rounded-md p-4 space-y-4">
               <h4 className="font-medium">Ручной ввод данных страницы</h4>
               
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  ID Facebook страницы
-                </label>
-                <input
-                  type="text"
-                  value={pageId}
-                  onChange={(e) => setPageId(e.target.value)}
-                  placeholder="Например: 2120362494678794"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="manualPageId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID Facebook страницы</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Например: 2120362494678794"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Название страницы (необязательно)
-                </label>
-                <input
-                  type="text"
-                  value={pageName}
-                  onChange={(e) => setPageName(e.target.value)}
-                  placeholder="Например: SMM Бизнес"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="manualPageName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Название страницы (необязательно)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Например: SMM Бизнес"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              {pageId && (
+              {form.watch('manualPageId') && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-3">
                   <p className="text-sm text-green-700">
-                    ✅ ID: <code className="bg-green-100 px-1 rounded">{pageId}</code>
-                    {pageName && <span>, название: <strong>{pageName}</strong></span>}
+                    ✅ ID: <code className="bg-green-100 px-1 rounded">{form.watch('manualPageId')}</code>
+                    {form.watch('manualPageName') && <span>, название: <strong>{form.watch('manualPageName')}</strong></span>}
                   </p>
                   <Button 
                     onClick={() => handleManualPageSelect()}
