@@ -131,6 +131,88 @@ router.patch('/campaigns/:campaignId/instagram-settings', async (req, res) => {
 });
 
 /**
+ * Поиск всех доступных Instagram аккаунтов по токену
+ */
+router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, res) => {
+  const { campaignId } = req.params;
+  const { accessToken } = req.body;
+
+  try {
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access Token обязателен для поиска аккаунтов'
+      });
+    }
+
+    console.log('🔍 [INSTAGRAM-DISCOVERY] Ищем все доступные Instagram аккаунты через токен...');
+
+    // Сначала получаем все Facebook страницы пользователя
+    const pagesResponse = await axios.get(
+      `https://graph.facebook.com/me/accounts?fields=id,name,access_token,instagram_business_account`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    console.log('🔍 [INSTAGRAM-DISCOVERY] Facebook страницы получены:', pagesResponse.data);
+
+    const instagramAccounts = [];
+
+    // Проходим по каждой странице и ищем связанные Instagram аккаунты
+    for (const page of pagesResponse.data.data) {
+      if (page.instagram_business_account) {
+        try {
+          // Получаем детали Instagram аккаунта
+          const instagramResponse = await axios.get(
+            `https://graph.facebook.com/${page.instagram_business_account.id}?fields=id,name,username,followers_count,media_count,profile_picture_url`,
+            {
+              headers: {
+                Authorization: `Bearer ${page.access_token}`
+              }
+            }
+          );
+
+          console.log('✅ [INSTAGRAM-DISCOVERY] Instagram аккаунт найден:', instagramResponse.data);
+
+          instagramAccounts.push({
+            id: instagramResponse.data.id,
+            name: instagramResponse.data.name,
+            username: instagramResponse.data.username,
+            followers_count: instagramResponse.data.followers_count || 0,
+            media_count: instagramResponse.data.media_count || 0,
+            profile_picture_url: instagramResponse.data.profile_picture_url,
+            facebook_page_id: page.id,
+            facebook_page_name: page.name
+          });
+
+        } catch (error: any) {
+          console.error(`❌ [INSTAGRAM-DISCOVERY] Ошибка получения деталей для Instagram ${page.instagram_business_account.id}:`, error.message);
+        }
+      }
+    }
+
+    console.log(`🔍 [INSTAGRAM-DISCOVERY] Всего найдено Instagram аккаунтов: ${instagramAccounts.length}`);
+
+    res.json({
+      success: true,
+      accounts: instagramAccounts,
+      totalFound: instagramAccounts.length
+    });
+
+  } catch (error: any) {
+    console.error('❌ [INSTAGRAM-DISCOVERY] Ошибка поиска Instagram аккаунтов:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка при поиске Instagram аккаунтов',
+      details: error.message
+    });
+  }
+});
+
+/**
  * Получение Instagram Business Account ID через Graph API
  */
 router.post('/campaigns/:campaignId/fetch-instagram-business-id', async (req, res) => {

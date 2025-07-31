@@ -54,6 +54,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
   const [oauthLoading, setOauthLoading] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
   const [facebookToken, setFacebookToken] = useState('');
+  const [instagramAccounts, setInstagramAccounts] = useState<any[]>([]);
   
   const { toast } = useToast();
 
@@ -216,6 +217,48 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
       toast({
         title: "Ошибка OAuth",
         description: error instanceof Error ? error.message : "Произошла ошибка"
+      });
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
+  const findAllInstagramAccounts = async () => {
+    if (!formData.accessToken) {
+      toast({
+        title: "Ошибка",
+        description: "Access Token обязателен для поиска аккаунтов"
+      });
+      return;
+    }
+
+    setOauthLoading(true);
+    
+    try {
+      const response = await apiRequest(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
+        method: 'POST',
+        data: {
+          accessToken: formData.accessToken
+        }
+      });
+
+      if (response.success && response.accounts.length > 0) {
+        setInstagramAccounts(response.accounts);
+        toast({
+          title: "Аккаунты найдены!",
+          description: `Обнаружено ${response.accounts.length} Instagram аккаунтов`
+        });
+      } else {
+        toast({
+          title: "Аккаунты не найдены",
+          description: "Токен не имеет доступа к Instagram Business аккаунтам"
+        });
+      }
+    } catch (error: any) {
+      console.error('Error discovering Instagram accounts:', error);
+      toast({
+        title: "Ошибка поиска",
+        description: error.response?.data?.error || "Не удалось найти Instagram аккаунты"
       });
     } finally {
       setOauthLoading(false);
@@ -573,9 +616,73 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
               </AlertDescription>
             </Alert>
             
+            {/* Автопоиск всех доступных аккаунтов */}
+            {formData.accessToken && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={findAllInstagramAccounts}
+                  disabled={!formData.accessToken || oauthLoading}
+                  className="w-full"
+                >
+                  {oauthLoading ? (
+                    "🔍 Ищем все доступные аккаунты..."
+                  ) : (
+                    "🔍 Найти все Instagram аккаунты по токену"
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Автоматически найдет все аккаунты, которыми можно управлять через токен
+                </p>
+              </div>
+            )}
+
+            {/* Отображение найденных аккаунтов */}
+            {instagramAccounts.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <Label className="text-sm font-medium">Найденные Instagram аккаунты:</Label>
+                <div className="space-y-2">
+                  {instagramAccounts.map((account, index) => (
+                    <div 
+                      key={account.id}
+                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          instagramId: account.id
+                        }));
+                        toast({
+                          title: "Аккаунт выбран",
+                          description: `${account.name} (@${account.username})`
+                        });
+                      }}
+                    >
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        📸
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{account.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          @{account.username} • {account.followers_count} подписчиков
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          ID: {account.id}
+                        </div>
+                      </div>
+                      <Badge variant="secondary">
+                        {formData.instagramId === account.id ? 'Выбран' : 'Выбрать'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Кнопки быстрого выбора известных аккаунтов */}
             <div className="mt-3 space-y-2">
-              <Label className="text-sm font-medium">Быстрый выбор известных аккаунтов:</Label>
+              <Label className="text-sm font-medium">Или выберите известный аккаунт:</Label>
               <div className="flex flex-col gap-2">
                 <Button
                   type="button"
