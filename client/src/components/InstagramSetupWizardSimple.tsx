@@ -147,7 +147,27 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
 
     setIsProcessing(true);
     try {
-      // 1. Находим Instagram аккаунты
+      // 1. Получаем свежие настройки Instagram из базы данных
+      console.log('🔍 Loading fresh Instagram settings from database...');
+      const settingsResponse = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+
+      let accessTokenToUse = formData.accessToken;
+
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        if (settingsData.success && settingsData.settings) {
+          // Используем самый свежий токен из базы данных
+          accessTokenToUse = settingsData.settings.longLivedToken || settingsData.settings.accessToken || settingsData.settings.token || formData.accessToken;
+          console.log('🔍 Using fresh token from database:', accessTokenToUse.substring(0, 30) + '...');
+        }
+      }
+
+      // 2. Находим Instagram аккаунты с правильным токеном
       const instagramResponse = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
         method: 'POST',
         headers: {
@@ -155,13 +175,17 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({
-          accessToken: formData.accessToken
+          accessToken: accessTokenToUse
         })
       });
 
       const instagramData = await instagramResponse.json();
+      console.log('🔍 Instagram API response data:', instagramData);
+      console.log('🔍 Instagram response success:', instagramData.success);
+      console.log('🔍 Instagram accounts found:', instagramData.accounts?.length || 0);
       
-      if (instagramData.success && instagramData.accounts) {
+      if (instagramData.success && instagramData.accounts && instagramData.accounts.length > 0) {
+        console.log('✅ Instagram accounts successfully discovered:', instagramData.accounts);
         setAvailableAccounts(instagramData.accounts);
         setShowAccountSelection(true);
         
@@ -233,9 +257,23 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
       }
     } catch (error: any) {
       console.error('Error discovering Instagram accounts:', error);
+      
+      // Проверяем специальные типы ошибок
+      let errorMessage = error.message;
+      let shouldShowReauth = false;
+      
+      if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+        errorMessage = 'Ошибка сервера при поиске Instagram аккаунтов';
+      } else if (error.message.includes('401') || error.message.includes('TOKEN_EXPIRED')) {
+        errorMessage = 'Токен Instagram/Facebook истек. Необходима переавторизация.';
+        shouldShowReauth = true;
+      } else if (error.message.includes('403')) {
+        errorMessage = 'Нет доступа к Instagram API. Проверьте права доступа.';
+      }
+      
       toast({
-        title: "Ошибка",
-        description: error.message,
+        title: shouldShowReauth ? "Требуется переавторизация" : "Ошибка",
+        description: errorMessage + (shouldShowReauth ? " Нажмите кнопку OAuth для новой авторизации." : ""),
         variant: "destructive"
       });
     } finally {

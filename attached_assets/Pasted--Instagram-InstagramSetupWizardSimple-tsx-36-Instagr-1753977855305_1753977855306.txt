@@ -1,0 +1,64 @@
+Открываем Instagram мастер для настройки/пересконфигурации
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: 45daab2a-4c6f-4578-8665-3a049458c0c8
+InstagramSetupWizardSimple.tsx:151  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/campaigns/45daab2a-4c6f-4578-8665-3a049458c0c8/discover-instagram-accounts 500 (Internal Server Error)
+handleDiscoverAccounts @ InstagramSetupWizardSimple.tsx:151
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+InstagramSetupWizardSimple.tsx:235 Error discovering Instagram accounts: Error: Ошибка при поиске Instagram аккаунтов
+    at handleDiscoverAccounts (InstagramSetupWizardSimple.tsx:232:15)
+handleDiscoverAccounts @ InstagramSetupWizardSimple.tsx:235
+await in handleDiscoverAccounts
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+2InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: 45daab2a-4c6f-4578-8665-3a049458c0c8
+SocialMediaSettings.tsx:1770 Открываем Facebook мастер для настройки/пересконфигурации
+FacebookSetupWizard.tsx:162 Facebook Wizard: Получение Instagram связанных страниц из настроек кампании...
+FacebookSetupWizard.tsx:172 Facebook Wizard: Данные кампании получены: {success: true, data: {…}}
+FacebookSetupWizard.tsx:180 Facebook Wizard: Instagram настройки найдены: {hasInstagramSettings: true, tokenKeys: Array(8), tokenLength: 181}
+FacebookSetupWizard.tsx:195 Facebook Wizard: Используем Instagram токен для поиска связанных страниц...
+FacebookSetupWizard.tsx:200 Facebook Wizard: Ответ API Instagram связанных страниц: {success: true, connected_pages: Array(0), message: 'Не найдено Facebook страниц связанных с Instagram Business аккаунтами'}
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: 45daab2a-4c6f-4578-8665-3a049458c0c8
+FacebookSetupWizard.tsx:267  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/facebook/pages?token=EAFZA7pZCC2288BPGNQFXMjsB1OmxvMSqR6mQa9Keo3tJvUZAD7JTHNc2ZCFAX7QfmOE0HhZBMFdQEuPjrRZAoQkJcCyN7D0e4M9NgxUc3dYUc3dFgI2z6lWf4OvZBjZBPl7ZCKQZAkX5vX1Kc5Q2ZCJZAzD2VxX4kJ5ZCZBZCdG2l4TJgJ6z 400 (Bad Request)
+handleFetchPages @ FacebookSetupWizard.tsx:267
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+3InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: 45daab2a-4c6f-4578-8665-3a049458c0c8

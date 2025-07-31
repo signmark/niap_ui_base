@@ -147,15 +147,50 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
 
     console.log('🔍 [INSTAGRAM-DISCOVERY] Ищем все доступные Instagram аккаунты через токен...');
 
-    // Сначала получаем все Facebook страницы пользователя с расширенными полями
-    const pagesResponse = await axios.get(
-      `https://graph.facebook.com/me/accounts?fields=id,name,access_token,instagram_business_account,connected_instagram_account`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
+    // Сначала проверяем валидность токена
+    try {
+      const tokenCheckResponse = await axios.get(
+        `https://graph.facebook.com/me?fields=id,name`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          },
+          timeout: 5000
         }
-      }
-    );
+      );
+      console.log('✅ [INSTAGRAM-DISCOVERY] Токен валидный, пользователь:', tokenCheckResponse.data);
+    } catch (tokenError: any) {
+      console.error('❌ [INSTAGRAM-DISCOVERY] Токен недействителен:', tokenError.response?.data || tokenError.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Токен Instagram/Facebook недействителен или истек',
+        details: 'Необходимо переавторизоваться через Instagram Setup Wizard',
+        code: 'TOKEN_EXPIRED'
+      });
+    }
+
+    // Сначала получаем все Facebook страницы пользователя с расширенными полями
+    let pagesResponse;
+    try {
+      pagesResponse = await axios.get(
+        `https://graph.facebook.com/me/accounts?fields=id,name,access_token,instagram_business_account,connected_instagram_account`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          },
+          timeout: 10000
+        }
+      );
+      console.log('✅ [INSTAGRAM-DISCOVERY] Facebook страницы получены успешно');
+    } catch (fbError: any) {
+      console.error('❌ [INSTAGRAM-DISCOVERY] Ошибка при получении Facebook страниц:', fbError.response?.data || fbError.message);
+      return res.status(400).json({
+        success: false,
+        error: 'Ошибка доступа к Facebook страницам',
+        details: fbError.response?.data?.error?.message || fbError.message,
+        code: 'FACEBOOK_API_ERROR'
+      });
+    }
 
     console.log('🔍 [INSTAGRAM-DISCOVERY] Facebook страницы получены:', pagesResponse.data);
 
@@ -216,11 +251,13 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
     });
 
   } catch (error: any) {
-    console.error('❌ [INSTAGRAM-DISCOVERY] Ошибка поиска Instagram аккаунтов:', error.message);
+    console.error('❌ [INSTAGRAM-DISCOVERY] Общая ошибка поиска Instagram аккаунтов:', error.message);
+    console.error('❌ [INSTAGRAM-DISCOVERY] Полная ошибка:', error.response?.data || error);
     res.status(500).json({
       success: false,
       error: 'Ошибка при поиске Instagram аккаунтов',
-      details: error.message
+      details: error.message,
+      code: 'GENERAL_ERROR'
     });
   }
 });

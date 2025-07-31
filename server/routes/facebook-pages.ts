@@ -25,14 +25,25 @@ router.get('/pages', async (req, res) => {
 
     console.log('🔵 [FACEBOOK-PAGES] Fetching Facebook pages with token:', (accessToken as string).substring(0, 20) + '...');
 
-    // Сначала получаем user ID
-    const userResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
-      params: {
-        access_token: accessToken,
-        fields: 'id,name'
-      },
-      timeout: 10000
-    });
+    // Сначала проверяем валидность токена и получаем user ID
+    let userResponse;
+    try {
+      userResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+        params: {
+          access_token: accessToken,
+          fields: 'id,name'
+        },
+        timeout: 10000
+      });
+    } catch (tokenError: any) {
+      console.log('❌ [FACEBOOK-PAGES] Token validation failed:', tokenError.response?.data || tokenError.message);
+      return res.status(401).json({
+        error: 'Токен Facebook недействителен или истек',
+        details: 'Необходимо переавторизоваться через Instagram Setup Wizard или Facebook Setup Wizard',
+        code: 'TOKEN_EXPIRED',
+        fbError: tokenError.response?.data
+      });
+    }
 
     const userId = userResponse.data.id;
     console.log('🔵 [FACEBOOK-PAGES] User ID obtained:', userId);

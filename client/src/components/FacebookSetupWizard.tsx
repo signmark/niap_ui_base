@@ -285,9 +285,29 @@ export default function FacebookSetupWizard({
         });
       }
     } catch (error) {
+      console.error('Error fetching Facebook pages:', error);
+      
+      // Проверяем тип ошибки для более понятного сообщения
+      let errorMessage = "Не удалось получить Facebook страницы";
+      let shouldShowReauth = false;
+      
+      if (error instanceof Error) {
+        if (error.message.includes('400') || error.message.includes('Bad Request')) {
+          errorMessage = 'Токен Facebook недействителен или истек';
+          shouldShowReauth = true;
+        } else if (error.message.includes('401') || error.message.includes('TOKEN_EXPIRED')) {
+          errorMessage = 'Авторизация Facebook истекла. Необходима переавторизация.';
+          shouldShowReauth = true;
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Нет доступа к Facebook API. Проверьте права доступа.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
-        title: "Ошибка",
-        description: error instanceof Error ? error.message : "Не удалось получить страницы",
+        title: shouldShowReauth ? "Требуется переавторизация" : "Ошибка",
+        description: errorMessage + (shouldShowReauth ? " Получите новый токен через Instagram Setup Wizard." : ""),
         variant: "destructive",
       });
     } finally {
