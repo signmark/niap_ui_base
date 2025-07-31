@@ -41,11 +41,12 @@ router.post('/instagram/auth/start', async (req, res) => {
 
     // Формируем URL для авторизации Facebook
     const scopes = [
-      'pages_manage_posts',
-      'pages_read_engagement', 
-      'pages_show_list',
-      'instagram_basic',
-      'instagram_content_publish'
+      'pages_manage_posts',       // Публикация в Facebook страницы
+      'pages_read_engagement',    // Чтение взаимодействий на страницах
+      'pages_show_list',          // Получение списка страниц
+      'publish_to_groups',        // Публикация в Facebook группы
+      'instagram_basic',          // Базовые Instagram разрешения
+      'instagram_content_publish' // Публикация в Instagram
     ].join(',');
 
     const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +

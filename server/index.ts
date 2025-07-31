@@ -411,6 +411,14 @@ app.use((req, res, next) => {
     console.log("Facebook Campaign Settings routes registered");
     log("Facebook Campaign Settings routes registered successfully");
 
+    // Регистрируем Facebook Debug маршруты
+    console.log("Registering Facebook Debug routes...");
+    log("Registering Facebook Debug routes...");
+    const facebookDebugRouter = (await import('./routes/facebook-debug')).default;
+    app.use('/api', facebookDebugRouter);
+    console.log("Facebook Debug routes registered");
+    log("Facebook Debug routes registered successfully");
+
     // Регистрируем YouTube настройки кампании
     console.log("Registering YouTube Campaign Settings routes...");
     log("Registering YouTube Campaign Settings routes...");
