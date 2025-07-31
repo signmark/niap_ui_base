@@ -261,8 +261,8 @@ router.get('/instagram/auth/callback', async (req, res) => {
         ...existingInstagram,
         ...instagramSettings,
         // КРИТИЧЕСКИ ВАЖНО: всегда используем НОВЫЙ токен из OAuth
-        token: instagramSettings.longLivedToken, // Заменяем старый токен на новый
-        accessToken: instagramSettings.longLivedToken, // Дублируем для совместимости
+        token: longLivedToken, // Используем прямой токен
+        accessToken: longLivedToken, // Дублируем для совместимости
         businessAccountId: existingInstagram.businessAccountId || 
           (instagramSettings.instagramAccounts && instagramSettings.instagramAccounts[0] ? 
             instagramSettings.instagramAccounts[0].instagramId : null)
@@ -333,10 +333,10 @@ router.get('/instagram/auth/callback', async (req, res) => {
     console.log('📡 CALLBACK RESPONSE - Sending to client:', {
       success: responseData.success,
       message: responseData.message,
-      hasToken: !!responseData.data.token,
-      tokenPreview: responseData.data.token?.substring(0, 20) + '...',
-      userInfo: responseData.data.user,
-      accountsCount: responseData.data.instagramAccounts?.length || 0
+      hasToken: !!responseData.longLivedToken,
+      tokenPreview: responseData.longLivedToken?.substring(0, 20) + '...',
+      userInfo: responseData.user,
+      accountsCount: responseData.instagramAccounts?.length || 0
     });
     
     res.json(responseData);
