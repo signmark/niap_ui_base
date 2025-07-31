@@ -1,0 +1,40 @@
+SocialMediaSettings.tsx:1303 🔍 SAVE BUTTON CLICKED
+SocialMediaSettings.tsx:1304 🔍 Form isValid: true
+SocialMediaSettings.tsx:1305 🔍 Form errors: {}
+SocialMediaSettings.tsx:1306 🔍 Form values: {telegram: {…}, vk: {…}, instagram: {…}, facebook: {…}, youtube: {…}}
+SocialMediaSettings.tsx:1317 🔍 Form values detailed: {
+  "telegram": {
+    "token": "",
+    "chatId": ""
+  },
+  "vk": {
+    "token": "vk1.a.o0IumvkZD1lD7qz-Qxw9XGDDjA5Utea68-VlyJzEiJ4v8lP4M7qgEk6wBx6lhO4cIM3SZxK_KVrrakHVWtxJr4Ujm13jJRi_MPoYaVY5QKZJIMrdagLL95iOO72XiygFq79464s8dGQp7zTfUbJijNsn_cvOhXbr9vOp8F1_kSb84DT8ZK5JXR9E4PWpA72TI_h1S5vBd5ScZthKZFRn1g",
+    "groupId": "-176171231",
+    "groupName": "Онлайн бизнес - ПРОСТО",
+    "setupCompletedAt": "2025-07-30T09:47:45.679Z",
+    "configured": true
+  },
+  "instagram": {
+    "appId": "3459501544192396",
+    "appSecret": "50df248e9dae8af129403334c0ec28b9",
+    "accessToken": "EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs",
+    "businessAccountId": "17841422577074562",
+    "longLivedToken": "EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs",
+    "setupCompletedAt": "2025-07-30T14:40:48.649Z",
+    "token": "EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs"
+  },
+  "facebook": {
+    "token": "",
+    "pageId": ""
+  },
+  "youtube": {
+    "apiKey": "",
+    "channelId": "",
+    "accessToken": "",
+    "refreshToken": ""
+  }
+}
+SocialMediaSettings.tsx:1318 🔍 Form errors detailed: {}
+SocialMediaSettings.tsx:1333 🔄 Retried validation result: true
+SocialMediaSettings.tsx:1337 🔍 Form trigger result: true
+SocialMediaSettings.tsx:1343 ✅ FORM VALIDATION PASSED

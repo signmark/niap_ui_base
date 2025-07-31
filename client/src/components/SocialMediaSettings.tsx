@@ -1299,50 +1299,7 @@ export function SocialMediaSettings({
           <Button 
             type="submit" 
             disabled={isLoading}
-            onClick={async () => {
-              console.log('🔍 SAVE BUTTON CLICKED');
-              console.log('🔍 Form isValid:', form.formState.isValid);
-              console.log('🔍 Form errors:', form.formState.errors);
-              console.log('🔍 Form values:', form.getValues());
-              
-              // Детальный анализ ошибок
-              if (form.formState.errors.telegram) {
-                console.log('❌ TELEGRAM ERRORS:', form.formState.errors.telegram);
-              }
-              if (form.formState.errors.facebook) {
-                console.log('❌ FACEBOOK ERRORS:', form.formState.errors.facebook);
-              }
-              
-              // Проверяем все поля формы
-              console.log('🔍 Form values detailed:', JSON.stringify(form.getValues(), null, 2));
-              console.log('🔍 Form errors detailed:', JSON.stringify(form.formState.errors, null, 2));
-              
-              // Принудительно добавляем недостающие поля если их нет
-              const currentValues = form.getValues();
-              if (!currentValues.telegram) {
-                console.log('⚠️ Adding missing telegram field');
-                form.setValue('telegram', { token: '', chatId: '' });
-              }
-              if (!currentValues.facebook) {
-                console.log('⚠️ Adding missing facebook field');
-                form.setValue('facebook', { token: '', pageId: '' });
-              }
-              
-              // Попробуем валидацию снова после добавления полей
-              const retriedValidation = await form.trigger();
-              console.log('🔄 Retried validation result:', retriedValidation);
-              
-              // Принудительная валидация для диагностики
-              const isValid = await form.trigger();
-              console.log('🔍 Form trigger result:', isValid);
-              
-              if (!isValid) {
-                console.log('❌ FORM VALIDATION FAILED');
-                console.log('❌ Form errors after trigger:', form.formState.errors);
-              } else {
-                console.log('✅ FORM VALIDATION PASSED');
-              }
-            }}
+
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Сохранить настройки
