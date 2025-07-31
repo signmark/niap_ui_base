@@ -35,7 +35,7 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
   // Добавляем консольный лог для диагностики
   console.log('Instagram Setup Wizard rendering with campaignId:', campaignId);
 
-  // Загружаем существующие данные из кампании
+  // Загружаем существующие данные из кампании и проверяем Facebook
   useEffect(() => {
     const loadExistingSettings = async () => {
       try {
@@ -49,12 +49,81 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
           const data = await response.json();
           if (data.success && data.settings) {
             const settings = data.settings;
+            const accessToken = settings.accessToken || settings.longLivedToken || settings.token || '';
+            
             setFormData({
               appId: settings.appId || '',
               appSecret: settings.appSecret || '',
-              accessToken: settings.accessToken || settings.longLivedToken || settings.token || '',
+              accessToken: accessToken,
               businessAccountId: settings.businessAccountId || settings.instagramId || ''
             });
+
+            // Если есть токен - автоматически проверяем Facebook страницы
+            if (accessToken) {
+              console.log('🔍 Auto-checking Facebook pages for existing Instagram token...');
+              try {
+                const facebookResponse = await fetch(`/api/facebook/pages?token=${encodeURIComponent(accessToken)}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                  }
+                });
+
+                if (facebookResponse.ok) {
+                  const facebookData = await facebookResponse.json();
+                  console.log('🔍 Facebook pages found during loading:', facebookData);
+                  
+                  // Если найдена ровно одна Facebook страница - автоматически настраиваем её
+                  if (facebookData.success && facebookData.pages && facebookData.pages.length === 1) {
+                    const page = facebookData.pages[0];
+                    console.log('🔧 Auto-configuring Facebook page during Instagram load:', page);
+                    
+                    // Проверяем что Facebook ещё не настроен
+                    const currentFbResponse = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
+                      headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                      }
+                    });
+
+                    const currentFbData = await currentFbResponse.json();
+                    const hasExistingFb = currentFbData.success && currentFbData.settings && currentFbData.settings.pageId;
+
+                    if (!hasExistingFb) {
+                      // Сохраняем Facebook настройки автоматически
+                      const saveFacebookResponse = await fetch(`/api/campaigns/${campaignId}`, {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                        },
+                        body: JSON.stringify({
+                          social_media_settings: {
+                            facebook: {
+                              token: accessToken,
+                              pageId: page.id,
+                              pageName: page.name,
+                              autoConfiguredAt: new Date().toISOString()
+                            }
+                          }
+                        })
+                      });
+
+                      if (saveFacebookResponse.ok) {
+                        toast({
+                          title: "Facebook настроен автоматически",
+                          description: `Настроена страница: ${page.name}`,
+                          variant: "default"
+                        });
+                        console.log('✅ Facebook page auto-configured during Instagram load');
+                      }
+                    }
+                  }
+                }
+              } catch (fbError) {
+                console.error('Error auto-checking Facebook pages:', fbError);
+                // Не показываем ошибку пользователю
+              }
+            }
           }
         }
       } catch (error) {
@@ -65,7 +134,7 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
     loadExistingSettings();
   }, [campaignId]);
 
-  // Функция для загрузки доступных Instagram аккаунтов
+  // Функция для загрузки доступных Instagram аккаунтов и автоматической настройки Facebook
   const handleDiscoverAccounts = async () => {
     if (!formData.accessToken) {
       toast({
@@ -78,7 +147,8 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
+      // 1. Находим Instagram аккаунты
+      const instagramResponse = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,17 +159,77 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
         })
       });
 
-      const data = await response.json();
+      const instagramData = await instagramResponse.json();
       
-      if (data.success && data.accounts) {
-        setAvailableAccounts(data.accounts);
+      if (instagramData.success && instagramData.accounts) {
+        setAvailableAccounts(instagramData.accounts);
         setShowAccountSelection(true);
+        
+        // 2. Параллельно проверяем Facebook страницы тем же токеном
+        try {
+          console.log('🔍 Checking Facebook pages with Instagram token...');
+          const facebookResponse = await fetch(`/api/facebook/pages?token=${encodeURIComponent(formData.accessToken)}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+          });
+
+          if (facebookResponse.ok) {
+            const facebookData = await facebookResponse.json();
+            console.log('🔍 Facebook pages found:', facebookData);
+            
+            // 3. Если найдена ровно одна Facebook страница - автоматически настраиваем её
+            if (facebookData.success && facebookData.pages && facebookData.pages.length === 1) {
+              const page = facebookData.pages[0];
+              console.log('🔧 Auto-configuring single Facebook page:', page);
+              
+              // Сохраняем Facebook настройки автоматически
+              const saveFacebookResponse = await fetch(`/api/campaigns/${campaignId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                },
+                body: JSON.stringify({
+                  social_media_settings: {
+                    facebook: {
+                      token: formData.accessToken,
+                      pageId: page.id,
+                      pageName: page.name,
+                      autoConfiguredAt: new Date().toISOString()
+                    }
+                  }
+                })
+              });
+
+              if (saveFacebookResponse.ok) {
+                toast({
+                  title: "Facebook настроен автоматически",
+                  description: `Настроена страница: ${page.name}`,
+                  variant: "default"
+                });
+                console.log('✅ Facebook page auto-configured successfully');
+              }
+            } else if (facebookData.pages && facebookData.pages.length > 1) {
+              toast({
+                title: "Facebook страницы найдены",
+                description: `Найдено ${facebookData.pages.length} страниц. Настройте вручную в разделе Facebook.`,
+                variant: "default"
+              });
+            }
+          }
+        } catch (fbError) {
+          console.error('Error checking Facebook pages:', fbError);
+          // Не показываем ошибку пользователю, так как это дополнительная функция
+        }
+
         toast({
-          title: "Аккаунты найдены",
-          description: `Найдено ${data.accounts.length} Instagram Business аккаунтов`
+          title: "Instagram аккаунты найдены",
+          description: `Найдено ${instagramData.accounts.length} Instagram Business аккаунтов`
         });
       } else {
-        throw new Error(data.error || 'Аккаунты не найдены');
+        throw new Error(instagramData.error || 'Instagram аккаунты не найдены');
       }
     } catch (error: any) {
       console.error('Error discovering Instagram accounts:', error);
