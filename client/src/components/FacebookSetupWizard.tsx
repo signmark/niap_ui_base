@@ -41,8 +41,11 @@ export default function FacebookSetupWizard({
   onComplete,
   onCancel,
 }: FacebookSetupWizardProps) {
-  const [pages, setPages] = useState<FacebookPage[]>([]);
-  const [loadingPages, setLoadingPages] = useState(false);
+  const [pageId, setPageId] = useState('');
+  const [pageName, setPageName] = useState('');
+  const [pages, setPages] = useState<any[]>([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<FacebookSetupForm>({
@@ -144,7 +147,7 @@ export default function FacebookSetupWizard({
   }, [campaignId]);
 
   // Функция для получения Facebook страниц
-  const fetchFacebookPages = async () => {
+  const handleFetchPages = async () => {
     const formData = form.getValues();
     const token = formData.token;
     
@@ -167,7 +170,7 @@ export default function FacebookSetupWizard({
       return;
     }
 
-    setLoadingPages(true);
+    setIsPagesLoading(true);
     try {
       const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(token)}`);
       const data = await response.json();
@@ -196,7 +199,7 @@ export default function FacebookSetupWizard({
         variant: "destructive",
       });
     } finally {
-      setLoadingPages(false);
+      setIsPagesLoading(false);
     }
   };
 
@@ -224,7 +227,7 @@ export default function FacebookSetupWizard({
               
               // Автоматически загружаем страницы если токен найден
               setTimeout(() => {
-                fetchFacebookPages();
+                handleFetchPages();
               }, 500);
             } else {
               console.log('❌ Facebook token is corrupted, not loading');
@@ -239,7 +242,41 @@ export default function FacebookSetupWizard({
     loadExistingFacebookSettings();
   }, [campaignId]);
 
-  // Обработчик выбора Facebook страницы
+  // Обработчик ручного выбора страницы
+  const handleManualPageSelect = () => {
+    const token = form.getValues('token');
+    
+    if (!token || token.length < 10) {
+      toast({
+        title: "Ошибка",
+        description: "Сначала введите токен доступа",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!pageId) {
+      toast({
+        title: "Ошибка", 
+        description: "Введите ID страницы",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onComplete({
+      token,
+      pageId,
+      pageName: pageName || `Facebook Page ${pageId}`,
+    });
+
+    toast({
+      title: "Страница выбрана",
+      description: `Используется страница: ${pageName || pageId}`,
+    });
+  };
+
+  // Обработчик выбора Facebook страницы из списка
   const handlePageSelect = (pageId: string, pageName: string) => {
     const token = form.getValues('token');
     
@@ -266,6 +303,7 @@ export default function FacebookSetupWizard({
       pageName,
     });
     setPages([]); // Скрываем список страниц после выбора
+    setShowManualInput(false); // Скрываем ручной ввод
     toast({
       title: "Страница выбрана",
       description: `Выбрана страница: ${pageName}`,
@@ -334,143 +372,154 @@ export default function FacebookSetupWizard({
           </div>
         </Form>
 
-        {/* Предупреждение и инструкция */}
-        <div className="bg-orange-50 border border-orange-200 rounded-md p-4 space-y-3">
-          <h4 className="font-medium text-orange-800">⚠️ Найден личный профиль вместо страницы</h4>
-          <p className="text-sm text-orange-700">
-            "Dmitry Signmark" - это личный профиль Facebook, но для публикации контента нужна бизнес-страница.
-          </p>
-          <div className="bg-white border border-orange-200 rounded-md p-3">
-            <h5 className="font-medium text-orange-800 mb-2">Создайте новую Facebook страницу:</h5>
-            <ol className="text-sm text-orange-700 list-decimal list-inside space-y-1">
-              <li>Откройте <a href="https://www.facebook.com/pages/create" target="_blank" className="underline font-medium">facebook.com/pages/create</a></li>
-              <li>Выберите тип "Бизнес или бренд"</li>
-              <li>Название: например "SMM Бизнес" или ваше название</li>
-              <li>Категория: "Маркетинговое агентство" или подходящая</li>
-              <li>Сохраните страницу</li>
-              <li>Вернитесь сюда и нажмите "📋 Получить страницы"</li>
-            </ol>
-            <div className="mt-3 flex gap-2">
-              <Button 
-                onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
-                size="sm"
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                🔗 Создать Facebook страницу
-              </Button>
-              <Button 
-                onClick={() => window.open('https://www.facebook.com/profile.php?id=61578985855179', '_blank')}
-                size="sm"
-                variant="outline"
-                className="border-orange-300"
-              >
-                👤 Посмотреть профиль
-              </Button>
-            </div>
+        {/* Шаг 2: Получение страниц или ручной ввод */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Шаг 2: Выберите Facebook страницу</h3>
+          
+          {/* Автоматическое получение страниц */}
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleFetchPages}
+              disabled={isPagesLoading || !form.getValues('token')}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isPagesLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Получение...
+                </>
+              ) : (
+                <>📋 Получить мои страницы</>
+              )}
+            </Button>
+            
+            <Button 
+              onClick={() => setShowManualInput(!showManualInput)}
+              variant="outline"
+            >
+              {showManualInput ? 'Скрыть ручной ввод' : '✏️ Ввести вручную'}
+            </Button>
           </div>
-        </div>
 
-        {/* Список страниц с предупреждением о группах */}
-        {pages.length > 0 ? (
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <h4 className="font-medium">Найденные аккаунты Facebook:</h4>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setPages([])}
-              >
-                Скрыть
-              </Button>
+          {/* Ручной ввод (опционально) */}
+          {showManualInput && (
+            <div className="bg-gray-50 border border-gray-200 rounded-md p-4 space-y-4">
+              <h4 className="font-medium">Ручной ввод данных страницы</h4>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  ID Facebook страницы
+                </label>
+                <input
+                  type="text"
+                  value={pageId}
+                  onChange={(e) => setPageId(e.target.value)}
+                  placeholder="Например: 2120362494678794"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Название страницы (необязательно)
+                </label>
+                <input
+                  type="text"
+                  value={pageName}
+                  onChange={(e) => setPageName(e.target.value)}
+                  placeholder="Например: SMM Бизнес"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {pageId && (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <p className="text-sm text-green-700">
+                    ✅ ID: <code className="bg-green-100 px-1 rounded">{pageId}</code>
+                    {pageName && <span>, название: <strong>{pageName}</strong></span>}
+                  </p>
+                  <Button 
+                    onClick={() => handleManualPageSelect()}
+                    size="sm"
+                    className="mt-2 bg-green-600 hover:bg-green-700"
+                  >
+                    Использовать эти данные
+                  </Button>
+                </div>
+              )}
             </div>
-            
-            {/* Предупреждение о группах */}
-            <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
-              <h5 className="font-medium text-orange-800 mb-2">⚠️ Внимание: Проверьте тип аккаунта</h5>
-              <p className="text-sm text-orange-700">
-                Если найденный аккаунт - это группа, создайте отдельную Facebook страницу для публикации.
-              </p>
-              <Button 
-                onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
-                size="sm"
-                variant="outline"
-                className="mt-2"
-              >
-                📋 Создать Facebook страницу
-              </Button>
-            </div>
-            
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {pages.map((page) => (
-                <Card key={page.id} className="cursor-pointer hover:bg-gray-100 transition-colors">
-                  <CardContent className="p-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                            {page.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <h5 className="font-semibold">{page.name}</h5>
-                          <p className="text-sm text-gray-600">{page.category}</p>
-                          <span className="text-xs text-gray-500">ID: {page.id}</span>
-                          <div className="text-xs text-blue-600 mt-1">
-                            ℹ️ Убедитесь, что это страница, а не группа
-                          </div>
-                        </div>
+          )}
+
+          {/* Список найденных страниц */}
+          {pages.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-green-700">📋 Найденные Facebook страницы:</h4>
+              <div className="grid gap-3">
+                {pages.map((page) => (
+                  <div 
+                    key={page.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h5 className="font-medium">{page.name}</h5>
+                        <p className="text-sm text-gray-600">ID: {page.id}</p>
+                        {page.category && (
+                          <p className="text-sm text-gray-500">Категория: {page.category}</p>
+                        )}
+                        {page.link && (
+                          <p className="text-sm text-blue-600">
+                            <a href={page.link} target="_blank" rel="noopener noreferrer">
+                              {page.link}
+                            </a>
+                          </p>
+                        )}
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <Button 
-                          onClick={() => handlePageSelect(page.id, page.name)}
-                          disabled={loadingPages}
-                          size="sm"
-                          variant="outline"
-                        >
-                          Выбрать
-                        </Button>
-                        <Button 
-                          onClick={() => window.open(`https://facebook.com/${page.id}`, '_blank')}
-                          size="sm"
-                          variant="ghost"
-                          className="text-xs"
-                        >
-                          Проверить
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={() => handlePageSelect(page.id, page.name)}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Выбрать
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ) : (
-          // Если нажали "Получить страницы" но ничего не нашли
-          form.getValues('token') && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 space-y-3">
-              <h4 className="font-medium text-red-800">❌ Facebook страницы не найдены</h4>
-              <p className="text-sm text-red-700">
-                У вас нет доступных Facebook страниц для публикации.
-              </p>
-              <div className="bg-white border border-red-200 rounded-md p-3">
-                <h5 className="font-medium text-red-800 mb-2">Создайте Facebook страницу:</h5>
-                <ol className="text-sm text-red-700 list-decimal list-inside space-y-1">
-                  <li>Откройте <strong>facebook.com/pages/create</strong></li>
-                  <li>Выберите "Бизнес или бренд"</li>
-                  <li>Заполните информацию о компании</li>
-                  <li>После создания вернитесь и обновите список</li>
-                </ol>
-                <Button 
-                  onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
-                  size="sm"
-                  className="mt-3 bg-blue-600 hover:bg-blue-700"
-                >
-                  🔗 Создать страницу
-                </Button>
+                  </div>
+                ))}
               </div>
             </div>
-          )
-        )}
+          )}
+        </div>
+
+        {/* Инструкция по получению ID страницы */}
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <h4 className="font-medium text-blue-800 mb-3">📝 Как найти ID Facebook страницы:</h4>
+          <ol className="text-sm text-blue-700 list-decimal list-inside space-y-2">
+            <li>Откройте вашу Facebook страницу</li>
+            <li>Нажмите "Настройки страницы" в левом меню</li>
+            <li>Выберите "Информация о странице"</li>
+            <li>Найдите поле "ID страницы" - это длинное число</li>
+            <li>Скопируйте этот ID и вставьте выше</li>
+          </ol>
+          
+          <div className="mt-3 border-t border-blue-200 pt-3">
+            <h5 className="font-medium text-blue-800 mb-2">Альтернативный способ:</h5>
+            <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
+              <li>Откройте страницу в браузере</li>
+              <li>В адресной строке найдите длинное число</li>
+              <li>Например: facebook.com/<strong>2120362494678794</strong></li>
+            </ol>
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            <Button 
+              onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              🔗 Создать новую страницу
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
