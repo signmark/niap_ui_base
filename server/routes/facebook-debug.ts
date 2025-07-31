@@ -46,7 +46,7 @@ router.get('/debug-token', async (req, res) => {
       `/${tokenInfoResponse.data.id}/pages`
     ];
 
-    const results = {};
+    const results: any = {};
 
     for (const endpoint of endpoints) {
       try {
