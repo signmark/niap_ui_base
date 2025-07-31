@@ -176,19 +176,35 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         
         // Автоматически завершаем настройку без требования нажать кнопку
         const tokensToUse = tokens || authTokens;
+        console.log('🔍 [YouTube Wizard] Checking auto-completion conditions:', {
+          hasTokens: !!tokensToUse,
+          tokens: tokens ? 'passed as parameter' : 'from state',
+          authTokens: !!authTokens,
+          onComplete: typeof onComplete
+        });
+        
         if (tokensToUse) {
           console.log('✅ [YouTube Wizard] Auto-completing setup with data:', {
             channelId: data.channelInfo.channelId,
-            channelTitle: data.channelInfo.channelTitle
+            channelTitle: data.channelInfo.channelTitle,
+            accessToken: tokensToUse.accessToken ? 'present' : 'missing',
+            refreshToken: tokensToUse.refreshToken ? 'present' : 'missing'
           });
           
-          onComplete({
-            channelId: data.channelInfo.channelId,
-            channelTitle: data.channelInfo.channelTitle,
-            accessToken: tokensToUse.accessToken,
-            refreshToken: tokensToUse.refreshToken,
-            channelInfo: data.channelInfo
-          });
+          try {
+            onComplete({
+              channelId: data.channelInfo.channelId,
+              channelTitle: data.channelInfo.channelTitle,
+              accessToken: tokensToUse.accessToken,
+              refreshToken: tokensToUse.refreshToken,
+              channelInfo: data.channelInfo
+            });
+            console.log('✅ [YouTube Wizard] onComplete called successfully');
+          } catch (error) {
+            console.error('❌ [YouTube Wizard] Error calling onComplete:', error);
+          }
+        } else {
+          console.warn('⚠️ [YouTube Wizard] No tokens available for auto-completion');
         }
       } else {
         throw new Error(data.error || 'Failed to get channel info');
