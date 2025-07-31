@@ -81,22 +81,22 @@ export default function FacebookSetupWizard({
       if (data.success) {
         const permissions = data.permissions.map((p: any) => p.permission).join(', ');
         const hasPublishToGroups = data.permissions.some((p: any) => p.permission === 'publish_to_groups');
-        const hasPagesPosts = data.permissions.some((p: any) => p.permission === 'pages_manage_posts');
-        const hasPagesEngagement = data.permissions.some((p: any) => p.permission === 'pages_read_engagement');
+        const hasEmail = data.permissions.some((p: any) => p.permission === 'email');
+        const hasPublicProfile = data.permissions.some((p: any) => p.permission === 'public_profile');
         
         console.log('🔍 Facebook токен разрешения:', {
           permissions,
           hasPublishToGroups,
-          hasPagesPosts,
-          hasPagesEngagement,
+          hasEmail,
+          hasPublicProfile,
           user: data.user,
           pages: data.pages
         });
 
         const missingPermissions = [];
         if (!hasPublishToGroups) missingPermissions.push('publish_to_groups');
-        if (!hasPagesPosts) missingPermissions.push('pages_manage_posts');
-        if (!hasPagesEngagement) missingPermissions.push('pages_read_engagement');
+        if (!hasEmail) missingPermissions.push('email');
+        if (!hasPublicProfile) missingPermissions.push('public_profile');
 
         toast({
           title: "Диагностика токена",
