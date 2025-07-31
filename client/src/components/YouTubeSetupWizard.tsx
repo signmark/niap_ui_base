@@ -170,6 +170,22 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
           title: "Канал найден!",
           description: `Канал "${data.channelInfo.channelTitle}" готов к использованию`
         });
+        
+        // Автоматически завершаем настройку без требования нажать кнопку
+        if (authTokens) {
+          console.log('✅ [YouTube Wizard] Auto-completing setup with data:', {
+            channelId: data.channelInfo.channelId,
+            channelTitle: data.channelInfo.channelTitle
+          });
+          
+          onComplete({
+            channelId: data.channelInfo.channelId,
+            channelTitle: data.channelInfo.channelTitle,
+            accessToken: authTokens.accessToken,
+            refreshToken: authTokens.refreshToken,
+            channelInfo: data.channelInfo
+          });
+        }
       } else {
         throw new Error(data.error || 'Failed to get channel info');
       }

@@ -346,3 +346,4 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - July 31, 2025
 - YOUTUBE SETUP WIZARD CLOSING AND AUTO-SAVE FIXED: Resolved critical issues where YouTube Setup Wizard wouldn't close after successful OAuth completion and wouldn't save settings to database. Enhanced handleYoutubeComplete function to automatically save OAuth data (accessToken, refreshToken, channelId, channelTitle) to database using onSubmit. YouTube wizard now closes immediately after OAuth success and settings persist in database without manual save button click.
+- YOUTUBE WIZARD AUTO-COMPLETION IMPLEMENTED: Fixed issue where wizard stayed open after OAuth success requiring manual "Завершить настройку" button click. Added automatic onComplete() call in fetchChannelInfo function immediately after receiving channel data. System now automatically closes wizard and saves all data without user intervention - complete seamless OAuth experience.
