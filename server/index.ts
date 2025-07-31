@@ -355,7 +355,7 @@ app.use((req, res, next) => {
     console.log("Registering YouTube OAuth routes EARLY...");
     log("Registering YouTube OAuth routes EARLY...");
     const youtubeAuthRouter = (await import('./routes/youtube-auth')).default;
-    app.use('/api/auth', youtubeAuthRouter);
+    app.use('/api', youtubeAuthRouter);
     console.log("YouTube OAuth routes registered EARLY");
     log("YouTube OAuth routes registered successfully EARLY");
 

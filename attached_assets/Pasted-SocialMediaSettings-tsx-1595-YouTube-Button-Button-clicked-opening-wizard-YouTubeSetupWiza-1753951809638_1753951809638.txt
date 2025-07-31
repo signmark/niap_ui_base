@@ -1,0 +1,55 @@
+SocialMediaSettings.tsx:1595 🎬 [YouTube Button] Button clicked, opening wizard...
+YouTubeSetupWizard.tsx:41 🔄 [YouTube Wizard] Loading existing YouTube settings... {hasAccessToken: true, hasChannelId: true}
+YouTubeSetupWizard.tsx:152 📊 [YouTube Wizard] Fetching channel info...
+SocialMediaSettings.tsx:107 🎬 [YouTube State] showYoutubeWizard changed: true
+YouTubeSetupWizard.tsx:154  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/youtube/channel-info?accessToken=ya29.a0AS3H6Nxg-ZKdRZHItoY8alWfKFzOyoCGCbnsIWQ%20PIjMyvA1p7-R8neZi2fum0wOWrN5VFy1THsGERod-qMFy-W0yEbLeiFQdfhdlxQb0B4VeRLgfJNj0iWkEjNPaFcgvwtfAeFEwttJUfl_MCI28ejmKW7u2nDePqpuf8l5QaCgYKAQESARYSFQHGX2Mis0XMVsQ5WOFeo84zk7gXMA0175 401 (Unauthorized)
+fetchChannelInfo @ YouTubeSetupWizard.tsx:154
+(anonymous) @ YouTubeSetupWizard.tsx:54
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
+YouTubeSetupWizard.tsx:175 ❌ [YouTube Wizard] Channel info error: Error: Channel info request failed: Unauthorized
+    at fetchChannelInfo (YouTubeSetupWizard.tsx:157:15)
+fetchChannelInfo @ YouTubeSetupWizard.tsx:175
+await in fetchChannelInfo
+(anonymous) @ YouTubeSetupWizard.tsx:54
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
+YouTubeSetupWizard.tsx:64 🚀 [YouTube Wizard] Starting OAuth process...
+YouTubeSetupWizard.tsx:140 ❌ [YouTube Wizard] OAuth start error: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+handleOAuthStart @ YouTubeSetupWizard.tsx:140
+await in handleOAuthStart
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
