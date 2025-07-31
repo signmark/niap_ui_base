@@ -55,7 +55,10 @@ export default function FacebookSetupWizard({
   // Функция для получения Facebook страниц
   const fetchFacebookPages = async () => {
     const token = form.getValues('token');
+    console.log('🔵 Facebook Wizard: Начинаем получение страниц, токен:', token ? token.substring(0, 20) + '...' : 'пустой');
+    
     if (!token) {
+      console.log('❌ Facebook Wizard: Токен пустой');
       toast({
         title: "Ошибка",
         description: "Введите токен доступа",
@@ -66,20 +69,29 @@ export default function FacebookSetupWizard({
 
     setLoadingPages(true);
     try {
-      const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(token)}`);
+      const url = `/api/facebook/pages?token=${encodeURIComponent(token)}`;
+      console.log('🔵 Facebook Wizard: Отправляем запрос на:', url);
+      
+      const response = await fetch(url);
       const data = await response.json();
+      
+      console.log('🔵 Facebook Wizard: Ответ получен, статус:', response.status);
+      console.log('🔵 Facebook Wizard: Данные ответа:', data);
 
       if (!response.ok) {
+        console.error('❌ Facebook Wizard: Ошибка ответа:', data);
         throw new Error(data.error || 'Ошибка получения страниц');
       }
 
       if (data.pages && data.pages.length > 0) {
+        console.log('✅ Facebook Wizard: Страницы найдены:', data.pages.length);
         setPages(data.pages);
         toast({
           title: "Успешно",
           description: `Найдено ${data.pages.length} страниц`,
         });
       } else {
+        console.log('⚠️ Facebook Wizard: Страницы не найдены');
         toast({
           title: "Внимание",
           description: "Facebook страницы не найдены",
@@ -87,7 +99,7 @@ export default function FacebookSetupWizard({
         });
       }
     } catch (error) {
-      console.error('Error fetching Facebook pages:', error);
+      console.error('❌ Facebook Wizard: Ошибка запроса:', error);
       toast({
         title: "Ошибка",
         description: error instanceof Error ? error.message : "Не удалось получить страницы",

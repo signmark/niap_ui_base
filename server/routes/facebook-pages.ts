@@ -6,21 +6,21 @@ const router = express.Router();
 // GET /api/facebook/pages - получение Facebook страниц пользователя
 router.get('/pages', async (req, res) => {
   try {
-    const { access_token } = req.query;
+    const { token, access_token } = req.query;
+    const accessToken = token || access_token;
 
-    if (!access_token) {
+    if (!accessToken) {
       return res.status(400).json({
-        success: false,
         error: 'Access token is required'
       });
     }
 
-    console.log('🔵 [FACEBOOK-PAGES] Fetching Facebook pages with token:', (access_token as string).substring(0, 20) + '...');
+    console.log('🔵 [FACEBOOK-PAGES] Fetching Facebook pages with token:', (accessToken as string).substring(0, 20) + '...');
 
     // Получаем страницы пользователя через Facebook Graph API
     const response = await axios.get(`https://graph.facebook.com/v18.0/me/accounts`, {
       params: {
-        access_token,
+        access_token: accessToken,
         fields: 'id,name,access_token,category,tasks'
       },
       timeout: 10000
@@ -34,7 +34,6 @@ router.get('/pages', async (req, res) => {
     });
 
     res.json({
-      success: true,
       pages: pages
     });
 
@@ -55,7 +54,6 @@ router.get('/pages', async (req, res) => {
     }
 
     res.status(400).json({
-      success: false,
       error: errorMessage
     });
   }
