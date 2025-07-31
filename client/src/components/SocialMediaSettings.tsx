@@ -569,18 +569,27 @@ export function SocialMediaSettings({
   const loadInstagramSettings = async () => {
     setLoadingInstagramSettings(true);
     try {
+      console.log('🔄 [DEBUG] Загружаем Instagram настройки для кампании:', campaignId);
       // Используем API client с авторизацией 
       const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
       const data = response.data;
       
+      console.log('🔄 [DEBUG] Ответ от Instagram API:', data);
+      
       if (data.success && data.settings) {
+        console.log('✅ [DEBUG] Instagram настройки установлены:', data.settings);
         setInstagramSettings(data.settings);
+      } else {
+        console.log('⚠️ [DEBUG] Instagram настройки пустые или неуспешные:', data);
+        setInstagramSettings(null);
       }
     } catch (error: any) {
+      console.error('❌ [DEBUG] Ошибка загрузки Instagram настроек:', error);
       // Если ошибка авторизации, попробуем обновить страницу
       if (error.response?.status === 401) {
         // Обработка ошибки авторизации
       }
+      setInstagramSettings(null);
     } finally {
       setLoadingInstagramSettings(false);
     }
@@ -1720,7 +1729,14 @@ export function SocialMediaSettings({
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    {instagramSettings?.token && (
+                    {/* Debug: показываем статус Instagram settings */}
+                    <div className="text-xs text-gray-500">
+                      IG: {instagramSettings ? 'загружен' : 'не загружен'} | 
+                      token: {instagramSettings?.token ? 'есть' : 'нет'} | 
+                      longLived: {instagramSettings?.longLivedToken ? 'есть' : 'нет'}
+                    </div>
+                    
+                    {(instagramSettings?.token || instagramSettings?.longLivedToken || instagramSettings?.accessToken) && (
                       <Button 
                         type="button" 
                         variant="outline"
@@ -1729,6 +1745,7 @@ export function SocialMediaSettings({
                           // Выбираем лучший токен для Facebook: longLivedToken > token > accessToken
                           const tokenToUse = instagramSettings.longLivedToken || instagramSettings.token || instagramSettings.accessToken;
                           console.log('📋 Копируем Instagram токен в Facebook:', {
+                            instagramSettings: instagramSettings,
                             longLivedToken: instagramSettings.longLivedToken ? 'есть' : 'нет',
                             token: instagramSettings.token ? 'есть' : 'нет', 
                             accessToken: instagramSettings.accessToken ? 'есть' : 'нет',
