@@ -156,23 +156,37 @@ export default function FacebookSetupWizard({
 
   // Функция для получения Instagram связанных страниц
   const handleFetchInstagramConnectedPages = async () => {
-    const token = form.getValues('token');
-    
-    if (!token) {
-      toast({
-        title: "Ошибка",
-        description: "Введите токен доступа",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsPagesLoading(true);
     
     try {
-      console.log('Facebook Wizard: Получение Instagram связанных страниц...');
+      console.log('Facebook Wizard: Получение Instagram связанных страниц из настроек кампании...');
       
-      const response = await fetch(`/api/facebook/instagram-connected-pages?token=${encodeURIComponent(token)}`);
+      // Сначала получаем Instagram токен из настроек кампании
+      const campaignResponse = await fetch(`/api/campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      const campaignData = await campaignResponse.json();
+      console.log('Facebook Wizard: Данные кампании получены:', campaignData);
+      
+      // Ищем Instagram токен в настройках
+      const instagramToken = campaignData.social_media_settings?.instagram?.accessToken || 
+                           campaignData.social_media_settings?.instagram?.token;
+      
+      if (!instagramToken) {
+        toast({
+          title: "Instagram токен не найден",
+          description: "Сначала настройте Instagram через Instagram Setup Wizard",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log('Facebook Wizard: Используем Instagram токен для поиска связанных страниц...');
+      
+      const response = await fetch(`/api/facebook/instagram-connected-pages?token=${encodeURIComponent(instagramToken)}&campaignId=${campaignId}`);
       const data = await response.json();
       
       console.log('Facebook Wizard: Ответ API Instagram связанных страниц:', data);

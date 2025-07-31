@@ -210,7 +210,7 @@ router.get('/page-token/:pageId', async (req, res) => {
 router.get('/instagram-connected-pages', async (req, res) => {
   try {
     console.log('🔵 [FACEBOOK-IG-PAGES] Request received with query params:', req.query);
-    const { token, access_token } = req.query;
+    const { token, access_token, campaignId } = req.query;
     const accessToken = token || access_token;
 
     if (!accessToken) {
@@ -220,100 +220,159 @@ router.get('/instagram-connected-pages', async (req, res) => {
       });
     }
 
-    console.log('🔵 [FACEBOOK-IG-PAGES] Fetching Instagram connected pages...');
+    console.log('🔵 [FACEBOOK-IG-PAGES] Using Instagram OAuth token to find connected pages...');
 
-    // Получаем user ID
-    const userResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+    // Проверяем что это Instagram OAuth токен и получаем Instagram Business Account
+    const igMeResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
       params: {
         access_token: accessToken,
-        fields: 'id,name'
+        fields: 'id,name,account_type'
       },
       timeout: 10000
     });
 
-    const userId = userResponse.data.id;
-    console.log('🔵 [FACEBOOK-IG-PAGES] User ID obtained:', userId);
+    const igUser = igMeResponse.data;
+    console.log('🔵 [FACEBOOK-IG-PAGES] Instagram user info:', igUser);
 
-    // Получаем все страницы пользователя
-    const response = await axios.get(`https://graph.facebook.com/v18.0/${userId}/accounts`, {
-      params: {
-        access_token: accessToken,
-        fields: 'id,name,access_token,category,tasks,instagram_business_account'
-      },
-      timeout: 10000
-    });
-
-    const allAccounts = response.data.data || [];
-    
-    console.log('🔵 [FACEBOOK-IG-PAGES] All accounts from API:', allAccounts.length);
-    
-    // Проверяем каждую страницу на наличие связанного Instagram Business аккаунта
-    const connectedPages = [];
-    
-    for (const account of allAccounts) {
+    if (igUser.account_type === 'BUSINESS') {
+      // Это Instagram Business аккаунт, ищем связанную Facebook страницу
       try {
-        // Проверяем Instagram Business аккаунт для этой страницы
-        const igResponse = await axios.get(`https://graph.facebook.com/v18.0/${account.id}`, {
+        const businessResponse = await axios.get(`https://graph.facebook.com/v18.0/${igUser.id}`, {
           params: {
-            access_token: account.access_token || accessToken,
-            fields: 'id,name,instagram_business_account'
+            access_token: accessToken,
+            fields: 'connected_facebook_page'
           },
-          timeout: 5000
+          timeout: 10000
         });
 
-        const pageData = igResponse.data;
-        
-        console.log(`🔍 [FACEBOOK-IG-PAGES] Checking page ${account.name} (${account.id}):`, {
-          hasInstagramAccount: !!pageData.instagram_business_account,
-          igAccountId: pageData.instagram_business_account?.id
-        });
-
-        if (pageData.instagram_business_account) {
-          // Получаем информацию об Instagram аккаунте
-          const igAccountResponse = await axios.get(`https://graph.facebook.com/v18.0/${pageData.instagram_business_account.id}`, {
+        if (businessResponse.data.connected_facebook_page) {
+          const facebookPageId = businessResponse.data.connected_facebook_page.id;
+          
+          // Получаем информацию о Facebook странице
+          const pageResponse = await axios.get(`https://graph.facebook.com/v18.0/${facebookPageId}`, {
             params: {
-              access_token: account.access_token || accessToken,
-              fields: 'id,username,name,profile_picture_url,followers_count'
+              access_token: accessToken,
+              fields: 'id,name,category,access_token'
             },
-            timeout: 5000
+            timeout: 10000
           });
 
-          const igAccountData = igAccountResponse.data;
+          const facebookPage = pageResponse.data;
           
-          connectedPages.push({
+          const connectedPages = [{
             facebook_page: {
-              id: account.id,
-              name: account.name,
-              category: account.category,
-              access_token: account.access_token
+              id: facebookPage.id,
+              name: facebookPage.name,
+              category: facebookPage.category,
+              access_token: facebookPage.access_token || accessToken
             },
             instagram_account: {
-              id: igAccountData.id,
-              username: igAccountData.username,
-              name: igAccountData.name,
-              profile_picture_url: igAccountData.profile_picture_url,
-              followers_count: igAccountData.followers_count
+              id: igUser.id,
+              username: igUser.name, // Instagram API возвращает username в поле name для Business аккаунтов
+              name: igUser.name,
+              profile_picture_url: null,
+              followers_count: null
             }
+          }];
+
+          console.log('✅ [FACEBOOK-IG-PAGES] Connected page found via Instagram Business account:', {
+            facebook: facebookPage.name,
+            instagram: igUser.name
           });
 
-          console.log(`✅ [FACEBOOK-IG-PAGES] Connected page found: ${account.name} -> @${igAccountData.username}`);
+          return res.json({
+            success: true,
+            connected_pages: connectedPages
+          });
         }
-      } catch (igError: any) {
-        console.log(`⚠️ [FACEBOOK-IG-PAGES] No Instagram connection for page ${account.name}:`, igError.response?.data?.error?.message || 'Unknown error');
+      } catch (businessError: any) {
+        console.log('⚠️ [FACEBOOK-IG-PAGES] No connected Facebook page found for Instagram Business account:', businessError.response?.data?.error?.message || 'Unknown error');
       }
     }
-    
-    console.log('🔵 [FACEBOOK-IG-PAGES] Instagram connected pages found:', {
-      count: connectedPages.length,
-      pages: connectedPages.map((p: any) => ({
-        facebook: p.facebook_page.name,
-        instagram: `@${p.instagram_account.username}`
-      }))
-    });
 
+    // Альтернативный подход: если у нас есть campaignId, проверяем Instagram настройки кампании
+    if (campaignId) {
+      console.log('🔵 [FACEBOOK-IG-PAGES] Checking campaign Instagram settings for connected pages...');
+      
+      try {
+        // Получаем Instagram аккаунты из кампании
+        const directusResponse = await axios.get(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`
+          },
+          params: {
+            fields: 'social_media_settings'
+          }
+        });
+
+        const campaign = directusResponse.data.data;
+        if (campaign?.social_media_settings?.instagram?.accounts) {
+          const instagramAccounts = campaign.social_media_settings.instagram.accounts;
+          
+          const connectedPages = [];
+          
+          for (const igAccount of instagramAccounts) {
+            // Попробуем найти связанную Facebook страницу для каждого Instagram аккаунта
+            try {
+              const igResponse = await axios.get(`https://graph.facebook.com/v18.0/${igAccount.id}`, {
+                params: {
+                  access_token: accessToken,
+                  fields: 'connected_facebook_page'
+                },
+                timeout: 5000
+              });
+
+              if (igResponse.data.connected_facebook_page) {
+                const facebookPageId = igResponse.data.connected_facebook_page.id;
+                
+                const pageResponse = await axios.get(`https://graph.facebook.com/v18.0/${facebookPageId}`, {
+                  params: {
+                    access_token: accessToken,
+                    fields: 'id,name,category,access_token'
+                  },
+                  timeout: 5000
+                });
+
+                connectedPages.push({
+                  facebook_page: {
+                    id: pageResponse.data.id,
+                    name: pageResponse.data.name,
+                    category: pageResponse.data.category,
+                    access_token: pageResponse.data.access_token || accessToken
+                  },
+                  instagram_account: {
+                    id: igAccount.id,
+                    username: igAccount.username,
+                    name: igAccount.name,
+                    profile_picture_url: igAccount.profile_picture_url,
+                    followers_count: igAccount.followers_count
+                  }
+                });
+              }
+            } catch (igError: any) {
+              console.log(`⚠️ [FACEBOOK-IG-PAGES] No connected Facebook page for Instagram ${igAccount.username}:`, igError.response?.data?.error?.message || 'Unknown error');
+            }
+          }
+
+          if (connectedPages.length > 0) {
+            console.log('✅ [FACEBOOK-IG-PAGES] Connected pages found via campaign settings:', connectedPages.length);
+            
+            return res.json({
+              success: true,
+              connected_pages: connectedPages
+            });
+          }
+        }
+      } catch (campaignError: any) {
+        console.log('⚠️ [FACEBOOK-IG-PAGES] Error checking campaign Instagram settings:', campaignError.message);
+      }
+    }
+
+    // Если ничего не найдено
     res.json({
       success: true,
-      connected_pages: connectedPages
+      connected_pages: [],
+      message: 'Не найдено Facebook страниц связанных с Instagram Business аккаунтами'
     });
 
   } catch (error: any) {
