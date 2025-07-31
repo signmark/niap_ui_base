@@ -140,4 +140,70 @@ router.get('/pages', async (req, res) => {
   }
 });
 
+// GET /api/facebook/page-token - получение токена конкретной страницы
+router.get('/page-token/:pageId', async (req, res) => {
+  try {
+    const { pageId } = req.params;
+    const { token, access_token } = req.query;
+    const accessToken = token || access_token;
+
+    console.log(`🔵 [FACEBOOK-PAGE-TOKEN] Getting token for page ${pageId}`);
+
+    if (!accessToken) {
+      return res.status(400).json({
+        error: 'Access token is required'
+      });
+    }
+
+    // Получаем информацию о странице напрямую
+    const pageResponse = await axios.get(`https://graph.facebook.com/v18.0/${pageId}`, {
+      params: {
+        access_token: accessToken,
+        fields: 'id,name,access_token,category'
+      },
+      timeout: 10000
+    });
+
+    const pageData = pageResponse.data;
+    
+    console.log(`🔵 [FACEBOOK-PAGE-TOKEN] Page token retrieved for ${pageData.name}:`, {
+      id: pageData.id,
+      name: pageData.name,
+      category: pageData.category,
+      hasToken: !!pageData.access_token,
+      tokenPreview: pageData.access_token ? pageData.access_token.substring(0, 20) + '...' : 'none'
+    });
+
+    res.json({
+      success: true,
+      page: {
+        id: pageData.id,
+        name: pageData.name,
+        category: pageData.category,
+        access_token: pageData.access_token
+      }
+    });
+
+  } catch (error: any) {
+    console.error(`❌ [FACEBOOK-PAGE-TOKEN] Error getting page token:`, error.response?.data || error.message);
+    
+    let errorMessage = 'Не удалось получить токен страницы';
+    
+    if (error.response?.data?.error) {
+      const fbError = error.response.data.error;
+      if (fbError.code === 190) {
+        errorMessage = 'Недействительный токен доступа';
+      } else if (fbError.code === 104) {
+        errorMessage = 'Недостаточно прав для доступа к странице';
+      } else {
+        errorMessage = fbError.message || errorMessage;
+      }
+    }
+
+    res.status(400).json({
+      error: errorMessage
+    });
+  }
+});
+
 export default router;

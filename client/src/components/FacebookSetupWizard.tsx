@@ -250,6 +250,57 @@ export default function FacebookSetupWizard({
     loadExistingFacebookSettings();
   }, [campaignId]);
 
+  // Получение токена конкретной страницы
+  const handleGetPageToken = async (pageId: string) => {
+    const token = form.getValues('token');
+    
+    if (!token || !pageId) {
+      toast({
+        title: "Ошибка",
+        description: "Введите токен и ID страницы",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(token)}`);
+      const data = await response.json();
+
+      if (data.success && data.page) {
+        const { id, name, access_token } = data.page;
+        
+        // Обновляем токен в форме на токен страницы
+        form.setValue('token', access_token);
+        form.setValue('manualPageName', name);
+        
+        toast({
+          title: "Токен страницы получен",
+          description: `Получен токен для "${name}". Теперь нажмите "Получить страницы" для обновления списка.`,
+        });
+        
+        console.log('🔑 Page token retrieved:', {
+          pageId: id,
+          pageName: name,
+          tokenPreview: access_token.substring(0, 20) + '...'
+        });
+      } else {
+        toast({
+          title: "Ошибка",
+          description: data.error || "Не удалось получить токен страницы",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error getting page token:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось получить токен страницы",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Обработчик ручного выбора страницы
   const handleManualPageSelect = () => {
     const formData = form.getValues();
@@ -423,12 +474,23 @@ export default function FacebookSetupWizard({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ID Facebook страницы</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Например: 2120362494678794"
-                        {...field}
-                      />
-                    </FormControl>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input
+                          placeholder="Например: 2120362494678794"
+                          {...field}
+                        />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => handleGetPageToken(field.value || '')}
+                        disabled={!field.value || !form.getValues('token')}
+                        size="sm"
+                      >
+                        🔑 Получить токен
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
