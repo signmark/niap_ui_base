@@ -314,59 +314,74 @@ router.get('/instagram-connected-pages', async (req, res) => {
         
         const connectedPages = [];
         
-        // Обрабатываем каждую страницу и проверяем наличие connected_instagram_account
+        // Для каждой страницы проверяем есть ли связанный Instagram Business аккаунт
         for (const page of pagesResponse.data.data) {
-          console.log('🔍 [FACEBOOK-IG-PAGES] Page details:', JSON.stringify(page, null, 2));
-          if (page.connected_instagram_account) {
-            console.log('✅ [FACEBOOK-IG-PAGES] Page has connected Instagram account:', page.name, '→', page.connected_instagram_account.id);
-            
-            // Получаем детальную информацию об Instagram аккаунте
-            try {
-              const igInfoResponse = await axios.get(`https://graph.facebook.com/v18.0/${page.connected_instagram_account.id}`, {
-                params: {
-                  access_token: page.access_token || accessToken,
-                  fields: 'id,username,name,profile_picture_url,followers_count'
-                },
-                timeout: 10000
-              });
+          console.log('🔍 [FACEBOOK-IG-PAGES] Checking page for Instagram connection:', page.name, '(ID:', page.id + ')');
+          
+          try {
+            // Проверяем есть ли у страницы Instagram Business аккаунт
+            const pageInstagramResponse = await axios.get(`https://graph.facebook.com/v18.0/${page.id}`, {
+              params: {
+                access_token: page.access_token || accessToken,
+                fields: 'instagram_business_account'
+              },
+              timeout: 10000
+            });
 
-              connectedPages.push({
-                facebook_page: {
-                  id: page.id,
-                  name: page.name,
-                  category: page.category,
-                  access_token: page.access_token || accessToken
-                },
-                instagram_account: {
-                  id: igInfoResponse.data.id,
-                  username: igInfoResponse.data.username,
-                  name: igInfoResponse.data.name,
-                  profile_picture_url: igInfoResponse.data.profile_picture_url,
-                  followers_count: igInfoResponse.data.followers_count
-                }
-              });
-            } catch (igInfoError: any) {
-              console.log('⚠️ [FACEBOOK-IG-PAGES] Could not get Instagram account details for page', page.name, ':', igInfoError.response?.data?.error?.message || 'Unknown error');
+            if (pageInstagramResponse.data.instagram_business_account) {
+              const igAccountId = pageInstagramResponse.data.instagram_business_account.id;
+              console.log('✅ [FACEBOOK-IG-PAGES] Page has connected Instagram Business account:', page.name, '→', igAccountId);
               
-              // Добавляем с базовой информацией из connected_instagram_account
-              connectedPages.push({
-                facebook_page: {
-                  id: page.id,
-                  name: page.name,
-                  category: page.category,
-                  access_token: page.access_token || accessToken
-                },
-                instagram_account: {
-                  id: page.connected_instagram_account.id,
-                  username: `IG_${page.connected_instagram_account.id}`,
-                  name: `Instagram Account ${page.connected_instagram_account.id}`,
-                  profile_picture_url: null,
-                  followers_count: null
-                }
-              });
+              // Получаем детальную информацию об Instagram аккаунте
+              try {
+                const igInfoResponse = await axios.get(`https://graph.facebook.com/v18.0/${igAccountId}`, {
+                  params: {
+                    access_token: page.access_token || accessToken,
+                    fields: 'id,username,name,profile_picture_url,followers_count'
+                  },
+                  timeout: 10000
+                });
+
+                connectedPages.push({
+                  facebook_page: {
+                    id: page.id,
+                    name: page.name,
+                    category: page.category,
+                    access_token: page.access_token || accessToken
+                  },
+                  instagram_account: {
+                    id: igInfoResponse.data.id,
+                    username: igInfoResponse.data.username,
+                    name: igInfoResponse.data.name,
+                    profile_picture_url: igInfoResponse.data.profile_picture_url,
+                    followers_count: igInfoResponse.data.followers_count
+                  }
+                });
+              } catch (igInfoError: any) {
+                console.log('⚠️ [FACEBOOK-IG-PAGES] Could not get Instagram account details for', igAccountId, ':', igInfoError.response?.data?.error?.message || 'Unknown error');
+                
+                // Добавляем с базовой информацией
+                connectedPages.push({
+                  facebook_page: {
+                    id: page.id,
+                    name: page.name,
+                    category: page.category,
+                    access_token: page.access_token || accessToken
+                  },
+                  instagram_account: {
+                    id: igAccountId,
+                    username: `IG_${igAccountId}`,
+                    name: `Instagram Account ${igAccountId}`,
+                    profile_picture_url: null,
+                    followers_count: null
+                  }
+                });
+              }
+            } else {
+              console.log('⚠️ [FACEBOOK-IG-PAGES] Page has no Instagram Business account:', page.name);
             }
-          } else {
-            console.log('⚠️ [FACEBOOK-IG-PAGES] Page has no connected Instagram account:', page.name);
+          } catch (pageCheckError: any) {
+            console.log('⚠️ [FACEBOOK-IG-PAGES] Error checking Instagram connection for page', page.name, ':', pageCheckError.response?.data?.error?.message || 'Unknown error');
           }
         }
 
