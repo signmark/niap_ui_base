@@ -35,7 +35,7 @@ export function YouTubeOAuthSetup({ onAuthComplete }: YouTubeOAuthSetupProps) {
     try {
       setIsAuthenticating(true);
       
-      const response = await axios.post('/api/auth/youtube/auth/start', {}, {
+      const response = await axios.post('/api/youtube/auth/start', {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
