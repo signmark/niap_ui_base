@@ -68,6 +68,7 @@ router.post('/instagram/auth/start', async (req, res) => {
       `redirect_uri=${encodeURIComponent(finalRedirectUri)}&` +
       `scope=${encodeURIComponent(scopes)}&` +
       `response_type=code&` +
+      `auth_type=rerequest&` +
       `state=${state}`;
 
     log('instagram-oauth', `OAuth поток запущен для App ID: ${appId}, Campaign ID: ${campaignId}`);

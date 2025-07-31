@@ -11,6 +11,7 @@ import {
   Loader2, 
   CheckCircle, 
   AlertCircle, 
+  AlertTriangle,
   ExternalLink, 
   Facebook, 
   Instagram, 
@@ -554,13 +555,20 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Как это работает:</h4>
           <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
-            <li>Откроется окно авторизации Facebook</li>
-            <li>Вы авторизуете доступ к Instagram Business аккаунту</li>
+            <li>Откроется окно авторизации Facebook с принудительным запросом новых разрешений</li>
+            <li>Вы авторизуете доступ к Instagram Business аккаунту для этого конкретного приложения</li>
             <li>Система получит краткосрочный токен и обменяет на долгосрочный</li>
             <li>Все данные Instagram сохранятся в настройках этой кампании</li>
-            <li>Готово! Можно публиковать контент в Instagram</li>
+            <li>Готово! Каждое приложение будет иметь свой уникальный токен</li>
           </ol>
         </div>
+
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Новая функция:</strong> Система теперь принудительно запрашивает новые токены для каждого Facebook приложения через параметр auth_type=rerequest. Это предотвращает повторное использование одного токена для разных приложений.
+          </AlertDescription>
+        </Alert>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setCurrentStep(3)}>
