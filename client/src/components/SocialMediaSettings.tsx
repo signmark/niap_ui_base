@@ -233,6 +233,7 @@ export function SocialMediaSettings({
   const handleVkGroupSelect = (groupId: string, groupName: string) => {
     form.setValue('vk.groupId', groupId);
     form.setValue('vk.groupName', groupName);
+    setVkGroups([]); // Скрываем список групп после выбора
     toast({
       title: "Группа выбрана",
       description: `Выбрана группа: ${groupName}`,
