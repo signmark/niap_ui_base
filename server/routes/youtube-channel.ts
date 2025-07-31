@@ -24,25 +24,20 @@ router.get('/youtube/channel-info', async (req, res) => {
     console.log('🔍 [YOUTUBE-CHANNEL] Clean token length:', cleanToken.length);
     console.log('🔍 [YOUTUBE-CHANNEL] Getting channel info for token:', cleanToken.substring(0, 20) + '...');
 
-    // Получаем системный YouTube API ключ
-    const globalApiKeysService = new GlobalApiKeysService();
-    const youtubeApiKey = await globalApiKeysService.getGlobalApiKey('YOUTUBE_API_KEY' as any);
-    
-    console.log('🔍 [YOUTUBE-CHANNEL] Retrieved YouTube API key:', youtubeApiKey ? 'Found' : 'Not found');
-    
-    if (!youtubeApiKey) {
-      console.error('❌ [YOUTUBE-CHANNEL] YouTube API key not found in global settings');
-      return res.status(500).json({
-        success: false,
-        error: 'YouTube API key not configured'
-      });
-    }
-
-    console.log('✅ [YOUTUBE-CHANNEL] Using system YouTube API key:', youtubeApiKey.substring(0, 10) + '...');
+    console.log('🔍 [YOUTUBE-CHANNEL] Using OAuth token for channel info (no API key needed for mine=true)');
 
     // Запрашиваем информацию о канале через YouTube Data API v3
+    // Для запросов с mine=true используем только OAuth токен без API ключа
+    // API ключ и OAuth токен должны быть из одного проекта Google Cloud
     const channelResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true&access_token=${cleanToken}&key=${youtubeApiKey}`
+      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true`,
+      {
+        headers: {
+          'Authorization': `Bearer ${cleanToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
     if (!channelResponse.ok) {

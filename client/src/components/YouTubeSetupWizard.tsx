@@ -125,11 +125,55 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         
         // Ожидаем завершения OAuth в popup
         const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed);
-            // Проверяем есть ли токены в localStorage
+          try {
+            // Пытаемся проверить статус popup окна
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              // Проверяем есть ли токены в localStorage
+              const oauthTokens = localStorage.getItem('youtubeOAuthTokens');
+              if (oauthTokens) {
+                try {
+                  const tokens = JSON.parse(oauthTokens);
+                  console.log('🎉 [YouTube Wizard] OAuth completed successfully in popup');
+                  
+                  setAuthTokens({
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken
+                  });
+                  
+                  // Получаем информацию о канале
+                  fetchChannelInfo(tokens.accessToken, {
+                    accessToken: tokens.accessToken,
+                    refreshToken: tokens.refreshToken
+                  });
+                  
+                  // Очищаем токены из localStorage
+                  localStorage.removeItem('youtubeOAuthTokens');
+                  setIsLoading(false);
+                } catch (e) {
+                  console.error('❌ [YouTube Wizard] Error parsing OAuth tokens:', e);
+                  setIsLoading(false);
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось обработать результат авторизации",
+                    variant: "destructive"
+                  });
+                }
+              } else {
+                console.log('⚠️ [YouTube Wizard] OAuth popup closed without tokens');
+                setIsLoading(false);
+                toast({
+                  title: "Авторизация отменена",
+                  description: "OAuth окно закрыто без получения токенов",
+                  variant: "destructive"
+                });
+              }
+            }
+          } catch (error) {
+            // Cross-Origin-Opener-Policy ошибка - игнорируем и проверяем localStorage
             const oauthTokens = localStorage.getItem('youtubeOAuthTokens');
             if (oauthTokens) {
+              clearInterval(checkClosed);
               try {
                 const tokens = JSON.parse(oauthTokens);
                 console.log('🎉 [YouTube Wizard] OAuth completed successfully in popup');
@@ -157,14 +201,6 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
                   variant: "destructive"
                 });
               }
-            } else {
-              console.log('⚠️ [YouTube Wizard] OAuth popup closed without tokens');
-              setIsLoading(false);
-              toast({
-                title: "Авторизация отменена",
-                description: "OAuth окно закрыто без получения токенов",
-                variant: "destructive"
-              });
             }
           }
         }, 1000);
