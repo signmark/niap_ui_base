@@ -1,223 +1,84 @@
-import express from 'express';
+import { Router } from 'express';
 import axios from 'axios';
-import { log } from '../utils/logger';
 
-const router = express.Router();
+const router = Router();
 
-// Автоматическое обнаружение групп, связанных с Facebook страницами
-router.get('/campaigns/:campaignId/discover-facebook-groups', async (req, res) => {
+// API для получения Facebook групп и страниц пользователя
+router.get('/facebook/groups-and-pages', async (req, res) => {
   try {
-    const { campaignId } = req.params;
-    const { accessToken } = req.query;
-
-    if (!accessToken) {
+    const token = req.query.token as string;
+    
+    if (!token) {
       return res.status(400).json({
         success: false,
-        error: 'Требуется accessToken для обнаружения групп'
+        error: 'Токен обязателен'
       });
     }
 
-    console.log('🔍 [FB-GROUPS] Начинаем обнаружение Facebook групп...');
+    console.log('🔍 [FB-GROUPS] Получаем группы и страницы для токена:', token.substring(0, 20) + '...');
 
-    // 1. Получаем страницы пользователя
+    // Получаем страницы пользователя
     const pagesResponse = await axios.get(`https://graph.facebook.com/me/accounts`, {
       params: {
-        access_token: accessToken,
-        fields: 'id,name,access_token,category'
+        access_token: token,
+        fields: 'id,name,access_token,category,tasks'
       }
     });
 
-    console.log('📄 [FB-GROUPS] Найдено страниц:', pagesResponse.data.data.length);
+    console.log('📄 [FB-GROUPS] Страницы найдены:', pagesResponse.data);
 
-    const discoveredGroups = [];
-
-    // 2. Для каждой страницы ищем связанные группы
-    for (const page of pagesResponse.data.data) {
-      console.log(`🔍 [FB-GROUPS] Проверяем страницу: ${page.name} (${page.id})`);
-
-      try {
-        // Проверяем группы, где страница является администратором
-        const groupsResponse = await axios.get(`https://graph.facebook.com/${page.id}/groups`, {
-          params: {
-            access_token: page.access_token,
-            fields: 'id,name,description,privacy,member_count,cover'
-          }
-        });
-
-        if (groupsResponse.data.data && groupsResponse.data.data.length > 0) {
-          console.log(`📊 [FB-GROUPS] Найдено групп для страницы ${page.name}:`, groupsResponse.data.data.length);
-
-          for (const group of groupsResponse.data.data) {
-            discoveredGroups.push({
-              groupId: group.id,
-              groupName: group.name,
-              groupDescription: group.description || '',
-              privacy: group.privacy,
-              memberCount: group.member_count || 0,
-              cover: group.cover?.source || '',
-              linkedPageId: page.id,
-              linkedPageName: page.name,
-              pageAccessToken: page.access_token
-            });
-          }
-        }
-      } catch (groupError) {
-        console.log(`⚠️ [FB-GROUPS] Ошибка получения групп для страницы ${page.name}:`, groupError.response?.data || groupError.message);
-        // Продолжаем с другими страницами
-      }
-    }
-
-    // 3. Также проверяем группы пользователя напрямую
+    // Получаем группы пользователя
+    let groups = [];
     try {
-      const userGroupsResponse = await axios.get(`https://graph.facebook.com/me/groups`, {
+      const groupsResponse = await axios.get(`https://graph.facebook.com/me/groups`, {
         params: {
-          access_token: accessToken,
-          fields: 'id,name,description,privacy,member_count,cover,administrator'
+          access_token: token,
+          fields: 'id,name,description,privacy,member_count'
         }
       });
-
-      if (userGroupsResponse.data.data) {
-        for (const group of userGroupsResponse.data.data) {
-          // Добавляем только если пользователь администратор
-          if (group.administrator) {
-            // Проверяем, не добавлена ли группа уже через страницы
-            const alreadyAdded = discoveredGroups.find(g => g.groupId === group.id);
-            if (!alreadyAdded) {
-              discoveredGroups.push({
-                groupId: group.id,
-                groupName: group.name,
-                groupDescription: group.description || '',
-                privacy: group.privacy,
-                memberCount: group.member_count || 0,
-                cover: group.cover?.source || '',
-                linkedPageId: null,
-                linkedPageName: 'Прямой доступ',
-                pageAccessToken: null,
-                userAccessToken: accessToken
-              });
-            }
-          }
-        }
-      }
-    } catch (userGroupError) {
-      console.log(`⚠️ [FB-GROUPS] Ошибка получения групп пользователя:`, userGroupError.response?.data || userGroupError.message);
+      groups = groupsResponse.data.data || [];
+      console.log('👥 [FB-GROUPS] Группы найдены:', groups);
+    } catch (groupError: any) {
+      console.log('⚠️ [FB-GROUPS] Не удалось получить группы:', groupError.response?.data || groupError.message);
+      // Не прерываем выполнение, просто оставляем группы пустыми
     }
 
-    console.log(`✅ [FB-GROUPS] Всего обнаружено групп: ${discoveredGroups.length}`);
+    // Получаем информацию о разрешениях
+    const permissionsResponse = await axios.get(`https://graph.facebook.com/me/permissions`, {
+      params: {
+        access_token: token
+      }
+    });
+
+    const permissions = permissionsResponse.data.data.map((p: any) => p.permission);
+    const hasPublishToGroups = permissions.includes('publish_to_groups');
+    const hasManagePosts = permissions.includes('pages_manage_posts');
+
+    console.log('🔑 [FB-GROUPS] Разрешения:', {
+      hasPublishToGroups,
+      hasManagePosts,
+      allPermissions: permissions
+    });
 
     res.json({
       success: true,
-      groups: discoveredGroups,
-      totalGroups: discoveredGroups.length,
-      groupsByPage: discoveredGroups.reduce((acc, group) => {
-        const pageKey = group.linkedPageName || 'Прямой доступ';
-        if (!acc[pageKey]) acc[pageKey] = [];
-        acc[pageKey].push(group);
-        return acc;
-      }, {} as Record<string, any[]>)
+      data: {
+        pages: pagesResponse.data.data || [],
+        groups: groups,
+        permissions: {
+          hasPublishToGroups,
+          hasManagePosts,
+          all: permissions
+        }
+      }
     });
 
-  } catch (error) {
-    console.log('❌ [FB-GROUPS] Ошибка обнаружения групп:', error);
+  } catch (error: any) {
+    console.error('❌ [FB-GROUPS] Ошибка получения групп и страниц:', error.response?.data || error.message);
     res.status(500).json({
       success: false,
-      error: 'Ошибка обнаружения Facebook групп',
+      error: 'Ошибка получения данных Facebook',
       details: error.response?.data || error.message
-    });
-  }
-});
-
-// Сохранение выбранных групп в настройки кампании
-router.post('/campaigns/:campaignId/save-facebook-groups', async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-    const { selectedGroups } = req.body;
-
-    if (!selectedGroups || !Array.isArray(selectedGroups)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Требуется массив selectedGroups'
-      });
-    }
-
-    console.log(`💾 [FB-GROUPS] Сохраняем ${selectedGroups.length} групп для кампании ${campaignId}`);
-
-    // Получаем текущие настройки кампании
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Токен авторизации не найден' });
-    }
-
-    // Получаем текущие настройки
-    const getCurrentSettings = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!getCurrentSettings.ok) {
-      return res.status(500).json({
-        success: false,
-        error: 'Ошибка получения текущих настроек кампании'
-      });
-    }
-
-    const currentData = await getCurrentSettings.json();
-    const currentSettings = currentData.data?.social_media_settings || {};
-
-    // Обновляем Facebook настройки с группами
-    const updatedFacebookSettings = {
-      ...currentSettings.facebook,
-      groups: selectedGroups.map(group => ({
-        groupId: group.groupId,
-        groupName: group.groupName,
-        privacy: group.privacy,
-        memberCount: group.memberCount,
-        linkedPageId: group.linkedPageId,
-        linkedPageName: group.linkedPageName,
-        enabled: true
-      }))
-    };
-
-    const updatedSettings = {
-      ...currentSettings,
-      facebook: updatedFacebookSettings
-    };
-
-    // Сохраняем обновленные настройки
-    const updateResponse = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        social_media_settings: updatedSettings
-      })
-    });
-
-    if (!updateResponse.ok) {
-      return res.status(500).json({
-        success: false,
-        error: 'Ошибка сохранения настроек кампании'
-      });
-    }
-
-    console.log(`✅ [FB-GROUPS] Группы успешно сохранены для кампании ${campaignId}`);
-
-    res.json({
-      success: true,
-      message: `Сохранено ${selectedGroups.length} Facebook групп`,
-      groups: selectedGroups
-    });
-
-  } catch (error) {
-    console.log('❌ [FB-GROUPS] Ошибка сохранения групп:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Ошибка сохранения Facebook групп',
-      details: error.message
     });
   }
 });

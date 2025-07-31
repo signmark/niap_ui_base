@@ -135,6 +135,8 @@ import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
 import instagramSetupRoutes from './routes/instagram-setup-wizard';
 // Импортируем Facebook Pages router
 import facebookPagesRouter from './routes/facebook-pages';
+// Импортируем Facebook Groups Discovery router
+import facebookGroupsRouter from './routes/facebook-groups-discovery';
 registerGlobalApiKeysRoutes(app);
 log('Global API keys routes registered early to avoid Vite middleware interception');
 
@@ -149,6 +151,10 @@ log('Instagram Setup Wizard routes registered');
 // Регистрируем Facebook Pages маршруты
 app.use('/api/facebook', facebookPagesRouter);
 log('Facebook Pages routes registered');
+
+// Регистрируем Facebook Groups Discovery маршруты
+app.use('/api', facebookGroupsRouter);
+log('Facebook Groups Discovery routes registered');
 
 // Регистрируем YouTube Auth маршруты раньше всех
 import youtubeAuthRouter from './routes/youtube-auth';
