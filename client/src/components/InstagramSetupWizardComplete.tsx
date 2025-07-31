@@ -573,6 +573,55 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
               </AlertDescription>
             </Alert>
             
+            {/* Кнопки быстрого выбора известных аккаунтов */}
+            <div className="mt-3 space-y-2">
+              <Label className="text-sm font-medium">Быстрый выбор известных аккаунтов:</Label>
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      instagramId: "17841422577074562"
+                    }));
+                  }}
+                  className="justify-start text-xs"
+                >
+                  📸 @it_zhdanov (17841422577074562)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      instagramId: "17841422578516105"
+                    }));
+                  }}
+                  className="justify-start text-xs"
+                >
+                  📸 @d.signmark (17841422578516105)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      instagramId: "17841474548013708"
+                    }));
+                  }}
+                  className="justify-start text-xs"
+                >
+                  🤖 @smm_manager_niap (17841474548013708)
+                </Button>
+              </div>
+            </div>
+
             {formData.instagramId && formData.accessToken && (
               <div className="mt-3">
                 <Button
