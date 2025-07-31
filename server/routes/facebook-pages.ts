@@ -41,7 +41,7 @@ router.get('/pages', async (req, res) => {
     const response = await axios.get(`https://graph.facebook.com/v18.0/${userId}/accounts`, {
       params: {
         access_token: accessToken,
-        fields: 'id,name,access_token,category,tasks'
+        fields: 'id,name,access_token,category,tasks,link,fan_count,about'
       },
       timeout: 10000
     });
@@ -52,33 +52,57 @@ router.get('/pages', async (req, res) => {
       id: account.id,
       name: account.name,
       category: account.category,
-      tasks: account.tasks
+      tasks: account.tasks,
+      link: account.link,
+      fan_count: account.fan_count
     })));
     
-    // Фильтруем только Facebook СТРАНИЦЫ, исключаем группы
-    // Проверяем: есть ли у account поле tasks - это признак страницы
-    // Группы возвращаются через другой endpoint и не имеют tasks
+    // Фильтруем только Facebook СТРАНИЦЫ, исключаем группы и личные профили
     const pages = allAccounts.filter((account: any) => {
       console.log(`🔍 [FACEBOOK-PAGES] Checking account ${account.name} (${account.id}):`, {
         category: account.category,
         hasTasks: !!account.tasks,
-        tasks: account.tasks || 'none'
+        tasks: account.tasks || 'none',
+        link: account.link,
+        fan_count: account.fan_count
       });
       
       // Проверяем что это страница, а не группа
-      // У страниц есть tasks, у групп их нет в этом endpoint
       if (!account.tasks || !Array.isArray(account.tasks)) {
-        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - no tasks (likely group)`);
+        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - no tasks (likely group or profile)`);
         return false;
       }
       
-      // Дополнительно проверяем наличие нужных разрешений для публикации
-      const hasManagetasks = account.tasks.includes('MANAGE');
+      // Исключаем личные профили по URL
+      // Личные профили имеют URL формата profile.php?id= или facebook.com/profile.php
+      if (account.link && (
+        account.link.includes('profile.php?id=') || 
+        account.link.includes('/profile.php') ||
+        account.link.match(/facebook\.com\/[a-z]+\.[a-z]+\.[\d]+$/)
+      )) {
+        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - personal profile detected by URL pattern`);
+        return false;
+      }
+      
+      // Исключаем аккаунты с категорией "Person" или без категории (часто личные профили)
+      if (!account.category || account.category === 'Person') {
+        console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - no category or Person category`);
+        return false;
+      }
+      
+      // Проверяем наличие нужных разрешений для публикации
+      const hasManageTasks = account.tasks.includes('MANAGE');
       const hasCreateContent = account.tasks.includes('CREATE_CONTENT');
       
-      if (!hasManagetasks || !hasCreateContent) {
+      if (!hasManageTasks || !hasCreateContent) {
         console.log(`❌ [FACEBOOK-PAGES] Skipping ${account.name} - insufficient permissions`);
         return false;
+      }
+      
+      // Дополнительная проверка: у настоящих страниц обычно есть fan_count
+      // Личные профили могут не иметь этого поля
+      if (account.fan_count === undefined) {
+        console.log(`⚠️ [FACEBOOK-PAGES] Warning: ${account.name} has no fan_count - might be personal profile`);
       }
       
       console.log(`✅ [FACEBOOK-PAGES] Valid page found: ${account.name}`);
