@@ -374,6 +374,14 @@ app.use((req, res, next) => {
     app.use('/api', vkSettingsRouter);
     console.log("VK Campaign Settings routes registered");
     log("VK Campaign Settings routes registered successfully");
+
+    // Регистрируем Facebook настройки кампании
+    console.log("Registering Facebook Campaign Settings routes...");
+    log("Registering Facebook Campaign Settings routes...");
+    const facebookSettingsRouter = (await import('./routes/campaign-facebook-settings')).default;
+    app.use('/api', facebookSettingsRouter);
+    console.log("Facebook Campaign Settings routes registered");
+    log("Facebook Campaign Settings routes registered successfully");
     
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");

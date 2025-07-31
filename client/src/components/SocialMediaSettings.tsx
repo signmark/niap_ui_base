@@ -105,6 +105,10 @@ export function SocialMediaSettings({
   // Состояние для VK настроек из базы данных
   const [vkSettings, setVkSettings] = useState<any>(null);
   const [loadingVkSettings, setLoadingVkSettings] = useState(false);
+
+  // Состояние для Facebook настроек из базы данных
+  const [facebookSettings, setFacebookSettings] = useState<any>(null);
+  const [loadingFacebookSettings, setLoadingFacebookSettings] = useState(false);
   
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -247,6 +251,16 @@ export function SocialMediaSettings({
 
   // Обработчик завершения Facebook мастера
   const handleFacebookComplete = (data: { token: string; pageId: string; pageName: string }) => {
+    // Проверяем что токен не содержит лог консоли
+    if (data.token.includes('Facebook Wizard:') || data.token.includes('%20') || data.token.includes('FacebookSetupWizard')) {
+      toast({
+        title: "Ошибка",
+        description: "Получен некорректный токен от мастера настройки. Попробуйте заново.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     form.setValue('facebook.token', data.token);
     form.setValue('facebook.pageId', data.pageId);
     form.setValue('facebook.pageName', data.pageName);
@@ -423,11 +437,57 @@ export function SocialMediaSettings({
     }
   };
 
-  // Загружаем Instagram и VK настройки при монтировании компонента
+  // Функция загрузки Facebook настроек из базы данных
+  const loadFacebookSettings = async () => {
+    setLoadingFacebookSettings(true);
+    try {
+      console.log('🔄 Loading Facebook settings from database...');
+      
+      const response = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Facebook settings loaded:', data);
+        
+        if (data.success && data.settings) {
+          setFacebookSettings(data.settings);
+          
+          // Обновляем поля формы с полученными данными
+          if (data.settings.token) {
+            form.setValue('facebook.token', data.settings.token);
+          }
+          if (data.settings.pageId) {
+            form.setValue('facebook.pageId', data.settings.pageId);
+          }
+          if (data.settings.pageName) {
+            form.setValue('facebook.pageName', data.settings.pageName);
+          }
+          
+          console.log('🔄 Facebook form fields updated with database values');
+        } else {
+          console.log('ℹ️ No Facebook settings found in database');
+          setFacebookSettings(null);
+        }
+      } else {
+        console.error('❌ Failed to load Facebook settings:', response.statusText);
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading Facebook settings:', error);
+    } finally {
+      setLoadingFacebookSettings(false);
+    }
+  };
+
+  // Загружаем Instagram, VK и Facebook настройки при монтировании компонента
   useEffect(() => {
     if (campaignId) {
       loadInstagramSettings();
       loadVkSettings();
+      loadFacebookSettings();
     }
   }, [campaignId]);
 
@@ -486,6 +546,40 @@ export function SocialMediaSettings({
       form.trigger('vk');
     }
   }, [vkSettings, form]);
+
+  // Обновляем форму когда Facebook настройки загружены
+  useEffect(() => {
+    if (facebookSettings) {
+      console.log('🔄 Updating Facebook form fields with database values:', facebookSettings);
+      
+      // Проверяем что токен не содержит лог консоли
+      const token = facebookSettings.token || '';
+      if (token.includes('Facebook Wizard:') || token.includes('%20') || token.includes('FacebookSetupWizard')) {
+        console.error('❌ Facebook token is corrupted with console log data');
+        return;
+      }
+      
+      // Обновляем поля формы с данными из базы
+      if (facebookSettings.token) {
+        form.setValue('facebook.token', facebookSettings.token);
+      }
+      if (facebookSettings.pageId) {
+        form.setValue('facebook.pageId', facebookSettings.pageId);
+      }
+      if (facebookSettings.pageName) {
+        form.setValue('facebook.pageName', facebookSettings.pageName);
+      }
+      
+      console.log('✅ Facebook form fields updated:', {
+        token: form.getValues('facebook.token'),
+        pageId: form.getValues('facebook.pageId'),
+        pageName: form.getValues('facebook.pageName')
+      });
+      
+      // Принудительно обновляем отображение формы
+      form.trigger('facebook');
+    }
+  }, [facebookSettings, form]);
 
   // Функции проверки API ключей
   const validateTelegramToken = async () => {
