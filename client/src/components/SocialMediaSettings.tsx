@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, AlertCircle, Youtube } from "lucide-react";
 import { directusApi } from "@/lib/directus";
 import { api } from "@/lib/api";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
+import { YouTubeSetupWizard } from "./YouTubeSetupWizard";
 import InstagramSetupWizardSimple from "./InstagramSetupWizardSimple";
 import VkSetupWizard from "./VkSetupWizard";
 import FacebookSetupWizard from "./FacebookSetupWizard";
@@ -61,8 +62,8 @@ const socialMediaSettingsSchema = z.object({
     pageName: z.string().nullable().optional(),
   }).optional(),
   youtube: z.object({
-    apiKey: z.string().nullable().optional(),
     channelId: z.string().nullable().optional(),
+    channelTitle: z.string().nullable().optional(),
     accessToken: z.string().nullable().optional(),
     refreshToken: z.string().nullable().optional(),
   }).optional(),
@@ -97,6 +98,9 @@ export function SocialMediaSettings({
   
   // Состояние для показа Facebook wizard
   const [showFacebookWizard, setShowFacebookWizard] = useState(false);
+  
+  // Состояние для показа YouTube wizard
+  const [showYoutubeWizard, setShowYoutubeWizard] = useState(false);
   
   // Состояние для Instagram настроек из базы данных
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
@@ -270,6 +274,32 @@ export function SocialMediaSettings({
     });
   };
 
+  // Обработчик завершения YouTube мастера
+  const handleYoutubeComplete = (data: { 
+    channelId: string; 
+    channelTitle: string; 
+    accessToken: string; 
+    refreshToken: string;
+    channelInfo: any;
+  }) => {
+    console.log('🎬 [YouTube Complete] Setting form values:', {
+      channelId: data.channelId,
+      channelTitle: data.channelTitle
+    });
+
+    form.setValue('youtube.channelId', data.channelId);
+    form.setValue('youtube.channelTitle', data.channelTitle);
+    form.setValue('youtube.accessToken', data.accessToken);
+    form.setValue('youtube.refreshToken', data.refreshToken);
+    
+    setShowYoutubeWizard(false);
+    
+    toast({
+      title: "YouTube настроен!",
+      description: `Канал "${data.channelTitle}" готов к публикации видео`
+    });
+  };
+
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
     defaultValues: {
@@ -277,7 +307,7 @@ export function SocialMediaSettings({
       vk: initialSettings?.vk || { token: '', groupId: '', groupName: '' },
       instagram: initialSettings?.instagram || { token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' },
       facebook: initialSettings?.facebook || { token: '', pageId: '', pageName: '' },
-      youtube: initialSettings?.youtube || { apiKey: '', channelId: '', accessToken: '', refreshToken: '' }
+      youtube: initialSettings?.youtube || { channelId: '', channelTitle: '', accessToken: '', refreshToken: '' }
     }
   });
 
@@ -1506,120 +1536,78 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>YouTube</span>
-                <ValidationBadge status={youtubeStatus} />
+                {form.watch('youtube.channelId') && form.watch('youtube.accessToken') ? (
+                  <Badge variant="default" className="text-xs bg-green-100 text-green-800 border-green-200">
+                    Настроено
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    Не настроено
+                  </Badge>
+                )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
               <div className="space-y-4">
-                <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
-                  <span className="font-medium">Требуется для YouTube:</span>
-                  <br />• <span className="font-medium">API Key</span> - для базовых операций с YouTube API
-                  <br />• <span className="font-medium">ID Канала</span> - для указания канала для загрузки
-                  <br />• <span className="font-medium">OAuth авторизация</span> - для загрузки видео (см. ниже)
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="youtube.apiKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>API Key (обязательно)</FormLabel>
-                      <div className="flex space-x-2">
-                        <FormControl>
-                          <Input 
-                            type="password" 
-                            placeholder="Введите API ключ YouTube" 
-                            {...field} 
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={validateYoutubeApiKey}
-                          disabled={youtubeStatus.isLoading}
-                        >
-                          {youtubeStatus.isLoading ? 
-                            <Loader2 className="h-4 w-4 animate-spin" /> : 
-                            <AlertCircle className="h-4 w-4" />
-                          }
-                        </Button>
+                {/* YouTube Channel Info Display */}
+                {form.watch('youtube.channelId') && form.watch('youtube.channelTitle') ? (
+                  <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-green-800">YouTube канал настроен</h4>
+                        <p className="text-sm text-green-700">
+                          Канал: <span className="font-medium">{form.watch('youtube.channelTitle')}</span>
+                        </p>
+                        <p className="text-xs text-green-600">
+                          ID: {form.watch('youtube.channelId')}
+                        </p>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        Получите в Google Cloud Console → APIs & Services → Credentials
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="youtube.channelId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ID Канала (обязательно)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Например: UCxxxxxxxxxxxxxxxxxxxxxxx" 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground">
-                        ID канала можно найти в YouTube Studio → Настройки → Канал → Основная информация
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowYoutubeWizard(true)}
+                        className="border-green-300 text-green-700 hover:bg-green-100"
+                      >
+                        Пересконфигурировать
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                      <span className="font-medium">Упрощенная настройка YouTube:</span>
+                      <br />• Системный API ключ уже настроен
+                      <br />• Требуется только OAuth авторизация
+                      <br />• Channel ID получается автоматически
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      onClick={() => setShowYoutubeWizard(true)}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <Youtube className="h-4 w-4 mr-2" />
+                      Настроить YouTube
+                    </Button>
+                  </div>
+                )}
               </div>
               
-              {/* YouTube OAuth Setup */}
-              <div className="border-t pt-4 mt-4">
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium">OAuth Авторизация (для загрузки видео)</h4>
-                  <div className="text-xs text-muted-foreground">
-                    После ввода API Key и Channel ID выполните OAuth авторизацию для возможности загрузки видео
-                  </div>
-                  
-                  {/* Показываем статус OAuth токенов */}
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <span className="text-muted-foreground">Access Token:</span>
-                      <span className={form.watch('youtube.accessToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
-                        {form.watch('youtube.accessToken') ? 'Получен' : 'Отсутствует'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <span className="text-muted-foreground">Refresh Token:</span>
-                      <span className={form.watch('youtube.refreshToken') ? 'text-green-600 font-medium' : 'text-gray-400'}>
-                        {form.watch('youtube.refreshToken') ? 'Получен' : 'Отсутствует'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <YouTubeOAuthSetup 
-                    onAuthComplete={(authData) => {
-
-                      
-                      // Обновляем форму с полученными токенами
-                      if (authData.accessToken) {
-                        form.setValue('youtube.accessToken', authData.accessToken);
-                      }
-                      if (authData.refreshToken) {
-                        form.setValue('youtube.refreshToken', authData.refreshToken);
-                      }
-                      if (authData.channelId) {
-                        form.setValue('youtube.channelId', authData.channelId);
-                      }
-                      
-                      // Сохраняем настройки автоматически
-                      form.handleSubmit(onSubmit)();
-                    }} 
+              {/* YouTube Setup Wizard Inline */}
+              {showYoutubeWizard && (
+                <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                  <YouTubeSetupWizard
+                    campaignId={campaignId}
+                    initialSettings={initialSettings}
+                    onComplete={(data) => {
+                      console.log('🎬 YouTube setup completed, updating form...');
+                      handleYoutubeComplete(data);
+                    }}
                   />
                 </div>
-              </div>
+              )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

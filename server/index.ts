@@ -351,6 +351,14 @@ app.use((req, res, next) => {
     console.log("YouTube OAuth routes registered");
     log("YouTube OAuth routes registered successfully");
     
+    // Регистрируем YouTube Channel Info маршруты
+    console.log("Registering YouTube Channel routes...");
+    log("Registering YouTube Channel routes...");
+    const youtubeChannelRouter = (await import('./routes/youtube-channel')).default;
+    app.use('/', youtubeChannelRouter);
+    console.log("YouTube Channel routes registered");
+    log("YouTube Channel routes registered successfully");
+    
     // Регистрируем Instagram OAuth маршруты
     console.log("Registering Instagram OAuth routes...");
     log("Registering Instagram OAuth routes...");
