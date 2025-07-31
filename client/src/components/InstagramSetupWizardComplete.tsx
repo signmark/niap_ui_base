@@ -649,11 +649,31 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     </Card>
   );
 
+  const resetWizard = () => {
+    setFormData({
+      appId: '',
+      appSecret: '',
+      accessToken: '',
+      instagramId: ''
+    });
+    setCurrentStep(1);
+    setFacebookToken('');
+    toast({
+      title: "Настройки сброшены",
+      description: "Можете начать заново с новым Facebook приложением"
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Instagram API Setup Wizard</h3>
-        <Badge variant="outline">Шаг {currentStep} из 5</Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={resetWizard}>
+            Сбросить настройки
+          </Button>
+          <Badge variant="outline">Шаг {currentStep} из 5</Badge>
+        </div>
       </div>
 
       {/* Progress indicator */}
