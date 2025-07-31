@@ -56,8 +56,8 @@ const InstagramSetupWizard: React.FC<InstagramSetupWizardProps> = ({ campaignId,
         window.open(data.authUrl, 'instagram-auth', 'width=600,height=600');
         
         toast({
-          title: "Авторизация Instagram",
-          description: "Скопируйте полученный токен и вставьте в поле ниже"
+          title: "OAuth авторизация",
+          description: "Откроется окно для авторизации Instagram"
         });
       } else {
         throw new Error(data.error || 'Ошибка создания ссылки авторизации');
