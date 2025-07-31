@@ -28,16 +28,30 @@ export default function YouTubeCallbackPage() {
     setStatus('success');
     setMessage('YouTube успешно подключен! Токены сохранены.');
 
-    // Автоматически закрываем окно через 3 секунды
+    // Проверяем есть ли сохраненное состояние мастера
+    const wizardState = localStorage.getItem('youtubeWizardState');
+    
+    // Автоматически возвращаемся к настройкам через 2 секунды
     setTimeout(() => {
-      if (window.opener) {
-        // Если это popup окно, закрываем его
-        window.close();
+      if (wizardState) {
+        try {
+          const state = JSON.parse(wizardState);
+          console.log('🔄 [YouTube Callback] Returning to campaign settings:', state.campaignId);
+          
+          // Очищаем состояние мастера
+          localStorage.removeItem('youtubeWizardState');
+          
+          // Возвращаемся к настройкам кампании
+          window.location.href = `/campaigns/${state.campaignId}?openYouTube=true`;
+        } catch (e) {
+          console.error('❌ [YouTube Callback] Error parsing wizard state:', e);
+          window.location.href = '/';
+        }
       } else {
-        // Если это основное окно, перенаправляем на главную
+        // Если нет состояния мастера, перенаправляем на главную
         window.location.href = '/';
       }
-    }, 3000);
+    }, 2000);
   }, [search]);
 
   return (

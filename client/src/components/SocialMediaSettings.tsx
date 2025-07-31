@@ -588,6 +588,18 @@ export function SocialMediaSettings({
       loadVkSettings();
       loadFacebookSettings();
       loadYoutubeSettings();
+      
+      // Проверяем URL параметр для автоматического открытия YouTube мастера
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('openYouTube') === 'true') {
+        console.log('🎬 [YouTube Settings] Auto-opening YouTube wizard from URL parameter');
+        setShowYoutubeWizard(true);
+        
+        // Очищаем URL параметр
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('openYouTube');
+        window.history.replaceState({}, '', newUrl.toString());
+      }
     }
   }, [campaignId]);
 

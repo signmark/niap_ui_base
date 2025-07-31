@@ -52,6 +52,19 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
       if (initialSettings.youtube.channelId) {
         setStep(3); // Переходим к шагу показа информации о канале
         fetchChannelInfo(initialSettings.youtube.accessToken);
+        
+        // Если мастер открылся автоматически после OAuth (есть URL параметр), 
+        // то автоматически завершаем настройку
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('openYouTube') === 'true') {
+          console.log('🎬 [YouTube Wizard] Auto-completing after OAuth return...');
+          setTimeout(() => {
+            fetchChannelInfo(initialSettings.youtube.accessToken, {
+              accessToken: initialSettings.youtube.accessToken,
+              refreshToken: initialSettings.youtube.refreshToken || ''
+            });
+          }, 1000);
+        }
       } else {
         setStep(2); // Переходим к получению Channel ID
       }
@@ -78,65 +91,17 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
       const data = await response.json();
       
       if (data.success && data.authUrl) {
-        console.log('✅ [YouTube Wizard] OAuth URL received, opening popup...');
+        console.log('✅ [YouTube Wizard] OAuth URL received, using direct redirect...');
         
-        // Открываем popup для авторизации
-        const popup = window.open(
-          data.authUrl,
-          'youtube-oauth',
-          'width=600,height=700,scrollbars=yes,resizable=yes'
-        );
+        // Сохраняем состояние мастера в localStorage
+        localStorage.setItem('youtubeWizardState', JSON.stringify({
+          campaignId: campaignId,
+          wizardOpen: true,
+          timestamp: Date.now()
+        }));
         
-        // Слушаем сообщения от popup
-        const messageHandler = (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
-          
-          if (event.data.type === 'YOUTUBE_OAUTH_SUCCESS') {
-            console.log('✅ [YouTube Wizard] OAuth success received:', event.data);
-            popup?.close();
-            window.removeEventListener('message', messageHandler);
-            
-            setAuthTokens({
-              accessToken: event.data.accessToken,
-              refreshToken: event.data.refreshToken
-            });
-            setStep(2);
-            setIsLoading(false);
-            
-            toast({
-              title: "Авторизация успешна!",
-              description: "Получаю информацию о вашем канале..."
-            });
-            
-            // Автоматически получаем информацию о канале
-            fetchChannelInfo(event.data.accessToken, {
-              accessToken: event.data.accessToken,
-              refreshToken: event.data.refreshToken
-            });
-          } else if (event.data.type === 'YOUTUBE_OAUTH_ERROR') {
-            console.error('❌ [YouTube Wizard] OAuth error:', event.data.error);
-            popup?.close();
-            window.removeEventListener('message', messageHandler);
-            setIsLoading(false);
-            
-            toast({
-              title: "Ошибка авторизации",
-              description: event.data.error || "Произошла ошибка при авторизации",
-              variant: "destructive"
-            });
-          }
-        };
-        
-        window.addEventListener('message', messageHandler);
-        
-        // Проверяем, не закрыли ли popup
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener('message', messageHandler);
-            setIsLoading(false);
-          }
-        }, 1000);
+        // Вместо popup используем прямой редирект
+        window.location.href = data.authUrl;
         
       } else {
         throw new Error(data.error || 'Failed to get authorization URL');

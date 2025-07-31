@@ -1,0 +1,73 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Injected CSS loaded successfully
+ 🎬 [YouTube State] showYoutubeWizard changed: false
+ 🔄 Loading VK settings from database...
+ 🔄 Loading Facebook settings from database...
+ 📋 [YOUTUBE-SETTINGS] Loading YouTube settings from database...
+ ✅ VK settings loaded: Object
+ 🔄 VK form fields updated with database values
+ 🔄 Updating VK form fields with database values: Object
+ ✅ VK form fields updated: Object
+ ✅ Facebook settings loaded: Object
+ 🔄 Facebook form fields updated with database values
+ 🔄 Updating Facebook form fields with database values: Object
+ ✅ Facebook form fields updated: Object
+ 📋 [YOUTUBE-SETTINGS] YouTube settings loaded: Object
+ 📋 [YOUTUBE-SETTINGS] YouTube form fields updated with database values
+   - token: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+   - accessToken: EAAxKZAfikOYwBPLEXuPWT5hFTVPULZAmzQYMVJcqsTSPTkKfgHgIt6gDslZBsCq8Hum2dfZADErGAE3ypdIEQ3jAJESTzLnJttZAgZA4RnnZA8ussQP9x6sOKnJlwyWEQzmcSb71Nfvcrkbf8pM6kW1Gw2oCvbwfa90D41QQRWmfZAoleCEYTscj1IEIAkEs
+   - businessAccountId: 17841422577074562
+   - appId: 3459501544192396
+   - appSecret: 50df248e9dae8af129403334c0ec28b9
+ 📋 [YOUTUBE-SETTINGS] Updating YouTube form fields with database values: Object
+ 📋 [YOUTUBE-SETTINGS] YouTube form fields updated: Object
+ 🎬 [YouTube Button] Button clicked, opening wizard...
+ 🎬 [YouTube State] showYoutubeWizard changed: true
+YouTubeSetupWizard.tsx:64 🚀 [YouTube Wizard] Starting OAuth process...
+YouTubeSetupWizard.tsx:81 ✅ [YouTube Wizard] OAuth URL received, opening popup...
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+client:536 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/?token=aewpT-aNrSLp' failed: 
+setupWebSocket @ client:536
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=aewpT-aNrSLp' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+ WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ /src/hooks/use-websocket.ts:9
+YouTubeSetupWizard.tsx:64 🚀 [YouTube Wizard] Starting OAuth process...
+YouTubeSetupWizard.tsx:81 ✅ [YouTube Wizard] OAuth URL received, opening popup...
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
+YouTubeSetupWizard.tsx:134 Cross-Origin-Opener-Policy policy would block the window.closed call.
+(anonymous) @ YouTubeSetupWizard.tsx:134
