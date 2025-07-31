@@ -35,6 +35,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { YouTubeOAuthSetup } from "./YouTubeOAuthSetup";
 import InstagramSetupWizardSimple from "./InstagramSetupWizardSimple";
 import VkSetupWizard from "./VkSetupWizard";
+import FacebookSetupWizard from "./FacebookSetupWizard";
 import type { SocialMediaSettings } from "@shared/schema";
 
 const socialMediaSettingsSchema = z.object({
@@ -57,6 +58,7 @@ const socialMediaSettingsSchema = z.object({
   facebook: z.object({
     token: z.string().nullable().optional(),
     pageId: z.string().nullable().optional(),
+    pageName: z.string().nullable().optional(),
   }).optional(),
   youtube: z.object({
     apiKey: z.string().nullable().optional(),
@@ -92,6 +94,9 @@ export function SocialMediaSettings({
   
   // Состояние для показа VK wizard
   const [showVkWizard, setShowVkWizard] = useState(false);
+  
+  // Состояние для показа Facebook wizard
+  const [showFacebookWizard, setShowFacebookWizard] = useState(false);
   
   // Состояние для Instagram настроек из базы данных
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
@@ -240,13 +245,24 @@ export function SocialMediaSettings({
     });
   };
 
+  // Обработчик завершения Facebook мастера
+  const handleFacebookComplete = (data: { token: string; pageId: string; pageName: string }) => {
+    form.setValue('facebook.token', data.token);
+    form.setValue('facebook.pageId', data.pageId);
+    form.setValue('facebook.pageName', data.pageName);
+    toast({
+      title: "Facebook настроен",
+      description: `Выбрана страница: ${data.pageName}`,
+    });
+  };
+
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
     defaultValues: {
       telegram: initialSettings?.telegram || { token: '', chatId: '' },
       vk: initialSettings?.vk || { token: '', groupId: '', groupName: '' },
       instagram: initialSettings?.instagram || { token: '', accessToken: '', businessAccountId: '', appId: '', appSecret: '' },
-      facebook: initialSettings?.facebook || { token: '', pageId: '' },
+      facebook: initialSettings?.facebook || { token: '', pageId: '', pageName: '' },
       youtube: initialSettings?.youtube || { apiKey: '', channelId: '', accessToken: '', refreshToken: '' }
     }
   });
@@ -1344,58 +1360,46 @@ export function SocialMediaSettings({
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="facebook.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="Введите токен доступа" 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateFacebookToken}
-                        disabled={facebookStatus.isLoading}
-                      >
-                        {facebookStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
-                        }
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="facebook.pageId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Page ID</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Например: 102938475647382" 
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <div className="text-xs text-muted-foreground">
-                      ID Facebook страницы можно найти в настройках страницы или в URL: facebook.com/yourpagename
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Facebook настройки</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                      {form.watch('facebook.pageName') 
+                        ? `Страница: ${form.watch('facebook.pageName')} (${form.watch('facebook.pageId')})` 
+                        : 'Настройте Facebook страницу для этой кампании'
+                      }
+                    </p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant={form.watch('facebook.token') ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      console.log('Открываем Facebook мастер для настройки/пересконфигурации');
+                      setShowFacebookWizard(true);
+                    }}
+                  >
+                    {form.watch('facebook.token') ? 'Пересконфигурировать' : 'Настроить Facebook'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Facebook Setup Wizard Inline */}
+              {showFacebookWizard && (
+                <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                  <FacebookSetupWizard
+                    campaignId={campaignId}
+                    onCancel={() => {
+                      console.log('Facebook wizard: Закрытие встроенного мастера');
+                      setShowFacebookWizard(false);
+                    }}
+                    onComplete={handleFacebookComplete}
+                  />
+                </div>
+              )}
+              
+              {/* Facebook поля скрыты - используется только мастер настройки */}
             </AccordionContent>
           </AccordionItem>
 

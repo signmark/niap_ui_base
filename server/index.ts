@@ -125,6 +125,8 @@ registerAuthRoutes(app);
 import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
 // Импортируем Instagram Setup Wizard
 import instagramSetupRoutes from './routes/instagram-setup-wizard';
+// Импортируем Facebook Pages router
+import facebookPagesRouter from './routes/facebook-pages';
 registerGlobalApiKeysRoutes(app);
 log('Global API keys routes registered early to avoid Vite middleware interception');
 
@@ -135,6 +137,10 @@ log('User API keys routes registered early to avoid Vite middleware interception
 // Регистрируем Instagram Setup Wizard маршруты
 app.use('/api/instagram-setup', instagramSetupRoutes);
 log('Instagram Setup Wizard routes registered');
+
+// Регистрируем Facebook Pages маршруты
+app.use('/api/facebook', facebookPagesRouter);
+log('Facebook Pages routes registered');
 
 // Instagram Campaign Settings маршруты будут зарегистрированы ПОСЛЕ registerRoutes
 // чтобы иметь приоритет над конфликтующими маршрутами в routes.ts
