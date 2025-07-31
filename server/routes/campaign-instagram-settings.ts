@@ -588,4 +588,85 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
   }
 });
 
+/**
+ * Тестирование конкретного Instagram Business Account ID
+ */
+router.post('/campaigns/:campaignId/test-instagram-account', async (req, res) => {
+  const { campaignId } = req.params;
+  const { accessToken, instagramId } = req.body;
+  const userToken = req.headers.authorization?.replace('Bearer ', '');
+
+  try {
+    console.log('🔍 [TEST-IG] Testing Instagram account:', instagramId);
+    
+    if (!accessToken || !instagramId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access Token и Instagram ID обязательны'
+      });
+    }
+
+    if (!userToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Токен авторизации не предоставлен'
+      });
+    }
+
+    // Тестируем доступ к Instagram аккаунту
+    try {
+      const instagramResponse = await axios.get(
+        `https://graph.facebook.com/v23.0/${instagramId}?access_token=${accessToken}&fields=id,username,name,account_type,media_count,followers_count`
+      );
+
+      const instagramData = instagramResponse.data;
+      console.log('✅ [TEST-IG] Instagram account accessible:', instagramData);
+
+      res.json({
+        success: true,
+        accountData: {
+          id: instagramData.id,
+          username: instagramData.username,
+          name: instagramData.name,
+          accountType: instagramData.account_type,
+          mediaCount: instagramData.media_count,
+          followersCount: instagramData.followers_count
+        },
+        message: `Instagram аккаунт @${instagramData.username} успешно протестирован`
+      });
+
+    } catch (instagramError: any) {
+      console.error('❌ [TEST-IG] Error testing Instagram account:', instagramError.response?.data || instagramError.message);
+      
+      if (instagramError.response?.status === 403) {
+        res.status(403).json({
+          success: false,
+          error: `Нет доступа к Instagram аккаунту ${instagramId}. Возможно токен не имеет прав или аккаунт не связан с этим приложением.`,
+          details: instagramError.response?.data
+        });
+      } else if (instagramError.response?.status === 400) {
+        res.status(400).json({
+          success: false,
+          error: `Неверный Instagram Business Account ID: ${instagramId}. Проверьте правильность ID.`,
+          details: instagramError.response?.data
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Ошибка при тестировании Instagram аккаунта',
+          details: instagramError.response?.data || instagramError.message
+        });
+      }
+    }
+
+  } catch (error: any) {
+    console.error('❌ [TEST-IG] Error in Instagram test:', error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка тестирования Instagram аккаунта',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 export default router;

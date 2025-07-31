@@ -222,6 +222,57 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
     }
   };
 
+  const testInstagramAccount = async () => {
+    if (!formData.instagramId || !formData.accessToken) {
+      toast({
+        title: "Ошибка",
+        description: "Необходимы Access Token и Instagram ID для тестирования"
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const response = await apiRequest(`/api/campaigns/${campaignId}/test-instagram-account`, {
+        method: 'POST',
+        data: {
+          accessToken: formData.accessToken,
+          instagramId: formData.instagramId
+        }
+      });
+
+      if (response.success) {
+        const account = response.accountData;
+        toast({
+          title: "Тест успешен!",
+          description: `@${account.username} (${account.name}) - ${account.followersCount} подписчиков`
+        });
+      }
+    } catch (error: any) {
+      console.error('Error testing Instagram account:', error);
+      
+      if (error.response?.status === 403) {
+        toast({
+          title: "Нет доступа",
+          description: "Токен не имеет прав к этому Instagram аккаунту. Возможно он привязан к другому приложению."
+        });
+      } else if (error.response?.status === 400) {
+        toast({
+          title: "Неверный ID",
+          description: "Проверьте правильность Instagram Business Account ID"
+        });
+      } else {
+        toast({
+          title: "Ошибка тестирования",
+          description: error.response?.data?.error || "Не удалось протестировать аккаунт"
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveSettings = async () => {
     if (!formData.appId || !formData.appSecret) {
       toast({
@@ -503,17 +554,39 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="instagramId">Instagram Business Account ID (опционально)</Label>
+            <Label htmlFor="instagramId">Instagram Business Account ID</Label>
             <Input
               id="instagramId"
               type="text"
-              placeholder="Если известен, введите Instagram ID"
+              placeholder="17841422577074562"
               value={formData.instagramId}
               onChange={(e) => setFormData(prev => ({ ...prev, instagramId: e.target.value }))}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Будет получен автоматически после авторизации
+              {formData.instagramId ? '✅ Instagram ID указан' : 'Обязательно укажите ID вашего Instagram Business аккаунта'}
             </p>
+            <Alert className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                <strong>Важно:</strong> Если автопоиск не находит аккаунты, введите Business Account ID вручную. 
+                Найти его можно в Graph API Explorer: <code>me/accounts?fields=instagram_business_account</code>
+              </AlertDescription>
+            </Alert>
+            
+            {formData.instagramId && formData.accessToken && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={testInstagramAccount}
+                  disabled={!formData.instagramId || !formData.accessToken}
+                  className="w-full"
+                >
+                  🧪 Протестировать Instagram Account ID
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -524,7 +597,7 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
           <Button 
             onClick={() => setCurrentStep(4)} 
             className="flex-1"
-            disabled={!formData.appId || !formData.appSecret}
+            disabled={!formData.appId || !formData.appSecret || !formData.instagramId}
           >
             Продолжить <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
