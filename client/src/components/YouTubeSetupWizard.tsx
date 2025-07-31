@@ -173,6 +173,12 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
       }
     } catch (error: any) {
       console.error('❌ [YouTube Wizard] Channel info error:', error);
+      
+      // Если ошибка авторизации (401), предлагаем повторную авторизацию
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        setStep(4); // Переходим к шагу ошибки авторизации
+      }
+      
       toast({
         title: "Ошибка получения данных канала",
         description: error.message || "Не удалось получить информацию о канале",
@@ -274,6 +280,43 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         </Card>
       )}
 
+      {step === 4 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ExternalLink className="h-6 w-6 text-orange-600" />
+              Требуется повторная авторизация
+            </CardTitle>
+            <CardDescription>
+              Токен авторизации истек или недействителен. Необходимо авторизоваться заново.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-orange-50 p-4 rounded-lg">
+              <h4 className="font-medium text-orange-900 mb-2">Что произошло:</h4>
+              <ul className="text-sm text-orange-800 space-y-1">
+                <li>• Токен доступа YouTube истек</li>
+                <li>• Или были изменены настройки канала</li>
+                <li>• Требуется новая авторизация для получения свежих токенов</li>
+              </ul>
+            </div>
+            
+            <Button 
+              onClick={() => {
+                setStep(1);
+                setAuthTokens(null);
+                setChannelInfo(null);
+              }}
+              className="w-full"
+              size="lg"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Авторизоваться заново
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {step === 3 && channelInfo && (
         <Card>
           <CardHeader>
@@ -316,10 +359,24 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
               </div>
             </div>
             
-            <Button onClick={handleComplete} className="w-full" size="lg">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Завершить настройку
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={handleComplete} className="flex-1" size="lg">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Завершить настройку
+              </Button>
+              <Button 
+                onClick={() => {
+                  setStep(1);
+                  setAuthTokens(null);
+                  setChannelInfo(null);
+                }} 
+                variant="outline" 
+                size="lg"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Авторизоваться заново
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
