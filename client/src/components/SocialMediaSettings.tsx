@@ -1394,7 +1394,11 @@ export function SocialMediaSettings({
                       console.log('Facebook wizard: Закрытие встроенного мастера');
                       setShowFacebookWizard(false);
                     }}
-                    onComplete={handleFacebookComplete}
+                    onComplete={(data) => {
+                      console.log('🔄 Facebook setup completed, updating form...');
+                      handleFacebookComplete(data);
+                      setShowFacebookWizard(false);
+                    }}
                   />
                 </div>
               )}
