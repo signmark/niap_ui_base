@@ -334,28 +334,37 @@ export default function FacebookSetupWizard({
           </div>
         </Form>
 
-        {/* Инструкция по получению страниц */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-3">
-          <h4 className="font-medium text-blue-800">📋 Как получить Facebook страницы</h4>
-          <div className="bg-white border border-blue-200 rounded-md p-3">
-            <h5 className="font-medium text-blue-800 mb-2">Шаг 1: Создайте новую Facebook страницу</h5>
-            <p className="text-sm text-blue-700 mb-2">
-              Для публикации контента нужна именно страница (Page), а не группа (Group).
-            </p>
-            <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
+        {/* Предупреждение и инструкция */}
+        <div className="bg-orange-50 border border-orange-200 rounded-md p-4 space-y-3">
+          <h4 className="font-medium text-orange-800">⚠️ Найден личный профиль вместо страницы</h4>
+          <p className="text-sm text-orange-700">
+            "Dmitry Signmark" - это личный профиль Facebook, но для публикации контента нужна бизнес-страница.
+          </p>
+          <div className="bg-white border border-orange-200 rounded-md p-3">
+            <h5 className="font-medium text-orange-800 mb-2">Создайте новую Facebook страницу:</h5>
+            <ol className="text-sm text-orange-700 list-decimal list-inside space-y-1">
               <li>Откройте <a href="https://www.facebook.com/pages/create" target="_blank" className="underline font-medium">facebook.com/pages/create</a></li>
               <li>Выберите тип "Бизнес или бренд"</li>
-              <li>Заполните: название, категория, описание</li>
+              <li>Название: например "SMM Бизнес" или ваше название</li>
+              <li>Категория: "Маркетинговое агентство" или подходящая</li>
               <li>Сохраните страницу</li>
               <li>Вернитесь сюда и нажмите "📋 Получить страницы"</li>
             </ol>
-            <div className="mt-3">
+            <div className="mt-3 flex gap-2">
               <Button 
                 onClick={() => window.open('https://www.facebook.com/pages/create', '_blank')}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-orange-600 hover:bg-orange-700"
               >
                 🔗 Создать Facebook страницу
+              </Button>
+              <Button 
+                onClick={() => window.open('https://www.facebook.com/profile.php?id=61578985855179', '_blank')}
+                size="sm"
+                variant="outline"
+                className="border-orange-300"
+              >
+                👤 Посмотреть профиль
               </Button>
             </div>
           </div>
