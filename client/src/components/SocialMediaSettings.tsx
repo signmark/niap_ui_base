@@ -127,6 +127,61 @@ export function SocialMediaSettings({
     username?: string;
   }>>([]);
 
+  // Состояние для VK URL парсинга
+  const [vkUrlInput, setVkUrlInput] = useState('');
+
+  // Функция парсинга VK URL для извлечения API ключа
+  const parseVkUrl = (url: string) => {
+    try {
+      // Ищем access_token в URL
+      const urlParams = new URLSearchParams(url.split('#')[1] || url.split('?')[1] || '');
+      const accessToken = urlParams.get('access_token');
+      
+      if (accessToken) {
+        return accessToken;
+      }
+
+      // Альтернативный парсинг для разных форматов VK URL
+      const tokenMatch = url.match(/access_token=([^&]+)/);
+      if (tokenMatch) {
+        return tokenMatch[1];
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Ошибка парсинга VK URL:', error);
+      return null;
+    }
+  };
+
+  // Функция обработки VK URL
+  const handleVkUrlParse = () => {
+    if (!vkUrlInput.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка!",
+        description: "Введите URL с токеном доступа ВК"
+      });
+      return;
+    }
+
+    const token = parseVkUrl(vkUrlInput);
+    if (token) {
+      form.setValue('vk.token', token);
+      setVkUrlInput('');
+      toast({
+        title: "Успешно!",
+        description: "Токен доступа извлечен из URL"
+      });
+    } else {
+      toast({
+        variant: "destructive", 
+        title: "Ошибка!",
+        description: "Не удалось извлечь токен из URL. Проверьте формат ссылки."
+      });
+    }
+  };
+
   const form = useForm<SocialMediaSettings>({
     resolver: zodResolver(socialMediaSettingsSchema),
     defaultValues: {
@@ -912,6 +967,32 @@ export function SocialMediaSettings({
                 </div>
               </div>
 
+              {/* VK URL Parser */}
+              <div className="space-y-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-orange-800 dark:text-orange-200">🔗 Извлечь токен из URL</span>
+                </div>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Вставьте полный URL с access_token из VK API..."
+                    value={vkUrlInput}
+                    onChange={(e) => setVkUrlInput(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleVkUrlParse}
+                    disabled={!vkUrlInput.trim()}
+                  >
+                    📋 Извлечь
+                  </Button>
+                </div>
+                <p className="text-xs text-orange-700 dark:text-orange-300">
+                  Вставьте полный URL, который получили при авторизации VK API (содержит access_token=...)
+                </p>
+              </div>
+
               <FormField
                 control={form.control}
                 name="vk.token"
@@ -922,7 +1003,7 @@ export function SocialMediaSettings({
                       <FormControl>
                         <Input 
                           type="password" 
-                          placeholder="Введите токен доступа" 
+                          placeholder="Введите токен доступа или используйте парсер URL выше" 
                           {...field} 
                           value={field.value || ''}
                         />
