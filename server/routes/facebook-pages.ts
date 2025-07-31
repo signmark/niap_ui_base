@@ -209,7 +209,8 @@ router.get('/page-token/:pageId', async (req, res) => {
 // GET /api/facebook/instagram-connected-pages - получение Facebook страниц связанных с Instagram Business аккаунтами
 router.get('/instagram-connected-pages', async (req, res) => {
   try {
-    console.log('🔵 [FACEBOOK-IG-PAGES] Request received with query params:', req.query);
+    console.log('🟣 [FACEBOOK-IG-PAGES] === INSTAGRAM CONNECTED PAGES ENDPOINT CALLED ===');
+    console.log('🟣 [FACEBOOK-IG-PAGES] Request received with query params:', req.query);
     const { token, access_token, campaignId } = req.query;
     const accessToken = token || access_token;
 
@@ -309,11 +310,13 @@ router.get('/instagram-connected-pages', async (req, res) => {
 
       if (pagesResponse.data.data && pagesResponse.data.data.length > 0) {
         console.log('✅ [FACEBOOK-IG-PAGES] Found Facebook pages via Instagram OAuth:', pagesResponse.data.data.length);
+        console.log('🔍 [FACEBOOK-IG-PAGES] Raw API response structure:', JSON.stringify(pagesResponse.data, null, 2));
         
         const connectedPages = [];
         
         // Обрабатываем каждую страницу и проверяем наличие connected_instagram_account
         for (const page of pagesResponse.data.data) {
+          console.log('🔍 [FACEBOOK-IG-PAGES] Page details:', JSON.stringify(page, null, 2));
           if (page.connected_instagram_account) {
             console.log('✅ [FACEBOOK-IG-PAGES] Page has connected Instagram account:', page.name, '→', page.connected_instagram_account.id);
             

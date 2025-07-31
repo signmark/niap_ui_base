@@ -1,0 +1,27 @@
+🔄 Loading existing Facebook settings for campaign: 45daab2a-4c6f-4578-8665-3a049458c0c8
+FacebookSetupWizard.tsx:311 📋 Facebook settings loaded: {success: true, settings: {…}}
+FacebookSetupWizard.tsx:317 ✅ Setting Facebook token in form: EAAxKZAfikOYwBPFTPoE...
+FacebookSetupWizard.tsx:267  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/facebook/pages?token=EAAxKZAfikOYwBPFTPoEAZAMZB2MiSejlhIFNwvDj2ob5pGsV1cfJDFVgUYQMsZANJSegM0kqKGhOHZCGAyn8mzDTVvKWoR1RHYZCm7ZCx1AKhBRu5XahyXESEkAHLXT0rgVGsadZCh4er0WIqZCtZBGtYZB00O9aWZAgTJdVbILJ1vLmnXVmsR3pXjyMsIzoFr9DvAspbRnDNxLh 400 (Bad Request)
+handleFetchPages @ FacebookSetupWizard.tsx:267
+(anonymous) @ FacebookSetupWizard.tsx:322
+setTimeout
+loadExistingFacebookSettings @ FacebookSetupWizard.tsx:321
+await in loadExistingFacebookSettings
+(anonymous) @ FacebookSetupWizard.tsx:334
+commitHookEffectListMount @ chunk-276SZO74.js?v=a627230e:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=a627230e:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=a627230e:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=a627230e:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=a627230e:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=a627230e:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=a627230e:19447
+commitRootImpl @ chunk-276SZO74.js?v=a627230e:19416
+commitRoot @ chunk-276SZO74.js?v=a627230e:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=a627230e:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=a627230e:9119
+(anonymous) @ chunk-276SZO74.js?v=a627230e:18627
+FacebookSetupWizard.tsx:162 Facebook Wizard: Получение Instagram связанных страниц из настроек кампании...
+FacebookSetupWizard.tsx:172 Facebook Wizard: Данные кампании получены: {success: true, data: {…}}
+FacebookSetupWizard.tsx:180 Facebook Wizard: Instagram настройки найдены: {hasInstagramSettings: true, tokenKeys: Array(5), tokenLength: 241}
+FacebookSetupWizard.tsx:195 Facebook Wizard: Используем Instagram токен для поиска связанных страниц...
+FacebookSetupWizard.tsx:200 Facebook Wizard: Ответ API Instagram связанных страниц: {success: true, connected_pages: Array(0), message: 'Не найдено Facebook страниц связанных с Instagram Business аккаунтами'}
