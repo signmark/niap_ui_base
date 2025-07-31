@@ -119,6 +119,10 @@ export function SocialMediaSettings({
   const [facebookSettings, setFacebookSettings] = useState<any>(null);
   const [loadingFacebookSettings, setLoadingFacebookSettings] = useState(false);
   
+  // Состояние для YouTube настроек из базы данных
+  const [youtubeSettings, setYoutubeSettings] = useState<any>(null);
+  const [loadingYoutubeSettings, setLoadingYoutubeSettings] = useState(false);
+  
   // Статусы валидации для каждой соцсети
   const [telegramStatus, setTelegramStatus] = useState<ValidationStatus>({ isLoading: false });
   const [vkStatus, setVkStatus] = useState<ValidationStatus>({ isLoading: false });
@@ -517,12 +521,61 @@ export function SocialMediaSettings({
     }
   };
 
-  // Загружаем Instagram, VK и Facebook настройки при монтировании компонента
+  // Функция загрузки YouTube настроек из базы данных
+  const loadYoutubeSettings = async () => {
+    setLoadingYoutubeSettings(true);
+    try {
+      console.log('📋 [YOUTUBE-SETTINGS] Loading YouTube settings from database...');
+      
+      const response = await fetch(`/api/campaigns/${campaignId}/youtube-settings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📋 [YOUTUBE-SETTINGS] YouTube settings loaded:', data);
+        
+        if (data.success && data.settings) {
+          setYoutubeSettings(data.settings);
+          
+          // Обновляем поля формы с полученными данными
+          if (data.settings.accessToken) {
+            form.setValue('youtube.accessToken', data.settings.accessToken);
+          }
+          if (data.settings.refreshToken) {
+            form.setValue('youtube.refreshToken', data.settings.refreshToken);
+          }
+          if (data.settings.channelId) {
+            form.setValue('youtube.channelId', data.settings.channelId);
+          }
+          if (data.settings.channelTitle) {
+            form.setValue('youtube.channelTitle', data.settings.channelTitle);
+          }
+          
+          console.log('📋 [YOUTUBE-SETTINGS] YouTube form fields updated with database values');
+        } else {
+          console.log('ℹ️ No YouTube settings found in database');
+          setYoutubeSettings(null);
+        }
+      } else {
+        console.error('❌ Failed to load YouTube settings:', response.statusText);
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading YouTube settings:', error);
+    } finally {
+      setLoadingYoutubeSettings(false);
+    }
+  };
+
+  // Загружаем Instagram, VK, Facebook и YouTube настройки при монтировании компонента
   useEffect(() => {
     if (campaignId) {
       loadInstagramSettings();
       loadVkSettings();
       loadFacebookSettings();
+      loadYoutubeSettings();
     }
   }, [campaignId]);
 
@@ -615,6 +668,37 @@ export function SocialMediaSettings({
       form.trigger('facebook');
     }
   }, [facebookSettings, form]);
+
+  // Обновляем форму когда YouTube настройки загружены
+  useEffect(() => {
+    if (youtubeSettings) {
+      console.log('📋 [YOUTUBE-SETTINGS] Updating YouTube form fields with database values:', youtubeSettings);
+      
+      // Обновляем поля формы с данными из базы
+      if (youtubeSettings.accessToken) {
+        form.setValue('youtube.accessToken', youtubeSettings.accessToken);
+      }
+      if (youtubeSettings.refreshToken) {
+        form.setValue('youtube.refreshToken', youtubeSettings.refreshToken);
+      }
+      if (youtubeSettings.channelId) {
+        form.setValue('youtube.channelId', youtubeSettings.channelId);
+      }
+      if (youtubeSettings.channelTitle) {
+        form.setValue('youtube.channelTitle', youtubeSettings.channelTitle);
+      }
+      
+      console.log('📋 [YOUTUBE-SETTINGS] YouTube form fields updated:', {
+        accessToken: form.getValues('youtube.accessToken'),
+        refreshToken: form.getValues('youtube.refreshToken'),
+        channelId: form.getValues('youtube.channelId'),
+        channelTitle: form.getValues('youtube.channelTitle')
+      });
+      
+      // Принудительно обновляем отображение формы
+      form.trigger(['youtube.accessToken', 'youtube.channelId']);
+    }
+  }, [youtubeSettings, form]);
 
   // Функции проверки API ключей
   const validateTelegramToken = async () => {

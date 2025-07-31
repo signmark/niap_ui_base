@@ -149,7 +149,7 @@ function Router() {
       <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
       
       {/* OAuth callbacks */}
-      <Route path="/api/auth/youtube/callback" component={YouTubeCallback} />
+      <Route path="/api/youtube/auth/callback" component={YouTubeCallback} />
       <Route path="/instagram-callback" component={InstagramCallback} />
       <Route path="/vk-callback" component={VkCallback} />
       

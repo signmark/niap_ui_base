@@ -1,134 +1,101 @@
-/**
- * YouTube OAuth Callback Page
- * Handles the OAuth callback from Google and posts message to parent window
- */
+import { useEffect, useState } from 'react';
+import { useSearch } from 'wouter';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-
-export default function YouTubeCallback() {
+export default function YouTubeCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const search = useSearch();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        const error = urlParams.get('error');
+    const urlParams = new URLSearchParams(search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+    const state = urlParams.get('state');
 
-        if (error) {
-          setStatus('error');
-          setMessage(`Авторизация отклонена: ${error}`);
-          
-          // Отправляем сообщение об ошибке родительскому окну
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'YOUTUBE_AUTH_ERROR',
-              error: `Авторизация отклонена: ${error}`
-            }, window.location.origin);
-          }
-          return;
-        }
+    if (error) {
+      setStatus('error');
+      setMessage(`Авторизация отклонена: ${error}`);
+      return;
+    }
 
-        if (!code || !state) {
-          setStatus('error');
-          setMessage('Отсутствуют необходимые параметры авторизации');
-          
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'YOUTUBE_AUTH_ERROR',
-              error: 'Отсутствуют необходимые параметры авторизации'
-            }, window.location.origin);
-          }
-          return;
-        }
+    if (!code || !state) {
+      setStatus('error');
+      setMessage('Отсутствуют необходимые параметры авторизации');
+      return;
+    }
 
-        // Отправляем код на сервер для обмена на токены
-        const response = await fetch('/api/auth/youtube/auth/callback?' + urlParams.toString());
-        const data = await response.json();
+    // Параметры уже обработаны сервером, показываем успех
+    setStatus('success');
+    setMessage('YouTube успешно подключен! Токены сохранены.');
 
-        if (data.success) {
-          setStatus('success');
-          setMessage('YouTube успешно подключен!');
-          
-          // Отправляем токены родительскому окну
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'YOUTUBE_AUTH_SUCCESS',
-              tokens: data.tokens
-            }, window.location.origin);
-          }
-          
-          // Закрываем окно через 2 секунды
-          setTimeout(() => {
-            window.close();
-          }, 2000);
-        } else {
-          setStatus('error');
-          setMessage(data.error || 'Ошибка при обработке авторизации');
-          
-          if (window.opener) {
-            window.opener.postMessage({
-              type: 'YOUTUBE_AUTH_ERROR',
-              error: data.error || 'Ошибка при обработке авторизации'
-            }, window.location.origin);
-          }
-        }
-      } catch (error) {
-        console.error('Ошибка при обработке callback:', error);
-        setStatus('error');
-        setMessage('Произошла ошибка при обработке авторизации');
-        
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'YOUTUBE_AUTH_ERROR',
-            error: 'Произошла ошибка при обработке авторизации'
-          }, window.location.origin);
-        }
+    // Автоматически закрываем окно через 3 секунды
+    setTimeout(() => {
+      if (window.opener) {
+        // Если это popup окно, закрываем его
+        window.close();
+      } else {
+        // Если это основное окно, перенаправляем на главную
+        window.location.href = '/';
       }
-    };
-
-    handleCallback();
-  }, []);
+    }, 3000);
+  }, [search]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            {status === 'loading' && <Loader2 className="h-5 w-5 animate-spin" />}
-            {status === 'success' && <CheckCircle className="h-5 w-5 text-green-600" />}
-            {status === 'error' && <AlertCircle className="h-5 w-5 text-red-600" />}
-            
-            {status === 'loading' && 'Обработка авторизации...'}
-            {status === 'success' && 'Успешно!'}
-            {status === 'error' && 'Ошибка'}
-          </CardTitle>
-          <CardDescription>
-            {message || 'Подождите, обрабатываем данные авторизации YouTube...'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {status === 'success' && (
-            <div className="text-center text-sm text-muted-foreground">
-              Это окно закроется автоматически через несколько секунд
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+        {status === 'loading' && (
+          <>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Обработка авторизации...
+            </h1>
+            <p className="text-gray-600">
+              Пожалуйста, подождите
+            </p>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <div className="rounded-full bg-green-100 p-3 mx-auto mb-4 w-16 h-16 flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-          )}
-          {status === 'error' && (
-            <div className="text-center">
-              <button 
-                onClick={() => window.close()}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Закрыть окно
-              </button>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              YouTube подключен!
+            </h1>
+            <p className="text-gray-600 mb-4">
+              {message}
+            </p>
+            <p className="text-sm text-gray-500">
+              Окно автоматически закроется через несколько секунд...
+            </p>
+          </>
+        )}
+
+        {status === 'error' && (
+          <>
+            <div className="rounded-full bg-red-100 p-3 mx-auto mb-4 w-16 h-16 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Ошибка авторизации
+            </h1>
+            <p className="text-gray-600 mb-4">
+              {message}
+            </p>
+            <button
+              onClick={() => window.close()}
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+            >
+              Закрыть
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

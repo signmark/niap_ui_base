@@ -403,6 +403,14 @@ app.use((req, res, next) => {
     app.use('/api', facebookSettingsRouter);
     console.log("Facebook Campaign Settings routes registered");
     log("Facebook Campaign Settings routes registered successfully");
+
+    // Регистрируем YouTube настройки кампании
+    console.log("Registering YouTube Campaign Settings routes...");
+    log("Registering YouTube Campaign Settings routes...");
+    const youtubeSettingsRouter = (await import('./routes/campaign-youtube-settings')).default;
+    app.use('/api', youtubeSettingsRouter);
+    console.log("YouTube Campaign Settings routes registered");
+    log("YouTube Campaign Settings routes registered successfully");
     
     // Register stories routes with proper API fixes
     console.log("Registering Stories routes...");
