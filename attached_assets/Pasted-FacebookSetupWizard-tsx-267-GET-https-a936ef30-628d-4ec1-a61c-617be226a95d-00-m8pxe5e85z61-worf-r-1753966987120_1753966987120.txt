@@ -1,0 +1,59 @@
+FacebookSetupWizard.tsx:267  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/facebook/pages?token=EAAxKZAfikOYwBPFTPoEAZAMZB2MiSejlhIFNwvDj2ob5pGsV1cfJDFVgUYQMsZANJSegM0kqKGhOHZCGAyn8mzDTVvKWoR1RHYZCm7ZCx1AKhBRu5XahyXESEkAHLXT0rgVGsadZCh4er0WIqZCtZBGtYZB00O9aWZAgTJdVbILJ1vLmnXVmsR3pXjyMsIzoFr9DvAspbRnDNxLh 400 (Bad Request)
+handleFetchPages @ FacebookSetupWizard.tsx:267
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+FacebookSetupWizard.tsx:162 Facebook Wizard: Получение Instagram связанных страниц из настроек кампании...
+FacebookSetupWizard.tsx:172 Facebook Wizard: Данные кампании получены: {success: true, data: {…}}
+FacebookSetupWizard.tsx:180 Facebook Wizard: Instagram настройки найдены: {hasInstagramSettings: true, tokenKeys: Array(5), tokenLength: 241}
+FacebookSetupWizard.tsx:195 Facebook Wizard: Используем Instagram токен для поиска связанных страниц...
+FacebookSetupWizard.tsx:197  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/facebook/instagram-connected-pages?token=EAA520SFRtvcBPF4rYPMtVU21gA6NYuNn4xQS3MmifDXszkEPtjWtkVHNM7tYGZC2dhpnS9RSZCJqxgB8cfZCl3ZAZBZChk73QB2rLmV6o7ZCGsbZB1vmdZA48KJYaEG6PKnhdPjQVzY9lrie1JZCS4hOnjUvF88uxJexEe6PG51vZC7EdH1DzuJP2nLepuxXY8yZA0956pCe78956i3q8Lx7T3qoZAJILpVZBK4XMObwZDZD&campaignId=45daab2a-4c6f-4578-8665-3a049458c0c8 400 (Bad Request)
+handleFetchInstagramConnectedPages @ FacebookSetupWizard.tsx:197
+await in handleFetchInstagramConnectedPages
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449
+FacebookSetupWizard.tsx:200 Facebook Wizard: Ответ API Instagram связанных страниц: {error: '(#100) Tried accessing nonexisting field (account_type) on node type (User)'}
+FacebookSetupWizard.tsx:230 Facebook Wizard: Ошибка при получении Instagram связанных страниц: Error: (#100) Tried accessing nonexisting field (account_type) on node type (User)
+    at handleFetchInstagramConnectedPages (FacebookSetupWizard.tsx:203:15)
+handleFetchInstagramConnectedPages @ FacebookSetupWizard.tsx:230
+await in handleFetchInstagramConnectedPages
+callCallback2 @ chunk-276SZO74.js?v=a627230e:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=a627230e:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=a627230e:3736
+executeDispatch @ chunk-276SZO74.js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=a627230e:7034
+processDispatchQueue @ chunk-276SZO74.js?v=a627230e:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=a627230e:7051
+(anonymous) @ chunk-276SZO74.js?v=a627230e:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=a627230e:18913
+batchedUpdates @ chunk-276SZO74.js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=a627230e:5478
+dispatchEvent @ chunk-276SZO74.js?v=a627230e:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=a627230e:5449

@@ -222,20 +222,23 @@ router.get('/instagram-connected-pages', async (req, res) => {
 
     console.log('🔵 [FACEBOOK-IG-PAGES] Using Instagram OAuth token to find connected pages...');
 
-    // Проверяем что это Instagram OAuth токен и получаем Instagram Business Account
-    const igMeResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
-      params: {
-        access_token: accessToken,
-        fields: 'id,name,account_type'
-      },
-      timeout: 10000
-    });
+    // Пробуем различные подходы для получения Instagram Business аккаунтов
+    console.log('🔵 [FACEBOOK-IG-PAGES] Trying different approaches to find Instagram Business accounts...');
 
-    const igUser = igMeResponse.data;
-    console.log('🔵 [FACEBOOK-IG-PAGES] Instagram user info:', igUser);
+    // Подход 1: Пробуем получить Instagram Business Account напрямую
+    try {
+      const igMeResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+        params: {
+          access_token: accessToken,
+          fields: 'id,name'
+        },
+        timeout: 10000
+      });
 
-    if (igUser.account_type === 'BUSINESS') {
-      // Это Instagram Business аккаунт, ищем связанную Facebook страницу
+      const igUser = igMeResponse.data;
+      console.log('🔵 [FACEBOOK-IG-PAGES] Instagram user info:', igUser);
+
+      // Пробуем найти connected_facebook_page для этого аккаунта
       try {
         const businessResponse = await axios.get(`https://graph.facebook.com/v18.0/${igUser.id}`, {
           params: {
@@ -247,6 +250,7 @@ router.get('/instagram-connected-pages', async (req, res) => {
 
         if (businessResponse.data.connected_facebook_page) {
           const facebookPageId = businessResponse.data.connected_facebook_page.id;
+          console.log('✅ [FACEBOOK-IG-PAGES] Found connected Facebook page:', facebookPageId);
           
           // Получаем информацию о Facebook странице
           const pageResponse = await axios.get(`https://graph.facebook.com/v18.0/${facebookPageId}`, {
@@ -268,7 +272,7 @@ router.get('/instagram-connected-pages', async (req, res) => {
             },
             instagram_account: {
               id: igUser.id,
-              username: igUser.name, // Instagram API возвращает username в поле name для Business аккаунтов
+              username: igUser.name,
               name: igUser.name,
               profile_picture_url: null,
               followers_count: null
@@ -286,8 +290,10 @@ router.get('/instagram-connected-pages', async (req, res) => {
           });
         }
       } catch (businessError: any) {
-        console.log('⚠️ [FACEBOOK-IG-PAGES] No connected Facebook page found for Instagram Business account:', businessError.response?.data?.error?.message || 'Unknown error');
+        console.log('⚠️ [FACEBOOK-IG-PAGES] No connected Facebook page found for current Instagram account:', businessError.response?.data?.error?.message || 'Unknown error');
       }
+    } catch (igError: any) {
+      console.log('⚠️ [FACEBOOK-IG-PAGES] Error accessing Instagram account info:', igError.response?.data?.error?.message || 'Unknown error');
     }
 
     // Альтернативный подход: если у нас есть campaignId, проверяем Instagram настройки кампании
