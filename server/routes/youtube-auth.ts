@@ -127,52 +127,34 @@ router.get('/youtube/auth/callback', async (req, res) => {
     // Обмениваем code на токены
     const tokens = await youtubeOAuth.exchangeCodeForTokens(code as string);
 
-    // Сохраняем токены в активную кампанию пользователя
-    try {
-      // Получаем активную кампанию пользователя
-      const campaignsResponse = await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns?filter[user_id][_eq]=${userId}&limit=1`, {
-        headers: {
-          'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`
-        }
-      });
-      
-      const campaignsData = await campaignsResponse.json();
-      
-      if (campaignsData.data && campaignsData.data.length > 0) {
-        const campaign = campaignsData.data[0];
-        
-        // Обновляем YouTube настройки в кампании, сохраняя существующие
-        const currentSettings = campaign.social_media_settings || {};
-        const currentYouTubeSettings = currentSettings.youtube || {};
-        
-        const updatedSettings = {
-          ...currentSettings,
-          youtube: {
-            ...currentYouTubeSettings,
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken
-          }
-        };
-        
-        await fetch(`${process.env.DIRECTUS_URL}/items/user_campaigns/${campaign.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            social_media_settings: updatedSettings
-          })
-        });
-        
-        console.log(`[youtube-auth] Токены обновлены для кампании ${campaign.id}`);
-      }
-    } catch (error) {
-      console.error('[youtube-auth] Ошибка сохранения токенов:', error);
-    }
+    // Токены будут сохранены через frontend после возврата к мастеру
+    // Здесь только логируем успешное получение токенов
+    console.log(`[youtube-auth] OAuth токены успешно получены для пользователя ${userId}`);
 
-    // Перенаправляем на frontend callback страницу
-    res.redirect('/youtube-callback?success=true&message=' + encodeURIComponent('YouTube успешно подключен и токены обновлены'));
+    // Перенаправляем на frontend callback страницу с токенами и campaignId из state
+    let campaignId = null;
+    if (state) {
+      try {
+        const stateData = JSON.parse(state);
+        campaignId = stateData.campaignId;
+        console.log(`[youtube-auth] Campaign ID from state: ${campaignId}`);
+      } catch (e) {
+        console.warn('[youtube-auth] Could not parse state for campaignId');
+      }
+    }
+    
+    const params = new URLSearchParams({
+      success: 'true',
+      message: 'YouTube успешно подключен',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken
+    });
+    
+    if (campaignId) {
+      params.set('campaignId', campaignId);
+    }
+    
+    res.redirect('/youtube-callback?' + params.toString());
   } catch (error) {
     console.error('Ошибка обработки YouTube callback:', error);
     // Перенаправляем на callback страницу с ошибкой

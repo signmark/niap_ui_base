@@ -11,6 +11,9 @@ export default function YouTubeCallbackPage() {
     const success = urlParams.get('success');
     const error = urlParams.get('error');
     const message = urlParams.get('message');
+    const accessToken = urlParams.get('accessToken');
+    const refreshToken = urlParams.get('refreshToken');
+    const campaignId = urlParams.get('campaignId');
 
     if (error === 'true') {
       setStatus('error');
@@ -21,6 +24,26 @@ export default function YouTubeCallbackPage() {
     if (success === 'true') {
       setStatus('success');
       setMessage(message ? decodeURIComponent(message) : 'YouTube успешно подключен!');
+      
+      // Если получили токены, сохраняем их в localStorage для передачи мастеру
+      if (accessToken && refreshToken) {
+        const tokenData = {
+          accessToken,
+          refreshToken,
+          timestamp: Date.now()
+        };
+        
+        // Добавляем campaignId если он есть в URL
+        if (campaignId) {
+          tokenData.campaignId = campaignId;
+          console.log('🎯 [YouTube Callback] Campaign ID найден:', campaignId);
+        } else {
+          console.warn('⚠️ [YouTube Callback] Campaign ID не найден в URL параметрах');
+        }
+        
+        localStorage.setItem('youtubeOAuthTokens', JSON.stringify(tokenData));
+        console.log('🔑 [YouTube Callback] Токены сохранены в localStorage:', tokenData);
+      }
     } else {
       setStatus('error');
       setMessage('Неожиданная ошибка обработки авторизации');

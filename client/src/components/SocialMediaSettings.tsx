@@ -290,34 +290,82 @@ export function SocialMediaSettings({
     accessToken: string; 
     refreshToken: string;
     channelInfo: any;
+    campaignId?: string;  // Добавляем возможность передать campaignId
   }) => {
+    const targetCampaignId = data.campaignId || campaignId;
+    
     console.log('🎬 [YouTube Complete] Setting form values:', {
       channelId: data.channelId,
-      channelTitle: data.channelTitle
+      channelTitle: data.channelTitle,
+      originalCampaignId: campaignId,
+      targetCampaignId: targetCampaignId,
+      campaignIdFromData: data.campaignId
     });
 
-    // Устанавливаем значения в форму
-    form.setValue('youtube.channelId', data.channelId);
-    form.setValue('youtube.channelTitle', data.channelTitle);
-    form.setValue('youtube.accessToken', data.accessToken);
-    form.setValue('youtube.refreshToken', data.refreshToken);
-    
-    // Автоматически сохраняем настройки в базу данных
-    try {
-      await onSubmit(form.getValues());
-      console.log('✅ [YouTube Complete] Settings automatically saved to database');
+    // Если campaignId из токенов отличается от текущей кампании, сохраняем в правильную кампанию
+    if (data.campaignId && data.campaignId !== campaignId) {
+      console.log('🎯 [YouTube Complete] Saving to different campaign:', data.campaignId);
       
-      toast({
-        title: "YouTube настроен!",
-        description: `Канал "${data.channelTitle}" готов к публикации видео`
-      });
-    } catch (error) {
-      console.error('❌ [YouTube Complete] Error saving settings:', error);
-      toast({
-        title: "Ошибка сохранения",
-        description: "YouTube настроен, но возникла ошибка при сохранении настроек",
-        variant: "destructive"
-      });
+      try {
+        // Сохраняем настройки напрямую в указанную кампанию через API
+        const response = await fetch(`/api/campaigns/${data.campaignId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            social_media_settings: {
+              youtube: {
+                channelId: data.channelId,
+                channelTitle: data.channelTitle,
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken
+              }
+            }
+          })
+        });
+        
+        if (response.ok) {
+          console.log('✅ [YouTube Complete] Settings saved to correct campaign:', data.campaignId);
+          toast({
+            title: "YouTube настроен!",
+            description: `Канал "${data.channelTitle}" сохранен в правильную кампанию`
+          });
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('❌ [YouTube Complete] Error saving to target campaign:', error);
+        toast({
+          title: "Ошибка сохранения",
+          description: "Не удалось сохранить YouTube настройки в правильную кампанию",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Обычное сохранение в текущую кампанию
+      form.setValue('youtube.channelId', data.channelId);
+      form.setValue('youtube.channelTitle', data.channelTitle);
+      form.setValue('youtube.accessToken', data.accessToken);
+      form.setValue('youtube.refreshToken', data.refreshToken);
+      
+      try {
+        await onSubmit(form.getValues());
+        console.log('✅ [YouTube Complete] Settings automatically saved to current campaign');
+        
+        toast({
+          title: "YouTube настроен!",
+          description: `Канал "${data.channelTitle}" готов к публикации видео`
+        });
+      } catch (error) {
+        console.error('❌ [YouTube Complete] Error saving settings:', error);
+        toast({
+          title: "Ошибка сохранения",
+          description: "YouTube настроен, но возникла ошибка при сохранении настроек",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -593,7 +641,16 @@ export function SocialMediaSettings({
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('openYouTube') === 'true') {
         console.log('🎬 [YouTube Settings] Auto-opening YouTube wizard from URL parameter');
-        setShowYoutubeWizard(true);
+        
+        // Принудительно перезагружаем YouTube настройки
+        setTimeout(() => {
+          loadYoutubeSettings();
+        }, 1000);
+        
+        // Открываем мастер через 1.5 секунды, после перезагрузки настроек
+        setTimeout(() => {
+          setShowYoutubeWizard(true);
+        }, 1500);
         
         // Очищаем URL параметр
         const newUrl = new URL(window.location.href);

@@ -37,36 +37,54 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
 
   // Автоматическая загрузка существующих настроек при открытии мастера
   useEffect(() => {
-    if (initialSettings?.youtube?.accessToken) {
-      console.log('🔄 [YouTube Wizard] Loading existing YouTube settings...', {
-        hasAccessToken: !!initialSettings.youtube.accessToken,
-        hasChannelId: !!initialSettings.youtube.channelId
+    // Проверяем есть ли свежие токены из OAuth callback
+    const oauthTokens = localStorage.getItem('youtubeOAuthTokens');
+    let freshTokens = null;
+    
+    if (oauthTokens) {
+      try {
+        const tokens = JSON.parse(oauthTokens);
+        // Токены считаются свежими в течение 5 минут
+        if (Date.now() - tokens.timestamp < 5 * 60 * 1000) {
+          freshTokens = tokens;
+          console.log('🆕 [YouTube Wizard] Found fresh OAuth tokens from callback:', {
+            hasCampaignId: !!tokens.campaignId,
+            campaignId: tokens.campaignId || 'not specified'
+          });
+          localStorage.removeItem('youtubeOAuthTokens'); // Удаляем после использования
+        }
+      } catch (e) {
+        console.error('❌ [YouTube Wizard] Error parsing OAuth tokens:', e);
+        localStorage.removeItem('youtubeOAuthTokens');
+      }
+    }
+    
+    // Используем свежие токены или существующие настройки
+    const tokensToUse = freshTokens || initialSettings?.youtube;
+    
+    if (tokensToUse?.accessToken) {
+      console.log('🔄 [YouTube Wizard] Loading YouTube settings...', {
+        source: freshTokens ? 'fresh OAuth' : 'existing settings',
+        hasAccessToken: !!tokensToUse.accessToken,
+        hasChannelId: !!tokensToUse.channelId
       });
       
       setAuthTokens({
-        accessToken: initialSettings.youtube.accessToken,
-        refreshToken: initialSettings.youtube.refreshToken || ''
+        accessToken: tokensToUse.accessToken,
+        refreshToken: tokensToUse.refreshToken || ''
       });
       
-      // Если есть channelId, то пропускаем OAuth и сразу получаем информацию о канале
-      if (initialSettings.youtube.channelId) {
-        setStep(3); // Переходим к шагу показа информации о канале
-        fetchChannelInfo(initialSettings.youtube.accessToken);
-        
-        // Если мастер открылся автоматически после OAuth (есть URL параметр), 
-        // то автоматически завершаем настройку
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('openYouTube') === 'true') {
-          console.log('🎬 [YouTube Wizard] Auto-completing after OAuth return...');
-          setTimeout(() => {
-            fetchChannelInfo(initialSettings.youtube.accessToken, {
-              accessToken: initialSettings.youtube.accessToken,
-              refreshToken: initialSettings.youtube.refreshToken || ''
-            });
-          }, 1000);
-        }
+      // Если есть channelId в существующих настройках, пропускаем OAuth
+      if (initialSettings?.youtube?.channelId && !freshTokens) {
+        setStep(3);
+        fetchChannelInfo(tokensToUse.accessToken);
       } else {
-        setStep(2); // Переходим к получению Channel ID
+        // Если есть свежие токены или нет channelId, получаем информацию о канале
+        setStep(2);
+        fetchChannelInfo(tokensToUse.accessToken, {
+          accessToken: tokensToUse.accessToken,
+          refreshToken: tokensToUse.refreshToken || ''
+        });
       }
     }
   }, [initialSettings]);
@@ -145,15 +163,20 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
           hasTokens: !!tokensToUse,
           tokens: tokens ? 'passed as parameter' : 'from state',
           authTokens: !!authTokens,
-          onComplete: typeof onComplete
+          onComplete: typeof onComplete,
+          campaignId: tokensToUse?.campaignId || campaignId
         });
         
         if (tokensToUse) {
+          // Определяем правильный campaignId из токенов или props
+          const targetCampaignId = tokensToUse.campaignId || campaignId;
+          
           console.log('✅ [YouTube Wizard] Auto-completing setup with data:', {
             channelId: data.channelInfo.channelId,
             channelTitle: data.channelInfo.channelTitle,
             accessToken: tokensToUse.accessToken ? 'present' : 'missing',
-            refreshToken: tokensToUse.refreshToken ? 'present' : 'missing'
+            refreshToken: tokensToUse.refreshToken ? 'present' : 'missing',
+            targetCampaignId: targetCampaignId
           });
           
           try {
@@ -162,9 +185,10 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
               channelTitle: data.channelInfo.channelTitle,
               accessToken: tokensToUse.accessToken,
               refreshToken: tokensToUse.refreshToken,
-              channelInfo: data.channelInfo
+              channelInfo: data.channelInfo,
+              campaignId: targetCampaignId  // Передаем правильный campaignId
             });
-            console.log('✅ [YouTube Wizard] onComplete called successfully');
+            console.log('✅ [YouTube Wizard] onComplete called successfully for campaign:', targetCampaignId);
           } catch (error) {
             console.error('❌ [YouTube Wizard] Error calling onComplete:', error);
           }
