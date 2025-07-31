@@ -19,8 +19,18 @@ router.post('/instagram/auth/start', async (req, res) => {
       });
     }
 
-    // Используем дефолтный redirectUri если не передан
-    const finalRedirectUri = redirectUri || `${req.protocol}://${req.get('host')}/instagram-callback`;
+    // Определяем правильный redirect URI в зависимости от окружения
+    let finalRedirectUri = redirectUri;
+    if (!finalRedirectUri) {
+      const host = req.get('host');
+      if (host && host.includes('replit.dev')) {
+        // В Replit разработке используем текущий домен
+        finalRedirectUri = `${req.protocol}://${host}/instagram-callback`;
+      } else {
+        // В продакшене используем фиксированный домен
+        finalRedirectUri = 'https://smm.roboflow.space/instagram-callback';
+      }
+    }
 
     // Используем зашитый webhook URL если не передан
     const finalWebhookUrl = webhookUrl || 'https://n8n.roboflow.space/webhook/instagram-auth';
@@ -44,7 +54,7 @@ router.post('/instagram/auth/start', async (req, res) => {
       'pages_manage_posts',       // Публикация в Facebook страницы
       'pages_read_engagement',    // Чтение взаимодействий на страницах
       'pages_show_list',          // Получение списка страниц
-      'publish_to_groups',        // Публикация в Facebook группы
+      // 'publish_to_groups',     // Публикация в Facebook группы (требует настройки приложения)
       'instagram_basic',          // Базовые Instagram разрешения
       'instagram_content_publish' // Публикация в Instagram
     ].join(',');
