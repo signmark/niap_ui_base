@@ -1719,17 +1719,37 @@ export function SocialMediaSettings({
                       }
                     </p>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant={form.watch('facebook.token') ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      console.log('Открываем Facebook мастер для настройки/пересконфигурации');
-                      setShowFacebookWizard(true);
-                    }}
-                  >
-                    {form.watch('facebook.token') ? 'Пересконфигурировать' : 'Настроить Facebook'}
-                  </Button>
+                  <div className="flex space-x-2">
+                    {instagramSettings?.token && (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          console.log('📋 Копируем Instagram токен в Facebook:', instagramSettings.token);
+                          form.setValue('facebook.token', instagramSettings.token);
+                          toast({
+                            title: "Токен скопирован",
+                            description: "Instagram токен скопирован в настройки Facebook",
+                          });
+                        }}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                      >
+                        📋 Взять из Instagram
+                      </Button>
+                    )}
+                    <Button 
+                      type="button" 
+                      variant={form.watch('facebook.token') ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        console.log('Открываем Facebook мастер для настройки/пересконфигурации');
+                        setShowFacebookWizard(true);
+                      }}
+                    >
+                      {form.watch('facebook.token') ? 'Пересконфигурировать' : 'Настроить Facebook'}
+                    </Button>
+                  </div>
                 </div>
               </div>
               
