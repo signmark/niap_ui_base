@@ -150,6 +150,13 @@ log('Instagram Setup Wizard routes registered');
 app.use('/api/facebook', facebookPagesRouter);
 log('Facebook Pages routes registered');
 
+// Регистрируем YouTube Auth маршруты раньше всех
+import youtubeAuthRouter from './routes/youtube-auth';
+import youtubeSettingsRouter from './routes/campaign-youtube-settings';
+app.use('/api', youtubeAuthRouter);
+app.use('/api', youtubeSettingsRouter);
+log('YouTube Auth and Settings routes registered early to avoid 404 errors');
+
 // Instagram Campaign Settings маршруты будут зарегистрированы ПОСЛЕ registerRoutes
 // чтобы иметь приоритет над конфликтующими маршрутами в routes.ts
 log('Instagram Campaign Settings routes will be registered after main routes');
