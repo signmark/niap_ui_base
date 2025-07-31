@@ -190,6 +190,26 @@ export function SocialMediaSettings({
   }>>([]);
   const [loadingVkGroups, setLoadingVkGroups] = useState(false);
 
+  // Функция проверки статуса настройки платформ
+  const isConfigured = (platform: 'instagram' | 'youtube' | 'facebook' | 'vk' | 'telegram') => {
+    const settings = form.getValues();
+    
+    switch (platform) {
+      case 'instagram':
+        return !!(settings.instagram?.accessToken || settings.instagram?.token) && !!settings.instagram?.businessAccountId;
+      case 'youtube':
+        return !!settings.youtube?.channelId && !!settings.youtube?.accessToken;
+      case 'facebook':
+        return !!settings.facebook?.token && !!settings.facebook?.pageId;
+      case 'vk':
+        return !!settings.vk?.token && !!settings.vk?.groupId;
+      case 'telegram':
+        return !!settings.telegram?.token && !!settings.telegram?.chatId;
+      default:
+        return false;
+    }
+  };
+
   // Функция парсинга VK URL для извлечения API ключа
   const parseVkUrl = (url: string) => {
     try {
@@ -1271,6 +1291,7 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>Telegram</span>
+                {isConfigured('telegram') && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Настроено</Badge>}
                 <ValidationBadge status={telegramStatus} />
               </div>
             </AccordionTrigger>
@@ -1336,6 +1357,7 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>ВКонтакте</span>
+                {isConfigured('vk') && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Настроено</Badge>}
                 <ValidationBadge status={vkStatus} />
               </div>
             </AccordionTrigger>
@@ -1539,6 +1561,7 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>Instagram</span>
+                {isConfigured('instagram') && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Настроено</Badge>}
                 <ValidationBadge status={instagramStatus} />
               </div>
             </AccordionTrigger>
@@ -1680,6 +1703,7 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>Facebook</span>
+                {isConfigured('facebook') && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Настроено</Badge>}
                 <ValidationBadge status={facebookStatus} />
               </div>
             </AccordionTrigger>
@@ -1736,15 +1760,7 @@ export function SocialMediaSettings({
             <AccordionTrigger className="py-2">
               <div className="flex items-center space-x-2">
                 <span>YouTube</span>
-                {form.watch('youtube.channelId') && form.watch('youtube.accessToken') ? (
-                  <Badge variant="default" className="text-xs bg-green-100 text-green-800 border-green-200">
-                    Настроено
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="text-xs">
-                    Не настроено
-                  </Badge>
-                )}
+                {isConfigured('youtube') && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Настроено</Badge>}
               </div>
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
