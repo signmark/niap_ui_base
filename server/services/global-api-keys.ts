@@ -4,10 +4,11 @@
  */
 
 import { directusApiManager } from '../directus';
-import { log } from '../utils/logger';
+import { log } from '../utils/logger';  
 import { directusCrud } from './directus-crud';
 import { directusAuthManager } from './directus-auth-manager';
 import { ApiServiceName } from './api-keys';
+import axios from 'axios';
 
 /**
  * Интерфейс для хранения кэша глобальных API ключей
@@ -210,7 +211,8 @@ export class GlobalApiKeysService {
             config.clientSecret = keyData.api_key;
             break;
           case 'YOUTUBE_REDIRECT_URI':
-            config.redirectUri = keyData.api_key;
+            // НЕ используем redirect URI из базы данных, пусть система автоопределит
+            console.log('[global-api-keys] Игнорируем redirect URI из базы для автоопределения среды');
             break;
         }
       }
@@ -670,6 +672,48 @@ export class GlobalApiKeysService {
       return true;
     } catch (error) {
       console.error(`Error deleting global API key ${id}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Обновляет redirect URI для YouTube в базе данных
+   */
+  async updateYouTubeRedirectUri(newRedirectUri: string): Promise<boolean> {
+    try {
+      console.log('[global-api-keys] Обновляем YouTube redirect URI:', newRedirectUri);
+      
+      const systemToken = await this.getSystemToken();
+      if (!systemToken) {
+        console.error('[global-api-keys] Не удалось получить системный токен');
+        return false;
+      }
+
+      const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL || 'https://directus.roboflow.space';
+      
+      const response = await axios.patch(
+        `${directusUrl}/items/global_api_keys/9`, // ID записи YouTube в базе
+        {
+          api_secret: newRedirectUri
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${systemToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        console.log('[global-api-keys] YouTube redirect URI успешно обновлен');
+        return true;
+      } else {
+        console.log('[global-api-keys] Неожиданный статус ответа:', response.status);
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('[global-api-keys] Ошибка при обновлении YouTube redirect URI:', error);
       return false;
     }
   }

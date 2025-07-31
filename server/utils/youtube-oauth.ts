@@ -7,13 +7,20 @@ export class YouTubeOAuth {
   constructor(config?: YouTubeConfig) {
     // Если конфигурация передана, используем её
     if (config) {
-      const redirectUri = config.redirectUri || this.getDefaultRedirectUri();
-      console.log('[youtube-oauth] Используем конфигурацию из базы данных, redirect URI:', redirectUri);
+      const defaultRedirectUri = this.getDefaultRedirectUri();
+      const finalRedirectUri = config.redirectUri || defaultRedirectUri;
+      
+      console.log('[youtube-oauth] Конфигурация YouTube OAuth:');
+      console.log('[youtube-oauth] - clientId:', config.clientId ? '***установлен***' : 'НЕ ЗАДАН');
+      console.log('[youtube-oauth] - clientSecret:', config.clientSecret ? '***установлен***' : 'НЕ ЗАДАН');
+      console.log('[youtube-oauth] - redirectUri из config:', config.redirectUri || 'НЕ ЗАДАН');
+      console.log('[youtube-oauth] - getDefaultRedirectUri():', defaultRedirectUri);
+      console.log('[youtube-oauth] - Финальный redirect URI:', finalRedirectUri);
       
       this.oauth2Client = new google.auth.OAuth2(
         config.clientId,
         config.clientSecret,
-        redirectUri
+        finalRedirectUri
       );
     } else {
       // Fallback на старый способ с переменными среды
@@ -29,23 +36,40 @@ export class YouTubeOAuth {
   }
 
   private getDefaultRedirectUri(): string {
-    // Если есть переменная среды, используем её
+    console.log('[getDefaultRedirectUri] Начинаем определение redirect URI');
+    console.log('[getDefaultRedirectUri] YOUTUBE_REDIRECT_URI:', process.env.YOUTUBE_REDIRECT_URI || 'НЕ ЗАДАН');
+    console.log('[getDefaultRedirectUri] DIRECTUS_URL:', process.env.DIRECTUS_URL || 'НЕ ЗАДАН');
+    console.log('[getDefaultRedirectUri] VITE_DIRECTUS_URL:', process.env.VITE_DIRECTUS_URL || 'НЕ ЗАДАН');
+    console.log('[getDefaultRedirectUri] REPL_ID:', process.env.REPL_ID || 'НЕ ЗАДАН');
+    
+    // ВРЕМЕННО ОТКЛЮЧЕНО: Игнорируем YOUTUBE_REDIRECT_URI для автоопределения среды
     if (process.env.YOUTUBE_REDIRECT_URI) {
-      return process.env.YOUTUBE_REDIRECT_URI;
+      console.log('[getDefaultRedirectUri] Игнорируем устаревшую YOUTUBE_REDIRECT_URI, используем автоопределение');
+      // НЕ возвращаем process.env.YOUTUBE_REDIRECT_URI - продолжаем автоопределение
     }
     
     // Определяем среду по URL Directus
     const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
+    console.log('[getDefaultRedirectUri] directusUrl для проверки:', directusUrl);
     
     if (directusUrl?.includes('roboflow.space')) {
       // Стейдж среда
-      return 'https://smm.roboflow.space/api/auth/youtube/callback';
+      return 'https://smm.roboflow.space/api/youtube/auth/callback';
     } else if (directusUrl?.includes('replit.dev') || process.env.REPL_ID) {
-      // Dev среда (Replit)
-      return 'https://6813c5d2-7c73-4e24-8e70-d9b38d1135b3-00-1i11z1ktw30ct.worf.replit.dev/api/auth/youtube/callback';
+      // Dev среда (Replit) - формируем URL из REPL_ID и REPL_SLUG
+      const replId = process.env.REPL_ID;
+      const replSlug = process.env.REPL_SLUG || 'workspace';
+      const replUrl = `https://${replId}-00-m8pxe5e85z61.worf.replit.dev`;
+      
+      console.log('[youtube-oauth] Формируем Replit URL:');
+      console.log('[youtube-oauth] REPL_ID:', replId);
+      console.log('[youtube-oauth] REPL_SLUG:', replSlug);
+      console.log('[youtube-oauth] Полный URL:', replUrl);
+      
+      return `${replUrl}/api/youtube/auth/callback`;
     } else {
       // Fallback для локальной разработки
-      return 'http://localhost:5000/api/auth/youtube/callback';
+      return 'http://localhost:5000/api/youtube/auth/callback';
     }
   }
 

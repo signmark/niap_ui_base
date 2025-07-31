@@ -231,4 +231,56 @@ router.post('/youtube/test', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * Тестовый endpoint для обновления redirect URI в базе данных
+ */
+router.post('/youtube/fix-redirect-uri', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Пользователь не авторизован' });
+    }
+
+    console.log('🔧 [youtube-auth] Исправляем redirect URI в базе данных...');
+    
+    // Определяем правильный redirect URI для текущей среды
+    const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
+    let correctRedirectUri;
+    
+    if (directusUrl?.includes('roboflow.space')) {
+      correctRedirectUri = 'https://smm.roboflow.space/api/youtube/auth/callback';
+    } else if (directusUrl?.includes('replit.dev') || process.env.REPL_ID) {
+      correctRedirectUri = 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/youtube/auth/callback';
+    } else {
+      correctRedirectUri = 'http://localhost:5000/api/youtube/auth/callback';
+    }
+
+    console.log('🔧 [youtube-auth] Правильный redirect URI:', correctRedirectUri);
+
+    // Обновляем redirect URI в базе данных через GlobalApiKeysService
+    const success = await globalApiKeysService.updateYouTubeRedirectUri(correctRedirectUri);
+    
+    if (success) {
+      console.log('✅ [youtube-auth] Redirect URI успешно обновлен в базе данных');
+      res.json({ 
+        success: true, 
+        message: 'Redirect URI исправлен',
+        redirectUri: correctRedirectUri
+      });
+    } else {
+      console.log('❌ [youtube-auth] Не удалось обновить redirect URI');
+      res.status(500).json({ 
+        error: 'Не удалось обновить redirect URI в базе данных' 
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ [youtube-auth] Ошибка при исправлении redirect URI:', error);
+    res.status(500).json({ 
+      error: 'Ошибка при исправлении redirect URI',
+      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+    });
+  }
+});
+
 export default router;
