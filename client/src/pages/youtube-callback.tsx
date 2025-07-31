@@ -43,37 +43,36 @@ export default function YouTubeCallbackPage() {
         
         localStorage.setItem('youtubeOAuthTokens', JSON.stringify(tokenData));
         console.log('🔑 [YouTube Callback] Токены сохранены в localStorage:', tokenData);
+        
+        // Если это popup окно, закрываем его через короткое время
+        if (window.opener) {
+          console.log('🪟 [YouTube Callback] Detected popup window, closing in 2 seconds...');
+          setTimeout(() => {
+            window.close();
+          }, 2000);
+        } else {
+          // Если это обычное окно, переходим к настройкам кампании
+          setTimeout(() => {
+            if (campaignId) {
+              window.location.href = `/campaigns/${campaignId}?openYouTube=true`;
+            } else {
+              window.location.href = '/';
+            }
+          }, 2000);
+        }
       }
     } else {
       setStatus('error');
       setMessage('Неожиданная ошибка обработки авторизации');
+      
+      // Если это popup окно с ошибкой, закрываем его
+      if (window.opener) {
+        setTimeout(() => {
+          window.close();
+        }, 3000);
+      }
       return;
     }
-
-    // Проверяем есть ли сохраненное состояние мастера
-    const wizardState = localStorage.getItem('youtubeWizardState');
-    
-    // Автоматически возвращаемся к настройкам через 2 секунды
-    setTimeout(() => {
-      if (wizardState) {
-        try {
-          const state = JSON.parse(wizardState);
-          console.log('🔄 [YouTube Callback] Returning to campaign settings:', state.campaignId);
-          
-          // Очищаем состояние мастера
-          localStorage.removeItem('youtubeWizardState');
-          
-          // Возвращаемся к настройкам кампании
-          window.location.href = `/campaigns/${state.campaignId}?openYouTube=true`;
-        } catch (e) {
-          console.error('❌ [YouTube Callback] Error parsing wizard state:', e);
-          window.location.href = '/';
-        }
-      } else {
-        // Если нет состояния мастера, перенаправляем на главную
-        window.location.href = '/';
-      }
-    }, 2000);
   }, [search]);
 
   return (

@@ -25,6 +25,10 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Пользователь не авторизован' });
     }
 
+    // Получаем campaignId из тела запроса
+    const { campaignId } = req.body;
+    console.log('[youtube-auth] Starting OAuth for campaignId:', campaignId);
+
     // Получаем конфигурацию YouTube из базы данных
     const youtubeConfig = await globalApiKeysService.getYouTubeConfig();
 
@@ -41,12 +45,25 @@ router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
 
     const youtubeOAuth = new YouTubeOAuth(youtubeConfig);
 
+    // Создаем state объект с campaignId
+    const stateData = {
+      userId,
+      campaignId,
+      timestamp: Date.now()
+    };
+    
     // Генерируем уникальный state для защиты от CSRF
-    const state = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    oauthStates.set(state, { userId, timestamp: Date.now() });
+    const stateKey = `${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    oauthStates.set(stateKey, stateData);
+
+    // Кодируем state с данными в Base64 для передачи в URL
+    const encodedState = Buffer.from(JSON.stringify({
+      key: stateKey,
+      campaignId
+    })).toString('base64');
 
     const authUrl = youtubeOAuth.getAuthUrl();
-    const authUrlWithState = `${authUrl}&state=${state}`;
+    const authUrlWithState = `${authUrl}&state=${encodedState}`;
 
     res.json({ 
       success: true, 
@@ -82,14 +99,28 @@ router.get('/youtube/auth/callback', async (req, res) => {
       });
     }
 
-    // Проверяем state
-    const stateData = oauthStates.get(state as string);
+    // Декодируем state параметр
+    let stateKey, campaignId;
+    let userId;
+    
+    try {
+      // Пробуем декодировать новый формат state
+      const decodedState = JSON.parse(Buffer.from(state as string, 'base64').toString());
+      stateKey = decodedState.key;
+      campaignId = decodedState.campaignId;
+      console.log('[youtube-auth] Decoded state:', { stateKey, campaignId });
+    } catch (e) {
+      // Fallback для старых форматов state
+      stateKey = state as string;
+      console.log('[youtube-auth] Using legacy state format');
+    }
+    
+    const stateData = oauthStates.get(stateKey);
     
     // Для тестовых state параметров и устаревших state используем fallback
-    let userId;
-    if (!stateData && (state as string).includes('test_state_manual')) {
+    if (!stateData && stateKey.includes('test_state_manual')) {
       userId = '53921f16-f51d-4591-80b9-8caa4fde4d13'; // Тестовый пользователь
-    } else if (!stateData && (state as string).includes('53921f16-f51d-4591-80b9-8caa4fde4d13')) {
+    } else if (!stateData && stateKey.includes('53921f16-f51d-4591-80b9-8caa4fde4d13')) {
       // Fallback для устаревших state параметров, извлекаем userId из самого state
       userId = '53921f16-f51d-4591-80b9-8caa4fde4d13';
       console.log('[youtube-auth] Используем fallback для устаревшего state параметра');
@@ -99,17 +130,21 @@ router.get('/youtube/auth/callback', async (req, res) => {
       });
     } else {
       userId = stateData.userId;
+      // Если campaignId не был извлечен из state URL, берем из stateData
+      if (!campaignId && stateData.campaignId) {
+        campaignId = stateData.campaignId;
+      }
     }
 
     // Проверяем время жизни state (10 минут) только для обычных state
     if (stateData) {
       if (Date.now() - stateData.timestamp > 10 * 60 * 1000) {
-        oauthStates.delete(state as string);
+        oauthStates.delete(stateKey);
         return res.status(400).json({ 
           error: 'State параметр истек' 
         });
       }
-      oauthStates.delete(state as string);
+      oauthStates.delete(stateKey);
     }
 
     // Получаем конфигурацию YouTube из базы данных
@@ -131,17 +166,8 @@ router.get('/youtube/auth/callback', async (req, res) => {
     // Здесь только логируем успешное получение токенов
     console.log(`[youtube-auth] OAuth токены успешно получены для пользователя ${userId}`);
 
-    // Перенаправляем на frontend callback страницу с токенами и campaignId из state
-    let campaignId = null;
-    if (state) {
-      try {
-        const stateData = JSON.parse(state);
-        campaignId = stateData.campaignId;
-        console.log(`[youtube-auth] Campaign ID from state: ${campaignId}`);
-      } catch (e) {
-        console.warn('[youtube-auth] Could not parse state for campaignId');
-      }
-    }
+    // campaignId уже извлечен выше при декодировании state
+    console.log(`[youtube-auth] Using campaignId from state: ${campaignId}`);
     
     const params = new URLSearchParams({
       success: 'true',

@@ -150,6 +150,7 @@ function Router() {
       
       {/* OAuth callbacks */}
       <Route path="/api/youtube/auth/callback" component={YouTubeCallback} />
+      <Route path="/youtube-callback" component={YouTubeCallback} />
       <Route path="/instagram-callback" component={InstagramCallback} />
       <Route path="/vk-callback" component={VkCallback} />
       

@@ -99,7 +99,8 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ campaignId })
       });
       
       if (!response.ok) {
@@ -109,17 +110,78 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
       const data = await response.json();
       
       if (data.success && data.authUrl) {
-        console.log('✅ [YouTube Wizard] OAuth URL received, using direct redirect...');
+        console.log('✅ [YouTube Wizard] Opening OAuth popup window...');
         
-        // Сохраняем состояние мастера в localStorage
-        localStorage.setItem('youtubeWizardState', JSON.stringify({
-          campaignId: campaignId,
-          wizardOpen: true,
-          timestamp: Date.now()
-        }));
+        // Открываем popup окно для OAuth
+        const popup = window.open(
+          data.authUrl,
+          'youtube-oauth',
+          'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+        );
         
-        // Вместо popup используем прямой редирект
-        window.location.href = data.authUrl;
+        if (!popup) {
+          throw new Error('Popup window was blocked. Please allow popups for this site.');
+        }
+        
+        // Ожидаем завершения OAuth в popup
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            // Проверяем есть ли токены в localStorage
+            const oauthTokens = localStorage.getItem('youtubeOAuthTokens');
+            if (oauthTokens) {
+              try {
+                const tokens = JSON.parse(oauthTokens);
+                console.log('🎉 [YouTube Wizard] OAuth completed successfully in popup');
+                
+                setAuthTokens({
+                  accessToken: tokens.accessToken,
+                  refreshToken: tokens.refreshToken
+                });
+                
+                // Получаем информацию о канале
+                fetchChannelInfo(tokens.accessToken, {
+                  accessToken: tokens.accessToken,
+                  refreshToken: tokens.refreshToken
+                });
+                
+                // Очищаем токены из localStorage
+                localStorage.removeItem('youtubeOAuthTokens');
+                setIsLoading(false);
+              } catch (e) {
+                console.error('❌ [YouTube Wizard] Error parsing OAuth tokens:', e);
+                setIsLoading(false);
+                toast({
+                  title: "Ошибка",
+                  description: "Не удалось обработать результат авторизации",
+                  variant: "destructive"
+                });
+              }
+            } else {
+              console.log('⚠️ [YouTube Wizard] OAuth popup closed without tokens');
+              setIsLoading(false);
+              toast({
+                title: "Авторизация отменена",
+                description: "OAuth окно закрыто без получения токенов",
+                variant: "destructive"
+              });
+            }
+          }
+        }, 1000);
+        
+        // Таймаут для popup (10 минут)
+        setTimeout(() => {
+          if (!popup.closed) {
+            popup.close();
+            clearInterval(checkClosed);
+            setIsLoading(false);
+            toast({
+              title: "Таймаут авторизации",
+              description: "OAuth процесс занял слишком много времени",
+              variant: "destructive"
+            });
+          }
+        }, 10 * 60 * 1000);
         
       } else {
         throw new Error(data.error || 'Failed to get authorization URL');
