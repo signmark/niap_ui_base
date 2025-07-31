@@ -52,7 +52,7 @@ router.get('/facebook/groups-and-pages', async (req, res) => {
 
     const permissions = permissionsResponse.data.data.map((p: any) => p.permission);
     const hasPublishToGroups = permissions.includes('publish_to_groups');
-    const hasManagePosts = permissions.includes('email'); // Используем базовое разрешение
+    const hasManagePosts = permissions.includes('pages_manage_posts');
 
     console.log('🔑 [FB-GROUPS] Разрешения:', {
       hasPublishToGroups,

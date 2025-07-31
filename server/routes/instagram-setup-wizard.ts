@@ -8,10 +8,18 @@ const router = express.Router();
 // Временное хранение для OAuth flow (в продакшене использовать Redis)
 const oauthSessions = new Map();
 
-// Конфигурация для Instagram OAuth (обновленные разрешения 2025)
+// Конфигурация для Instagram OAuth (полные разрешения для постинга)
 const INSTAGRAM_SCOPES = [
-  'email',
-  'public_profile'
+  'pages_show_list',
+  'ads_management',
+  'business_management',
+  'pages_messaging',
+  'instagram_basic',
+  'instagram_manage_insights',
+  'instagram_content_publish',
+  'pages_read_engagement',
+  'pages_manage_metadata',
+  'pages_manage_posts'
 ];
 
 const AXIOS_CONFIG = {
@@ -54,8 +62,16 @@ router.post('/save-config', async (req, res) => {
       createdAt: new Date(),
       status: 'pending_auth',
       scopes: [
-        'email',
-        'public_profile'
+        'pages_show_list',
+        'ads_management',
+        'business_management',
+        'pages_messaging',
+        'instagram_basic',
+        'instagram_manage_insights',
+        'instagram_content_publish',
+        'pages_read_engagement',
+        'pages_manage_metadata',
+        'pages_manage_posts'
       ].join(',')
     };
 

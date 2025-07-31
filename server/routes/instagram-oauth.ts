@@ -49,10 +49,18 @@ router.post('/instagram/auth/start', async (req, res) => {
       timestamp: Date.now()
     });
 
-    // Формируем URL для авторизации Facebook с актуальными разрешениями 2025
+    // Формируем URL для авторизации Facebook с полными разрешениями для постинга
     const scopes = [
-      'email',                         // Базовое разрешение для email
-      'public_profile'                 // Базовое разрешение для профиля
+      'pages_show_list',               // Список Facebook страниц
+      'ads_management',                // Управление рекламой
+      'business_management',           // Управление бизнесом
+      'pages_messaging',               // Сообщения страниц
+      'instagram_basic',               // Базовые Instagram разрешения
+      'instagram_manage_insights',     // Аналитика Instagram
+      'instagram_content_publish',     // Публикация в Instagram
+      'pages_read_engagement',         // Чтение взаимодействий на страницах
+      'pages_manage_metadata',         // Управление метаданными страниц
+      'pages_manage_posts'             // Управление постами страниц
     ].join(',');
 
     const authUrl = `https://www.facebook.com/v23.0/dialog/oauth?` +

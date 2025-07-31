@@ -398,12 +398,20 @@ const InstagramSetupWizardComplete: React.FC<InstagramSetupWizardProps> = ({
                 В Instagram Basic Display → Settings добавьте разрешения:
               </p>
               <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs font-mono">
-                email,<br/>
-                public_profile
+                pages_show_list,<br/>
+                ads_management,<br/>
+                business_management,<br/>
+                pages_messaging,<br/>
+                instagram_basic,<br/>
+                instagram_manage_insights,<br/>
+                instagram_content_publish,<br/>
+                pages_read_engagement,<br/>
+                pages_manage_metadata,<br/>
+                pages_manage_posts
               </div>
-              <p className="text-xs text-yellow-600 mt-2">
-                ⚠️ Используем только базовые разрешения, которые точно работают. 
-                Дополнительные разрешения можно добавить позже через App Review.
+              <p className="text-xs text-blue-600 mt-2">
+                ✅ Полный набор разрешений для публикации в Instagram и Facebook.
+                Некоторые разрешения могут потребовать App Review.
               </p>
             </div>
           </div>
