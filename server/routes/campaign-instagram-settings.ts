@@ -575,7 +575,7 @@ router.post('/campaigns/:campaignId/discover-instagram-accounts', async (req, re
         const getInstagramUsername = (accountId: string) => {
           const knownAccounts: Record<string, string> = {
             '17841422578516105': '@it.zhdanov',
-            '17841422577074562': '@ad.signmark'
+            '17841422577074562': '@d.signmark'
           };
           return knownAccounts[accountId] || account.pageName;
         };

@@ -133,11 +133,54 @@ export function SocialMediaSettings({
   // Состояние для переключения Instagram аккаунтов
   const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
 
+  // Состояние для кэширования Instagram username
+  const [instagramDisplayName, setInstagramDisplayName] = useState<string>('');
+
+  // useEffect для загрузки Instagram username при изменении настроек
+  useEffect(() => {
+    const loadInstagramUsername = async () => {
+      const settings = form.getValues();
+      if (settings.instagram?.businessAccountId && settings.instagram?.accessToken) {
+        try {
+          console.log('📱 Loading Instagram username for account:', settings.instagram.businessAccountId);
+          const response = await fetch(`https://graph.facebook.com/v23.0/${settings.instagram.businessAccountId}?access_token=${settings.instagram.accessToken}&fields=id,username,name`);
+          const data = await response.json();
+          
+          if (data.username) {
+            const displayName = `@${data.username}`;
+            console.log('📱 Instagram username loaded:', displayName);
+            setInstagramDisplayName(displayName);
+          } else {
+            // Fallback для известных аккаунтов
+            const knownAccounts: Record<string, string> = {
+              '17841422578516105': '@it.zhdanov',
+              '17841422577074562': '@d.signmark'
+            };
+            const fallbackName = knownAccounts[settings.instagram.businessAccountId] || 'Instagram Business Account';
+            console.log('📱 Using fallback name:', fallbackName);
+            setInstagramDisplayName(fallbackName);
+          }
+        } catch (error) {
+          console.error('Error fetching Instagram username:', error);
+          // Fallback в случае ошибки
+          const knownAccounts: Record<string, string> = {
+            '17841422578516105': '@it.zhdanov',
+            '17841422577074562': '@d.signmark'
+          };
+          const fallbackName = knownAccounts[settings.instagram?.businessAccountId || ''] || 'Instagram Business Account';
+          setInstagramDisplayName(fallbackName);
+        }
+      }
+    };
+
+    loadInstagramUsername();
+  }, [form.watch('instagram.businessAccountId'), form.watch('instagram.accessToken')]);
+
   // Функция для получения имени Instagram аккаунта
   const getInstagramAccountName = (accountId: string) => {
     const knownAccounts: Record<string, string> = {
       '17841422578516105': '@it.zhdanov',
-      '17841422577074562': '@ad.signmark'
+      '17841422577074562': '@d.signmark'
     };
     return knownAccounts[accountId] || 'Instagram Business Account';
   };
@@ -1519,7 +1562,7 @@ export function SocialMediaSettings({
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">Instagram API настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
                       {instagramSettings?.businessAccountId 
-                        ? `Аккаунт: ${getInstagramAccountName(instagramSettings.businessAccountId)} (${instagramSettings.businessAccountId})` 
+                        ? `Аккаунт: ${instagramDisplayName || getInstagramAccountName(instagramSettings.businessAccountId)} (${instagramSettings.businessAccountId})` 
                         : 'Настройте Instagram API для этой кампании'
                       }
                     </p>
