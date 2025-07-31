@@ -8,25 +8,24 @@ export default function YouTubeCallbackPage() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(search);
-    const code = urlParams.get('code');
+    const success = urlParams.get('success');
     const error = urlParams.get('error');
-    const state = urlParams.get('state');
+    const message = urlParams.get('message');
 
-    if (error) {
+    if (error === 'true') {
       setStatus('error');
-      setMessage(`Авторизация отклонена: ${error}`);
+      setMessage(message ? decodeURIComponent(message) : 'Произошла ошибка авторизации');
       return;
     }
 
-    if (!code || !state) {
+    if (success === 'true') {
+      setStatus('success');
+      setMessage(message ? decodeURIComponent(message) : 'YouTube успешно подключен!');
+    } else {
       setStatus('error');
-      setMessage('Отсутствуют необходимые параметры авторизации');
+      setMessage('Неожиданная ошибка обработки авторизации');
       return;
     }
-
-    // Параметры уже обработаны сервером, показываем успех
-    setStatus('success');
-    setMessage('YouTube успешно подключен! Токены сохранены.');
 
     // Проверяем есть ли сохраненное состояние мастера
     const wizardState = localStorage.getItem('youtubeWizardState');

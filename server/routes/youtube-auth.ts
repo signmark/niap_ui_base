@@ -171,20 +171,13 @@ router.get('/youtube/auth/callback', async (req, res) => {
       console.error('[youtube-auth] Ошибка сохранения токенов:', error);
     }
 
-    res.json({
-      success: true,
-      message: 'YouTube успешно подключен и токены обновлены',
-      tokens: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
-      }
-    });
+    // Перенаправляем на frontend callback страницу
+    res.redirect('/youtube-callback?success=true&message=' + encodeURIComponent('YouTube успешно подключен и токены обновлены'));
   } catch (error) {
     console.error('Ошибка обработки YouTube callback:', error);
-    res.status(500).json({ 
-      error: 'Ошибка обработки авторизации',
-      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
-    });
+    // Перенаправляем на callback страницу с ошибкой
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    res.redirect('/youtube-callback?error=true&message=' + encodeURIComponent(errorMessage));
   }
 });
 
