@@ -18,7 +18,11 @@ router.get('/youtube/channel-info', async (req, res) => {
       });
     }
 
-    console.log('🔍 [YOUTUBE-CHANNEL] Getting channel info for token:', accessToken.toString().substring(0, 20) + '...');
+    // Очищаем токен от пробелов и других невалидных символов
+    const cleanToken = accessToken.toString().trim().replace(/\s+/g, '');
+    console.log('🔍 [YOUTUBE-CHANNEL] Original token length:', accessToken.toString().length);
+    console.log('🔍 [YOUTUBE-CHANNEL] Clean token length:', cleanToken.length);
+    console.log('🔍 [YOUTUBE-CHANNEL] Getting channel info for token:', cleanToken.substring(0, 20) + '...');
 
     // Получаем системный YouTube API ключ
     const globalApiKeysService = new GlobalApiKeysService();
@@ -38,7 +42,7 @@ router.get('/youtube/channel-info', async (req, res) => {
 
     // Запрашиваем информацию о канале через YouTube Data API v3
     const channelResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true&access_token=${accessToken}&key=${youtubeApiKey}`
+      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true&access_token=${cleanToken}&key=${youtubeApiKey}`
     );
 
     if (!channelResponse.ok) {
