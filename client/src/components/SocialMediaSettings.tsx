@@ -1726,11 +1726,18 @@ export function SocialMediaSettings({
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          console.log('📋 Копируем Instagram токен в Facebook:', instagramSettings.token);
-                          form.setValue('facebook.token', instagramSettings.token);
+                          // Выбираем лучший токен для Facebook: longLivedToken > token > accessToken
+                          const tokenToUse = instagramSettings.longLivedToken || instagramSettings.token || instagramSettings.accessToken;
+                          console.log('📋 Копируем Instagram токен в Facebook:', {
+                            longLivedToken: instagramSettings.longLivedToken ? 'есть' : 'нет',
+                            token: instagramSettings.token ? 'есть' : 'нет', 
+                            accessToken: instagramSettings.accessToken ? 'есть' : 'нет',
+                            using: tokenToUse?.substring(0, 20) + '...'
+                          });
+                          form.setValue('facebook.token', tokenToUse);
                           toast({
                             title: "Токен скопирован",
-                            description: "Instagram токен скопирован в настройки Facebook",
+                            description: `Instagram ${instagramSettings.longLivedToken ? 'долгоживущий ' : ''}токен скопирован в настройки Facebook`,
                           });
                         }}
                         className="text-blue-600 border-blue-300 hover:bg-blue-100"
