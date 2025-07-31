@@ -5,6 +5,9 @@ const router = express.Router();
 
 // Получение информации о YouTube канале по access token
 router.get('/youtube/channel-info', async (req, res) => {
+  console.log('🔍 [YOUTUBE-CHANNEL] Request received for channel info');
+  console.log('🔍 [YOUTUBE-CHANNEL] Query params:', req.query);
+  
   try {
     const { accessToken } = req.query;
     
@@ -19,7 +22,9 @@ router.get('/youtube/channel-info', async (req, res) => {
 
     // Получаем системный YouTube API ключ
     const globalApiKeysService = new GlobalApiKeysService();
-    const youtubeApiKey = await globalApiKeysService.getApiKey('YOUTUBE_API_KEY');
+    const youtubeApiKey = await globalApiKeysService.getGlobalApiKey('YOUTUBE_API_KEY' as any);
+    
+    console.log('🔍 [YOUTUBE-CHANNEL] Retrieved YouTube API key:', youtubeApiKey ? 'Found' : 'Not found');
     
     if (!youtubeApiKey) {
       console.error('❌ [YOUTUBE-CHANNEL] YouTube API key not found in global settings');
