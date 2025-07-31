@@ -1317,6 +1317,21 @@ export function SocialMediaSettings({
               console.log('🔍 Form values detailed:', JSON.stringify(form.getValues(), null, 2));
               console.log('🔍 Form errors detailed:', JSON.stringify(form.formState.errors, null, 2));
               
+              // Принудительно добавляем недостающие поля если их нет
+              const currentValues = form.getValues();
+              if (!currentValues.telegram) {
+                console.log('⚠️ Adding missing telegram field');
+                form.setValue('telegram', { token: '', chatId: '' });
+              }
+              if (!currentValues.facebook) {
+                console.log('⚠️ Adding missing facebook field');
+                form.setValue('facebook', { token: '', pageId: '' });
+              }
+              
+              // Попробуем валидацию снова после добавления полей
+              const retriedValidation = await form.trigger();
+              console.log('🔄 Retried validation result:', retriedValidation);
+              
               // Принудительная валидация для диагностики
               const isValid = await form.trigger();
               console.log('🔍 Form trigger result:', isValid);
