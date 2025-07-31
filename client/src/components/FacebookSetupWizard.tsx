@@ -172,8 +172,16 @@ export default function FacebookSetupWizard({
       console.log('Facebook Wizard: Данные кампании получены:', campaignData);
       
       // Ищем Instagram токен в настройках
-      const instagramToken = campaignData.social_media_settings?.instagram?.accessToken || 
-                           campaignData.social_media_settings?.instagram?.token;
+      const instagramSettings = campaignData.data?.social_media_settings?.instagram;
+      const instagramToken = instagramSettings?.accessToken || 
+                           instagramSettings?.token ||
+                           instagramSettings?.longLivedToken;
+      
+      console.log('Facebook Wizard: Instagram настройки найдены:', {
+        hasInstagramSettings: !!instagramSettings,
+        tokenKeys: instagramSettings ? Object.keys(instagramSettings) : [],
+        tokenLength: instagramToken ? instagramToken.length : 0
+      });
       
       if (!instagramToken) {
         toast({
@@ -571,7 +579,7 @@ export default function FacebookSetupWizard({
             
             <Button 
               onClick={handleFetchInstagramConnectedPages}
-              disabled={isPagesLoading || !form.getValues('token')}
+              disabled={isPagesLoading}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {isPagesLoading ? (
