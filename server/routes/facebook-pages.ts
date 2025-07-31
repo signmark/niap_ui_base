@@ -6,10 +6,18 @@ const router = express.Router();
 // GET /api/facebook/pages - получение Facebook страниц пользователя
 router.get('/pages', async (req, res) => {
   try {
+    console.log('🔵 [FACEBOOK-PAGES] Request received with query params:', req.query);
     const { token, access_token } = req.query;
     const accessToken = token || access_token;
 
+    console.log('🔵 [FACEBOOK-PAGES] Extracted tokens:', {
+      token: token ? (token as string).substring(0, 20) + '...' : 'null',
+      access_token: access_token ? (access_token as string).substring(0, 20) + '...' : 'null',
+      accessToken: accessToken ? (accessToken as string).substring(0, 20) + '...' : 'null'
+    });
+
     if (!accessToken) {
+      console.log('❌ [FACEBOOK-PAGES] No access token provided');
       return res.status(400).json({
         error: 'Access token is required'
       });
