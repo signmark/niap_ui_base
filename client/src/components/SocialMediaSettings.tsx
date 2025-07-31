@@ -102,6 +102,11 @@ export function SocialMediaSettings({
   // Состояние для показа YouTube wizard
   const [showYoutubeWizard, setShowYoutubeWizard] = useState(false);
   
+  // Отладка изменения состояния YouTube wizard
+  useEffect(() => {
+    console.log('🎬 [YouTube State] showYoutubeWizard changed:', showYoutubeWizard);
+  }, [showYoutubeWizard]);
+  
   // Состояние для Instagram настроек из базы данных
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
   const [loadingInstagramSettings, setLoadingInstagramSettings] = useState(false);
@@ -1584,7 +1589,12 @@ export function SocialMediaSettings({
                     
                     <Button
                       type="button"
-                      onClick={() => setShowYoutubeWizard(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🎬 [YouTube Button] Button clicked, opening wizard...');
+                        setShowYoutubeWizard(true);
+                      }}
                       className="w-full"
                       variant="outline"
                     >
