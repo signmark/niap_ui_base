@@ -119,6 +119,30 @@ export default function FacebookSetupWizard({
     }
   };
 
+  // Загрузка существующих Facebook настроек при открытии wizard
+  useEffect(() => {
+    const loadFacebookSettings = async () => {
+      try {
+        const response = await fetch(`/api/campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        const data = await response.json();
+        if (data.social_media_settings?.facebook?.token) {
+          form.setValue('token', data.social_media_settings.facebook.token);
+          // Автоматически загружаем страницы если токен уже есть
+          fetchFacebookPages();
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки Facebook настроек:', error);
+      }
+    };
+
+    loadFacebookSettings();
+  }, [campaignId]);
+
   // Функция для получения Facebook страниц
   const fetchFacebookPages = async () => {
     const formData = form.getValues();
