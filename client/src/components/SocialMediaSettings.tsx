@@ -284,7 +284,7 @@ export function SocialMediaSettings({
   };
 
   // Обработчик завершения YouTube мастера
-  const handleYoutubeComplete = (data: { 
+  const handleYoutubeComplete = async (data: { 
     channelId: string; 
     channelTitle: string; 
     accessToken: string; 
@@ -296,17 +296,29 @@ export function SocialMediaSettings({
       channelTitle: data.channelTitle
     });
 
+    // Устанавливаем значения в форму
     form.setValue('youtube.channelId', data.channelId);
     form.setValue('youtube.channelTitle', data.channelTitle);
     form.setValue('youtube.accessToken', data.accessToken);
     form.setValue('youtube.refreshToken', data.refreshToken);
     
-    setShowYoutubeWizard(false);
-    
-    toast({
-      title: "YouTube настроен!",
-      description: `Канал "${data.channelTitle}" готов к публикации видео`
-    });
+    // Автоматически сохраняем настройки в базу данных
+    try {
+      await onSubmit(form.getValues());
+      console.log('✅ [YouTube Complete] Settings automatically saved to database');
+      
+      toast({
+        title: "YouTube настроен!",
+        description: `Канал "${data.channelTitle}" готов к публикации видео`
+      });
+    } catch (error) {
+      console.error('❌ [YouTube Complete] Error saving settings:', error);
+      toast({
+        title: "Ошибка сохранения",
+        description: "YouTube настроен, но возникла ошибка при сохранении настроек",
+        variant: "destructive"
+      });
+    }
   };
 
   const form = useForm<SocialMediaSettings>({

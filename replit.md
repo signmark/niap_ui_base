@@ -343,3 +343,6 @@ Preferred communication style: Simple, everyday language.
   4. Add content length limits (20KB) with truncation
   5. Never use while loops with regex.exec() - they cause infinite loops
   6. This is a recurring problem that needs immediate fixing when reported
+
+## Recent Updates - July 31, 2025
+- YOUTUBE SETUP WIZARD CLOSING AND AUTO-SAVE FIXED: Resolved critical issues where YouTube Setup Wizard wouldn't close after successful OAuth completion and wouldn't save settings to database. Enhanced handleYoutubeComplete function to automatically save OAuth data (accessToken, refreshToken, channelId, channelTitle) to database using onSubmit. YouTube wizard now closes immediately after OAuth success and settings persist in database without manual save button click.
