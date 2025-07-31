@@ -4,7 +4,7 @@ import { GlobalApiKeysService } from '../services/global-api-keys.js';
 const router = express.Router();
 
 // Получение информации о YouTube канале по access token
-router.get('/api/youtube/channel-info', async (req, res) => {
+router.get('/youtube/channel-info', async (req, res) => {
   try {
     const { accessToken } = req.query;
     

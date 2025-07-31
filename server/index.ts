@@ -355,7 +355,7 @@ app.use((req, res, next) => {
     console.log("Registering YouTube Channel routes...");
     log("Registering YouTube Channel routes...");
     const youtubeChannelRouter = (await import('./routes/youtube-channel')).default;
-    app.use('/', youtubeChannelRouter);
+    app.use('/api', youtubeChannelRouter);
     console.log("YouTube Channel routes registered");
     log("YouTube Channel routes registered successfully");
     
