@@ -92,7 +92,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 🔥 УНИВЕРСАЛЬНОЕ ОТСЛЕЖИВАНИЕ ВСЕХ POST ЗАПРОСОВ 🔥
+// 🔥 УНИВЕРСАЛЬНОЕ ОТСЛЕЖИВАНИЕ ВСЕХ POST И GET ЗАПРОСОВ 🔥
 app.use((req, res, next) => {
   if (req.method === 'POST') {
     console.log('🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥');
@@ -100,6 +100,14 @@ app.use((req, res, next) => {
     console.log('🔥 PATH:', req.path);
     console.log('🔥 BODY:', JSON.stringify(req.body, null, 2));
   }
+  
+  if (req.method === 'GET' && req.path.includes('youtube/channel-info')) {
+    console.log('🎯🎯🎯 YOUTUBE CHANNEL INFO GET ЗАПРОС 🎯🎯🎯');
+    console.log('🎯 URL:', req.url);
+    console.log('🎯 PATH:', req.path);
+    console.log('🎯 QUERY:', JSON.stringify(req.query, null, 2));
+  }
+  
   next();
 });
 
@@ -355,6 +363,11 @@ app.use((req, res, next) => {
     console.log("Registering YouTube Channel routes...");
     log("Registering YouTube Channel routes...");
     const youtubeChannelRouter = (await import('./routes/youtube-channel')).default;
+    
+    // Добавляем отладочное логирование для проверки регистрации маршрута
+    console.log('📍 [YOUTUBE-ROUTER] Router imported successfully:', !!youtubeChannelRouter);
+    console.log('📍 [YOUTUBE-ROUTER] Registering at /api prefix');
+    
     app.use('/api', youtubeChannelRouter);
     console.log("YouTube Channel routes registered");
     log("YouTube Channel routes registered successfully");
