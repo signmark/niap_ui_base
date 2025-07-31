@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -108,6 +108,45 @@ export default function FacebookSetupWizard({
       setLoadingPages(false);
     }
   };
+
+  // Загружаем существующие Facebook настройки при открытии мастера
+  useEffect(() => {
+    const loadExistingFacebookSettings = async () => {
+      try {
+        console.log('🔄 Loading existing Facebook settings for campaign:', campaignId);
+        const response = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📋 Facebook settings loaded:', data);
+          
+          if (data.success && data.settings && data.settings.token) {
+            // Проверяем что токен корректный
+            const token = data.settings.token;
+            if (!token.includes('Facebook Wizard:') && !token.includes('%20') && !token.includes('FacebookSetupWizard')) {
+              console.log('✅ Setting Facebook token in form:', token.substring(0, 20) + '...');
+              form.setValue('token', token);
+              
+              // Автоматически загружаем страницы если токен найден
+              setTimeout(() => {
+                fetchFacebookPages();
+              }, 500);
+            } else {
+              console.log('❌ Facebook token is corrupted, not loading');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading Facebook settings:', error);
+      }
+    };
+
+    loadExistingFacebookSettings();
+  }, [campaignId]);
 
   // Обработчик выбора Facebook страницы
   const handlePageSelect = (pageId: string, pageName: string) => {
