@@ -31,7 +31,8 @@ import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { log } from "./utils/logger";
 import { directusApiManager } from "./directus";
-import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
+// Временно закомментировано из-за отсутствия в schema
+// import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
 import { 
   validateTelegramToken,

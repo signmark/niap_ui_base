@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 
 const router = Router();
 const logPrefix = 'beget-s3-api';
@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Загрузка файла
-router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
+router.post('/upload', authenticateUser, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file provided' });
@@ -79,7 +79,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 });
 
 // Загрузка файла из URL
-router.post('/upload-from-url', authMiddleware, async (req, res) => {
+router.post('/upload-from-url', authenticateUser, async (req, res) => {
   try {
     const { url, fileName, folder, contentType } = req.body;
 
@@ -113,7 +113,7 @@ router.post('/upload-from-url', authMiddleware, async (req, res) => {
 });
 
 // Получение списка файлов
-router.get('/list', authMiddleware, async (req, res) => {
+router.get('/list', authenticateUser, async (req, res) => {
   try {
     const folder = req.query.folder as string | undefined;
     const maxKeys = req.query.maxKeys ? parseInt(req.query.maxKeys as string) : 1000;
@@ -132,7 +132,7 @@ router.get('/list', authMiddleware, async (req, res) => {
 });
 
 // Получение временной ссылки на файл
-router.get('/signed-url/:key', authMiddleware, async (req, res) => {
+router.get('/signed-url/:key', authenticateUser, async (req, res) => {
   try {
     const fileKey = req.params.key;
     const expiration = req.query.expiration ? parseInt(req.query.expiration as string) : 3600;
@@ -160,7 +160,7 @@ router.get('/signed-url/:key', authMiddleware, async (req, res) => {
 });
 
 // Удаление файла
-router.delete('/delete/:key', authMiddleware, async (req, res) => {
+router.delete('/delete/:key', authenticateUser, async (req, res) => {
   try {
     const fileKey = req.params.key;
 
@@ -185,7 +185,7 @@ router.delete('/delete/:key', authMiddleware, async (req, res) => {
 });
 
 // Проверка существования файла
-router.get('/exists/:key', authMiddleware, async (req, res) => {
+router.get('/exists/:key', authenticateUser, async (req, res) => {
   try {
     const fileKey = req.params.key;
 

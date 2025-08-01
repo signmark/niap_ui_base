@@ -7,7 +7,7 @@
 import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -50,7 +50,7 @@ const carouselStateStore: Record<string, CarouselState> = {};
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {String[]} containerIds ID созданных контейнеров
  */
-router.post('/instagram-carousel/create', authMiddleware, async (req, res) => {
+router.post('/instagram-carousel/create', authenticateUser, async (req, res) => {
   try {
     const { contentId, imageUrls, token, businessAccountId } = req.body;
     
@@ -180,7 +180,7 @@ router.post('/instagram-carousel/create', authMiddleware, async (req, res) => {
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {String} carouselContainerId ID созданного контейнера карусели
  */
-router.post('/instagram-carousel/container', authMiddleware, async (req, res) => {
+router.post('/instagram-carousel/container', authenticateUser, async (req, res) => {
   try {
     const { contentId, containerIds, token, businessAccountId, caption } = req.body;
     
@@ -293,7 +293,7 @@ router.post('/instagram-carousel/container', authMiddleware, async (req, res) =>
  * @apiSuccess {String} postId ID опубликованного поста
  * @apiSuccess {String} permalink Постоянная ссылка на публикацию
  */
-router.post('/instagram-carousel/publish', authMiddleware, async (req, res) => {
+router.post('/instagram-carousel/publish', authenticateUser, async (req, res) => {
   try {
     const { contentId, carouselContainerId, token, businessAccountId } = req.body;
     
@@ -419,7 +419,7 @@ router.post('/instagram-carousel/publish', authMiddleware, async (req, res) => {
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} carouselState Текущее состояние процесса публикации карусели
  */
-router.get('/instagram-carousel/status/:contentId', authMiddleware, (req, res) => {
+router.get('/instagram-carousel/status/:contentId', authenticateUser, (req, res) => {
   try {
     const { contentId } = req.params;
     
@@ -461,7 +461,7 @@ router.get('/instagram-carousel/status/:contentId', authMiddleware, (req, res) =
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} carouselState Текущее состояние процесса публикации карусели
  */
-router.post('/instagram-carousel/complete', authMiddleware, async (req, res) => {
+router.post('/instagram-carousel/complete', authenticateUser, async (req, res) => {
   try {
     const { contentId, imageUrls, caption, token, businessAccountId } = req.body;
     

@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import { YouTubeOAuth } from '../utils/youtube-oauth';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 import { GlobalApiKeysService } from '../services/global-api-keys';
 
 const router = Router();
@@ -18,7 +18,7 @@ const oauthStates = new Map<string, { userId: string; campaignId?: string; times
 /**
  * Инициирует OAuth авторизацию YouTube
  */
-router.post('/youtube/auth/start', authMiddleware, async (req, res) => {
+router.post('/youtube/auth/start', authenticateUser, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -192,7 +192,7 @@ router.get('/youtube/auth/callback', async (req, res) => {
 /**
  * Тестирует YouTube соединение
  */
-router.post('/youtube/test', authMiddleware, async (req, res) => {
+router.post('/youtube/test', authenticateUser, async (req, res) => {
   try {
     const { accessToken, refreshToken, channelId } = req.body;
 
@@ -235,7 +235,7 @@ router.post('/youtube/test', authMiddleware, async (req, res) => {
 /**
  * Тестовый endpoint для обновления redirect URI в базе данных
  */
-router.post('/youtube/fix-redirect-uri', authMiddleware, async (req, res) => {
+router.post('/youtube/fix-redirect-uri', authenticateUser, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {

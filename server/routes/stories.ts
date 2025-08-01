@@ -1,11 +1,11 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 import { directusApi } from '../directus';
 
 const router = express.Router();
 
 // Create a new story
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateUser, async (req, res) => {
   try {
     const { title, campaignId, slides } = req.body;
     const userId = req.user?.id;
@@ -49,7 +49,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Get all stories for user
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authenticateUser, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -82,7 +82,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Create a new story
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateUser, async (req, res) => {
   try {
     const { title, campaignId, slides } = req.body;
     const userId = req.user?.id;
@@ -126,7 +126,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Update story - SPECIFIC ROUTE FOR STORIES ONLY
-router.put('/story/:id', authMiddleware, async (req, res) => {
+router.put('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, slides } = req.body;
@@ -166,7 +166,7 @@ router.put('/story/:id', authMiddleware, async (req, res) => {
 });
 
 // Get story by ID - SPECIFIC ROUTE FOR STORIES ONLY
-router.get('/story/:id', authMiddleware, async (req, res) => {
+router.get('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -189,7 +189,7 @@ router.get('/story/:id', authMiddleware, async (req, res) => {
 });
 
 // Delete story - SPECIFIC ROUTE FOR STORIES ONLY
-router.delete('/story/:id', authMiddleware, async (req, res) => {
+router.delete('/story/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -223,7 +223,7 @@ router.delete('/story/:id', authMiddleware, async (req, res) => {
 });
 
 // Publish story - SPECIFIC ROUTE FOR STORIES ONLY
-router.post('/story/:id/publish', authMiddleware, async (req, res) => {
+router.post('/story/:id/publish', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { platforms, scheduledAt } = req.body;

@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { v4 as uuidv4 } from 'uuid';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 
 const router = Router();
 const logPrefix = 'beget-s3-video-api';
@@ -40,7 +40,7 @@ const upload = multer({
 });
 
 // Загрузка видео из URL
-router.post('/upload-from-url', authMiddleware, async (req, res) => {
+router.post('/upload-from-url', authenticateUser, async (req, res) => {
   try {
     const { videoUrl, generateThumbnail = true } = req.body;
 
@@ -73,7 +73,7 @@ router.post('/upload-from-url', authMiddleware, async (req, res) => {
 });
 
 // Загрузка видео из локального файла
-router.post('/upload', authMiddleware, upload.single('video'), async (req, res) => {
+router.post('/upload', authenticateUser, upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No video file provided' });

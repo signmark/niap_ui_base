@@ -7,7 +7,7 @@
 import express from 'express';
 import axios from 'axios';
 import { log } from '../utils/logger';
-import { authMiddleware } from '../middleware/auth';
+import { authenticateUser } from '../middleware/auth';
 import { publicationLockManager } from '../services/publication-lock-manager';
 import * as instagramCarouselHandler from './instagram-carousel-webhook';
 import { storage } from '../storage';
@@ -28,7 +28,7 @@ const router = express.Router();
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат публикации
  */
-router.post('/publish/now', authMiddleware, async (req, res) => {
+router.post('/publish/now', authenticateUser, async (req, res) => {
   try {
     log(`[Social Publishing] Получен запрос на публикацию с телом: ${JSON.stringify(req.body)}`);
     
@@ -330,7 +330,7 @@ router.post('/publish/now', authMiddleware, async (req, res) => {
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат публикации
  */
-router.post('/publish', authMiddleware, async (req, res) => {
+router.post('/publish', authenticateUser, async (req, res) => {
   try {
     console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Запрос на публикацию получен`);
     console.log(`🎯 [SOCIAL-PUBLISHING-ROUTER] Параметры:`, req.body);
@@ -809,7 +809,7 @@ async function publishInstagramCarousel(contentId: string, req: express.Request,
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат обновления статуса
  */
-router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
+router.post('/publish/auto-update-status', authenticateUser, async (req, res) => {
   try {
     const { contentId } = req.body;
     
@@ -931,7 +931,7 @@ router.post('/publish/auto-update-status', authMiddleware, async (req, res) => {
  * @apiSuccess {Boolean} success Статус операции
  * @apiSuccess {Object} result Результат обновления статуса
  */
-router.post('/publish/update-status', authMiddleware, async (req, res) => {
+router.post('/publish/update-status', authenticateUser, async (req, res) => {
   try {
     const { contentId } = req.body;
     
