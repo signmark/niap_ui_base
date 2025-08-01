@@ -148,23 +148,35 @@ export class GlobalApiKeysService {
    * @returns API ключ или null, если ключ не найден
    */
   async getGlobalApiKey(serviceName: ApiServiceName): Promise<string | null> {
-    // Проверяем кэш
-    if (this.keyCache[serviceName] && 
-        this.keyCache[serviceName].isActive && 
-        this.keyCache[serviceName].expiresAt > Date.now()) {
-      log(`Using cached global ${serviceName} API key`, 'global-api-keys');
-      return this.keyCache[serviceName].key;
+    // Создаем варианты названий для поиска (заглавные и строчные)
+    const searchVariants = [
+      serviceName, // исходное название из enum
+      serviceName.toUpperCase(), // заглавными буквами (как в админ-панели)
+      serviceName.toLowerCase() // строчными буквами (старая логика)
+    ];
+    
+    // Проверяем кэш для всех вариантов
+    for (const variant of searchVariants) {
+      if (this.keyCache[variant] && 
+          this.keyCache[variant].isActive && 
+          this.keyCache[variant].expiresAt > Date.now()) {
+        log(`Using cached global ${variant} API key`, 'global-api-keys');
+        return this.keyCache[variant].key;
+      }
     }
     
     // Если кэш устарел или ключа нет в кэше, обновляем кэш
     await this.refreshCache();
     
-    // Проверяем кэш еще раз после обновления
-    if (this.keyCache[serviceName] && this.keyCache[serviceName].isActive) {
-      return this.keyCache[serviceName].key;
+    // Проверяем кэш еще раз после обновления для всех вариантов
+    for (const variant of searchVariants) {
+      if (this.keyCache[variant] && this.keyCache[variant].isActive) {
+        log(`Found global ${variant} API key after cache refresh`, 'global-api-keys');
+        return this.keyCache[variant].key;
+      }
     }
     
-    log(`Global ${serviceName} API key not found or inactive`, 'global-api-keys');
+    log(`Global ${serviceName} API key not found or inactive (tried variants: ${searchVariants.join(', ')})`, 'global-api-keys');
     return null;
   }
 
