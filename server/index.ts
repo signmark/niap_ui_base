@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { registerRoutes, addTestRoutes } from "./routes";
+import { registerRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
@@ -42,40 +42,41 @@ global['directusApiManager'] = directusApiManager;
 const app = express();
 const server = createServer(app);
 
-// WebSocket server для real-time уведомлений
-const wss = new WebSocketServer({ server });
+// TEMPORARILY DISABLED: WebSocket server для real-time уведомлений
+// This was causing conflicts with Vite HMR WebSocket
+// const wss = new WebSocketServer({ server });
 
-// Обработка WebSocket подключений
-wss.on('connection', (ws) => {
-  log('WebSocket клиент подключен', 'websocket');
+// // Обработка WebSocket подключений
+// wss.on('connection', (ws) => {
+//   log('WebSocket клиент подключен', 'websocket');
   
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message.toString());
-      log(`WebSocket сообщение получено: ${data.type}`, 'websocket');
-    } catch (error) {
-      log(`Ошибка парсинга WebSocket сообщения: ${error}`, 'websocket');
-    }
-  });
+//   ws.on('message', (message) => {
+//     try {
+//       const data = JSON.parse(message.toString());
+//       log(`WebSocket сообщение получено: ${data.type}`, 'websocket');
+//     } catch (error) {
+//       log(`Ошибка парсинга WebSocket сообщения: ${error}`, 'websocket');
+//     }
+//   });
   
-  ws.on('close', () => {
-    log('WebSocket клиент отключен', 'websocket');
-  });
-});
+//   ws.on('close', () => {
+//     log('WebSocket клиент отключен', 'websocket');
+//   });
+// });
 
 // Функция для отправки уведомлений всем подключенным клиентам
 export function broadcastNotification(type: string, data: any) {
   const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
   
-  wss.clients.forEach((client) => {
-    if (client.readyState === client.OPEN) {
-      client.send(message);
-    }
-  });
+  // TEMPORARILY DISABLED: wss.clients.forEach((client) => {
+  //   if (client.readyState === client.OPEN) {
+  //     client.send(message);
+  //   }
+  // });
 }
 
 // Экспортируем WebSocket server для использования в других модулях
-export { wss };
+// export { wss };
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -124,9 +125,7 @@ import { registerSimpleAnalyticsAPI } from './simple-analytics-api';
 // Регистрируем простой API аналитики ПЕРЕД всеми остальными маршрутами
 registerSimpleAnalyticsAPI(app);
 
-// ТЕСТОВЫЙ ENDPOINT для отладки анализа источников
-addTestRoutes(app);
-log('Test routes registered (source analysis debug)');
+// Source analysis endpoint is now integrated in main routes
 
 // Старый код API аналитики удален - теперь используется simple-analytics-api.ts
 
@@ -390,7 +389,7 @@ app.use((req, res, next) => {
 
     log("Registering main routes after YouTube routes...");
     console.log("Starting route registration...");
-    const server = await registerRoutes(app);
+    await registerRoutes(app);
     
     // Регистрируем Instagram Campaign Settings маршруты ПОСЛЕ registerRoutes
     // чтобы они имели приоритет над конфликтующими маршрутами в routes.ts

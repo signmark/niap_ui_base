@@ -33,6 +33,10 @@ localPort = 5003
 [[ports]]
 localPort = 8080
 
+[[ports]]
+localPort = 24678
+externalPort = 3000
+
 [workflows]
 
 [[workflows.workflow]]
