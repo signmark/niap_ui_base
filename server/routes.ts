@@ -5,7 +5,7 @@ import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
 import { VertexAIService } from './services/vertex-ai';
-import { vertexAICredentials } from './services/vertex-ai-credentials';
+import { VertexAICredentialsService } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
 import { apiKeyService, ApiServiceName } from './services/api-keys';
 import { globalApiKeyManager } from './services/global-api-key-manager';
@@ -4875,8 +4875,8 @@ ${text}
       const userId = req.userId;
       const token = req.headers.authorization?.split(' ')[1];
       
+      // Проверяем доступность Gemini API ключа
       const geminiApiKey = process.env.GEMINI_API_KEY;
-      
       if (!geminiApiKey) {
         return res.status(400).json({
           success: false,
@@ -4906,7 +4906,7 @@ ${text}
         
         let geminiKeywords = [];
         try {
-          console.log(`[${requestId}] Используем GeminiProxyService через SOCKS5 прокси для анализа ключевых слов`);
+          console.log(`[${requestId}] Используем Gemini API для анализа ключевых слов`);
           
           const contextualPrompt = `Проанализируй содержимое сайта ${normalizedUrl} и создай 10-15 релевантных ключевых слов именно для этого бизнеса.
 
@@ -4926,29 +4926,35 @@ ${siteContent.substring(0, 2000)}
   {"keyword": "другое релевантное слово", "trend": 75, "competition": 45}
 ]`;
 
-          // Используем GeminiProxyService через SOCKS5 прокси
-          const { GeminiProxyService } = await import('./services/gemini-proxy');
-          const geminiProxy = new GeminiProxyService({ apiKey: geminiApiKey });
-          
-          const geminiText = await geminiProxy.generateText({ 
-            prompt: contextualPrompt, 
-            model: 'gemini-2.5-flash' 
+          // Используем прямой Gemini API
+          const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+            contents: [{
+              parts: [{
+                text: contextualPrompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 1000
+            }
           });
+
+          const geminiText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
           
           if (geminiText) {
-            console.log(`[${requestId}] Ответ от GeminiProxyService:`, geminiText.substring(0, 200));
+            console.log(`[${requestId}] Ответ от Gemini API:`, geminiText.substring(0, 200));
             const jsonMatch = geminiText.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
               geminiKeywords = JSON.parse(jsonMatch[0]);
-              console.log(`[${requestId}] ✅ Получены контекстуальные ключевые слова через GeminiProxyService:`, geminiKeywords.length);
+              console.log(`[${requestId}] ✅ Получены контекстуальные ключевые слова через Gemini API:`, geminiKeywords.length);
             } else {
-              console.log(`[${requestId}] Не найден JSON массив в ответе GeminiService`);
+              console.log(`[${requestId}] Не найден JSON массив в ответе Gemini API`);
             }
           } else {
-            console.log(`[${requestId}] Пустой ответ от GeminiService`);
+            console.log(`[${requestId}] ❌ Пустой ответ от Gemini API`);
           }
         } catch (proxyError) {
-          console.log(`[${requestId}] ❌ ОШИБКА: GeminiProxyService не сработал:`, proxyError.message);
+          console.log(`[${requestId}] ❌ ОШИБКА: Gemini API не сработал:`, proxyError.message);
           return res.status(500).json({ 
             error: 'Не удалось проанализировать сайт с помощью ИИ. Попробуйте позже.',
             details: proxyError.message
