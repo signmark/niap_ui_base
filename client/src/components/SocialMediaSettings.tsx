@@ -778,9 +778,9 @@ export function SocialMediaSettings({
     }
   }, [campaignId]);
 
-  // Слушатель событий для обновления Instagram настроек после OAuth
+  // Слушатель событий для обновления Instagram и VK настроек после OAuth
   useEffect(() => {
-    const handleInstagramOAuthSuccess = (event: MessageEvent) => {
+    const handleOAuthSuccess = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) {
         return;
       }
@@ -798,14 +798,28 @@ export function SocialMediaSettings({
           });
         }, 500);
       }
+
+      if (event.data.type === 'VK_OAUTH_SUCCESS') {
+        console.log('📋 [SocialMediaSettings] Получено событие VK OAuth успеха');
+        console.log('🔄 [SocialMediaSettings] Перезагружаем VK настройки...');
+        
+        // Перезагружаем VK настройки с задержкой для синхронизации с базой данных
+        setTimeout(() => {
+          loadVkSettings();
+          toast({
+            title: "VK обновлен",
+            description: "Настройки VK успешно обновлены"
+          });
+        }, 500);
+      }
     };
 
-    window.addEventListener('message', handleInstagramOAuthSuccess);
+    window.addEventListener('message', handleOAuthSuccess);
     
     return () => {
-      window.removeEventListener('message', handleInstagramOAuthSuccess);
+      window.removeEventListener('message', handleOAuthSuccess);
     };
-  }, [campaignId, loadInstagramSettings, toast]);
+  }, [campaignId, loadInstagramSettings, loadVkSettings, toast]);
 
   // Обновляем форму когда Instagram настройки загружены
   useEffect(() => {

@@ -384,6 +384,17 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
             needsReload: true
           });
         }
+        
+        // Дополнительно отправляем событие для обновления формы
+        window.dispatchEvent(new CustomEvent('instagram-settings-updated', {
+          detail: {
+            token: formData.accessToken,
+            accessToken: formData.accessToken,
+            businessAccountId: accountId,
+            appId: formData.appId,
+            appSecret: formData.appSecret
+          }
+        }));
       }
     } catch (error) {
       console.error('Error saving selected account:', error);

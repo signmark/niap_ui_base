@@ -7,6 +7,11 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **2025-08-01**: **FIXED CROSS-PLATFORM OAUTH TOKEN SYNCHRONIZATION** - Resolved critical bug where OAuth tokens didn't automatically update in form fields
+- **2025-08-01**: Enhanced Instagram OAuth with automatic postMessage handling and form field updates
+- **2025-08-01**: Fixed VK OAuth workflow - added proper message listener and corrected redirect URI to use local callback page
+- **2025-08-01**: Improved parent-child component communication between setup wizards and main settings form
+- **2025-08-01**: Added custom event dispatching for Instagram settings updates with automatic form synchronization
 - **2025-08-01**: Fixed YouTube OAuth workflow - resolved "Not Found" errors for users without YouTube channels
 - **2025-08-01**: Added comprehensive YouTube channel creation instructions with clickable links
 - **2025-08-01**: Cleaned up YouTube API logging to reduce console noise while maintaining error handling

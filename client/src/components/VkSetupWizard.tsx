@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 interface VkSetupWizardProps {
   campaignId: string;
@@ -23,9 +24,56 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
     members_count: number;
   }>>([]);
 
+  const { toast } = useToast();
+
+  // Обработчик сообщений от VK OAuth callback
+  useEffect(() => {
+    const handleVKOAuthMessage = (event: MessageEvent) => {
+      // Проверяем источник сообщения
+      if (event.origin !== window.location.origin) {
+        console.log('📤 VK OAuth - Origin mismatch, ignoring message');
+        return;
+      }
+
+      if (event.data.type === 'VK_OAUTH_SUCCESS') {
+        console.log('✅ VK OAuth success message received!');
+        console.log('📋 VK OAuth data:', event.data.data);
+        
+        // Автоматически получаем группы с новым токеном
+        if (event.data.data.accessToken) {
+          console.log('🔑 VK OAuth token received, fetching groups...');
+          setAccessToken(event.data.data.accessToken);
+          fetchVkGroups(event.data.data.accessToken);
+          
+          toast({
+            title: "VK авторизован",
+            description: "Токен получен, загружаем список групп",
+            variant: "default"
+          });
+        }
+      } else if (event.data.type === 'VK_OAUTH_ERROR') {
+        console.error('❌ VK OAuth error:', event.data.error);
+        toast({
+          title: "Ошибка VK OAuth",
+          description: event.data.error,
+          variant: "destructive"
+        });
+        setIsProcessing(false);
+      }
+    };
+
+    // Добавляем слушатель сообщений
+    window.addEventListener('message', handleVKOAuthMessage);
+    
+    // Убираем слушатель при размонтировании
+    return () => {
+      window.removeEventListener('message', handleVKOAuthMessage);
+    };
+  }, [toast]);
+
   const getVkOAuthUrl = () => {
-    // Используем разрешенный redirect_uri от VK
-    const redirectUri = 'https://oauth.vk.com/blank.html';
+    // Используем нашу callback страницу
+    const redirectUri = `${window.location.origin}/vk-callback`;
     return `https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=${encodeURIComponent(redirectUri)}&display=page&response_type=token&revoke=1`;
   };
 
@@ -154,7 +202,7 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                     
                     <div className="text-center">
                       <Button 
-                        onClick={() => window.open(getVkOAuthUrl(), '_blank', 'width=600,height=600')}
+                        onClick={() => window.open(getVkOAuthUrl(), 'vk-oauth', 'width=600,height=700,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no')}
                         className="w-full mb-4"
                       >
                         <ExternalLink className="mr-2 h-4 w-4" />
