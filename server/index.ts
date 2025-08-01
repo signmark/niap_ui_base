@@ -154,37 +154,27 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
       });
     }
 
-    console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
+    console.log(`[ANALYZE SOURCE] ===== НОВЫЙ ENDPOINT 2025-08-01 ===== Начинаем анализ источника ${sourceId} для кампании ${campaignId}`); 
+    console.log(`[ANALYZE SOURCE] ===== ИСПОЛЬЗУЕМ СИСТЕМНЫЙ ТОКЕН ===== : ${process.env.DIRECTUS_TOKEN?.substring(0, 10)}...`);
 
-    // Создаем отдельный axios instance для этого запроса с системным токеном
-    const systemToken = process.env.DIRECTUS_TOKEN;
-    if (!systemToken) {
-      console.log(`[ANALYZE SOURCE] System token не найден в переменных окружения`);
-      return res.status(500).json({
-        success: false,
-        message: "Системная ошибка: отсутствует конфигурация"
-      });
-    }
-
-    const cleanDirectusApi = axios.create({
+    // Используем системный токен для доступа к campaign_trend_topics
+    const systemDirectusApi = axios.create({
       baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.space',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${systemToken}`
+        'Authorization': `Bearer ${process.env.DIRECTUS_TOKEN}`,
+        'Content-Type': 'application/json'
       },
-      timeout: 15000,
+      timeout: 15000
     });
     
-    console.log(`[ANALYZE SOURCE] Используем системный токен: ${systemToken.substring(0, 10)}...`);
-
-    // 1. Получаем все тренды этого источника - используем чистый axios instance
-    const trendsResponse = await cleanDirectusApi.get('/items/campaign_trend_topics', {
+    console.log(`[ANALYZE SOURCE] Запрашиваем тренды для источника ${sourceId} в кампании ${campaignId}`);
+    
+    // Запрос к коллекции campaign_trend_topics с системным токеном
+    const trendsResponse = await systemDirectusApi.get('/items/campaign_trend_topics', {
       params: {
-        filter: {
-          source_id: { _eq: sourceId },
-          campaign_id: { _eq: campaignId }
-        },
-        fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
+        'filter[source_id][_eq]': sourceId,
+        'filter[campaign_id][_eq]': campaignId,
+        'fields': 'id,title,source_id,campaign_id,sentiment_analysis'
       }
     });
 
@@ -192,9 +182,30 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
     console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
 
     if (sourceTrends.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Для данного источника не найдено трендов для анализа"
+      // Если нет трендов, вернем нулевую статистику, но не ошибку
+      console.log(`[ANALYZE SOURCE] Нет трендов для источника ${sourceId}, возвращаем пустую статистику`);
+      return res.json({
+        success: true,
+        data: {
+          sourceId,
+          campaignId,
+          analyzed_trends: 0,
+          source_rating: {
+            total_trends: 0,
+            analyzed_trends: 0,
+            positive_percentage: 0,
+            negative_percentage: 0,
+            neutral_percentage: 0,
+            overall_sentiment: 'neutral',
+            analyzed_at: new Date().toISOString()
+          },
+          sentiment_breakdown: {
+            positive: 0,
+            negative: 0,
+            neutral: 0
+          }
+        },
+        message: `Анализ источника завершен. Трендов не найдено.`
       });
     }
 
