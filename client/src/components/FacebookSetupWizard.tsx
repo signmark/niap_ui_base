@@ -154,14 +154,14 @@ export default function FacebookSetupWizard({
     loadFacebookSettings();
   }, [campaignId]);
 
-  // Функция для получения Instagram связанных страниц
+  // Функция для копирования Instagram токена и поиска страниц
   const handleFetchInstagramConnectedPages = async () => {
     setIsPagesLoading(true);
     
     try {
-      console.log('Facebook Wizard: Получение Instagram связанных страниц из настроек кампании...');
+      console.log('📋 Взять из ИГ: Получение Instagram токена из настроек кампании...');
       
-      // Сначала получаем Instagram токен из настроек кампании
+      // Получаем Instagram токен из настроек кампании
       const campaignResponse = await fetch(`/api/campaigns/${campaignId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -169,7 +169,6 @@ export default function FacebookSetupWizard({
       });
       
       const campaignData = await campaignResponse.json();
-      console.log('Facebook Wizard: Данные кампании получены:', campaignData);
       
       // Ищем Instagram токен в настройках
       const instagramSettings = campaignData.data?.social_media_settings?.instagram;
@@ -177,60 +176,48 @@ export default function FacebookSetupWizard({
                            instagramSettings?.token ||
                            instagramSettings?.longLivedToken;
       
-      console.log('Facebook Wizard: Instagram настройки найдены:', {
-        hasInstagramSettings: !!instagramSettings,
-        tokenKeys: instagramSettings ? Object.keys(instagramSettings) : [],
-        tokenLength: instagramToken ? instagramToken.length : 0
-      });
+      console.log('📋 Взять из ИГ: Instagram токен найден:', !!instagramToken);
       
       if (!instagramToken) {
         toast({
           title: "Instagram токен не найден",
-          description: "Сначала настройте Instagram через Instagram Setup Wizard",
+          description: "Сначала настройте Instagram через мастер настройки",
           variant: "destructive",
         });
         return;
       }
       
-      console.log('Facebook Wizard: Используем Instagram токен для поиска связанных страниц...');
+      // Устанавливаем Instagram токен в поле Facebook токена
+      form.setValue('token', instagramToken);
       
-      const response = await fetch(`/api/facebook/instagram-connected-pages?campaignId=${campaignId}`);
+      console.log('📋 Взять из ИГ: Токен скопирован, теперь ищем страницы...');
+      
+      // Используем обычную функцию поиска страниц с Instagram токеном
+      const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(instagramToken)}`);
       const data = await response.json();
-      
-      console.log('Facebook Wizard: Ответ API Instagram связанных страниц:', data);
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Ошибка при получении связанных страниц');
+        throw new Error(data.error || 'Ошибка получения страниц');
       }
-      
-      if (data.success && data.connected_pages) {
-        // Преобразуем данные в формат, который ожидает интерфейс
-        const formattedPages = data.connected_pages.map((item: any) => ({
-          id: item.facebook_page.id,
-          name: `${item.facebook_page.name} → @${item.instagram_account.username}`,
-          access_token: item.facebook_page.access_token,
-          category: item.facebook_page.category,
-          instagram_info: item.instagram_account
-        }));
-        
-        setPages(formattedPages);
-        
+
+      if (data.pages && data.pages.length > 0) {
+        setPages(data.pages);
         toast({
-          title: "Instagram связанные страницы получены",
-          description: `Найдено ${formattedPages.length} страниц связанных с Instagram`,
+          title: "Instagram токен скопирован",
+          description: `Токен скопирован из Instagram настроек. Найдено ${data.pages.length} страниц`,
         });
       } else {
         toast({
-          title: "Страницы не найдены",
-          description: "У вас нет Facebook страниц связанных с Instagram Business аккаунтами",
+          title: "Токен скопирован, но страницы не найдены",
+          description: "Instagram токен скопирован, но Facebook страницы не найдены",
           variant: "destructive",
         });
       }
     } catch (error: any) {
-      console.error('Facebook Wizard: Ошибка при получении Instagram связанных страниц:', error);
+      console.error('📋 Взять из ИГ: Ошибка:', error);
       toast({
         title: "Ошибка",
-        description: error.message || "Не удалось получить Instagram связанные страницы",
+        description: error.message || "Не удалось скопировать Instagram токен",
         variant: "destructive",
       });
     } finally {
@@ -559,11 +546,12 @@ export default function FacebookSetupWizard({
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={debugFacebookToken}
-                      disabled={isPagesLoading || !form.getValues('token')}
+                      onClick={handleFetchInstagramConnectedPages}
+                      disabled={isPagesLoading}
                       size="sm"
+                      className="text-purple-600 border-purple-300 hover:bg-purple-100"
                     >
-                      🔍 Диагностика
+                      📋 Взять из ИГ
                     </Button>
                   </div>
                   <FormMessage />
