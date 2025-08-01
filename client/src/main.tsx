@@ -1,15 +1,14 @@
 import { createRoot } from "react-dom/client";
-import App from "./App-minimal";
+import App from "./App-ultra-minimal";
 
-// Убираем CSS пока - может быть причиной проблемы
-// import "./index.css";
-
-// Временно отключен logger для диагностики
-// import "./utils/logger";
-
-const rootElement = document.getElementById("root");
-if (rootElement) {
-  createRoot(rootElement).render(<App />);
-} else {
-  console.error("Элемент root не найден!");
+try {
+  const rootElement = document.getElementById("root");
+  if (rootElement) {
+    createRoot(rootElement).render(<App />);
+    console.log("React приложение загружено успешно!");
+  } else {
+    console.error("Элемент root не найден!");
+  }
+} catch (error) {
+  console.error("Ошибка загрузки React:", error);
 }
