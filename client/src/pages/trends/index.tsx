@@ -898,6 +898,14 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
       
+      // Показываем уведомление о начале сбора сразу после валидации
+      toast({
+        title: "Сбор начат",
+        description: collectSources 
+          ? `Сбор источников ${collectComments && collectComments.length > 0 ? 'и комментариев ' : ''}запущен. Результаты появятся по мере обновления.`
+          : `Сбор трендов запущен. Результаты появятся по мере обновления.`
+      });
+      
       // Gather all keywords from the campaign for the webhook
       const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
       console.log('Sending keywords to webhook with platforms:', keywordsList, platforms);
@@ -950,10 +958,10 @@ export default function Trends() {
     },
     onSuccess: (data, { platforms, collectSources, collectComments }) => {
       toast({
-        title: "Успешно",
+        title: "Успешно завершено",
         description: collectSources 
-          ? `Задача по сбору источников ${collectComments && collectComments.length > 0 ? 'и комментариев ' : ''}запущена. Данные будут обновляться автоматически.`
-          : `Задача по сбору трендов запущена. Данные будут обновляться автоматически.`
+          ? `Задача по сбору источников ${collectComments && collectComments.length > 0 ? 'и комментариев ' : ''}передана в обработку. Данные обновляются автоматически.`
+          : `Задача по сбору трендов передана в обработку. Данные обновляются автоматически.`
       });
       
       // Refresh the trend topics list и источники (делаем это только один раз)
