@@ -302,14 +302,38 @@ export function SocialMediaSettings({
   };
 
   // Обработчик выбора VK группы
-  const handleVkGroupSelect = (groupId: string, groupName: string) => {
-    form.setValue('vk.groupId', groupId);
-    form.setValue('vk.groupName', groupName);
-    setVkGroups([]); // Скрываем список групп после выбора
-    toast({
-      title: "Группа выбрана",
-      description: `Выбрана группа: ${groupName}`,
-    });
+  const handleVkGroupSelect = async (groupId: string, groupName: string) => {
+    try {
+      console.log('🔄 VK Group Select: Saving group selection...', { groupId, groupName });
+      
+      // Обновляем поля формы
+      form.setValue('vk.groupId', groupId);
+      form.setValue('vk.groupName', groupName);
+      
+      // Получаем данные формы и сохраняем в базу
+      const formData = form.getValues();
+      await onSubmit(formData);
+      
+      // Перезагружаем VK настройки из базы чтобы обновить отображение вверху
+      await loadVkSettings();
+      
+      // Скрываем список групп после выбора
+      setVkGroups([]);
+      
+      toast({
+        title: "Группа выбрана",
+        description: `Выбрана группа: ${groupName}`,
+      });
+      
+      console.log('✅ VK Group Select: Group saved and settings refreshed');
+    } catch (error) {
+      console.error('❌ VK Group Select: Error saving group selection:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить выбранную группу",
+        variant: "destructive",
+      });
+    }
   };
 
   // Обработчик завершения Facebook мастера
