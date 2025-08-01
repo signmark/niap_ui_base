@@ -1421,7 +1421,23 @@ export default function Trends() {
                     Нет добавленных источников
                   </p>
                 ) : (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                  <>
+                    {sources.length > 0 && (
+                      <div className="mb-3">
+                        <Button
+                          variant={selectedSourceId === null ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSourceId(null);
+                            setIsTrendsExpanded(true);
+                          }}
+                          className="w-full"
+                        >
+                          Все источники
+                        </Button>
+                      </div>
+                    )}
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                     {sources
                       // Фильтрация дубликатов по URL - показываем только первый источник с уникальным URL
                       .filter((source, index, array) => {
@@ -1523,8 +1539,8 @@ export default function Trends() {
                         </div>
                       </div>
                     ))}
-
-                  </div>
+                    </div>
+                  </>
                 )}
                   </CollapsibleContent>
                 </CardContent>
@@ -1568,20 +1584,6 @@ export default function Trends() {
 
                 {activeTab === 'trends' ? (
                   <>
-                    {sources.length > 0 && (
-                      <div className="mb-4">
-                        <Button
-                          variant={selectedSourceId === null ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSourceId(null);
-                          }}
-                          className="mb-4"
-                        >
-                          Все источники
-                        </Button>
-                      </div>
-                    )}
                     <div className="flex items-center flex-wrap gap-4 mb-4">
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Период:</div>
