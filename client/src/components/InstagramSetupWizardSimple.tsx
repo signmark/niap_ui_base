@@ -42,6 +42,53 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
   // Добавляем консольный лог для диагностики
   console.log('Instagram Setup Wizard rendering with campaignId:', campaignId);
 
+  // Обработчик сообщений от OAuth окна
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      // Проверяем источник сообщения
+      if (event.origin !== window.location.origin) {
+        console.log('📤 Instagram OAuth - Origin mismatch, ignoring message');
+        return;
+      }
+
+      if (event.data.type === 'INSTAGRAM_OAUTH_SUCCESS') {
+        console.log('✅ Instagram OAuth success message received!');
+        console.log('📋 OAuth data:', event.data.data);
+        
+        // Обновляем токен в форме с полученным токеном
+        if (event.data.data.token) {
+          console.log('🔑 Updating accessToken in form:', event.data.data.token.substring(0, 20) + '...');
+          setFormData(prev => ({
+            ...prev,
+            accessToken: event.data.data.token
+          }));
+          
+          toast({
+            title: "Токен обновлен",
+            description: "Instagram токен автоматически обновлен из OAuth окна",
+            variant: "default"
+          });
+        }
+        
+        // Если есть App ID - тоже обновляем
+        if (event.data.data.appId) {
+          setFormData(prev => ({
+            ...prev,
+            appId: event.data.data.appId
+          }));
+        }
+      }
+    };
+
+    // Добавляем слушатель сообщений
+    window.addEventListener('message', handleOAuthMessage);
+    
+    // Убираем слушатель при размонтировании
+    return () => {
+      window.removeEventListener('message', handleOAuthMessage);
+    };
+  }, [toast]);
+
   // Загружаем существующие данные из кампании и проверяем Facebook
   useEffect(() => {
     const loadExistingSettings = async () => {
