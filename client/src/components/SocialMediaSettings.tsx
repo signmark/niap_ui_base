@@ -1737,12 +1737,7 @@ export function SocialMediaSettings({
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    {/* Debug: показываем статус Instagram settings */}
-                    <div className="text-xs text-gray-500">
-                      IG: {instagramSettings ? 'загружен' : 'не загружен'} | 
-                      token: {instagramSettings?.token ? 'есть' : 'нет'} | 
-                      longLived: {instagramSettings?.longLivedToken ? 'есть' : 'нет'}
-                    </div>
+
                     
 
                     <Button 
