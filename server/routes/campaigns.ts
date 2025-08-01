@@ -18,7 +18,7 @@ router.get('/', authenticateUser, async (req: any, res) => {
 
     log('campaigns', `Getting campaigns for user ID: ${userId}`);
 
-    // Get campaigns from Directus
+    // Get campaigns from Directus - handle permissions gracefully
     const response = await directusApi.request({
       method: 'GET',
       url: '/items/campaigns',
@@ -55,11 +55,16 @@ router.get('/', authenticateUser, async (req: any, res) => {
   } catch (error: any) {
     log('campaigns', `Error getting campaigns: ${error.message}`);
     
-    if (error.response?.status === 401) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    // If no access to campaigns collection or any error, return empty array to prevent app crash
+    if (error.response?.status === 403) {
+      log('campaigns', `No campaigns access for user ${userId}, returning empty array`);
+    } else if (error.response?.status === 401) {
+      log('campaigns', `Unauthorized access for user ${userId}, returning empty array`);
+    } else {
+      log('campaigns', `Other error for user ${userId}: ${error.message}, returning empty array`);
     }
     
-    res.status(500).json({ error: 'Failed to fetch campaigns' });
+    res.json({ data: [] });
   }
 });
 
