@@ -1313,6 +1313,129 @@ function parseArrayField(value: any, itemId?: string): any[] {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // TEST ENDPOINT: проверяем заголовки
+  app.post("/api/test-headers", async (req: any, res) => {
+    console.log(`[TEST HEADERS] All request headers:`, req.headers);
+    const authHeader = req.headers['authorization'];
+    console.log(`[TEST HEADERS] Authorization header:`, authHeader);
+    res.json({
+      authorization: authHeader,
+      all_headers: req.headers
+    });
+  });
+
+  // ПРИОРИТЕТНЫЙ ENDPOINT: Анализ источника (создаем отдельный axios instance)
+  app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
+    const sourceId = req.params.sourceId;
+    const campaignId = req.body?.campaignId;
+    console.log(`[ANALYZE SOURCE] API called with sourceId: ${sourceId}, campaignId: ${campaignId}`);
+    
+    try {
+      // Получаем токен из заголовка Authorization
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        console.log(`[ANALYZE SOURCE] No authorization header provided`);
+        return res.status(401).json({
+          success: false,
+          message: "Требуется авторизация"
+        });
+      }
+      
+      const userToken = authHeader.replace('Bearer ', '');
+      console.log(`[ANALYZE SOURCE] Используем пользовательский токен: ${userToken.substring(0, 10)}...`);
+      
+      if (!sourceId || !campaignId) {
+        console.log(`[ANALYZE SOURCE] Missing required params: sourceId=${sourceId}, campaignId=${campaignId}`);
+        return res.status(400).json({
+          success: false,
+          message: "Требуется sourceId и campaignId"
+        });
+      }
+
+      console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
+
+      // Создаем отдельный axios instance для этого запроса
+      const cleanDirectusApi = axios.create({
+        baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.space',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`
+        },
+        timeout: 15000,
+      });
+
+      // 1. Получаем все тренды этого источника - используем чистый axios instance
+      const trendsResponse = await cleanDirectusApi.get('/items/campaign_trend_topics', {
+        params: {
+          filter: {
+            source_id: { _eq: sourceId },
+            campaign_id: { _eq: campaignId }
+          },
+          fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
+        }
+      });
+
+      const sourceTrends = trendsResponse.data?.data || [];
+      console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
+
+      if (sourceTrends.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Для данного источника не найдено трендов для анализа"
+        });
+      }
+
+      // 2. Анализируем настроения всех трендов
+      let positiveCount = 0;
+      let negativeCount = 0;
+      let neutralCount = 0;
+
+      sourceTrends.forEach((trend: any) => {
+        const sentiment = trend.sentiment_analysis?.sentiment || 'neutral';
+        if (sentiment === 'positive') positiveCount++;
+        else if (sentiment === 'negative') negativeCount++;
+        else neutralCount++;
+      });
+
+      const total = sourceTrends.length;
+      const sourceRating = {
+        total_trends: total,
+        analyzed_trends: total,
+        positive_percentage: Math.round((positiveCount / total) * 100),
+        negative_percentage: Math.round((negativeCount / total) * 100),
+        neutral_percentage: Math.round((neutralCount / total) * 100),
+        overall_sentiment: positiveCount > negativeCount ? 'positive' : (negativeCount > positiveCount ? 'negative' : 'neutral'),
+        analyzed_at: new Date().toISOString()
+      };
+
+      console.log(`[ANALYZE SOURCE] Анализ завершен: ${positiveCount} позитивных, ${negativeCount} негативных, ${neutralCount} нейтральных`);
+
+      return res.json({
+        success: true,
+        data: {
+          sourceId,
+          campaignId,
+          analyzed_trends: total,
+          source_rating: sourceRating,
+          sentiment_breakdown: {
+            positive: positiveCount,
+            negative: negativeCount,
+            neutral: neutralCount
+          }
+        },
+        message: `Анализ источника завершен. Проанализировано ${total} трендов.`
+      });
+
+    } catch (error) {
+      console.error('[ANALYZE SOURCE] Ошибка:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Ошибка при анализе источника",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Регистрируем универсальный интерфейс для FAL.AI
   // registerClaudeRoutes(app); // ОТКЛЮЧЕНО: используем единый маршрут /api/generate-content
   registerFalAiImageRoutes(app);
@@ -1481,108 +1604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Анализ источника - NEW ENDPOINT  
-  app.post("/api/analyze-source/:sourceId", authenticateUser, async (req: any, res) => {
-    const sourceId = req.params.sourceId;
-    const campaignId = req.body?.campaignId;
-    console.log(`[ANALYZE SOURCE] API called with sourceId: ${sourceId}, campaignId: ${campaignId}`);
-    
-    try {
-      // Получаем токен из заголовков 
-      const userToken = req.headers.authorization?.replace('Bearer ', '');
-      if (!userToken) {
-        return res.status(401).json({
-          success: false,
-          message: "Отсутствует токен авторизации"
-        });
-      }
-      
-      console.log(`[ANALYZE SOURCE] Используем пользовательский токен для анализа`);
-      
-      if (!sourceId || !campaignId) {
-        console.log(`[ANALYZE SOURCE] Missing required params: sourceId=${sourceId}, campaignId=${campaignId}`);
-        return res.status(400).json({
-          success: false,
-          message: "Требуется sourceId и campaignId"
-        });
-      }
-
-      console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
-
-      // 1. Получаем все тренды этого источника
-      const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
-        params: {
-          filter: {
-            source_id: { _eq: sourceId },
-            campaign_id: { _eq: campaignId }
-          },
-          fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
-        },
-        headers: {
-          'Authorization': `Bearer ${userToken}`
-        }
-      });
-
-      const sourceTrends = trendsResponse.data?.data || [];
-      console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
-
-      if (sourceTrends.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Для данного источника не найдено трендов для анализа"
-        });
-      }
-
-      // 2. Анализируем настроения всех трендов
-      let positiveCount = 0;
-      let negativeCount = 0;
-      let neutralCount = 0;
-
-      sourceTrends.forEach((trend: any) => {
-        const sentiment = trend.sentiment_analysis?.sentiment || 'neutral';
-        if (sentiment === 'positive') positiveCount++;
-        else if (sentiment === 'negative') negativeCount++;
-        else neutralCount++;
-      });
-
-      const total = sourceTrends.length;
-      const sourceRating = {
-        total_trends: total,
-        analyzed_trends: total,
-        positive_percentage: Math.round((positiveCount / total) * 100),
-        negative_percentage: Math.round((negativeCount / total) * 100),
-        neutral_percentage: Math.round((neutralCount / total) * 100),
-        overall_sentiment: positiveCount > negativeCount ? 'positive' : (negativeCount > positiveCount ? 'negative' : 'neutral'),
-        analyzed_at: new Date().toISOString()
-      };
-
-      console.log(`[ANALYZE SOURCE] Анализ завершен: ${positiveCount} позитивных, ${negativeCount} негативных, ${neutralCount} нейтральных`);
-
-      return res.json({
-        success: true,
-        data: {
-          sourceId,
-          campaignId,
-          analyzed_trends: total,
-          source_rating: sourceRating,
-          sentiment_breakdown: {
-            positive: positiveCount,
-            negative: negativeCount,
-            neutral: neutralCount
-          }
-        },
-        message: `Анализ источника завершен. Проанализировано ${total} трендов.`
-      });
-
-    } catch (error) {
-      console.error('[ANALYZE SOURCE] Ошибка:', error);
-      return res.status(500).json({
-        success: false,
-        message: "Ошибка при анализе источника",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+  // УДАЛЕН: дублированный endpoint перенесен в начало функции registerRoutes
   
   app.post('/api/v1/image-gen', async (req, res) => {
     try {

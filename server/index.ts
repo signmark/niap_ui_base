@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import axios from 'axios';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { registerRoutes } from "./routes";
@@ -124,6 +125,129 @@ import { registerSimpleAnalyticsAPI } from './simple-analytics-api';
 
 // Регистрируем простой API аналитики ПЕРЕД всеми остальными маршрутами
 registerSimpleAnalyticsAPI(app);
+
+// КРИТИЧНЫЙ ENDPOINT: Анализ источника (регистрируем ДО Vite middleware)
+app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
+  const sourceId = req.params.sourceId;
+  const campaignId = req.body?.campaignId;
+  console.log(`[ANALYZE SOURCE] API called with sourceId: ${sourceId}, campaignId: ${campaignId}`);
+  
+  try {
+    // Получаем токен из заголовка Authorization
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      console.log(`[ANALYZE SOURCE] No authorization header provided`);
+      return res.status(401).json({
+        success: false,
+        message: "Требуется авторизация"
+      });
+    }
+    
+    const userToken = authHeader.replace('Bearer ', '');
+    console.log(`[ANALYZE SOURCE] Используем пользовательский токен: ${userToken.substring(0, 10)}...`);
+    
+    if (!sourceId || !campaignId) {
+      console.log(`[ANALYZE SOURCE] Missing required params: sourceId=${sourceId}, campaignId=${campaignId}`);
+      return res.status(400).json({
+        success: false,
+        message: "Требуется sourceId и campaignId"
+      });
+    }
+
+    console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
+
+    // Создаем отдельный axios instance для этого запроса с системным токеном
+    const systemToken = process.env.DIRECTUS_TOKEN;
+    if (!systemToken) {
+      console.log(`[ANALYZE SOURCE] System token не найден в переменных окружения`);
+      return res.status(500).json({
+        success: false,
+        message: "Системная ошибка: отсутствует конфигурация"
+      });
+    }
+
+    const cleanDirectusApi = axios.create({
+      baseURL: process.env.DIRECTUS_URL || 'https://directus.roboflow.space',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${systemToken}`
+      },
+      timeout: 15000,
+    });
+    
+    console.log(`[ANALYZE SOURCE] Используем системный токен: ${systemToken.substring(0, 10)}...`);
+
+    // 1. Получаем все тренды этого источника - используем чистый axios instance
+    const trendsResponse = await cleanDirectusApi.get('/items/campaign_trend_topics', {
+      params: {
+        filter: {
+          source_id: { _eq: sourceId },
+          campaign_id: { _eq: campaignId }
+        },
+        fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
+      }
+    });
+
+    const sourceTrends = trendsResponse.data?.data || [];
+    console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
+
+    if (sourceTrends.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Для данного источника не найдено трендов для анализа"
+      });
+    }
+
+    // 2. Анализируем настроения всех трендов
+    let positiveCount = 0;
+    let negativeCount = 0;
+    let neutralCount = 0;
+
+    sourceTrends.forEach((trend: any) => {
+      const sentiment = trend.sentiment_analysis?.sentiment || 'neutral';
+      if (sentiment === 'positive') positiveCount++;
+      else if (sentiment === 'negative') negativeCount++;
+      else neutralCount++;
+    });
+
+    const total = sourceTrends.length;
+    const sourceRating = {
+      total_trends: total,
+      analyzed_trends: total,
+      positive_percentage: Math.round((positiveCount / total) * 100),
+      negative_percentage: Math.round((negativeCount / total) * 100),
+      neutral_percentage: Math.round((neutralCount / total) * 100),
+      overall_sentiment: positiveCount > negativeCount ? 'positive' : (negativeCount > positiveCount ? 'negative' : 'neutral'),
+      analyzed_at: new Date().toISOString()
+    };
+
+    console.log(`[ANALYZE SOURCE] Анализ завершен: ${positiveCount} позитивных, ${negativeCount} негативных, ${neutralCount} нейтральных`);
+
+    return res.json({
+      success: true,
+      data: {
+        sourceId,
+        campaignId,
+        analyzed_trends: total,
+        source_rating: sourceRating,
+        sentiment_breakdown: {
+          positive: positiveCount,
+          negative: negativeCount,
+          neutral: neutralCount
+        }
+      },
+      message: `Анализ источника завершен. Проанализировано ${total} трендов.`
+    });
+
+  } catch (error) {
+    console.error('[ANALYZE SOURCE] Ошибка:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Ошибка при анализе источника",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
 
 // Source analysis endpoint is now integrated in main routes
 
