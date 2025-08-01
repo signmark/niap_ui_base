@@ -6375,7 +6375,7 @@ Return your response as a JSON array in this exact format:
               console.log(`[ANALYZE SOURCE] Анализируем ${comments.length} комментариев для тренда ${trend.id}`);
               
               // Используем Gemini для анализа настроения
-              const geminiService = new GeminiProxyService(geminiApiKey);
+              const geminiService = new GeminiProxyService({ apiKey: geminiApiKey });
               const analysisPrompt = `Проанализируй настроение следующих комментариев по теме "${trend.title}":
 
 ${commentsText.substring(0, 2000)}
@@ -6389,7 +6389,7 @@ ${commentsText.substring(0, 2000)}
   "total_comments": ${comments.length}
 }`;
 
-              const analysisResponse = await geminiService.generateText(analysisPrompt);
+              const analysisResponse = await geminiService.generateText({ prompt: analysisPrompt });
               const analysisData = JSON.parse(analysisResponse);
               
               // Сохраняем анализ в тренде
