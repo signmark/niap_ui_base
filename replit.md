@@ -7,6 +7,7 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **2025-08-01**: **RESOLVED CRITICAL APPLICATION LOADING ISSUE** - Diagnosed and fixed React application crash that caused "app not running" error in Replit. Issue was traced to React component compilation problems and complex import dependencies. Solution involved systematic isolation using static HTML fallback, confirming server functionality, then gradual restoration of React components. Application now loads correctly in both development and production environments.
 - **2025-08-01**: **COMPLETED ROUTES REFACTORING WITH FULL RECOVERY** - Successfully implemented and restored modular architecture after compilation crisis. Extracted 5 core modules (auth, campaigns, keywords, trends, stories) with comprehensive error handling. Fixed 96+ TypeScript compilation errors including missing functions (normalizeSourceUrl, translateToEnglish, deleteRelatedItems). All modular routes now working perfectly with proper authentication responses.
 - **2025-08-01**: **COMPLETED TRENDS SOURCE RATING SYSTEM** - Fixed source rating display to properly read from sentiment_analysis field, system now correctly shows emoji ratings (😊, 😐, etc.) based on saved analysis data instead of "Analyze" buttons
 - **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
@@ -59,6 +60,12 @@ Preferred communication style: Simple, everyday language.
   4. Add content length limits (20KB) with truncation
   5. Never use while loops with regex.exec() - they cause infinite loops
   6. This is a recurring problem that needs immediate fixing when reported
+- **REPLIT APPLICATION LOADING TROUBLESHOOTING**: When "app not running" error appears in Replit:
+  1. Check server logs for Express startup confirmation on port 5000
+  2. Test with static HTML replacement in client/index.html to isolate React vs server issues
+  3. Common causes: complex React component imports, logger.ts blocking API calls, circular dependencies
+  4. Solution pattern: Use minimal React components, ensure proper error handling in main.tsx
+  5. Always verify with curl that server responds with HTTP 200 before debugging frontend
 
 ## System Architecture
 

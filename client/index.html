@@ -1,69 +1,12 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>SMM Manager</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .status {
-            background: #e8f5e8;
-            border: 1px solid #4caf50;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        .btn {
-            background: #2196F3;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🎉 SMM Manager</h1>
-        <div class="status">
-            ✅ Приложение успешно запущено и работает!
-        </div>
-        <p>Сервер Express работает корректно на порту 5000.</p>
-        <p>React приложение временно заменено статической страницей для диагностики.</p>
-        <p>Время загрузки: <span id="time"></span></p>
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="btn" onclick="enableReact()">Включить React приложение</button>
-        </div>
-    </div>
-    <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
-        console.log('✅ Статический HTML загружен успешно');
-        
-        function enableReact() {
-            if (confirm('Включить React приложение? (может вызвать ошибки)')) {
-                location.href = '/react';
-            }
-        }
-    </script>
-</body>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

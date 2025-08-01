@@ -1,14 +1,8 @@
 import { createRoot } from "react-dom/client";
-import App from "./App-ultra-minimal";
+import App from "./App";
+import "./index.css";
 
-try {
-  const rootElement = document.getElementById("root");
-  if (rootElement) {
-    createRoot(rootElement).render(<App />);
-    console.log("React приложение загружено успешно!");
-  } else {
-    console.error("Элемент root не найден!");
-  }
-} catch (error) {
-  console.error("Ошибка загрузки React:", error);
-}
+// Инициализируем браузерный логгер для контроля логов в зависимости от окружения
+import "./utils/logger";
+
+createRoot(document.getElementById("root")!).render(<App />);
