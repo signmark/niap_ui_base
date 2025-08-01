@@ -1388,7 +1388,7 @@ export function SocialMediaSettings({
                       window.open(vkOAuthUrl, '_blank', 'width=600,height=600');
                     }}
                   >
-                    🔗 Открыть VK OAuth
+                    🔗 Авторизоваться в ВК
                   </Button>
                 </div>
               </div>
