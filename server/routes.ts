@@ -3068,26 +3068,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Генерация изображения для пользователя:', userId);
       
-      // Инициализируем FAL.AI с использованием централизованной системы API ключей
+      // Инициализируем FAL.AI с использованием глобальных API ключей
       let falAiApiKey = null;
       
-      if (userId) {
-        // Если пользователь авторизован, получаем ключ из настроек пользователя
-        console.log('Получаем API ключ FAL.AI из настроек пользователя с ID:', userId);
-        falAiApiKey = await apiKeyService.getApiKey(userId, 'fal_ai', token);
+      try {
+        // Получаем глобальный API ключ FAL.AI из базы данных
+        console.log('Получаем глобальный API ключ FAL.AI из базы данных...');
+        falAiApiKey = await globalApiKeyManager.getApiKey('fal_ai');
         
         if (falAiApiKey) {
-          console.log('Используется FAL.AI API ключ из настроек пользователя (единственный источник)');
+          console.log('✅ Используется глобальный FAL.AI API ключ из базы данных');
         } else {
-          console.log('API ключ FAL.AI не найден в настройках пользователя');
+          console.log('❌ Глобальный API ключ FAL.AI не найден в базе данных');
         }
-      } else {
-        // Если пользователь не авторизован, отказываем в доступе
-        console.log('Пользователь не авторизован, доступ к FAL.AI API запрещен');
-        return res.status(403).json({ 
-          success: false, 
-          error: "Для использования генерации изображений необходимо авторизоваться и добавить ключ FAL.AI в настройки пользователя." 
-        });
+      } catch (error) {
+        console.error('Ошибка при получении глобального API ключа FAL.AI:', error);
       }
       
       if (!falAiApiKey) {

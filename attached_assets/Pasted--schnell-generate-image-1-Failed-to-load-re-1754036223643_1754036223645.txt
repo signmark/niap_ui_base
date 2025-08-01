@@ -1,0 +1,79 @@
+Выбрана модель: schnell
+generate-image:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 (Bad Request)
+ API Error: 400 for POST /generate-image Object
+(анонимная) @ src/lib/api.ts:98
+ Ошибка при запросе к API для модели schnell: Request failed with status code 400
+mutationFn @ src/components/Image…ationDialog.tsx:463
+ Системная ошибка: Неожиданная ошибка API (400). Свяжитесь с поддержкой. AxiosError
+systemError @ logger.ts:72
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+globalErrorHandler @ src/lib/queryClient.ts:91
+ Ошибка при генерации изображения: AxiosError
+onError @ src/components/Image…ationDialog.tsx:541
+generate-image:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 (Bad Request)
+ API Error: 400 for POST /generate-image Object
+(анонимная) @ src/lib/api.ts:98
+ Ошибка при запросе к API для модели schnell: Request failed with status code 400
+mutationFn @ src/components/Image…ationDialog.tsx:463
+ Системная ошибка: Неожиданная ошибка API (400). Свяжитесь с поддержкой. AxiosError
+systemError @ logger.ts:72
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+globalErrorHandler @ src/lib/queryClient.ts:91
+ Ошибка при генерации изображения: AxiosError
+onError @ src/components/Image…ationDialog.tsx:541
+ 
+            
+            
+           POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/generate-image 400 (Bad Request)
+dispatchXhrRequest @ @fs/home/runner/work….js?v=a627230e:1637
+xhr @ @fs/home/runner/work….js?v=a627230e:1517
+dispatchRequest @ @fs/home/runner/work….js?v=a627230e:1992
+Promise.then
+_request @ @fs/home/runner/work….js?v=a627230e:2195
+request @ @fs/home/runner/work….js?v=a627230e:2104
+httpMethod @ @fs/home/runner/work….js?v=a627230e:2242
+wrap @ @fs/home/runner/work…ios.js?v=a627230e:8
+mutationFn @ src/components/Image…ationDialog.tsx:452
+fn @ @fs/home/runner/work….js?v=a627230e:1189
+run @ @fs/home/runner/work…y.js?v=a627230e:494
+start @ @fs/home/runner/work…y.js?v=a627230e:536
+execute @ @fs/home/runner/work….js?v=a627230e:1225
+await in execute
+mutate @ @fs/home/runner/work….js?v=a627230e:2630
+(анонимная) @ @fs/home/runner/work….js?v=a627230e:3295
+onClick @ src/components/Image…tionDialog.tsx:1145
+callCallback2 @ @fs/home/runner/work….js?v=a627230e:3674
+invokeGuardedCallbackDev @ @fs/home/runner/work….js?v=a627230e:3699
+invokeGuardedCallback @ @fs/home/runner/work….js?v=a627230e:3733
+invokeGuardedCallbackAndCatchFirstError @ @fs/home/runner/work….js?v=a627230e:3736
+executeDispatch @ @fs/home/runner/work….js?v=a627230e:7014
+processDispatchQueueItemsInOrder @ @fs/home/runner/work….js?v=a627230e:7034
+processDispatchQueue @ @fs/home/runner/work….js?v=a627230e:7043
+dispatchEventsForPlugins @ @fs/home/runner/work….js?v=a627230e:7051
+(анонимная) @ @fs/home/runner/work….js?v=a627230e:7174
+batchedUpdates$1 @ @fs/home/runner/work…js?v=a627230e:18913
+batchedUpdates @ @fs/home/runner/work….js?v=a627230e:3579
+dispatchEventForPluginEventSystem @ @fs/home/runner/work….js?v=a627230e:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ @fs/home/runner/work….js?v=a627230e:5478
+dispatchEvent @ @fs/home/runner/work….js?v=a627230e:5472
+dispatchDiscreteEvent @ @fs/home/runner/work….js?v=a627230e:5449
+ API Error: 400 for POST /generate-image {success: false, error: 'API ключ для FAL.AI не настроен'}
+(анонимная) @ src/lib/api.ts:98
+Promise.then
+_request @ @fs/home/runner/work….js?v=a627230e:2195
+request @ @fs/home/runner/work….js?v=a627230e:2104
+httpMethod @ @fs/home/runner/work….js?v=a627230e:2242
+wrap @ @fs/home/runner/work…ios.js?v=a627230e:8
+mutationFn @ src/components/Image…ationDialog.tsx:452
+fn @ @fs/home/runner/work….js?v=a627230e:1189
+run @ @fs/home/runner/work…y.js?v=a627230e:494
+start @ @fs/home/runner/work…y.js?v=a627230e:536
+execute @ @fs/home/runner/work….js?v=a627230e:1225
+await in execute
+mutate @ @fs/home/runner/work….js?v=a627230e:2630
