@@ -495,13 +495,17 @@ export default function Trends() {
         description: `Проанализировано ${data.data?.analyzed_trends || 0} трендов. Рейтинг источника обновлен.`,
       });
       
+      console.log('[SOURCE ANALYSIS] Frontend: анализ завершен, обновляем кэш данных');
+      
       // Принудительно обновляем все данные для отображения новых рейтингов
       queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
       queryClient.invalidateQueries({ queryKey: ["trends"] });
-      queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
       
-      // Небольшая задержка перед повторным запросом данных
+      // Принудительная перезагрузка данных трендов с задержкой
       setTimeout(() => {
+        console.log('[SOURCE ANALYSIS] Frontend: принудительная перезагрузка через 500ms');
+        queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
         queryClient.refetchQueries({ queryKey: ["trends"] });
       }, 1000);
     },
