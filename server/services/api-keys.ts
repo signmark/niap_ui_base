@@ -23,7 +23,7 @@ const SERVICE_NAME_DB_MAPPING: Record<ApiServiceName, string> = {
   [ApiServiceName.SOCIAL_SEARCHER]: 'social_searcher',
   [ApiServiceName.APIFY]: 'apify',
   [ApiServiceName.DEEPSEEK]: 'deepseek',
-  [ApiServiceName.FAL_AI]: 'fal_ai',
+  [ApiServiceName.FAL_AI]: 'FAL_AI',
   [ApiServiceName.XMLRIVER]: 'xmlriver',
   [ApiServiceName.QWEN]: 'qwen',
   [ApiServiceName.CLAUDE]: 'claude',
