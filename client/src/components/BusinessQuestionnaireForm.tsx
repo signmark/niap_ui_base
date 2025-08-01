@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useAuthStore } from '@/lib/store';
+import { KeywordSelector } from '@/components/KeywordSelector';
 
 // Определяем схему валидации для формы бизнес-анкеты
 const businessQuestionnaireSchema = z.object({
@@ -756,6 +757,24 @@ export function BusinessQuestionnaireForm({
                   </FormItem>
                 )}
               />
+
+              {/* Блок с ключевыми словами */}
+              <div className="border-t pt-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Ключевые слова кампании</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ключевые слова используются для генерации релевантного контента и таргетинга рекламы.
+                  </p>
+                </div>
+                <KeywordSelector 
+                  campaignId={campaignId}
+                  showUpdateMetricsButton={false}
+                  onSelect={() => {
+                    // Обновляем кэш при изменении ключевых слов
+                    queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });
+                  }}
+                />
+              </div>
 
               {isEditMode && (
                 <div className="flex justify-end space-x-2">
