@@ -186,15 +186,47 @@ router.post('/refresh', async (req, res) => {
   }
 });
 
-// Check authentication status
-router.get('/status', authenticateUser, (req: any, res) => {
-  res.json({ 
-    authenticated: true,
-    user: {
-      id: req.user.id,
-      email: req.user.email
+// Check authentication status (public route)
+router.get('/status', (req: any, res) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.json({ 
+      authenticated: false,
+      message: 'No token provided'
+    });
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    // Decode JWT token to check validity
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      throw new Error('Invalid token format');
     }
-  });
+    
+    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+    
+    if (!payload.id) {
+      throw new Error('Invalid token payload');
+    }
+    
+    res.json({
+      authenticated: true,
+      user: {
+        id: payload.id,
+        email: payload.email || 'unknown@email.com',
+        role: payload.role
+      }
+    });
+  } catch (error) {
+    log('auth', `Token validation failed: ${error}`);
+    res.json({ 
+      authenticated: false,
+      message: 'Invalid token'
+    });
+  }
 });
 
 // Password reset request

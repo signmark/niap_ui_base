@@ -43,7 +43,7 @@ import {
 } from './services/social-api-validator';
 import { registerValidationRoutes } from './api/validation-routes';
 import { registerPublishingRoutes } from './api/publishing-routes';
-import { registerAuthRoutes } from './api/auth-routes';
+// Old auth routes removed - using modular routes/auth.ts
 import { registerTokenRoutes } from './api/token-routes';
 // Все старые импорты аналитики удалены
 import { registerTestInstagramRoute } from './api/test-instagram-route';

@@ -118,9 +118,8 @@ app.get('/api/status-check', (req, res) => {
   return res.json({ status: 'ok', server: 'running', time: new Date().toISOString() });
 });
 
-// Регистрируем прямые маршруты аутентификации до инициализации Vite
+// Регистрируем прямые маршруты до инициализации Vite
 import { isUserAdmin } from './routes-global-api-keys';
-import { registerAuthRoutes } from './api/auth-routes';
 import { registerSimpleAnalyticsAPI } from './simple-analytics-api';
 
 // Регистрируем простой API аналитики ПЕРЕД всеми остальными маршрутами
@@ -331,8 +330,7 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
 
 // Старый код API аналитики удален - теперь используется simple-analytics-api.ts
 
-// Регистрируем все маршруты аутентификации и API ключей раньше Vite
-registerAuthRoutes(app);
+// Старые маршруты аутентификации удалены - используются модульные из routes/auth.ts
 
 // Импортируем и регистрируем маршруты для глобальных API ключей
 import { registerGlobalApiKeysRoutes } from './routes-global-api-keys';
