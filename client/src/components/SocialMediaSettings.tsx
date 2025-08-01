@@ -1393,10 +1393,10 @@ export function SocialMediaSettings({
                 </div>
               </div>
 
-              {/* VK Access Token через URL */}
+              {/* VK Authorization URL */}
               <div className="space-y-4">
                 <FormItem>
-                  <FormLabel className="text-base font-medium">VK Access Token</FormLabel>
+                  <FormLabel className="text-base font-medium">Authorization URL</FormLabel>
                   <div className="flex space-x-2">
                     <Input
                       placeholder="https://oauth.vk.com/blank.html#access_token=vk1.a.enhtsafWTnsHKIpezjv..."
