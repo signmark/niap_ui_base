@@ -3,7 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { registerRoutes } from "./routes";
+import { registerRoutes, addTestRoutes } from "./routes";
 import { registerFalAiImageRoutes } from "./routes-fal-ai-images";
 import { registerClaudeRoutes } from "./routes-claude";
 import { registerDeepSeekRoutes } from "./routes-deepseek";
@@ -123,6 +123,10 @@ import { registerSimpleAnalyticsAPI } from './simple-analytics-api';
 
 // Регистрируем простой API аналитики ПЕРЕД всеми остальными маршрутами
 registerSimpleAnalyticsAPI(app);
+
+// ТЕСТОВЫЙ ENDPOINT для отладки анализа источников
+addTestRoutes(app);
+log('Test routes registered (source analysis debug)');
 
 // Старый код API аналитики удален - теперь используется simple-analytics-api.ts
 
