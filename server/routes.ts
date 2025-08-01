@@ -3073,16 +3073,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Получаем глобальный API ключ FAL.AI из базы данных
-        console.log('Получаем глобальный API ключ FAL.AI из базы данных...');
+        console.log('🔍 Получаем глобальный API ключ FAL.AI из базы данных...');
         falAiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.FAL_AI);
         
         if (falAiApiKey) {
-          console.log('✅ Используется глобальный FAL.AI API ключ из базы данных');
+          console.log('✅ Найден глобальный FAL.AI API ключ:', falAiApiKey.substring(0, 10) + '...');
         } else {
           console.log('❌ Глобальный API ключ FAL.AI не найден в базе данных');
+          
+          // Добавляем проверку всех доступных глобальных ключей для диагностики
+          console.log('🔍 Проверяем все доступные глобальные API ключи...');
+          try {
+            const allServices = Object.values(ApiServiceName);
+            for (const service of allServices) {
+              const key = await globalApiKeyManager.getApiKey(service);
+              console.log(`📋 ${service}: ${key ? 'НАЙДЕН' : 'НЕ НАЙДЕН'}`);
+            }
+          } catch (diagError) {
+            console.error('Ошибка диагностики глобальных ключей:', diagError);
+          }
         }
       } catch (error) {
-        console.error('Ошибка при получении глобального API ключа FAL.AI:', error);
+        console.error('❌ Ошибка при получении глобального API ключа FAL.AI:', error);
       }
       
       if (!falAiApiKey) {
