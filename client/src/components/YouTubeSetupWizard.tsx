@@ -236,11 +236,17 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
   const fetchChannelInfo = async (accessToken: string, tokens?: { accessToken: string; refreshToken: string }) => {
     try {
       console.log('📊 [YouTube Wizard] Fetching channel info...');
+      console.log('📊 [YouTube Wizard] Access token length:', accessToken?.length || 0);
+      console.log('📊 [YouTube Wizard] Access token preview:', accessToken?.substring(0, 20) + '...');
       
       const response = await fetch(`/api/youtube/channel-info?accessToken=${encodeURIComponent(accessToken)}`);
       
+      console.log('📊 [YouTube Wizard] Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Channel info request failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('📊 [YouTube Wizard] Error response:', errorText);
+        throw new Error(`Channel info request failed: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -298,9 +304,12 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
     } catch (error: any) {
       console.error('❌ [YouTube Wizard] Channel info error:', error);
       
-      // Если ошибка авторизации (401), предлагаем повторную авторизацию
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        setStep(4); // Переходим к шагу ошибки авторизации
+      // Если ошибка авторизации (401/404/Not Found), предлагаем повторную авторизацию
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized') || 
+          error.message?.includes('404') || error.message?.includes('Not Found')) {
+        console.log('🔄 [YouTube Wizard] Authorization error detected, returning to step 1');
+        setStep(1); // Возвращаемся к начальному шагу для повторной авторизации
+        setAuthTokens({ accessToken: '', refreshToken: '' }); // Сбрасываем токены
       }
       
       toast({
