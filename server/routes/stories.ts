@@ -1,274 +1,288 @@
 import express from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { directusApi } from '../directus';
+import { log } from '../utils/logger';
 
 const router = express.Router();
 
-// Create a new story
-router.post('/', authenticateUser, async (req, res) => {
+/**
+ * Stories Routes
+ * Handles Instagram Stories creation, editing, and management
+ */
+
+// Get stories for a specific campaign
+router.get('/:campaignId', authenticateUser, async (req: any, res) => {
   try {
-    const { title, campaignId, slides } = req.body;
-    const userId = req.user?.id;
+    const campaignId = req.params.campaignId;
+    const userId = req.user.id;
+    const token = req.user.token;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    log('stories', `Getting stories for campaign ${campaignId}, user ${userId}`);
 
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
-
-    // Create story content in campaign_content collection
-    const storyData = {
-      campaign_id: campaignId,
-      user_id: userId,
-      title: title || 'Новая история',
-      content_type: 'story',
-      status: 'draft',
-      content: '', // Empty content for stories
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16'
-      }),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
+    // Verify user has access to this campaign
+    const campaignResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaigns/${campaignId}`,
       headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = createResponse.data.data;
-
-    console.log('[DEV] [stories] Story created with ID:', story.id);
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error creating story:', error);
-    res.status(500).json({ error: 'Failed to create story' });
-  }
-});
-
-// Get all stories for user
-router.get('/', authenticateUser, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    console.log('[DEV] [stories] Fetching stories for user:', userId);
-
-    const response = await directusApi.get('/items/campaign_content', {
-      headers: {
-        'Authorization': req.headers.authorization
+        'Authorization': `Bearer ${token}`
       },
       params: {
-        filter: JSON.stringify({
-          user_id: { _eq: userId },
-          content_type: { _eq: 'story' }
-        }),
-        sort: '-created_at'
+        fields: ['user_created']
       }
     });
 
-    const stories = response.data.data || [];
-    console.log('[DEV] [stories] Found', stories.length, 'stories');
+    if (campaignResponse.data.user_created !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get stories from campaign_content with story type
+    const storiesResponse = await directusApi.request({
+      method: 'GET',
+      url: '/items/campaign_content',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        filter: {
+          campaign_id: {
+            _eq: campaignId
+          },
+          content_type: {
+            _eq: 'story'
+          }
+        },
+        sort: ['-date_created'],
+        fields: [
+          'id',
+          'title',
+          'content',
+          'metadata',
+          'date_created',
+          'status'
+        ]
+      }
+    });
+
+    const stories = storiesResponse.data || [];
+
+    log('stories', `Retrieved ${stories.length} stories for campaign ${campaignId}`);
+    res.json({ data: stories });
+
+  } catch (error: any) {
+    log('stories', `Error getting stories: ${error.message}`);
     
-    res.json({ success: true, data: stories });
-  } catch (error) {
-    console.error('Error fetching stories:', error);
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+    
     res.status(500).json({ error: 'Failed to fetch stories' });
   }
 });
 
 // Create a new story
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, async (req: any, res) => {
   try {
-    const { title, campaignId, slides } = req.body;
-    const userId = req.user?.id;
+    const { campaignId, title, slides, template } = req.body;
+    const userId = req.user.id;
+    const token = req.user.token;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!campaignId) {
+      return res.status(400).json({ error: 'Campaign ID is required' });
     }
 
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
+    log('stories', `Creating new story for campaign ${campaignId}`);
 
-    // Create story content in campaign_content collection
-    const storyData = {
-      campaign_id: campaignId,
-      user_id: userId,
-      title: title || 'Новая история',
-      content_type: 'story',
-      status: 'draft',
-      content: '', // Empty content for stories
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16'
-      }),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
+    // Verify user owns the campaign
+    const campaignResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaigns/${campaignId}`,
       headers: {
-        'Authorization': req.headers.authorization
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        fields: ['user_created']
       }
     });
-    const story = createResponse.data.data;
 
-    console.log('[DEV] [stories] Story created with ID:', story.id);
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error creating story:', error);
+    if (campaignResponse.data.user_created !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Create story metadata
+    const storyMetadata = {
+      slides: slides || [],
+      template: template || 'default',
+      created_by: userId,
+      version: 1
+    };
+
+    // Create story in campaign_content
+    const storyResponse = await directusApi.request({
+      method: 'POST',
+      url: '/items/campaign_content',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        campaign_id: campaignId,
+        title: title || 'Untitled Story',
+        content_type: 'story',
+        status: 'draft',
+        metadata: JSON.stringify(storyMetadata)
+      }
+    });
+
+    const createdStory = storyResponse.data;
+
+    log('stories', `Successfully created story ${createdStory.id}`);
+    res.status(201).json({ data: createdStory });
+
+  } catch (error: any) {
+    log('stories', `Error creating story: ${error.message}`);
     res.status(500).json({ error: 'Failed to create story' });
   }
 });
 
-// Update story - SPECIFIC ROUTE FOR STORIES ONLY
-router.put('/story/:id', authenticateUser, async (req, res) => {
+// Update an existing story
+router.patch('/:storyId', authenticateUser, async (req: any, res) => {
   try {
-    const { id } = req.params;
-    const { title, slides } = req.body;
-    const userId = req.user?.id;
+    const storyId = req.params.storyId;
+    const updateData = req.body;
+    const userId = req.user.id;
+    const token = req.user.token;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    log('stories', `Updating story ${storyId}`);
 
-    console.log('[DEV] [stories] Updating story:', id, { title, slidesCount: slides?.length });
-
-    const updateData = {
-      title: title || 'Новая история',
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16',
-        version: '1.0'
-      }),
-      updated_at: new Date().toISOString()
-    };
-
-    // Используем токен пользователя для обновления записи
-    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
+    // Get existing story
+    const storyResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaign_content/${storyId}`,
       headers: {
-        'Authorization': req.headers.authorization
+        'Authorization': `Bearer ${token}`
       }
     });
-    const story = updateResponse.data.data;
 
-    console.log('[DEV] [stories] Story updated successfully');
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error updating story:', error);
+    const story = storyResponse.data;
+
+    // Verify user owns the campaign
+    const campaignResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaigns/${story.campaign_id}`,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        fields: ['user_created']
+      }
+    });
+
+    if (campaignResponse.data.user_created !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Update story metadata if slides are provided
+    let updatedMetadata = story.metadata;
+    if (updateData.slides) {
+      try {
+        const currentMetadata = JSON.parse(story.metadata || '{}');
+        updatedMetadata = JSON.stringify({
+          ...currentMetadata,
+          slides: updateData.slides,
+          updated_by: userId,
+          updated_at: new Date().toISOString()
+        });
+      } catch (error) {
+        log('stories', `Error parsing story metadata: ${error}`);
+      }
+    }
+
+    // Update story
+    const updateResponse = await directusApi.request({
+      method: 'PATCH',
+      url: `/items/campaign_content/${storyId}`,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        title: updateData.title || story.title,
+        status: updateData.status || story.status,
+        metadata: updatedMetadata
+      }
+    });
+
+    const updatedStory = updateResponse.data;
+
+    log('stories', `Successfully updated story ${storyId}`);
+    res.json({ data: updatedStory });
+
+  } catch (error: any) {
+    log('stories', `Error updating story: ${error.message}`);
+    
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
     res.status(500).json({ error: 'Failed to update story' });
   }
 });
 
-// Get story by ID - SPECIFIC ROUTE FOR STORIES ONLY
-router.get('/story/:id', authenticateUser, async (req, res) => {
+// Delete a story
+router.delete('/:storyId', authenticateUser, async (req: any, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user?.id;
+    const storyId = req.params.storyId;
+    const userId = req.user.id;
+    const token = req.user.token;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    log('stories', `Deleting story ${storyId}`);
 
-    const story = await directusCrud.read('campaign_content', id);
-
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error fetching story:', error);
-    res.status(500).json({ error: 'Не удалось загрузить историю' });
-  }
-});
-
-// Delete story - SPECIFIC ROUTE FOR STORIES ONLY
-router.delete('/story/:id', authenticateUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Verify ownership с пользовательским токеном
-    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+    // Get story to verify access
+    const storyResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaign_content/${storyId}`,
       headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = response.data.data;
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-
-    await directusApi.delete(`/items/campaign_content/${id}`, {
-      headers: {
-        'Authorization': req.headers.authorization
+        'Authorization': `Bearer ${token}`
       }
     });
 
-    res.json({ success: true, message: 'Story deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting story:', error);
+    const story = storyResponse.data;
+
+    // Verify user owns the campaign
+    const campaignResponse = await directusApi.request({
+      method: 'GET',
+      url: `/items/campaigns/${story.campaign_id}`,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: {
+        fields: ['user_created']
+      }
+    });
+
+    if (campaignResponse.data.user_created !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Delete story
+    await directusApi.request({
+      method: 'DELETE',
+      url: `/items/campaign_content/${storyId}`,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    log('stories', `Successfully deleted story ${storyId}`);
+    res.json({ message: 'Story deleted successfully' });
+
+  } catch (error: any) {
+    log('stories', `Error deleting story: ${error.message}`);
+    
+    if (error.response?.status === 404) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
     res.status(500).json({ error: 'Failed to delete story' });
   }
 });
 
-// Publish story - SPECIFIC ROUTE FOR STORIES ONLY
-router.post('/story/:id/publish', authenticateUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { platforms, scheduledAt } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Get story с пользовательским токеном
-    const response = await directusApi.get(`/items/campaign_content/${id}`, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = response.data.data;
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-
-    // Update story status and platforms
-    const updateData = {
-      status: scheduledAt ? 'scheduled' : 'published',
-      scheduled_time: scheduledAt || new Date().toISOString(),
-      platforms: JSON.stringify(platforms),
-      updated_at: new Date().toISOString()
-    };
-
-    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const updatedStory = updateResponse.data.data;
-
-    res.json({ 
-      success: true, 
-      data: updatedStory,
-      message: scheduledAt ? 'Story scheduled for publication' : 'Story published successfully'
-    });
-  } catch (error) {
-    console.error('Error publishing story:', error);
-    res.status(500).json({ error: 'Failed to publish story' });
-  }
-});
-
-// Export router with specific story routes only
 export default router;

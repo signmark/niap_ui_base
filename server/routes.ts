@@ -56,6 +56,7 @@ import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
 import { publicationStatusChecker } from './services/status-checker';
+import { registerModularRoutes } from './routes/index';
 // import { geminiRouter } from './api/gemini-routes'; // ОТКЛЮЧЕНО: используем единый маршрут
 import telegramWebhookRoutes from './api/telegram-webhook-direct';
 import vkWebhookRoutes from './api/vk-webhook-direct';
@@ -4099,6 +4100,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
   console.log('Starting route registration...');
+  
+  // ===== МОДУЛЬНЫЕ МАРШРУТЫ (РЕФАКТОРИНГ) =====
+  // Регистрируем новые модульные маршруты для критических функций
+  console.log('Registering modular routes...');
+  registerModularRoutes(app);
+  console.log('✓ Modular routes registered successfully');
+  
   // Создаем HTTP сервер
   console.log('Creating HTTP server...');
   const httpServer = createServer(app);
