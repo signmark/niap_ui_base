@@ -209,101 +209,23 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
       });
     }
 
-    // 2. Анализируем настроения всех трендов
+    // 2. Собираем данные из уже проанализированных трендов
     let positiveCount = 0;
     let negativeCount = 0;
     let neutralCount = 0;
     let totalScore = 0;
     let scoredTrends = 0;
 
-    console.log(`[ANALYZE SOURCE] Начинаем анализ настроения для ${sourceTrends.length} трендов`);
+    console.log(`[ANALYZE SOURCE] Собираем баллы из проанализированных трендов для источника ${sourceId}`);
     
-    // Анализируем каждый тренд через Gemini API
+    // Просто собираем существующие данные без нового анализа
     for (const trend of sourceTrends) {
-      try {
-        // Проверяем, есть ли уже анализ настроения
-        if (trend.sentiment_analysis?.sentiment) {
-          const sentiment = trend.sentiment_analysis.sentiment;
-          if (sentiment === 'positive') positiveCount++;
-          else if (sentiment === 'negative') negativeCount++;
-          else neutralCount++;
-          console.log(`[ANALYZE SOURCE] Тренд ${trend.id} уже проанализирован: ${sentiment}`);
-          continue;
-        }
-
-        // Если анализа нет, проводим его
-        console.log(`[ANALYZE SOURCE] Анализируем тренд: ${trend.title.substring(0, 50)}...`);
+      // Проверяем, есть ли уже анализ настроения с баллом
+      if (trend.sentiment_analysis?.sentiment && trend.sentiment_analysis?.score) {
+        const sentiment = trend.sentiment_analysis.sentiment;
+        const score = trend.sentiment_analysis.score;
         
-        // Используем Gemini для анализа настроения с балльной оценкой
-        const sentimentResponse = await axios.post(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-          {
-            contents: [{
-              parts: [{
-                text: `Проанализируй настроение этого поста и дай оценку:
-
-Заголовок: ${trend.title}
-
-Ответь в формате JSON:
-{
-  "sentiment": "positive/negative/neutral",
-  "score": число_от_1_до_100,
-  "reasoning": "краткое_объяснение"
-}
-
-Где score:
-- 80-100: очень позитивный контент
-- 60-79: умеренно позитивный  
-- 40-59: нейтральный контент
-- 20-39: умеренно негативный
-- 1-19: очень негативный контент`
-              }]
-            }]
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            params: {
-              key: process.env.GEMINI_API_KEY
-            },
-            timeout: 10000
-          }
-        );
-
-        const responseText = sentimentResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        let sentiment = 'neutral';
-        let score = 50;
-        let reasoning = 'Автоматический анализ';
-
-        try {
-          // Парсим JSON ответ от Gemini
-          const jsonMatch = responseText.match(/\{[^}]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            sentiment = ['positive', 'negative', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral';
-            score = Math.max(1, Math.min(100, parseInt(parsed.score) || 50));
-            reasoning = parsed.reasoning || reasoning;
-          }
-        } catch (error) {
-          console.log(`[ANALYZE SOURCE] Ошибка парсинга JSON, используем fallback для тренда ${trend.id}`);
-          // Fallback к простому анализу
-          const sentimentText = responseText.toLowerCase();
-          if (sentimentText.includes('positive')) {
-            sentiment = 'positive';
-            score = 70;
-          } else if (sentimentText.includes('negative')) {
-            sentiment = 'negative';
-            score = 30;
-          } else {
-            sentiment = 'neutral';
-            score = 50;
-          }
-        }
-        
-        console.log(`[ANALYZE SOURCE] Результат анализа тренда ${trend.id}: ${sentiment} (${score} баллов)`);
-
-        // Подсчитываем статистику
+        // Подсчитываем статистику по типам
         if (sentiment === 'positive') positiveCount++;
         else if (sentiment === 'negative') negativeCount++;
         else neutralCount++;
@@ -311,31 +233,11 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
         // Добавляем балл к общему счету
         totalScore += score;
         scoredTrends++;
-
-        // Сохраняем результат анализа в базу данных
-        const sentimentAnalysis = {
-          sentiment: sentiment,
-          score: score,
-          reasoning: reasoning,
-          analyzed_at: new Date().toISOString(),
-          analyzed_by: 'source_analysis'
-        };
-
-        await systemDirectusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
-          sentiment_analysis: sentimentAnalysis
-        });
-
-        console.log(`[ANALYZE SOURCE] Анализ настроения сохранен для тренда ${trend.id}`);
-
-        // Небольшая задержка между запросами к Gemini
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error) {
-        console.error(`[ANALYZE SOURCE] Ошибка анализа тренда ${trend.id}:`, error);
-        // Если ошибка - считаем как нейтральный
-        neutralCount++;
-        totalScore += 50; // Нейтральный балл по умолчанию
-        scoredTrends++;
+        
+        console.log(`[ANALYZE SOURCE] Тренд ${trend.id}: ${sentiment} (балл: ${score}) - добавлен к общему счету`);
+        console.log(`[ANALYZE SOURCE] Текущий общий счет: ${totalScore}, проанализировано трендов: ${scoredTrends}`);
+      } else {
+        console.log(`[ANALYZE SOURCE] Тренд ${trend.id} не проанализирован - sentiment: ${trend.sentiment_analysis?.sentiment}, score: ${trend.sentiment_analysis?.score}`);
       }
     }
 
@@ -386,9 +288,7 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
           'Authorization': `Bearer ${directusToken}`
         },
         body: JSON.stringify({
-          sentiment: overallSentiment,
-          analysis_data: sourceRating,
-          analyzed_at: new Date().toISOString()
+          sentiment_analysis: sourceRating
         })
       });
 
