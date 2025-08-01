@@ -551,7 +551,7 @@ export default function FacebookSetupWizard({
                       size="sm"
                       className="text-purple-600 border-purple-300 hover:bg-purple-100"
                     >
-                      📋 Взять из ИГ
+                      📋 Взять из Instagram
                     </Button>
                   </div>
                   <FormMessage />
