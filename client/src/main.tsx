@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import App from "./App-simple";
 import "./index.css";
 
 // Инициализируем браузерный логгер для контроля логов в зависимости от окружения
