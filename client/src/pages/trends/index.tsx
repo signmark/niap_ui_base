@@ -990,8 +990,8 @@ export default function Trends() {
           // Убираем немедленный совет - пользователь только что запустил сбор
           // Совет может появиться позже, если пользователь не выберет тренд в течение минуты
           setTimeout(() => {
-            // Показываем совет только если тренд все еще не выбран через минуту
-            if (!selectedTrendTopic && collectComments && collectComments.length > 0) {
+            // Показываем совет только если есть тренды, но ни один не выбран
+            if (!selectedTrendTopic && collectComments && collectComments.length > 0 && trends && trends.length > 0) {
               toast({
                 title: "Совет",
                 description: "Выберите тренд, чтобы увидеть собранные комментарии"
