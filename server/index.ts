@@ -373,6 +373,34 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
     console.log(`[ANALYZE SOURCE] Анализ завершен: ${positiveCount} позитивных, ${negativeCount} негативных, ${neutralCount} нейтральных`);
     console.log(`[ANALYZE SOURCE] Средний балл: ${averageScore}, Эмодзи: ${emoji}, Общее настроение: ${overallSentiment}`);
 
+    // Обновляем рейтинг источника в базе данных
+    console.log(`[ANALYZE SOURCE] Сохраняем рейтинг источника ${sourceId} в базу данных`);
+    const directusUrl = process.env.DIRECTUS_URL;
+    const directusToken = process.env.DIRECTUS_TOKEN;
+    
+    try {
+      const updateResponse = await fetch(`${directusUrl}/items/campaign_content_sources/${sourceId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${directusToken}`
+        },
+        body: JSON.stringify({
+          sentiment: overallSentiment,
+          analysis_data: sourceRating,
+          analyzed_at: new Date().toISOString()
+        })
+      });
+
+      if (updateResponse.ok) {
+        console.log(`[ANALYZE SOURCE] Рейтинг источника ${sourceId} успешно сохранен в БД`);
+      } else {
+        console.error(`[ANALYZE SOURCE] Ошибка сохранения рейтинга источника ${sourceId}:`, updateResponse.status);
+      }
+    } catch (updateError) {
+      console.error(`[ANALYZE SOURCE] Ошибка обновления источника:`, updateError);
+    }
+
     return res.json({
       success: true,
       data: {

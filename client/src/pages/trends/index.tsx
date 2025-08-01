@@ -507,7 +507,13 @@ export default function Trends() {
         console.log('[SOURCE ANALYSIS] Frontend: принудительная перезагрузка через 500ms');
         queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
         queryClient.refetchQueries({ queryKey: ["trends"] });
-      }, 1000);
+        
+        // Дополнительная перезагрузка через 2 секунды для уверенности
+        setTimeout(() => {
+          console.log('[SOURCE ANALYSIS] Frontend: дополнительная перезагрузка через 2000ms');
+          queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+        }, 1500);
+      }, 500);
     },
     onError: (error: any, { sourceId }) => {
       console.error('Ошибка анализа источника:', error);
