@@ -213,26 +213,165 @@ app.post("/api/analyze-source/:sourceId", async (req: any, res) => {
     let positiveCount = 0;
     let negativeCount = 0;
     let neutralCount = 0;
+    let totalScore = 0;
+    let scoredTrends = 0;
 
-    sourceTrends.forEach((trend: any) => {
-      const sentiment = trend.sentiment_analysis?.sentiment || 'neutral';
-      if (sentiment === 'positive') positiveCount++;
-      else if (sentiment === 'negative') negativeCount++;
-      else neutralCount++;
-    });
+    console.log(`[ANALYZE SOURCE] Начинаем анализ настроения для ${sourceTrends.length} трендов`);
+    
+    // Анализируем каждый тренд через Gemini API
+    for (const trend of sourceTrends) {
+      try {
+        // Проверяем, есть ли уже анализ настроения
+        if (trend.sentiment_analysis?.sentiment) {
+          const sentiment = trend.sentiment_analysis.sentiment;
+          if (sentiment === 'positive') positiveCount++;
+          else if (sentiment === 'negative') negativeCount++;
+          else neutralCount++;
+          console.log(`[ANALYZE SOURCE] Тренд ${trend.id} уже проанализирован: ${sentiment}`);
+          continue;
+        }
 
+        // Если анализа нет, проводим его
+        console.log(`[ANALYZE SOURCE] Анализируем тренд: ${trend.title.substring(0, 50)}...`);
+        
+        // Используем Gemini для анализа настроения с балльной оценкой
+        const sentimentResponse = await axios.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+          {
+            contents: [{
+              parts: [{
+                text: `Проанализируй настроение этого поста и дай оценку:
+
+Заголовок: ${trend.title}
+
+Ответь в формате JSON:
+{
+  "sentiment": "positive/negative/neutral",
+  "score": число_от_1_до_100,
+  "reasoning": "краткое_объяснение"
+}
+
+Где score:
+- 80-100: очень позитивный контент
+- 60-79: умеренно позитивный  
+- 40-59: нейтральный контент
+- 20-39: умеренно негативный
+- 1-19: очень негативный контент`
+              }]
+            }]
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            params: {
+              key: process.env.GEMINI_API_KEY
+            },
+            timeout: 10000
+          }
+        );
+
+        const responseText = sentimentResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        let sentiment = 'neutral';
+        let score = 50;
+        let reasoning = 'Автоматический анализ';
+
+        try {
+          // Парсим JSON ответ от Gemini
+          const jsonMatch = responseText.match(/\{[^}]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            sentiment = ['positive', 'negative', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral';
+            score = Math.max(1, Math.min(100, parseInt(parsed.score) || 50));
+            reasoning = parsed.reasoning || reasoning;
+          }
+        } catch (error) {
+          console.log(`[ANALYZE SOURCE] Ошибка парсинга JSON, используем fallback для тренда ${trend.id}`);
+          // Fallback к простому анализу
+          const sentimentText = responseText.toLowerCase();
+          if (sentimentText.includes('positive')) {
+            sentiment = 'positive';
+            score = 70;
+          } else if (sentimentText.includes('negative')) {
+            sentiment = 'negative';
+            score = 30;
+          } else {
+            sentiment = 'neutral';
+            score = 50;
+          }
+        }
+        
+        console.log(`[ANALYZE SOURCE] Результат анализа тренда ${trend.id}: ${sentiment} (${score} баллов)`);
+
+        // Подсчитываем статистику
+        if (sentiment === 'positive') positiveCount++;
+        else if (sentiment === 'negative') negativeCount++;
+        else neutralCount++;
+        
+        // Добавляем балл к общему счету
+        totalScore += score;
+        scoredTrends++;
+
+        // Сохраняем результат анализа в базу данных
+        const sentimentAnalysis = {
+          sentiment: sentiment,
+          score: score,
+          reasoning: reasoning,
+          analyzed_at: new Date().toISOString(),
+          analyzed_by: 'source_analysis'
+        };
+
+        await systemDirectusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
+          sentiment_analysis: sentimentAnalysis
+        });
+
+        console.log(`[ANALYZE SOURCE] Анализ настроения сохранен для тренда ${trend.id}`);
+
+        // Небольшая задержка между запросами к Gemini
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+      } catch (error) {
+        console.error(`[ANALYZE SOURCE] Ошибка анализа тренда ${trend.id}:`, error);
+        // Если ошибка - считаем как нейтральный
+        neutralCount++;
+        totalScore += 50; // Нейтральный балл по умолчанию
+        scoredTrends++;
+      }
+    }
+
+    // Вычисляем средний балл на основе всех проанализированных трендов
+    const averageScore = scoredTrends > 0 ? Math.round(totalScore / scoredTrends) : 50;
     const total = sourceTrends.length;
+    
+    // Определяем общее настроение на основе среднего балла
+    let overallSentiment = 'neutral';
+    if (averageScore >= 70) overallSentiment = 'positive';
+    else if (averageScore <= 40) overallSentiment = 'negative';
+    
+    // Определяем эмодзи на основе среднего балла
+    let emoji = '😐'; // нейтральный по умолчанию
+    if (averageScore >= 90) emoji = '🔥'; // отлично
+    else if (averageScore >= 80) emoji = '😍'; // очень хорошо  
+    else if (averageScore >= 70) emoji = '😊'; // хорошо
+    else if (averageScore >= 60) emoji = '😌'; // неплохо
+    else if (averageScore >= 40) emoji = '😐'; // нейтрально
+    else if (averageScore >= 25) emoji = '😕'; // плохо
+    else emoji = '😞'; // очень плохо
+
     const sourceRating = {
       total_trends: total,
       analyzed_trends: total,
       positive_percentage: Math.round((positiveCount / total) * 100),
       negative_percentage: Math.round((negativeCount / total) * 100),
       neutral_percentage: Math.round((neutralCount / total) * 100),
-      overall_sentiment: positiveCount > negativeCount ? 'positive' : (negativeCount > positiveCount ? 'negative' : 'neutral'),
+      overall_sentiment: overallSentiment,
+      average_score: averageScore,
+      emoji: emoji,
       analyzed_at: new Date().toISOString()
     };
 
     console.log(`[ANALYZE SOURCE] Анализ завершен: ${positiveCount} позитивных, ${negativeCount} негативных, ${neutralCount} нейтральных`);
+    console.log(`[ANALYZE SOURCE] Средний балл: ${averageScore}, Эмодзи: ${emoji}, Общее настроение: ${overallSentiment}`);
 
     return res.json({
       success: true,

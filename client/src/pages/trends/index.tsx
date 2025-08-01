@@ -199,7 +199,7 @@ export default function Trends() {
   // Состояние для анализа источников
   const [isAnalyzingSource, setIsAnalyzingSource] = useState<string | null>(null);
   
-  // Функция для получения оценки источника на основе трендов
+  // Функция для получения оценки источника на основе трендов с новой балльной системой
   const getSourceRating = (sourceId: string) => {
     // Находим все тренды этого источника
     const sourcesTrends = trends.filter((trend: TrendTopic) => 
@@ -208,7 +208,8 @@ export default function Trends() {
     
     if (!sourcesTrends.length) return null;
     
-    // Подсчитываем анализы настроения
+    // Подсчитываем баллы и анализы настроения
+    let totalScore = 0;
     let totalAnalyses = 0;
     let positiveCount = 0;
     let negativeCount = 0;
@@ -218,23 +219,62 @@ export default function Trends() {
       const sentiment = (trend as any).sentiment_analysis;
       if (sentiment && sentiment.sentiment) {
         totalAnalyses++;
+        
+        // Подсчитываем количество по типам
         if (sentiment.sentiment === 'positive') positiveCount++;
         else if (sentiment.sentiment === 'negative') negativeCount++;
         else neutralCount++;
+        
+        // Подсчитываем общий балл
+        if (sentiment.score) {
+          totalScore += sentiment.score;
+        }
       }
     });
     
     if (totalAnalyses === 0) return null;
     
-    // Определяем общий рейтинг источника
-    const positivePercent = (positiveCount / totalAnalyses) * 100;
-    const negativePercent = (negativeCount / totalAnalyses) * 100;
+    // Вычисляем средний балл
+    const averageScore = Math.round(totalScore / totalAnalyses);
     
-    if (positivePercent >= 60) return { emoji: '😊', type: 'positive', score: positivePercent };
-    if (negativePercent >= 60) return { emoji: '😔', type: 'negative', score: negativePercent };
-    if (positivePercent >= 40) return { emoji: '😐', type: 'mixed-positive', score: positivePercent };
-    if (negativePercent >= 40) return { emoji: '😕', type: 'mixed-negative', score: negativePercent };
-    return { emoji: '😐', type: 'neutral', score: neutralCount / totalAnalyses * 100 };
+    // Определяем эмодзи на основе среднего балла (как в backend)
+    let emoji = '😐'; // нейтральный по умолчанию
+    let type = 'neutral';
+    
+    if (averageScore >= 90) {
+      emoji = '🔥';
+      type = 'excellent';
+    } else if (averageScore >= 80) {
+      emoji = '😍';
+      type = 'very-positive';
+    } else if (averageScore >= 70) {
+      emoji = '😊';
+      type = 'positive';
+    } else if (averageScore >= 60) {
+      emoji = '😌';
+      type = 'good';
+    } else if (averageScore >= 40) {
+      emoji = '😐';
+      type = 'neutral';
+    } else if (averageScore >= 25) {
+      emoji = '😕';
+      type = 'negative';
+    } else {
+      emoji = '😞';
+      type = 'very-negative';
+    }
+    
+    return { 
+      emoji, 
+      type, 
+      score: averageScore,
+      totalAnalyses,
+      breakdown: {
+        positive: positiveCount,
+        negative: negativeCount,
+        neutral: neutralCount
+      }
+    };
   };
   
   // Состояния для сворачивания/разворачивания секций
@@ -452,12 +492,18 @@ export default function Trends() {
     onSuccess: (data, { sourceId }) => {
       toast({
         title: "Анализ источника завершен",
-        description: "Источник успешно проанализирован на основе всех трендов",
+        description: `Проанализировано ${data.data?.analyzed_trends || 0} трендов. Рейтинг источника обновлен.`,
       });
       
-      // Обновляем данные источников и трендов
-      queryClient.invalidateQueries({ queryKey: ["sources", selectedCampaignId] });
-      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+      // Принудительно обновляем все данные для отображения новых рейтингов
+      queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      queryClient.refetchQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+      
+      // Небольшая задержка перед повторным запросом данных
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["trends"] });
+      }, 1000);
     },
     onError: (error: any, { sourceId }) => {
       console.error('Ошибка анализа источника:', error);
