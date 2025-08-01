@@ -17,6 +17,7 @@ Preferred communication style: Simple, everyday language.
   - Website analysis and other server-side operations
 - **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
 - **DEBUG PHILOSOPHY**: ВСЕГДА ИЩИТЕ ПРОБЛЕМЫ В КОДЕ ПЕРВУЮ ОЧЕРЕДЬ, а не в сервисах/API. API работают - ищите баги в логике, кэше, выполнении кода. Промптируйте себя правильно для поиска багов в коде.
+- **Production Code Quality**: All debug artifacts (console.log statements, UI debug information, temporary development text) must be completely removed before production deployment. System maintains clean, professional interface without any visible debug elements.
 - **CRITICAL RECURRING BUGS TO CHECK FIRST**:
   - **Comments API Field Names**: Collection `post_comment` uses field `trent_post_id` (NOT `trend_id`), sorting by `date` (NOT `date_created`)
   - **Comments API Authorization**: Use user token from headers, NOT system token. Check token validity first.
