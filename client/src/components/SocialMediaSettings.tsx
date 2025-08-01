@@ -354,6 +354,45 @@ export function SocialMediaSettings({
     });
   };
 
+  // Обработчик завершения Instagram мастера
+  const handleInstagramComplete = async (data: { 
+    token: string; 
+    accessToken: string;
+    businessAccountId: string;
+    appId: string;
+    appSecret: string;
+    needsReload?: boolean;
+  }) => {
+    console.log('📸 [Instagram Complete] Setting form values:', data);
+    
+    // Обновляем поля формы
+    form.setValue('instagram.token', data.token || data.accessToken);
+    form.setValue('instagram.accessToken', data.accessToken || data.token);
+    form.setValue('instagram.businessAccountId', data.businessAccountId);
+    form.setValue('instagram.appId', data.appId);
+    form.setValue('instagram.appSecret', data.appSecret);
+    
+    try {
+      await onSubmit(form.getValues());
+      console.log('✅ [Instagram Complete] Settings automatically saved');
+      
+      // Перезагружаем Instagram настройки из базы для обновления UI
+      await loadInstagramSettings();
+      
+      toast({
+        title: "Instagram настроен!",
+        description: "Токен получен и сохранен в настройки кампании"
+      });
+    } catch (error) {
+      console.error('❌ [Instagram Complete] Error saving settings:', error);
+      toast({
+        title: "Ошибка сохранения",
+        description: "Instagram настроен, но возникла ошибка при сохранении настроек",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Обработчик завершения YouTube мастера
   const handleYoutubeComplete = async (data: { 
     channelId: string; 
@@ -1650,11 +1689,26 @@ export function SocialMediaSettings({
                   <InstagramSetupWizardSimple
                     campaignId={campaignId}
                     onCancel={() => {
-
                       setShowInstagramWizard(false);
                     }}
-                    onComplete={() => {
-
+                    onComplete={(data) => {
+                      console.log('📸 [Instagram Simple Wizard] Settings updated:', data);
+                      
+                      // Обновляем поля формы напрямую
+                      if (data?.token || data?.accessToken) {
+                        form.setValue('instagram.token', data.token || data.accessToken);
+                        form.setValue('instagram.accessToken', data.accessToken || data.token);
+                      }
+                      if (data?.businessAccountId) {
+                        form.setValue('instagram.businessAccountId', data.businessAccountId);
+                      }
+                      if (data?.appId) {
+                        form.setValue('instagram.appId', data.appId);
+                      }
+                      if (data?.appSecret) {
+                        form.setValue('instagram.appSecret', data.appSecret);
+                      }
+                      
                       setShowInstagramWizard(false);
                       
                       // Перезагружаем Instagram настройки из базы данных

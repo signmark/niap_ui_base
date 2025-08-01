@@ -10,7 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InstagramSetupWizardProps {
   campaignId: string;
-  onComplete: () => void;
+  onComplete: (data?: {
+    token: string;
+    accessToken: string;
+    businessAccountId: string;
+    appId: string;
+    appSecret: string;
+    needsReload?: boolean;
+  }) => void;
   onCancel: () => void;
 }
 
@@ -319,9 +326,16 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
           description: `Выбран аккаунт: ${accountName} (ID: ${accountId})`
         });
         
-        // Уведомляем родительский компонент об изменениях
+        // Уведомляем родительский компонент об изменениях с данными
         if (onComplete) {
-          onComplete();
+          onComplete({
+            token: formData.accessToken,
+            accessToken: formData.accessToken,
+            businessAccountId: accountId,
+            appId: formData.appId,
+            appSecret: formData.appSecret,
+            needsReload: true
+          });
         }
       }
     } catch (error) {
@@ -426,7 +440,14 @@ const InstagramSetupWizardSimple: React.FC<InstagramSetupWizardProps> = ({ campa
           variant: "default"
         });
         setTimeout(() => {
-          onComplete();
+          onComplete({
+            token: formData.accessToken,
+            accessToken: formData.accessToken,
+            businessAccountId: formData.businessAccountId,
+            appId: formData.appId,
+            appSecret: formData.appSecret,
+            needsReload: true
+          });
         }, 1500);
       } else {
         throw new Error(data.error || 'Ошибка сохранения настроек');
