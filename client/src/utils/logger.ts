@@ -35,11 +35,17 @@ class BrowserLogger {
 
   private async initializeConfig() {
     try {
-      const response = await fetch('/api/config');
-      this.config = await response.json();
+      // Проверяем переменные окружения Vite вместо API запроса
+      const isDevelopment = import.meta.env.DEV;
+      this.config = {
+        environment: isDevelopment ? 'development' : 'production',
+        logLevel: 'debug',
+        debugScheduler: true,
+        verboseLogs: true
+      };
       this.setupConsoleOverrides();
     } catch (error) {
-      // Если не удалось получить конфигурацию, по умолчанию разрешаем логи
+      // В случае ошибки используем настройки по умолчанию
       this.config = {
         environment: 'development',
         logLevel: 'debug',
