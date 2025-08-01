@@ -13,7 +13,7 @@ const router = Router();
 const globalApiKeysService = new GlobalApiKeysService();
 
 // Временное хранилище для OAuth состояний (в продакшене использовать Redis)
-const oauthStates = new Map<string, { userId: string; timestamp: number }>();
+const oauthStates = new Map<string, { userId: string; campaignId?: string; timestamp: number }>();
 
 /**
  * Инициирует OAuth авторизацию YouTube

@@ -262,12 +262,12 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
           tokens: tokens ? 'passed as parameter' : 'from state',
           authTokens: !!authTokens,
           onComplete: typeof onComplete,
-          campaignId: tokensToUse?.campaignId || campaignId
+          campaignId: campaignId
         });
         
         if (tokensToUse) {
-          // Определяем правильный campaignId из токенов или props
-          const targetCampaignId = tokensToUse.campaignId || campaignId;
+          // Используем campaignId из props
+          const targetCampaignId = campaignId;
           
           console.log('✅ [YouTube Wizard] Auto-completing setup with data:', {
             channelId: data.channelInfo.channelId,
@@ -283,8 +283,7 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
               channelTitle: data.channelInfo.channelTitle,
               accessToken: tokensToUse.accessToken,
               refreshToken: tokensToUse.refreshToken,
-              channelInfo: data.channelInfo,
-              campaignId: targetCampaignId  // Передаем правильный campaignId
+              channelInfo: data.channelInfo
             });
             console.log('✅ [YouTube Wizard] onComplete called successfully for campaign:', targetCampaignId);
           } catch (error) {

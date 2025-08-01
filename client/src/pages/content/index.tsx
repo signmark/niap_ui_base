@@ -288,41 +288,13 @@ export default function ContentPage() {
 
 
 
-  // Force refetch data when campaign changes
+  // Force refetch data when campaign changes or navigating to content page
   useEffect(() => {
-    if (selectedCampaignId) {
-
+    if (selectedCampaignId && location === '/content') {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
       queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
     }
-  }, [selectedCampaignId, queryClient]);
-
-  // Track location changes to reload data when navigating to content page
-  const [hasNavigated, setHasNavigated] = useState(false);
-
-  // Force refetch data when navigating to content page
-  useEffect(() => {
-    if (location === '/content' && selectedCampaignId) {
-
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
-      // Принудительная перезагрузка данных
-      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
-      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
-      setHasNavigated(true);
-    }
-  }, [location, selectedCampaignId, queryClient]);
-
-  // Also force reload when component first mounts
-  useEffect(() => {
-    if (!hasNavigated && selectedCampaignId) {
-
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
-      queryClient.refetchQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
-      queryClient.refetchQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
-    }
-  }, [selectedCampaignId, hasNavigated, queryClient]);
+  }, [selectedCampaignId]); // Убираем queryClient и location из зависимостей чтобы избежать циклов
 
   // Запрос списка кампаний
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
@@ -439,6 +411,7 @@ export default function ContentPage() {
             imageUrl: "",
             additionalImages: [],
             videoUrl: "",
+            videoThumbnail: "",
             additionalVideos: [], // Сбрасываем дополнительные видео
             prompt: "", // Сохраняем поле prompt
             keywords: []
