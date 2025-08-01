@@ -258,6 +258,65 @@ router.post('/update-status', async (req, res) => {
   }
 });
 
+// Маршрут для получения токена конкретной страницы
+router.get('/page-token/:pageId', async (req, res) => {
+  try {
+    const { pageId } = req.params;
+    const { token } = req.query;
+    
+    if (!token || !pageId) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Не указан токен пользователя или ID страницы' 
+      });
+    }
+    
+    log.info(`[Facebook] Получение токена для страницы ${pageId}`);
+    
+    // Получаем список страниц с их токенами
+    const apiVersion = 'v19.0';
+    const pagesUrl = `https://graph.facebook.com/${apiVersion}/me/accounts`;
+    
+    const pagesResponse = await axios.get(pagesUrl, {
+      params: { access_token: token }
+    });
+    
+    if (!pagesResponse.data?.data) {
+      throw new Error('Не удалось получить список страниц');
+    }
+    
+    const pages = pagesResponse.data.data || [];
+    const targetPage = pages.find((page: any) => page.id === pageId);
+    
+    if (!targetPage) {
+      return res.status(404).json({
+        success: false,
+        error: `Страница с ID ${pageId} не найдена или нет доступа к ней`
+      });
+    }
+    
+    log.info(`[Facebook] Токен страницы ${targetPage.name} успешно получен`);
+    
+    return res.json({
+      success: true,
+      message: `Токен страницы "${targetPage.name}" получен`,
+      page: {
+        id: targetPage.id,
+        name: targetPage.name,
+        category: targetPage.category,
+        access_token: targetPage.access_token,
+      }
+    });
+  } catch (error: any) {
+    log.error(`[Facebook] Ошибка при получении токена страницы: ${error.message}`);
+    
+    return res.status(500).json({
+      success: false,
+      error: `Ошибка получения токена страницы: ${error.message}`
+    });
+  }
+});
+
 // Маршрут для тестирования токена и получения доступных страниц
 router.post('/test-token', async (req, res) => {
   try {
