@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { ArrowUpIcon, ArrowDownIcon, Globe } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, Globe, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink, BarChart } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink, BarChart, Target, Building } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
@@ -54,6 +54,7 @@ import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorD
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
 import { BulkSourcesImportDialog } from "@/components/BulkSourcesImportDialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Определение интерфейсов для типизации
 import {
@@ -189,8 +190,42 @@ export default function Trends() {
   const [sentimentData, setSentimentData] = useState<any>(null);
   const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
   
+  // Состояния для сворачивания/разворачивания секций
+  const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
+  const [isTrendsExpanded, setIsTrendsExpanded] = useState(false); // По умолчанию свернута
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null); // Выбранный источник для фильтрации трендов
 
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
+
+  // Загрузка состояния из localStorage при инициализации
+  useEffect(() => {
+    const savedDataSourcesExpanded = localStorage.getItem('trends_data_sources_expanded');
+    const savedTrendsExpanded = localStorage.getItem('trends_trends_expanded');
+    const savedSelectedSourceId = localStorage.getItem('trends_selected_source_id');
+    
+    if (savedDataSourcesExpanded !== null) {
+      setIsDataSourcesExpanded(JSON.parse(savedDataSourcesExpanded));
+    }
+    if (savedTrendsExpanded !== null) {
+      setIsTrendsExpanded(JSON.parse(savedTrendsExpanded));
+    }
+    if (savedSelectedSourceId && savedSelectedSourceId !== 'null') {
+      setSelectedSourceId(savedSelectedSourceId);
+    }
+  }, []);
+
+  // Сохранение состояния в localStorage при изменении
+  useEffect(() => {
+    localStorage.setItem('trends_data_sources_expanded', JSON.stringify(isDataSourcesExpanded));
+  }, [isDataSourcesExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem('trends_trends_expanded', JSON.stringify(isTrendsExpanded));
+  }, [isTrendsExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem('trends_selected_source_id', selectedSourceId || 'null');
+  }, [selectedSourceId]);
 
   // Функция для сбора комментариев к тренду
   const collectTrendComments = async (trendId: string, trendUrl: string) => {
@@ -279,6 +314,58 @@ export default function Trends() {
       setIsLoadingComments(false);
     }
   };
+
+  // Мутация для анализа комментариев
+  const analyzeCommentsMutation = useMutation({
+    mutationFn: async ({ trendId, level }: { trendId: string, level: 'trend' | 'source' }) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      const response = await fetch('/api/analyze-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ 
+          trendId, 
+          level,
+          campaignId: selectedCampaignId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Ошибка анализа комментариев');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data, { level }) => {
+      toast({
+        title: "Анализ завершен",
+        description: `Анализ комментариев на уровне ${level === 'trend' ? 'тренда' : 'источника'} успешно выполнен`,
+      });
+      
+      // Перезагружаем комментарии для обновления данных
+      if (selectedTrendTopic) {
+        loadTrendComments(selectedTrendTopic.id);
+      }
+      
+      // Обновляем данные трендов для получения новой аналитики
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+    },
+    onError: (error: any) => {
+      console.error('Ошибка анализа комментариев:', error);
+      toast({
+        title: "Ошибка анализа",
+        description: error.message || "Не удалось провести анализ комментариев",
+        variant: "destructive",
+      });
+    }
+  });
   
   // Обновляем локальный ID кампании когда меняется глобальный выбор
   useEffect(() => {
@@ -1185,8 +1272,20 @@ export default function Trends() {
         {isValidCampaignSelected && (
           <>
             <Card className="bg-white shadow-md">
-              <CardContent className="pt-6">
-                <h2 className="text-lg font-semibold mb-4">Источники данных</h2>
+              <Collapsible open={isDataSourcesExpanded} onOpenChange={setIsDataSourcesExpanded}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Источники данных</h2>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-1 h-auto">
+                        {isDataSourcesExpanded ? 
+                          <ChevronUp className="h-4 w-4" /> : 
+                          <ChevronDown className="h-4 w-4" />
+                        }
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
                 {isLoadingSources ? (
                   <div className="flex justify-center p-4">
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -1215,8 +1314,16 @@ export default function Trends() {
                         return typeA.localeCompare(typeB);
                       })
                       .map((source) => (
-                      <div key={source.id} className="flex items-center justify-between p-2 rounded-lg border">
-                        <div className="flex items-center gap-2">
+                      <div key={source.id} className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${
+                        selectedSourceId === source.id ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
+                      }`}>
+                        <div 
+                          className="flex items-center gap-2 flex-1" 
+                          onClick={() => {
+                            setSelectedSourceId(selectedSourceId === source.id ? null : source.id);
+                            setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов при выборе источника
+                          }}
+                        >
                           <div>
                             <h3 className="font-medium">{source.name}</h3>
                             <p className="text-sm text-muted-foreground">
@@ -1225,6 +1332,7 @@ export default function Trends() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 {source.url}
                               </a>
@@ -1242,36 +1350,72 @@ export default function Trends() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteSource(source.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSource(source.id);
+                            }}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
                     ))}
+                    {sources.length > 0 && (
+                      <div className="mt-4 pt-2 border-t">
+                        <Button
+                          variant={selectedSourceId === null ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSourceId(null);
+                            setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов
+                          }}
+                          className="w-full"
+                        >
+                          Все источники
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </CardContent>
+                  </CollapsibleContent>
+                </CardContent>
+              </Collapsible>
             </Card>
 
             <Card className="bg-white shadow-md">
-              <CardContent className="p-6 space-y-4">
-                <div className="border-b mb-4">
-                  <div className="flex">
-                    <button
-                      className={`px-4 py-2 border-b-2 ${activeTab === 'trends' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
-                      onClick={() => setActiveTab('trends')}
-                    >
-                      Тренды
-                    </button>
-                    <button
-                      className={`px-4 py-2 border-b-2 ${activeTab === 'comments' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
-                      onClick={() => setActiveTab('comments')}
-                    >
-                      Комментарии
-                    </button>
+              <Collapsible open={isTrendsExpanded} onOpenChange={setIsTrendsExpanded}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">
+                      Тренды{selectedSourceId ? ` - ${sources.find(s => s.id === selectedSourceId)?.name || 'Выбранный источник'}` : ''}
+                    </h2>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-1 h-auto">
+                        {isTrendsExpanded ? 
+                          <ChevronUp className="h-4 w-4" /> : 
+                          <ChevronDown className="h-4 w-4" />
+                        }
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
-                </div>
+                  <CollapsibleContent>
+                    <div className="space-y-4">
+                      <div className="border-b mb-4">
+                        <div className="flex">
+                          <button
+                            className={`px-4 py-2 border-b-2 ${activeTab === 'trends' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
+                            onClick={() => setActiveTab('trends')}
+                          >
+                            Тренды
+                          </button>
+                          <button
+                            className={`px-4 py-2 border-b-2 ${activeTab === 'comments' ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground'}`}
+                            onClick={() => setActiveTab('comments')}
+                          >
+                            Комментарии
+                          </button>
+                        </div>
+                      </div>
 
                 {activeTab === 'trends' ? (
                   <>
@@ -1529,7 +1673,12 @@ export default function Trends() {
                               }
                             }
                             
-                            const finalResult = withinPeriod && matchesSearch && platformMatches;
+                            // Фильтр по выбранному источнику
+                            const sourceMatches = selectedSourceId === null || 
+                              topic.source_id === selectedSourceId || 
+                              topic.sourceId === selectedSourceId;
+                            
+                            const finalResult = withinPeriod && matchesSearch && platformMatches && sourceMatches;
                             
 
                             
@@ -1932,6 +2081,42 @@ export default function Trends() {
                                 )}
                                 {isAnalyzingSentiment ? 'Анализируем...' : 'Анализ настроения'}
                               </Button>
+                              
+                              <Button
+                                onClick={() => analyzeCommentsMutation.mutate({ 
+                                  trendId: selectedTrendTopic.id, 
+                                  level: 'trend' 
+                                })}
+                                disabled={analyzeCommentsMutation.isPending || trendComments.length === 0}
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                              >
+                                {analyzeCommentsMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Target className="h-4 w-4" />
+                                )}
+                                {analyzeCommentsMutation.isPending ? 'Анализируем...' : 'Анализ на уровне тренда'}
+                              </Button>
+                              
+                              <Button
+                                onClick={() => analyzeCommentsMutation.mutate({ 
+                                  trendId: selectedTrendTopic.id, 
+                                  level: 'source' 
+                                })}
+                                disabled={analyzeCommentsMutation.isPending || trendComments.length === 0}
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                              >
+                                {analyzeCommentsMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Building className="h-4 w-4" />
+                                )}
+                                {analyzeCommentsMutation.isPending ? 'Анализируем...' : 'Анализ на уровне источника'}
+                              </Button>
                             </div>
                             
                             {/* Блок результатов анализа настроения */}
@@ -2026,7 +2211,10 @@ export default function Trends() {
                     )}
                   </>
                 ) : null}
-              </CardContent>
+                    </div>
+                  </CollapsibleContent>
+                </CardContent>
+              </Collapsible>
             </Card>
 
             {selectedTopics.length > 0 && (

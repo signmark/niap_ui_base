@@ -7753,6 +7753,181 @@ ${commentTexts}`;
     }
   });
 
+  // Анализ комментариев на многоуровневой основе
+  app.post("/api/analyze-comments", authenticateUser, async (req: any, res) => {
+    try {
+      const { trendId, level, campaignId } = req.body;
+      
+      console.log(`[POST /api/analyze-comments] Запрос анализа комментариев для тренда ${trendId}, уровень: ${level}`);
+      
+      if (!trendId || !level) {
+        return res.status(400).json({ 
+          success: false,
+          error: "trendId и level обязательны" 
+        });
+      }
+      
+      if (!['trend', 'source'].includes(level)) {
+        return res.status(400).json({ 
+          success: false,
+          error: "level должен быть 'trend' или 'source'" 
+        });
+      }
+      
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ 
+          success: false,
+          error: "Токен авторизации обязателен" 
+        });
+      }
+      
+      try {
+        // Получаем комментарии для анализа
+        const response = await directusApi.get('/items/post_comment', {
+          params: {
+            'filter[trent_post_id][_eq]': trendId,
+            'limit': 100,
+            'fields': ['id', 'text', 'platform', 'author', 'date']
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const comments = response.data?.data || [];
+        console.log(`[POST /api/analyze-comments] Найдено ${comments.length} комментариев для анализа`);
+        
+        if (comments.length === 0) {
+          return res.json({
+            success: true,
+            data: {
+              level,
+              trendId,
+              analysis: {
+                sentiment: 'neutral',
+                confidence: 0,
+                themes: [],
+                summary: 'Комментарии для анализа не найдены'
+              },
+              commentsAnalyzed: 0
+            }
+          });
+        }
+        
+        // Подготавливаем текст для анализа
+        const commentTexts = comments.map((c: any) => 
+          `[${c.platform}] ${c.author}: ${c.text}`
+        ).join('\n---\n');
+        
+        console.log(`[POST /api/analyze-comments] Отправляем анализ на уровне ${level} в Gemini`);
+        
+        // Используем Gemini для многоуровневого анализа
+        const { geminiProxyService } = await import('./services/gemini-proxy');
+        
+        const analysisPrompt = level === 'trend' 
+          ? `Проанализируй комментарии к посту на уровне ТРЕНДА. Сфокусируйся на общих реакциях пользователей, популярности контента и вовлеченности аудитории.
+          
+Верни результат в JSON формате:
+{
+  "sentiment": "positive/negative/neutral",
+  "confidence": число от 0 до 100,
+  "themes": ["тема1", "тема2", "тема3"],
+  "engagement": "high/medium/low",
+  "viral_potential": число от 0 до 100,
+  "summary": "анализ тренда и реакций аудитории"
+}
+
+Комментарии:
+${commentTexts}`
+          : `Проанализируй комментарии к посту на уровне ИСТОЧНИКА. Сфокусируйся на репутации источника, качестве контента и отношении аудитории к конкретному источнику/автору.
+
+Верни результат в JSON формате:
+{
+  "sentiment": "positive/negative/neutral", 
+  "confidence": число от 0 до 100,
+  "themes": ["тема1", "тема2", "тема3"],
+  "source_reputation": "excellent/good/average/poor",
+  "content_quality": "high/medium/low",
+  "audience_trust": число от 0 до 100,
+  "summary": "анализ источника и доверия аудитории"
+}
+
+Комментарии:
+${commentTexts}`;
+
+        const result = await geminiProxyService.generateText({ 
+          prompt: analysisPrompt, 
+          model: 'gemini-2.5-flash'
+        });
+        
+        console.log(`[POST /api/analyze-comments] Получен ответ от Gemini, парсим JSON`);
+        
+        let analysisData;
+        try {
+          const jsonMatch = result.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            analysisData = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('JSON не найден в ответе');
+          }
+        } catch (parseError) {
+          console.log(`[POST /api/analyze-comments] Ошибка парсинга JSON:`, parseError);
+          analysisData = {
+            sentiment: 'neutral',
+            confidence: 50,
+            themes: ['Общие комментарии'],
+            summary: 'Анализ выполнен, но структурированные данные недоступны'
+          };
+        }
+        
+        // Сохраняем результат анализа в поле sentiment_analysis тренда
+        try {
+          const currentAnalysis = level === 'trend' 
+            ? { trend_level: analysisData }
+            : { source_level: analysisData };
+            
+          await directusApi.patch(`/items/campaign_trend_topics/${trendId}`, {
+            sentiment_analysis: currentAnalysis
+          }, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          console.log(`[POST /api/analyze-comments] Анализ уровня ${level} сохранен в тренд`);
+        } catch (saveError) {
+          console.log(`[POST /api/analyze-comments] Ошибка сохранения анализа:`, saveError);
+        }
+        
+        res.json({
+          success: true,
+          data: {
+            level,
+            trendId,
+            analysis: analysisData,
+            commentsAnalyzed: comments.length
+          }
+        });
+        
+      } catch (error) {
+        console.error(`[POST /api/analyze-comments] Ошибка анализа:`, error);
+        return res.status(500).json({ 
+          success: false,
+          error: "Ошибка при анализе комментариев",
+          message: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    } catch (error) {
+      console.error("[POST /api/analyze-comments] Error:", error);
+      res.status(500).json({ 
+        success: false,
+        error: "Failed to analyze comments",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Campaign Keywords routes
   // API эндпоинт для получения ключевых слов кампании по ID кампании
   // Используется в KeywordSelector и KeywordTable
