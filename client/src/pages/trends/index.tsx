@@ -196,6 +196,47 @@ export default function Trends() {
     source_level?: any;
   }>({});
   
+  // Состояние для анализа источников
+  const [isAnalyzingSource, setIsAnalyzingSource] = useState<string | null>(null);
+  
+  // Функция для получения оценки источника на основе трендов
+  const getSourceRating = (sourceId: string) => {
+    // Находим все тренды этого источника
+    const sourcesTrends = trends.filter((trend: TrendTopic) => 
+      (trend as any).source_id === sourceId
+    );
+    
+    if (!sourcesTrends.length) return null;
+    
+    // Подсчитываем анализы настроения
+    let totalAnalyses = 0;
+    let positiveCount = 0;
+    let negativeCount = 0;
+    let neutralCount = 0;
+    
+    sourcesTrends.forEach((trend: TrendTopic) => {
+      const sentiment = (trend as any).sentiment_analysis;
+      if (sentiment && sentiment.sentiment) {
+        totalAnalyses++;
+        if (sentiment.sentiment === 'positive') positiveCount++;
+        else if (sentiment.sentiment === 'negative') negativeCount++;
+        else neutralCount++;
+      }
+    });
+    
+    if (totalAnalyses === 0) return null;
+    
+    // Определяем общий рейтинг источника
+    const positivePercent = (positiveCount / totalAnalyses) * 100;
+    const negativePercent = (negativeCount / totalAnalyses) * 100;
+    
+    if (positivePercent >= 60) return { emoji: '😊', type: 'positive', score: positivePercent };
+    if (negativePercent >= 60) return { emoji: '😔', type: 'negative', score: negativePercent };
+    if (positivePercent >= 40) return { emoji: '😐', type: 'mixed-positive', score: positivePercent };
+    if (negativePercent >= 40) return { emoji: '😕', type: 'mixed-negative', score: negativePercent };
+    return { emoji: '😐', type: 'neutral', score: neutralCount / totalAnalyses * 100 };
+  };
+  
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
   const [isTrendsExpanded, setIsTrendsExpanded] = useState(false); // По умолчанию свернута
@@ -376,6 +417,58 @@ export default function Trends() {
         description: error.message || "Не удалось провести анализ комментариев",
         variant: "destructive",
       });
+    }
+  });
+
+  // Мутация для анализа источника
+  const analyzeSourceMutation = useMutation({
+    mutationFn: async ({ sourceId }: { sourceId: string }) => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      const response = await fetch(`/api/analyze-source/${sourceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Ошибка анализа источника');
+      }
+
+      return await response.json();
+    },
+    onMutate: ({ sourceId }) => {
+      setIsAnalyzingSource(sourceId);
+    },
+    onSuccess: (data, { sourceId }) => {
+      toast({
+        title: "Анализ источника завершен",
+        description: "Источник успешно проанализирован на основе всех трендов",
+      });
+      
+      // Обновляем данные источников и трендов
+      queryClient.invalidateQueries({ queryKey: ["sources", selectedCampaignId] });
+      queryClient.invalidateQueries({ queryKey: ["trends", selectedPeriod, selectedCampaignId] });
+    },
+    onError: (error: any, { sourceId }) => {
+      console.error('Ошибка анализа источника:', error);
+      toast({
+        title: "Ошибка анализа источника",
+        description: error.message || "Не удалось провести анализ источника",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsAnalyzingSource(null);
     }
   });
   
@@ -1339,13 +1432,50 @@ export default function Trends() {
                         selectedSourceId === source.id ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
                       }`}>
                         <div 
-                          className="flex items-center gap-2 flex-1" 
+                          className="flex items-center gap-3 flex-1" 
                           onClick={() => {
                             setSelectedSourceId(selectedSourceId === source.id ? null : source.id);
                             setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов при выборе источника
                           }}
                         >
-                          <div>
+                          {/* Иконка оценки источника */}
+                          <div className="flex-shrink-0">
+                            {(() => {
+                              const rating = getSourceRating(source.id);
+                              if (rating) {
+                                return (
+                                  <div 
+                                    className="text-xl cursor-help" 
+                                    title={`Оценка источника: ${rating.type} (${Math.round(rating.score)}%)`}
+                                  >
+                                    {rating.emoji}
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-blue-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      analyzeSourceMutation.mutate({ sourceId: source.id });
+                                    }}
+                                    disabled={isAnalyzingSource === source.id}
+                                    title="Анализировать источник"
+                                  >
+                                    {isAnalyzingSource === source.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                                    ) : (
+                                      <BarChart className="h-4 w-4 text-gray-400 hover:text-blue-600" />
+                                    )}
+                                  </Button>
+                                );
+                              }
+                            })()}
+                          </div>
+                          
+                          <div className="flex-1">
                             <h3 className="font-medium">{source.name}</h3>
                             <p className="text-sm text-muted-foreground">
                               <a

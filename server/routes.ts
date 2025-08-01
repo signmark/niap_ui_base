@@ -4,6 +4,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { GeminiProxyService } from './services/gemini-proxy';
 import { VertexAIService } from './services/vertex-ai';
 import { VertexAICredentialsService } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
@@ -6286,6 +6287,198 @@ Return your response as a JSON array in this exact format:
         success: false, 
         error: 'Ошибка при поиске источников по кампании', 
         message: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      });
+    }
+  });
+
+  // Эндпоинт для анализа источника
+  app.post("/api/analyze-source/:sourceId", authenticateUser, async (req: any, res) => {
+    try {
+      const sourceId = req.params.sourceId;
+      const { campaignId } = req.body;
+      const authToken = req.headers.authorization?.split(' ')[1];
+      
+      if (!authToken) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Требуется авторизация" 
+        });
+      }
+
+      if (!sourceId || !campaignId) {
+        return res.status(400).json({
+          success: false,
+          message: "Требуется sourceId и campaignId"
+        });
+      }
+
+      console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
+
+      // 1. Получаем все тренды этого источника
+      const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
+        params: {
+          filter: {
+            source_id: { _eq: sourceId },
+            campaign_id: { _eq: campaignId }
+          },
+          fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      const sourceTrends = trendsResponse.data?.data || [];
+      console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
+
+      if (sourceTrends.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Для данного источника не найдено трендов для анализа"
+        });
+      }
+
+      // 2. Анализируем каждый тренд, если у него нет анализа
+      let analyzedTrends = 0;
+      for (const trend of sourceTrends) {
+        if (!trend.sentiment_analysis) {
+          console.log(`[ANALYZE SOURCE] Анализируем тренд ${trend.id} без существующего анализа`);
+          
+          // Получаем комментарии для тренда
+          const commentsResponse = await directusApi.get('/items/post_comment', {
+            params: {
+              filter: {
+                trent_post_id: { _eq: trend.id }
+              },
+              fields: ['id', 'comment_text', 'date'],
+              sort: ['-date']
+            },
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+
+          const comments = commentsResponse.data?.data || [];
+          
+          if (comments.length > 0) {
+            // Анализируем комментарии с помощью Gemini
+            const commentsText = comments.map((c: any) => c.comment_text).join('\n\n');
+            
+            try {
+              // Получаем Gemini API ключ
+              const geminiApiKey = process.env.GEMINI_API_KEY;
+              if (!geminiApiKey) {
+                console.error('[ANALYZE SOURCE] Отсутствует GEMINI_API_KEY');
+                continue;
+              }
+
+              console.log(`[ANALYZE SOURCE] Анализируем ${comments.length} комментариев для тренда ${trend.id}`);
+              
+              // Используем Gemini для анализа настроения
+              const geminiService = new GeminiProxyService(geminiApiKey);
+              const analysisPrompt = `Проанализируй настроение следующих комментариев по теме "${trend.title}":
+
+${commentsText.substring(0, 2000)}
+
+Верни результат в JSON формате:
+{
+  "sentiment": "positive|negative|neutral",
+  "confidence": 0.85,
+  "summary": "Краткое описание общего настроения",
+  "key_points": ["ключевая точка 1", "ключевая точка 2"],
+  "total_comments": ${comments.length}
+}`;
+
+              const analysisResponse = await geminiService.generateText(analysisPrompt);
+              const analysisData = JSON.parse(analysisResponse);
+              
+              // Сохраняем анализ в тренде
+              await directusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
+                sentiment_analysis: analysisData
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${authToken}`
+                }
+              });
+              
+              analyzedTrends++;
+              console.log(`[ANALYZE SOURCE] Анализ тренда ${trend.id} сохранен`);
+              
+            } catch (analysisError) {
+              console.error(`[ANALYZE SOURCE] Ошибка анализа тренда ${trend.id}:`, analysisError);
+            }
+          }
+        }
+      }
+
+      // 3. Обновляем данные трендов и создаем общую оценку источника
+      const updatedTrendsResponse = await directusApi.get('/items/campaign_trend_topics', {
+        params: {
+          filter: {
+            source_id: { _eq: sourceId },
+            campaign_id: { _eq: campaignId }
+          },
+          fields: ['id', 'sentiment_analysis']
+        },
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      const updatedTrends = updatedTrendsResponse.data?.data || [];
+      
+      // Подсчитываем общую статистику
+      let totalAnalyzed = 0;
+      let positiveCount = 0;
+      let negativeCount = 0;
+      let neutralCount = 0;
+
+      updatedTrends.forEach((trend: any) => {
+        if (trend.sentiment_analysis && trend.sentiment_analysis.sentiment) {
+          totalAnalyzed++;
+          switch (trend.sentiment_analysis.sentiment) {
+            case 'positive':
+              positiveCount++;
+              break;
+            case 'negative':
+              negativeCount++;
+              break;
+            case 'neutral':
+              neutralCount++;
+              break;
+          }
+        }
+      });
+
+      const sourceRating = {
+        total_trends: updatedTrends.length,
+        analyzed_trends: totalAnalyzed,
+        positive_percentage: totalAnalyzed > 0 ? Math.round((positiveCount / totalAnalyzed) * 100) : 0,
+        negative_percentage: totalAnalyzed > 0 ? Math.round((negativeCount / totalAnalyzed) * 100) : 0,
+        neutral_percentage: totalAnalyzed > 0 ? Math.round((neutralCount / totalAnalyzed) * 100) : 0,
+        overall_sentiment: positiveCount > negativeCount ? 'positive' : negativeCount > positiveCount ? 'negative' : 'neutral',
+        analyzed_at: new Date().toISOString()
+      };
+
+      console.log(`[ANALYZE SOURCE] Создана оценка источника:`, sourceRating);
+
+      return res.json({
+        success: true,
+        data: {
+          sourceId,
+          campaignId,
+          analyzed_trends: analyzedTrends,
+          source_rating: sourceRating
+        },
+        message: `Анализ источника завершен. Проанализировано ${analyzedTrends} новых трендов.`
+      });
+
+    } catch (error) {
+      console.error('[ANALYZE SOURCE] Ошибка:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Ошибка при анализе источника",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
