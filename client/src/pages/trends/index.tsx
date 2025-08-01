@@ -190,6 +190,12 @@ export default function Trends() {
   const [sentimentData, setSentimentData] = useState<any>(null);
   const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
   
+  // Состояние для результатов анализа комментариев
+  const [commentsAnalysisData, setCommentsAnalysisData] = useState<{
+    trend_level?: any;
+    source_level?: any;
+  }>({});
+  
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
   const [isTrendsExpanded, setIsTrendsExpanded] = useState(false); // По умолчанию свернута
@@ -349,6 +355,12 @@ export default function Trends() {
         description: `Анализ комментариев на уровне ${level === 'trend' ? 'тренда' : 'источника'} успешно выполнен`,
       });
       
+      // Сохраняем результаты анализа в состояние
+      setCommentsAnalysisData(prev => ({
+        ...prev,
+        [level + '_level']: data.data?.analysis
+      }));
+      
       // Перезагружаем комментарии для обновления данных
       if (selectedTrendTopic) {
         loadTrendComments(selectedTrendTopic.id);
@@ -379,12 +391,21 @@ export default function Trends() {
   // Загрузка существующего анализа настроения для тренда из кэшированных данных
   const loadExistingSentimentAnalysis = (selectedTrend: TrendTopic | null) => {
     if (selectedTrend && (selectedTrend as any).sentiment_analysis) {
-
       setSentimentData((selectedTrend as any).sentiment_analysis);
+      
+      // Проверяем наличие многоуровневого анализа комментариев в sentiment_analysis
+      const sentimentAnalysis = (selectedTrend as any).sentiment_analysis;
+      if (sentimentAnalysis && (sentimentAnalysis.trend_level || sentimentAnalysis.source_level)) {
+        setCommentsAnalysisData({
+          trend_level: sentimentAnalysis.trend_level,
+          source_level: sentimentAnalysis.source_level
+        });
+      } else {
+        setCommentsAnalysisData({});
+      }
     } else {
-
-
       setSentimentData(null);
+      setCommentsAnalysisData({});
     }
   };
 
@@ -2161,6 +2182,115 @@ export default function Trends() {
                                     </>
                                   )}
                                 </div>
+                              </div>
+                            )}
+                            
+                            {/* Блок результатов многоуровневого анализа комментариев */}
+                            {(commentsAnalysisData.trend_level || commentsAnalysisData.source_level) && (
+                              <div className="mb-4 space-y-4">
+                                {/* Анализ на уровне тренда */}
+                                {commentsAnalysisData.trend_level && (
+                                  <div className="p-4 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <Target className="h-5 w-5 text-green-600" />
+                                      <h5 className="font-medium text-gray-900">Анализ тренда</h5>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-green-600">
+                                          {commentsAnalysisData.trend_level.sentiment === 'positive' ? '😊' : 
+                                           commentsAnalysisData.trend_level.sentiment === 'negative' ? '😔' : '😐'}
+                                        </div>
+                                        <div className="text-xs text-gray-600">Настроение</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-blue-600">
+                                          {commentsAnalysisData.trend_level.confidence || 0}%
+                                        </div>
+                                        <div className="text-xs text-gray-600">Уверенность</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-purple-600">
+                                          {commentsAnalysisData.trend_level.engagement || 'N/A'}
+                                        </div>
+                                        <div className="text-xs text-gray-600">Вовлеченность</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-orange-600">
+                                          {commentsAnalysisData.trend_level.viral_potential || 0}%
+                                        </div>
+                                        <div className="text-xs text-gray-600">Вирусность</div>
+                                      </div>
+                                    </div>
+                                    {commentsAnalysisData.trend_level.themes && commentsAnalysisData.trend_level.themes.length > 0 && (
+                                      <div className="mb-3">
+                                        <div className="text-xs text-gray-600 mb-1">Основные темы:</div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {commentsAnalysisData.trend_level.themes.map((theme: string, index: number) => (
+                                            <span key={index} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                              {theme}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="text-sm text-gray-700 bg-white p-2 rounded border">
+                                      <strong>Анализ тренда:</strong> {commentsAnalysisData.trend_level.summary}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Анализ на уровне источника */}
+                                {commentsAnalysisData.source_level && (
+                                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <Building className="h-5 w-5 text-amber-600" />
+                                      <h5 className="font-medium text-gray-900">Анализ источника</h5>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-amber-600">
+                                          {commentsAnalysisData.source_level.sentiment === 'positive' ? '😊' : 
+                                           commentsAnalysisData.source_level.sentiment === 'negative' ? '😔' : '😐'}
+                                        </div>
+                                        <div className="text-xs text-gray-600">Настроение</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-blue-600">
+                                          {commentsAnalysisData.source_level.confidence || 0}%
+                                        </div>
+                                        <div className="text-xs text-gray-600">Уверенность</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-purple-600">
+                                          {commentsAnalysisData.source_level.source_reputation || 'N/A'}
+                                        </div>
+                                        <div className="text-xs text-gray-600">Репутация</div>
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-green-600">
+                                          {commentsAnalysisData.source_level.audience_trust || 0}%
+                                        </div>
+                                        <div className="text-xs text-gray-600">Доверие</div>
+                                      </div>
+                                    </div>
+                                    {commentsAnalysisData.source_level.themes && commentsAnalysisData.source_level.themes.length > 0 && (
+                                      <div className="mb-3">
+                                        <div className="text-xs text-gray-600 mb-1">Основные темы:</div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {commentsAnalysisData.source_level.themes.map((theme: string, index: number) => (
+                                            <span key={index} className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                                              {theme}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="text-sm text-gray-700 bg-white p-2 rounded border">
+                                      <strong>Анализ источника:</strong> {commentsAnalysisData.source_level.summary}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
