@@ -1379,33 +1379,17 @@ export function SocialMediaSettings({
                       {vkSettings?.groupName ? `Группа: ${vkSettings.groupName}` : 'Вставьте URL с access_token от VK OAuth'}
                     </p>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const vkOAuthUrl = 'https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1';
-                        window.open(vkOAuthUrl, '_blank', 'width=600,height=600');
-                      }}
-                    >
-                      🔗 Открыть VK OAuth
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant={vkSettings?.configured ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowVkWizard(true)}
-                      disabled={loadingVkSettings}
-                    >
-                      {loadingVkSettings ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Загрузка...
-                        </>
-                      ) : (vkSettings?.configured ? 'Пересконфигурировать' : 'Мастер настройки')}
-                    </Button>
-                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const vkOAuthUrl = 'https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1';
+                      window.open(vkOAuthUrl, '_blank', 'width=600,height=600');
+                    }}
+                  >
+                    🔗 Открыть VK OAuth
+                  </Button>
                 </div>
               </div>
 
