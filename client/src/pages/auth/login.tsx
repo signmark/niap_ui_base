@@ -58,11 +58,11 @@ export default function Login() {
 
       const authData = await response.json();
       
-      if (!authData?.token) {
+      if (!authData?.access_token) {
         throw new Error("Неверный формат ответа от сервера");
       }
 
-      const access_token = authData.token;
+      const access_token = authData.access_token;
       const refresh_token = authData.refresh_token;
       const expires = authData.expires || 900000; // Если не указан, используем 15 минут по умолчанию
       const userId = authData.user?.id;
