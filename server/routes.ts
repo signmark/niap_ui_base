@@ -3074,7 +3074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Получаем глобальный API ключ FAL.AI из базы данных
         console.log('Получаем глобальный API ключ FAL.AI из базы данных...');
-        falAiApiKey = await globalApiKeyManager.getApiKey('fal_ai');
+        falAiApiKey = await globalApiKeyManager.getApiKey(ApiServiceName.FAL_AI);
         
         if (falAiApiKey) {
           console.log('✅ Используется глобальный FAL.AI API ключ из базы данных');
