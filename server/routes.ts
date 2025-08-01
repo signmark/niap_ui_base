@@ -6293,19 +6293,23 @@ Return your response as a JSON array in this exact format:
 
   // Эндпоинт для анализа источника
   app.post("/api/analyze-source/:sourceId", authenticateUser, async (req: any, res) => {
+    const sourceId = req.params.sourceId;
+    const campaignId = req.body?.campaignId;
+    console.log(`[ANALYZE SOURCE] API called with sourceId: ${sourceId}, campaignId: ${campaignId}`);
+    
     try {
-      const sourceId = req.params.sourceId;
-      const { campaignId } = req.body;
-      const authToken = req.headers.authorization?.split(' ')[1];
-      
-      if (!authToken) {
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
         return res.status(401).json({ 
           success: false, 
           message: "Требуется авторизация" 
         });
       }
-
+      
+      const userToken = authHeader.replace('Bearer ', '');
+      
       if (!sourceId || !campaignId) {
+        console.log(`[ANALYZE SOURCE] Missing required params: sourceId=${sourceId}, campaignId=${campaignId}`);
         return res.status(400).json({
           success: false,
           message: "Требуется sourceId и campaignId"
@@ -6314,7 +6318,9 @@ Return your response as a JSON array in this exact format:
 
       console.log(`[ANALYZE SOURCE] Начинаем анализ источника ${sourceId} для кампании ${campaignId}`);
 
-      // 1. Получаем все тренды этого источника
+      // 1. Получаем все тренды этого источника с правильными полями
+      console.log(`[ANALYZE SOURCE] Получаем тренды для источника ${sourceId}`);
+      
       const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
         params: {
           filter: {
@@ -6324,9 +6330,10 @@ Return your response as a JSON array in this exact format:
           fields: ['id', 'title', 'content', 'source_id', 'campaign_id', 'sentiment_analysis']
         },
         headers: {
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${userToken}`
         }
       });
+      console.log(`[ANALYZE SOURCE] Directus response status: ${trendsResponse.status}`);
 
       const sourceTrends = trendsResponse.data?.data || [];
       console.log(`[ANALYZE SOURCE] Найдено ${sourceTrends.length} трендов для источника ${sourceId}`);
@@ -6354,7 +6361,7 @@ Return your response as a JSON array in this exact format:
               sort: ['-date']
             },
             headers: {
-              'Authorization': `Bearer ${authToken}`
+              'Authorization': `Bearer ${userToken}`
             }
           });
 
@@ -6397,7 +6404,7 @@ ${commentsText.substring(0, 2000)}
                 sentiment_analysis: analysisData
               }, {
                 headers: {
-                  'Authorization': `Bearer ${authToken}`
+                  'Authorization': `Bearer ${userToken}`
                 }
               });
               
@@ -6421,7 +6428,7 @@ ${commentsText.substring(0, 2000)}
           fields: ['id', 'sentiment_analysis']
         },
         headers: {
-          'Authorization': `Bearer ${authToken}`
+          'Authorization': `Bearer ${userToken}`
         }
       });
 
@@ -6475,6 +6482,13 @@ ${commentsText.substring(0, 2000)}
 
     } catch (error) {
       console.error('[ANALYZE SOURCE] Ошибка:', error);
+      console.error('[ANALYZE SOURCE] Stack trace:', error instanceof Error ? error.stack : 'No stack');
+      console.error('[ANALYZE SOURCE] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        sourceId,
+        campaignId
+      });
       return res.status(500).json({
         success: false,
         message: "Ошибка при анализе источника",
