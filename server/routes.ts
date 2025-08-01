@@ -2126,7 +2126,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем данные кампании через авторизованный токен
       const directusUrl = process.env.DIRECTUS_URL;
       if (!directusUrl) {
-        return res.status(500).json({ error: 'DIRECTUS_URL не настроен в переменных окружения' });
+        console.error('ERROR: DIRECTUS_URL не настроен в переменных окружения');
+        return null;
       }
       
       const directusApi = axios.create({
@@ -4259,7 +4260,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Получаем FAL.AI API ключ через сервис ключей
       const userId = req.body.userId || req.query.userId || (req as any).user?.id;
-      const token = getAuthToken(req);
+      const authHeader = req.headers.authorization;
+      const token = authHeader ? authHeader.replace('Bearer ', '') : null;
       let falAiApiKey = null;
       
       try {
@@ -4661,10 +4663,10 @@ ${text}
       // Предоставляем fallback результат в случае ошибки API
       const fallbackKeywords = [
         { keyword: req.body.keyword, trend: 80, competition: 65 },
-        { keyword: `${keyword} маркетинг`, trend: 75, competition: 55 },
-        { keyword: `${keyword} SEO`, trend: 70, competition: 60 },
-        { keyword: `${keyword} оптимизация`, trend: 68, competition: 50 },
-        { keyword: `${keyword} продвижение`, trend: 72, competition: 58 }
+        { keyword: `${req.body.keyword} маркетинг`, trend: 75, competition: 55 },
+        { keyword: `${req.body.keyword} SEO`, trend: 70, competition: 60 },
+        { keyword: `${req.body.keyword} оптимизация`, trend: 68, competition: 50 },
+        { keyword: `${req.body.keyword} продвижение`, trend: 72, competition: 58 }
       ];
       
       return res.json({
