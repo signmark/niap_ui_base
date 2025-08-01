@@ -768,7 +768,6 @@ export function BusinessQuestionnaireForm({
                 </div>
                 <KeywordSelector 
                   campaignId={campaignId}
-                  showUpdateMetricsButton={false}
                   onSelect={() => {
                     // Обновляем кэш при изменении ключевых слов
                     queryClient.invalidateQueries({ queryKey: ["/api/keywords", campaignId] });

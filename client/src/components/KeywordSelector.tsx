@@ -61,6 +61,7 @@ export function KeywordSelector({
       
       const data = await response.json();
       const keywords = data.map((item: any) => item.keyword);
+      console.log('KeywordSelector: Загружены ключевые слова:', keywords);
       setExistingKeywords(keywords);
       setSelectedItems(keywords);
       
@@ -353,14 +354,19 @@ export function KeywordSelector({
         </div>
       )}
 
-      {selectedItems.length > 0 && (
+      {(selectedItems.length > 0 || existingKeywords.length > 0) && (
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <div className="text-sm font-medium">Выбранные ключевые слова:</div>
+            <div className="text-sm font-medium">
+              Ключевые слова кампании ({Math.max(selectedItems.length, existingKeywords.length)}):
+            </div>
+            {isLoadingExisting && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
           </div>
           
           <div className="flex flex-wrap gap-2">
-            {selectedItems.map((keyword) => (
+            {(selectedItems.length > 0 ? selectedItems : existingKeywords).map((keyword) => (
               <Badge 
                 key={keyword} 
                 className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
