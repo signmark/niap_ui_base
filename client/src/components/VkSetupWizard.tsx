@@ -189,14 +189,16 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                   <div className="space-y-4">
                     <Alert>
                       <AlertDescription>
-                        <strong>Пошаговая инструкция:</strong><br/>
+                        <strong>Пошаговая инструкция VK OAuth:</strong><br/>
                         1. Нажмите кнопку "Открыть VK OAuth" ниже<br/>
-                        2. В новом окне пройдите авторизацию VK<br/>
-                        3. После авторизации URL изменится на что-то вроде:<br/>
-                        <code className="text-xs bg-gray-100 p-1 rounded">
-                          https://oauth.vk.com/blank.html#access_token=<strong>vk1.a.ДЛИННЫЙ_ТОКЕН</strong>&expires_in=0&user_id=123456
-                        </code><br/>
-                        4. Скопируйте только токен (от vk1.a. до &expires) и вставьте ниже
+                        2. В новом окне войдите в свой VK аккаунт<br/>
+                        3. Разрешите доступ к вашим группам<br/>
+                        4. После авторизации URL в адресной строке изменится на:<br/>
+                        <code className="text-xs bg-gray-100 p-1 rounded block mt-1 mb-1">
+                          https://[URL]#access_token=<strong className="text-blue-600">vk1.a.ДЛИННЫЙ_ТОКЕН</strong>&expires_in=0&user_id=123456
+                        </code>
+                        5. <strong>Скопируйте весь токен</strong> (начинается с "vk1.a." и очень длинный)<br/>
+                        6. Вставьте токен в поле ниже и нажмите "Продолжить"
                       </AlertDescription>
                     </Alert>
                     
@@ -220,7 +222,15 @@ const VkSetupWizard: React.FC<VkSetupWizardProps> = ({ campaignId, onComplete, o
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                       />
                       <div className="text-xs text-gray-500">
-                        Токен должен начинаться с "vk1.a." и быть довольно длинным (100+ символов)
+                        <div className="mb-1">
+                          <strong>Пример правильного токена:</strong>
+                        </div>
+                        <code className="bg-green-50 text-green-700 p-1 rounded text-xs block">
+                          vk1.a.abcDEF123xyz789...WgH4K5L6 (длина ~180 символов)
+                        </code>
+                        <div className="mt-1">
+                          Токен должен начинаться с "vk1.a." и быть довольно длинным (100+ символов)
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button 
