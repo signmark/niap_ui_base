@@ -235,17 +235,13 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
 
   const fetchChannelInfo = async (accessToken: string, tokens?: { accessToken: string; refreshToken: string }) => {
     try {
-      console.log('📊 [YouTube Wizard] Fetching channel info...');
-      console.log('📊 [YouTube Wizard] Access token length:', accessToken?.length || 0);
-      console.log('📊 [YouTube Wizard] Access token preview:', accessToken?.substring(0, 20) + '...');
-      
       const response = await fetch(`/api/youtube/channel-info?accessToken=${encodeURIComponent(accessToken)}`);
       
-      console.log('📊 [YouTube Wizard] Response status:', response.status, response.statusText);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('📊 [YouTube Wizard] Error response:', errorText);
+        const errorData = await response.json();
+        if (errorData.errorCode === 'NO_CHANNEL') {
+          throw new Error(errorData.error);
+        }
         throw new Error(`Channel info request failed: ${response.status} ${response.statusText}`);
       }
       
@@ -314,11 +310,14 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
         setAuthTokens({ accessToken: '', refreshToken: '' }); // Сбрасываем токены
       }
       
-      toast({
-        title: "Ошибка получения данных канала",
-        description: error.message || "Не удалось получить информацию о канале",
-        variant: "destructive"
-      });
+      // Показываем toast только для неожиданных ошибок, не для отсутствия канала
+      if (!error.message?.includes('У вас нет YouTube канала')) {
+        toast({
+          title: "Ошибка получения данных канала",
+          description: error.message || "Не удалось получить информацию о канале",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -453,57 +452,103 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
       )}
 
       {step === 5 && (
-        <Card>
+        <Card className="border-orange-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Youtube className="h-6 w-6 text-red-600" />
-              Создайте YouTube канал
+              <Youtube className="h-6 w-6 text-orange-600" />
+              Нужно создать YouTube канал
             </CardTitle>
             <CardDescription>
-              У вас есть Google аккаунт, но нет YouTube канала для публикации видео
+              Авторизация прошла успешно, но у вашего Google аккаунта нет YouTube канала
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-red-50 p-4 rounded-lg">
-              <h4 className="font-medium text-red-900 mb-2">Что нужно сделать:</h4>
-              <ol className="text-sm text-red-800 space-y-2 list-decimal list-inside">
-                <li>Откройте <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">YouTube Studio</a></li>
-                <li>Войдите в свой Google аккаунт</li>
-                <li>Создайте новый YouTube канал (следуйте инструкциям на экране)</li>
-                <li>Вернитесь сюда и нажмите "Повторить авторизацию"</li>
+            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+              <h4 className="font-semibold text-orange-900 mb-3">📋 Пошаговая инструкция:</h4>
+              <ol className="text-sm text-orange-800 space-y-3 list-decimal list-inside">
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">1.</span>
+                  <div>
+                    Откройте <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium hover:text-blue-800">studio.youtube.com</a> в новой вкладке
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">2.</span>
+                  <div>Войдите в тот же Google аккаунт, который авторизовали</div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">3.</span>
+                  <div>Нажмите "Создать канал" и следуйте инструкциям</div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-medium">4.</span>
+                  <div>Вернитесь сюда и нажмите "Проверить канал"</div>
+                </li>
               </ol>
             </div>
             
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Альтернативный способ:</h4>
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">💡 Альтернативный способ:</h4>
               <p className="text-sm text-blue-800">
-                Также можно создать канал напрямую в <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">YouTube</a> - 
-                нажмите на аватар в правом верхнем углу → "Создать канал"
+                Перейдите на <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium hover:text-blue-800">youtube.com</a> → 
+                нажмите на аватар справа вверху → "Создать канал"
               </p>
             </div>
             
-            <div className="flex gap-3">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
+              <h4 className="font-medium text-gray-700 mb-2">🔗 Полезные ссылки:</h4>
+              <div className="flex flex-wrap gap-3 text-sm">
+                <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                  YouTube Studio
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                  YouTube.com
+                </a>
+                <a href="https://support.google.com/youtube/answer/1646861" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                  Справка по созданию канала
+                </a>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 pt-2">
               <Button 
                 onClick={() => {
                   window.open('https://studio.youtube.com', '_blank');
                 }}
-                variant="outline"
-                className="flex-1"
+                className="w-full bg-red-600 hover:bg-red-700"
+                size="lg"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Открыть YouTube Studio
               </Button>
-              <Button 
-                onClick={() => {
-                  setStep(1);
-                  setAuthTokens({ accessToken: '', refreshToken: '' });
-                  setChannelInfo(null);
-                }}
-                className="flex-1"
-              >
-                <Youtube className="h-4 w-4 mr-2" />
-                Повторить авторизацию
-              </Button>
+              
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => {
+                    // Повторяем запрос с теми же токенами
+                    if (authTokens?.accessToken) {
+                      fetchChannelInfo(authTokens.accessToken, authTokens);
+                    }
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={!authTokens?.accessToken}
+                >
+                  <Youtube className="h-4 w-4 mr-2" />
+                  Проверить канал
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setStep(1);
+                    setAuthTokens({ accessToken: '', refreshToken: '' });
+                    setChannelInfo(null);
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Начать заново
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

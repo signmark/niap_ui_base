@@ -5,9 +5,6 @@ const router = express.Router();
 
 // Получение информации о YouTube канале по access token
 router.get('/youtube/channel-info', async (req, res) => {
-  console.log('🔍 [YOUTUBE-CHANNEL] Request received for channel info');
-  console.log('🔍 [YOUTUBE-CHANNEL] Query params:', req.query);
-  
   try {
     const { accessToken } = req.query;
     
@@ -20,11 +17,6 @@ router.get('/youtube/channel-info', async (req, res) => {
 
     // Очищаем токен от пробелов и других невалидных символов
     const cleanToken = accessToken.toString().trim().replace(/\s+/g, '');
-    console.log('🔍 [YOUTUBE-CHANNEL] Original token length:', accessToken.toString().length);
-    console.log('🔍 [YOUTUBE-CHANNEL] Clean token length:', cleanToken.length);
-    console.log('🔍 [YOUTUBE-CHANNEL] Getting channel info for token:', cleanToken.substring(0, 20) + '...');
-
-    console.log('🔍 [YOUTUBE-CHANNEL] Using OAuth token for channel info (no API key needed for mine=true)');
 
     // Запрашиваем информацию о канале через YouTube Data API v3
     // Для запросов с mine=true используем только OAuth токен без API ключа
@@ -42,7 +34,6 @@ router.get('/youtube/channel-info', async (req, res) => {
 
     if (!channelResponse.ok) {
       const errorData = await channelResponse.text();
-      console.error('❌ [YOUTUBE-CHANNEL] YouTube API error:', errorData);
       return res.status(channelResponse.status).json({
         success: false,
         error: `YouTube API error: ${channelResponse.statusText}`,
@@ -51,10 +42,8 @@ router.get('/youtube/channel-info', async (req, res) => {
     }
 
     const channelData = await channelResponse.json();
-    console.log('📊 [YOUTUBE-CHANNEL] YouTube API response:', JSON.stringify(channelData, null, 2));
 
     if (!channelData.items || channelData.items.length === 0) {
-      console.log('🔍 [YOUTUBE-CHANNEL] No channel found, checking if user needs to create one');
       return res.status(404).json({
         success: false,
         error: 'У вас нет YouTube канала. Создайте канал в YouTube Studio, затем повторите авторизацию.',
@@ -75,11 +64,7 @@ router.get('/youtube/channel-info', async (req, res) => {
       publishedAt: channel.snippet.publishedAt
     };
 
-    console.log('✅ [YOUTUBE-CHANNEL] Channel info extracted:', {
-      channelId: channelInfo.channelId,
-      title: channelInfo.channelTitle,
-      subscribers: channelInfo.subscriberCount
-    });
+
 
     res.json({
       success: true,
