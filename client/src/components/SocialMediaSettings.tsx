@@ -739,6 +739,35 @@ export function SocialMediaSettings({
     }
   }, [campaignId]);
 
+  // Слушатель событий для обновления Instagram настроек после OAuth
+  useEffect(() => {
+    const handleInstagramOAuthSuccess = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data.type === 'INSTAGRAM_OAUTH_SUCCESS') {
+        console.log('📋 [SocialMediaSettings] Получено событие Instagram OAuth успеха');
+        console.log('🔄 [SocialMediaSettings] Перезагружаем Instagram настройки...');
+        
+        // Перезагружаем Instagram настройки с задержкой для синхронизации с базой данных
+        setTimeout(() => {
+          loadInstagramSettings();
+          toast({
+            title: "Instagram обновлен",
+            description: "Настройки Instagram успешно обновлены"
+          });
+        }, 500);
+      }
+    };
+
+    window.addEventListener('message', handleInstagramOAuthSuccess);
+    
+    return () => {
+      window.removeEventListener('message', handleInstagramOAuthSuccess);
+    };
+  }, [campaignId, loadInstagramSettings, toast]);
+
   // Обновляем форму когда Instagram настройки загружены
   useEffect(() => {
     if (instagramSettings) {
