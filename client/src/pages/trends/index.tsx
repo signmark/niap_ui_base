@@ -1523,21 +1523,7 @@ export default function Trends() {
                         </div>
                       </div>
                     ))}
-                    {sources.length > 0 && (
-                      <div className="mt-4 pt-2 border-t">
-                        <Button
-                          variant={selectedSourceId === null ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSourceId(null);
-                            setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов
-                          }}
-                          className="w-full"
-                        >
-                          Все источники
-                        </Button>
-                      </div>
-                    )}
+
                   </div>
                 )}
                   </CollapsibleContent>
@@ -1582,6 +1568,20 @@ export default function Trends() {
 
                 {activeTab === 'trends' ? (
                   <>
+                    {sources.length > 0 && (
+                      <div className="mb-4">
+                        <Button
+                          variant={selectedSourceId === null ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSourceId(null);
+                          }}
+                          className="mb-4"
+                        >
+                          Все источники
+                        </Button>
+                      </div>
+                    )}
                     <div className="flex items-center flex-wrap gap-4 mb-4">
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Период:</div>
