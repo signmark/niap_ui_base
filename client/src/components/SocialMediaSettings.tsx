@@ -102,10 +102,7 @@ export function SocialMediaSettings({
   // Состояние для показа YouTube wizard
   const [showYoutubeWizard, setShowYoutubeWizard] = useState(false);
   
-  // Отладка изменения состояния YouTube wizard
-  useEffect(() => {
-    console.log('🎬 [YouTube State] showYoutubeWizard changed:', showYoutubeWizard);
-  }, [showYoutubeWizard]);
+
   
   // Состояние для Instagram настроек из базы данных
   const [instagramSettings, setInstagramSettings] = useState<any>(null);
@@ -141,20 +138,20 @@ export function SocialMediaSettings({
     const loadInstagramUsername = async () => {
       if (instagramSettings?.businessAccountId && instagramSettings?.accessToken) {
         try {
-          console.log('📱 Loading Instagram username for account:', instagramSettings.businessAccountId);
+
           const response = await fetch(`https://graph.facebook.com/v23.0/${instagramSettings.businessAccountId}?access_token=${instagramSettings.accessToken}&fields=id,username,name`);
           const data = await response.json();
           
           if (data.username) {
             const displayName = `@${data.username}`;
-            console.log('📱 Instagram username loaded:', displayName);
+
             setInstagramDisplayName(displayName);
           } else if (data.name) {
             // Используем name если username недоступен
-            console.log('📱 Instagram name loaded:', data.name);
+
             setInstagramDisplayName(data.name);
           } else {
-            console.log('📱 No username or name available');
+
             setInstagramDisplayName('Instagram Business Account');
           }
         } catch (error) {
@@ -458,7 +455,7 @@ export function SocialMediaSettings({
   const loadVkSettings = async () => {
     setLoadingVkSettings(true);
     try {
-      console.log('🔄 Loading VK settings from database...');
+
       
       const response = await fetch(`/api/campaigns/${campaignId}/vk-settings`, {
         headers: {
@@ -468,7 +465,7 @@ export function SocialMediaSettings({
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ VK settings loaded:', data);
+
         
         if (data.success && data.settings) {
           setVkSettings(data.settings);
@@ -481,9 +478,9 @@ export function SocialMediaSettings({
             form.setValue('vk.groupId', data.settings.groupId);
           }
           
-          console.log('🔄 VK form fields updated with database values');
+
         } else {
-          console.log('ℹ️ No VK settings found in database');
+
           setVkSettings(null);
         }
       } else {
@@ -499,11 +496,10 @@ export function SocialMediaSettings({
   // Функция загрузки Instagram настроек из базы данных
   // Функция для переключения Instagram аккаунтов
   const handleSwitchInstagramAccount = async () => {
-    console.log('🔄 Instagram: Начинаем поиск аккаунтов для переключения');
-    console.log('🔄 Instagram: Текущие настройки:', instagramSettings);
+
     
     if (!instagramSettings?.accessToken) {
-      console.log('❌ Instagram: Отсутствует accessToken');
+
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -514,7 +510,7 @@ export function SocialMediaSettings({
 
     setLoadingAccounts(true);
     try {
-      console.log('🔍 Instagram: Отправляем запрос на поиск аккаунтов...');
+
       const response = await fetch(`/api/campaigns/${campaignId}/discover-instagram-accounts`, {
         method: 'POST',
         headers: {
@@ -527,10 +523,10 @@ export function SocialMediaSettings({
       });
 
       const data = await response.json();
-      console.log('📊 Instagram: Ответ от сервера:', data);
+
       
       if (data.success && data.accounts) {
-        console.log('✅ Instagram: Найдены аккаунты:', data.accounts);
+
         setAvailableInstagramAccounts(data.accounts);
         setShowAccountSwitcher(true);
         toast({
@@ -593,22 +589,22 @@ export function SocialMediaSettings({
   const loadInstagramSettings = async () => {
     setLoadingInstagramSettings(true);
     try {
-      console.log('🔄 [DEBUG] Загружаем Instagram настройки для кампании:', campaignId);
+
       // Используем API client с авторизацией 
       const response = await api.get(`/campaigns/${campaignId}/instagram-settings`);
       const data = response.data;
       
-      console.log('🔄 [DEBUG] Ответ от Instagram API:', data);
+
       
       if (data.success && data.settings) {
-        console.log('✅ [DEBUG] Instagram настройки установлены:', data.settings);
+
         setInstagramSettings(data.settings);
       } else {
-        console.log('⚠️ [DEBUG] Instagram настройки пустые или неуспешные:', data);
+
         setInstagramSettings(null);
       }
     } catch (error: any) {
-      console.error('❌ [DEBUG] Ошибка загрузки Instagram настроек:', error);
+
       // Если ошибка авторизации, попробуем обновить страницу
       if (error.response?.status === 401) {
         // Обработка ошибки авторизации
@@ -623,7 +619,7 @@ export function SocialMediaSettings({
   const loadFacebookSettings = async () => {
     setLoadingFacebookSettings(true);
     try {
-      console.log('🔄 Loading Facebook settings from database...');
+
       
       const response = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
         headers: {
@@ -633,7 +629,7 @@ export function SocialMediaSettings({
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Facebook settings loaded:', data);
+
         
         if (data.success && data.settings) {
           setFacebookSettings(data.settings);
@@ -649,9 +645,9 @@ export function SocialMediaSettings({
             form.setValue('facebook.pageName', data.settings.pageName);
           }
           
-          console.log('🔄 Facebook form fields updated with database values');
+
         } else {
-          console.log('ℹ️ No Facebook settings found in database');
+
           setFacebookSettings(null);
         }
       } else {
@@ -668,7 +664,7 @@ export function SocialMediaSettings({
   const loadYoutubeSettings = async () => {
     setLoadingYoutubeSettings(true);
     try {
-      console.log('📋 [YOUTUBE-SETTINGS] Loading YouTube settings from database...');
+
       
       const response = await fetch(`/api/campaigns/${campaignId}/youtube-settings`, {
         headers: {
@@ -678,7 +674,7 @@ export function SocialMediaSettings({
       
       if (response.ok) {
         const data = await response.json();
-        console.log('📋 [YOUTUBE-SETTINGS] YouTube settings loaded:', data);
+
         
         if (data.success && data.settings) {
           setYoutubeSettings(data.settings);
@@ -697,9 +693,9 @@ export function SocialMediaSettings({
             form.setValue('youtube.channelTitle', data.settings.channelTitle);
           }
           
-          console.log('📋 [YOUTUBE-SETTINGS] YouTube form fields updated with database values');
+
         } else {
-          console.log('ℹ️ No YouTube settings found in database');
+
           setYoutubeSettings(null);
         }
       } else {
@@ -764,11 +760,7 @@ export function SocialMediaSettings({
       form.setValue('instagram.appId', formattedInstagramData.appId);
       form.setValue('instagram.appSecret', formattedInstagramData.appSecret);
       
-      console.log('  - token:', form.getValues('instagram.token'));
-      console.log('  - accessToken:', form.getValues('instagram.accessToken')); 
-      console.log('  - businessAccountId:', form.getValues('instagram.businessAccountId'));
-      console.log('  - appId:', form.getValues('instagram.appId'));
-      console.log('  - appSecret:', form.getValues('instagram.appSecret'));
+
       
       // Принудительно обновляем отображение формы
       form.trigger('instagram');
@@ -778,7 +770,7 @@ export function SocialMediaSettings({
   // Обновляем форму когда VK настройки загружены
   useEffect(() => {
     if (vkSettings) {
-      console.log('🔄 Updating VK form fields with database values:', vkSettings);
+
       
       // Обновляем поля формы с данными из базы
       if (vkSettings.token) {
@@ -788,11 +780,7 @@ export function SocialMediaSettings({
         form.setValue('vk.groupId', vkSettings.groupId);
       }
       
-      console.log('✅ VK form fields updated:', {
-        token: form.getValues('vk.token'),
-        groupId: form.getValues('vk.groupId'),
-        groupName: vkSettings.groupName
-      });
+
       
       // Принудительно обновляем отображение формы
       form.trigger('vk');
@@ -802,7 +790,7 @@ export function SocialMediaSettings({
   // Обновляем форму когда Facebook настройки загружены
   useEffect(() => {
     if (facebookSettings) {
-      console.log('🔄 Updating Facebook form fields with database values:', facebookSettings);
+
       
       // Проверяем что токен не содержит лог консоли
       const token = facebookSettings.token || '';
@@ -822,11 +810,7 @@ export function SocialMediaSettings({
         form.setValue('facebook.pageName', facebookSettings.pageName);
       }
       
-      console.log('✅ Facebook form fields updated:', {
-        token: form.getValues('facebook.token'),
-        pageId: form.getValues('facebook.pageId'),
-        pageName: form.getValues('facebook.pageName')
-      });
+
       
       // Принудительно обновляем отображение формы
       form.trigger('facebook');
@@ -836,7 +820,7 @@ export function SocialMediaSettings({
   // Обновляем форму когда YouTube настройки загружены
   useEffect(() => {
     if (youtubeSettings) {
-      console.log('📋 [YOUTUBE-SETTINGS] Updating YouTube form fields with database values:', youtubeSettings);
+
       
       // Обновляем поля формы с данными из базы
       if (youtubeSettings.accessToken) {
@@ -852,12 +836,7 @@ export function SocialMediaSettings({
         form.setValue('youtube.channelTitle', youtubeSettings.channelTitle);
       }
       
-      console.log('📋 [YOUTUBE-SETTINGS] YouTube form fields updated:', {
-        accessToken: form.getValues('youtube.accessToken'),
-        refreshToken: form.getValues('youtube.refreshToken'),
-        channelId: form.getValues('youtube.channelId'),
-        channelTitle: form.getValues('youtube.channelTitle')
-      });
+
       
       // Принудительно обновляем отображение формы
       form.trigger(['youtube.accessToken', 'youtube.channelId']);
@@ -1620,7 +1599,7 @@ export function SocialMediaSettings({
                       variant={instagramSettings?.configured || instagramSettings?.token ? "default" : "outline"}
                       size="sm"
                       onClick={() => {
-                        console.log('Открываем Instagram мастер для настройки/пересконфигурации');
+
                         setShowInstagramWizard(true);
                       }}
                       disabled={loadingInstagramSettings}
@@ -1642,11 +1621,11 @@ export function SocialMediaSettings({
                   <InstagramSetupWizardSimple
                     campaignId={campaignId}
                     onCancel={() => {
-                      console.log('Instagram wizard: Закрытие встроенного мастера');
+
                       setShowInstagramWizard(false);
                     }}
                     onComplete={() => {
-                      console.log('🔄 Instagram setup completed, refreshing Instagram settings...');
+
                       setShowInstagramWizard(false);
                       
                       // Перезагружаем Instagram настройки из базы данных
@@ -1737,15 +1716,12 @@ export function SocialMediaSettings({
                     </p>
                   </div>
                   <div className="flex space-x-2">
-
-                    
-
                     <Button 
                       type="button" 
                       variant={form.watch('facebook.token') ? "default" : "outline"}
                       size="sm"
                       onClick={() => {
-                        console.log('Открываем Facebook мастер для настройки/пересконфигурации');
+
                         setShowFacebookWizard(true);
                       }}
                     >
@@ -1761,11 +1737,11 @@ export function SocialMediaSettings({
                   <FacebookSetupWizard
                     campaignId={campaignId}
                     onCancel={() => {
-                      console.log('Facebook wizard: Закрытие встроенного мастера');
+
                       setShowFacebookWizard(false);
                     }}
                     onComplete={(data) => {
-                      console.log('🔄 Facebook setup completed, updating form...');
+
                       handleFacebookComplete(data);
                       setShowFacebookWizard(false);
                     }}

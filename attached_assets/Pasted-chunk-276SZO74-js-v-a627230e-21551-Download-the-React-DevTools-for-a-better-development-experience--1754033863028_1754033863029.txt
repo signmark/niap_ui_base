@@ -1,0 +1,42 @@
+chunk-276SZO74.js?v=a627230e:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+SocialMediaSettings.tsx:107 🎬 [YouTube State] showYoutubeWizard changed: false
+SocialMediaSettings.tsx:596 🔄 [DEBUG] Загружаем Instagram настройки для кампании: fde4ae82-e492-4c94-965d-902bfe721d97
+SocialMediaSettings.tsx:461 🔄 Loading VK settings from database...
+SocialMediaSettings.tsx:626 🔄 Loading Facebook settings from database...
+SocialMediaSettings.tsx:671 📋 [YOUTUBE-SETTINGS] Loading YouTube settings from database...
+SocialMediaSettings.tsx:636 ✅ Facebook settings loaded: Object
+SocialMediaSettings.tsx:652 🔄 Facebook form fields updated with database values
+SocialMediaSettings.tsx:805 🔄 Updating Facebook form fields with database values: Object
+SocialMediaSettings.tsx:825 ✅ Facebook form fields updated: Object
+SocialMediaSettings.tsx:471 ✅ VK settings loaded: Object
+SocialMediaSettings.tsx:484 🔄 VK form fields updated with database values
+SocialMediaSettings.tsx:781 🔄 Updating VK form fields with database values: Object
+SocialMediaSettings.tsx:791 ✅ VK form fields updated: Object
+SocialMediaSettings.tsx:601 🔄 [DEBUG] Ответ от Instagram API: Object
+SocialMediaSettings.tsx:604 ✅ [DEBUG] Instagram настройки установлены: Object
+SocialMediaSettings.tsx:144 📱 Loading Instagram username for account: 17841422578516105
+SocialMediaSettings.tsx:767   - token: EAAZAHcTF7hDoBPCe39ztywC0ZBDGv9VeQ2rYTGAcWZAln54S6FlSMOpPd8xQ7xHreZBu1PwMfTtaI1mLd3DwaANaHTt9D9mKCr2v1LFZAFYVLNmqWFTGwlXnG7CxUZBH3GULAnd6hQVgNK6EXxEdUQTI8SD7PADx19ehPu3avOlHX3I65wox9Ql0BTtq3UcTprm61XsZCOuauA9v8ru
+SocialMediaSettings.tsx:768   - accessToken: EAAZAHcTF7hDoBPCe39ztywC0ZBDGv9VeQ2rYTGAcWZAln54S6FlSMOpPd8xQ7xHreZBu1PwMfTtaI1mLd3DwaANaHTt9D9mKCr2v1LFZAFYVLNmqWFTGwlXnG7CxUZBH3GULAnd6hQVgNK6EXxEdUQTI8SD7PADx19ehPu3avOlHX3I65wox9Ql0BTtq3UcTprm61XsZCOuauA9v8ru
+SocialMediaSettings.tsx:769   - businessAccountId: 17841422578516105
+SocialMediaSettings.tsx:770   - appId: 1767401347318842
+SocialMediaSettings.tsx:771   - appSecret: 4733b103b7bd85f973ab6ee97cc5a45d
+SocialMediaSettings.tsx:681 📋 [YOUTUBE-SETTINGS] YouTube settings loaded: Object
+SocialMediaSettings.tsx:700 📋 [YOUTUBE-SETTINGS] YouTube form fields updated with database values
+SocialMediaSettings.tsx:839 📋 [YOUTUBE-SETTINGS] Updating YouTube form fields with database values: Object
+SocialMediaSettings.tsx:855 📋 [YOUTUBE-SETTINGS] YouTube form fields updated: Object
+SocialMediaSettings.tsx:150 📱 Instagram username loaded: @d.signmark
+SocialMediaSettings.tsx:1753 Открываем Facebook мастер для настройки/пересконфигурации
+FacebookSetupWizard.tsx:309 🔄 Loading existing Facebook settings for campaign: fde4ae82-e492-4c94-965d-902bfe721d97
+FacebookSetupWizard.tsx:318 📋 Facebook settings loaded: Object
+FacebookSetupWizard.tsx:324 ✅ Setting Facebook token in form: EAAZAHcTF7hDoBPCe39z...
+FacebookSetupWizard.tsx:309 🔄 Loading existing Facebook settings for campaign: fde4ae82-e492-4c94-965d-902bfe721d97
+FacebookSetupWizard.tsx:318 📋 Facebook settings loaded: Object
+FacebookSetupWizard.tsx:324 ✅ Setting Facebook token in form: EAAZAHcTF7hDoBPCe39z...
+SocialMediaSettings.tsx:1623 Открываем Instagram мастер для настройки/пересконфигурации
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: fde4ae82-e492-4c94-965d-902bfe721d97
+InstagramSetupWizardSimple.tsx:63 🔍 Auto-checking Facebook pages for existing Instagram token...
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: fde4ae82-e492-4c94-965d-902bfe721d97
+InstagramSetupWizardSimple.tsx:74 🔍 Facebook pages found during loading: Object
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: fde4ae82-e492-4c94-965d-902bfe721d97
+InstagramSetupWizardSimple.tsx:36 Instagram Setup Wizard rendering with campaignId: fde4ae82-e492-4c94-965d-902bfe721d97
