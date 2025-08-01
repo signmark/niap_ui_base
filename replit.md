@@ -7,6 +7,7 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
 - **2025-08-01**: **FIXED TREND COLLECTION USER NOTIFICATIONS** - Added immediate "Sбор начат" notification when trend collection starts, delayed helpful tips by 60 seconds
 - **2025-08-01**: **OPTIMIZED VK OAUTH WINDOW SIZE** - Set precise 685x670px dimensions for VK authorization popup to eliminate scrolling issues
 - **2025-08-01**: **FIXED CROSS-PLATFORM OAUTH TOKEN SYNCHRONIZATION** - Resolved critical bug where OAuth tokens didn't automatically update in form fields

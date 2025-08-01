@@ -334,7 +334,7 @@ export function SocialMediaSettings({
   };
 
   // Обработчик завершения Facebook мастера
-  const handleFacebookComplete = (data: { token: string; pageId: string; pageName: string }) => {
+  const handleFacebookComplete = (data: { token: string; pageId: string; pageName: string; userToken?: string }) => {
     // Проверяем что токен не содержит лог консоли
     if (data.token.includes('Facebook Wizard:') || data.token.includes('%20') || data.token.includes('FacebookSetupWizard')) {
       toast({
@@ -345,9 +345,26 @@ export function SocialMediaSettings({
       return;
     }
 
+    // Токен страницы Facebook идет в основное поле token
     form.setValue('facebook.token', data.token);
     form.setValue('facebook.pageId', data.pageId);
     form.setValue('facebook.pageName', data.pageName);
+    
+    // Если есть пользовательский токен (это Instagram токен), сохраняем его отдельно
+    if (data.userToken) {
+      // Проверяем, что это именно Instagram токен из существующих настроек
+      const instagramToken = instagramSettings?.accessToken || 
+                            instagramSettings?.token ||
+                            instagramSettings?.longLivedToken;
+      
+      // Если userToken совпадает с Instagram токеном, это значит был использован "Взять из Instagram"
+      if (instagramToken && data.userToken === instagramToken) {
+        console.log('📋 Facebook Setup: Instagram токен будет сохранен как ссылка в Facebook настройках');
+        // В будущем здесь можно добавить сохранение ссылки на Instagram токен
+        // Пока просто логируем для понимания структуры
+      }
+    }
+    
     toast({
       title: "Facebook настроен",
       description: `Выбрана страница: ${data.pageName}`,
