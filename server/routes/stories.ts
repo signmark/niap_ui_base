@@ -31,7 +31,8 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    if (campaignResponse.data.user_created !== userId) {
+    const campaignData = campaignResponse.data.data || campaignResponse.data;
+    if (campaignData.user_created !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -63,7 +64,7 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    const stories = storiesResponse.data || [];
+    const stories = storiesResponse.data.data || storiesResponse.data || [];
 
     log('stories', `Retrieved ${stories.length} stories for campaign ${campaignId}`);
     res.json({ data: stories });

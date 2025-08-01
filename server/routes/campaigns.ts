@@ -47,7 +47,7 @@ router.get('/', authenticateUser, async (req: any, res) => {
       }
     });
 
-    const campaigns = response.data || [];
+    const campaigns = response.data.data || response.data || [];
     
     log('campaigns', `Retrieved ${campaigns.length} campaigns for user ${userId}`);
     res.json({ data: campaigns });

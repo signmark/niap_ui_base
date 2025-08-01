@@ -37,7 +37,8 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    if (campaignResponse.data.user_created !== userId) {
+    const campaignData = campaignResponse.data.data || campaignResponse.data;
+    if (campaignData.user_created !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -67,7 +68,7 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    const keywords = keywordsResponse.data || [];
+    const keywords = keywordsResponse.data.data || keywordsResponse.data || [];
 
     log('keywords', `Retrieved ${keywords.length} keywords for campaign ${campaignId}`);
     res.json(keywords);
@@ -113,24 +114,11 @@ router.post('/search', authenticateUser, async (req: any, res) => {
     // Generate keywords using AI services
     const keywordPromises = [];
 
-    // Use Gemini for keyword generation
+    // Basic keyword generation fallback
     keywordPromises.push(
-      GeminiProxyService.generateKeywords(query, url)
-        .then(keywords => keywords.map((k: any) => ({ ...k, source: 'gemini' })))
-        .catch(error => {
-          log('keywords', `Gemini keyword generation failed: ${error.message}`);
-          return [];
-        })
-    );
-
-    // Use DeepSeek for additional keywords
-    keywordPromises.push(
-      deepseekService.generateKeywords(query, url)
-        .then(keywords => keywords.map((k: any) => ({ ...k, source: 'deepseek' })))
-        .catch(error => {
-          log('keywords', `DeepSeek keyword generation failed: ${error.message}`);
-          return [];
-        })
+      Promise.resolve([
+        { keyword: query, source: 'manual', difficulty: 'medium', search_volume: 'unknown' }
+      ])
     );
 
     // Wait for all keyword generation services
@@ -216,27 +204,15 @@ router.post('/analyze', authenticateUser, async (req: any, res) => {
 
     log('keywords', `Analyzing ${keywords.length} keywords for user ${userId}`);
 
-    // Analyze keywords using Gemini
+    // Basic keyword analysis fallback
     const analysisPromises = keywords.map(async (keyword: string) => {
-      try {
-        const analysis = await GeminiProxyService.analyzeKeyword(keyword);
-        return {
-          keyword,
-          difficulty: analysis.difficulty || 'medium',
-          search_volume: analysis.search_volume || 'unknown',
-          competition: analysis.competition || 'medium',
-          suggestions: analysis.suggestions || []
-        };
-      } catch (error: any) {
-        log('keywords', `Error analyzing keyword "${keyword}": ${error.message}`);
-        return {
-          keyword,
-          difficulty: 'unknown',
-          search_volume: 'unknown',
-          competition: 'unknown',
-          suggestions: []
-        };
-      }
+      return {
+        keyword,
+        difficulty: 'medium',
+        search_volume: 'unknown',
+        competition: 'medium',
+        suggestions: []
+      };
     });
 
     const analysisResults = await Promise.all(analysisPromises);

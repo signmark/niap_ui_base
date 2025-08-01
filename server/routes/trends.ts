@@ -31,7 +31,8 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    if (campaignResponse.data.user_created !== userId) {
+    const campaignData = campaignResponse.data.data || campaignResponse.data;
+    if (campaignData.user_created !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -62,7 +63,7 @@ router.get('/:campaignId', authenticateUser, async (req: any, res) => {
       }
     });
 
-    const trends = trendsResponse.data || [];
+    const trends = trendsResponse.data.data || trendsResponse.data || [];
 
     // Process sentiment analysis for display
     const processedTrends = trends.map((trend: any) => {
