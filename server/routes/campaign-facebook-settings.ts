@@ -56,10 +56,10 @@ router.get('/campaigns/:campaignId/facebook-settings', async (req, res) => {
  */
 router.post('/campaigns/:campaignId/facebook-settings', async (req, res) => {
   const { campaignId } = req.params;
-  const { token, pageId, pageName } = req.body;
-  const userToken = req.headers.authorization?.replace('Bearer ', '');
+  const { token, pageId, pageName, userToken: userAccessToken } = req.body;
+  const authToken = req.headers.authorization?.replace('Bearer ', '');
 
-  if (!userToken) {
+  if (!authToken) {
     return res.status(401).json({
       success: false,
       error: 'Токен авторизации обязателен'
@@ -87,7 +87,7 @@ router.post('/campaigns/:campaignId/facebook-settings', async (req, res) => {
       `${process.env.DIRECTUS_URL}/items/user_campaigns/${campaignId}`,
       {
         headers: {
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       }
@@ -97,16 +97,26 @@ router.post('/campaigns/:campaignId/facebook-settings', async (req, res) => {
     const existingSocialSettings = campaign.social_media_settings || {};
     const existingFacebook = existingSocialSettings.facebook || {};
 
-    // Объединяем существующие и новые настройки
+    // Объединяем существующие и новые настройки с раздельным хранением токенов
     const updatedSettings = {
       ...existingSocialSettings,
       facebook: {
         ...existingFacebook, // Сохраняем существующие данные
+        
+        // Основной токен страницы для публикации
         token,
         pageId,
         pageName: pageName || existingFacebook.pageName || '',
+        
+        // Пользовательский токен для получения списка страниц
+        userToken: userAccessToken || existingFacebook.userToken || token,
+        
+        // Метаданные
         setupCompletedAt: new Date().toISOString(),
-        configured: true
+        configured: true,
+        
+        // Дополнительная информация
+        tokenType: userAccessToken ? 'page' : 'user' // Определяем тип основного токена
       }
     };
 
@@ -118,7 +128,7 @@ router.post('/campaigns/:campaignId/facebook-settings', async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${userToken}`,
+          Authorization: `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       }

@@ -28,13 +28,30 @@ router.get('/pages', async (req, res) => {
     // Сначала проверяем тип токена и получаем информацию
     let tokenInfo;
     try {
+      // Сначала пробуем получить базовую информацию без category
       tokenInfo = await axios.get(`https://graph.facebook.com/v18.0/me`, {
         params: {
           access_token: accessToken,
-          fields: 'id,name,category'
+          fields: 'id,name'
         },
         timeout: 10000
       });
+      
+      // Затем пробуем получить category - если получится, то это Page
+      try {
+        const categoryResponse = await axios.get(`https://graph.facebook.com/v18.0/me`, {
+          params: {
+            access_token: accessToken,
+            fields: 'category'
+          },
+          timeout: 5000
+        });
+        tokenInfo.data.category = categoryResponse.data.category;
+      } catch (categoryError) {
+        // Если category недоступна - это User токен
+        console.log('🔵 [FACEBOOK-PAGES] No category field - User token detected');
+        tokenInfo.data.category = null;
+      }
     } catch (tokenError: any) {
       console.log('❌ [FACEBOOK-PAGES] Token validation failed:', tokenError.response?.data || tokenError.message);
       return res.status(401).json({

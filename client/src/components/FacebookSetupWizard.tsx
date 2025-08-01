@@ -34,7 +34,7 @@ interface FacebookPage {
 
 interface FacebookSetupWizardProps {
   campaignId: string;
-  onComplete: (data: { token: string; pageId: string; pageName: string }) => void;
+  onComplete: (data: { token: string; pageId: string; pageName: string; userToken?: string }) => void;
   onCancel: () => void;
 }
 
@@ -187,10 +187,10 @@ export default function FacebookSetupWizard({
         return;
       }
       
-      // Устанавливаем Instagram токен в поле Facebook токена
+      // Устанавливаем Instagram токен как пользовательский токен для управления Facebook страницами
       form.setValue('token', instagramToken);
       
-      console.log('📋 Взять из ИГ: Токен скопирован, теперь ищем страницы...');
+      console.log('📋 Взять из ИГ: Instagram токен будет использоваться как пользовательский токен для управления Facebook страницами...');
       
       // Используем обычную функцию поиска страниц с Instagram токеном
       const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(instagramToken)}`);
@@ -431,10 +431,10 @@ export default function FacebookSetupWizard({
 
   // Обработчик выбора Facebook страницы из списка
   const handlePageSelect = async (pageId: string, pageName: string) => {
-    const token = form.getValues('token');
+    const userToken = form.getValues('token'); // Пользовательский токен для получения списка страниц
     
     // Проверяем что токен не содержит лог консоли перед передачей
-    if (token.includes('Facebook Wizard:') || token.includes('%20') || token.includes('FacebookSetupWizard')) {
+    if (userToken.includes('Facebook Wizard:') || userToken.includes('%20') || userToken.includes('FacebookSetupWizard')) {
       toast({
         title: "Ошибка",
         description: "Токен поврежден. Введите новый токен Facebook.",
@@ -446,22 +446,24 @@ export default function FacebookSetupWizard({
     console.log('Facebook Wizard: Выбрана страница:', {
       pageId,
       pageName,
-      tokenLength: token.length,
-      tokenValid: token.length > 50 && !token.includes('Facebook Wizard:')
+      userTokenLength: userToken.length,
+      tokenValid: userToken.length > 50 && !userToken.includes('Facebook Wizard:')
     });
 
     // Получаем токен конкретной страницы
     try {
-      const response = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(token)}`);
+      const response = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(userToken)}`);
       const data = await response.json();
       
       console.log('Facebook Wizard: Токен страницы получен:', data);
       
       if (data.success && data.page) {
+        // Передаем оба токена: токен страницы для публикации и пользовательский для управления
         onComplete({
-          token: data.page.access_token, // Используем токен страницы
+          token: data.page.access_token, // Токен страницы для публикации
           pageId,
           pageName,
+          userToken: userToken // Пользовательский токен для получения списка страниц
         });
         
         toast({
@@ -471,9 +473,10 @@ export default function FacebookSetupWizard({
       } else {
         // Если не удалось получить токен страницы, используем основной токен
         onComplete({
-          token,
+          token: userToken, // Используем пользовательский токен как основной
           pageId,
           pageName,
+          userToken: userToken // Сохраняем пользовательский токен
         });
         
         toast({
@@ -486,9 +489,10 @@ export default function FacebookSetupWizard({
       
       // В случае ошибки используем основной токен
       onComplete({
-        token,
+        token: userToken,
         pageId,
         pageName,
+        userToken: userToken // Сохраняем пользовательский токен
       });
       
       toast({
@@ -596,7 +600,7 @@ export default function FacebookSetupWizard({
                   Получение...
                 </>
               ) : (
-                <>📱 Instagram связанные</>
+                <>📋 Взять из Instagram</>
               )}
             </Button>
             
