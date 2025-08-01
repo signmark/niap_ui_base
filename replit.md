@@ -7,6 +7,7 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **2025-08-01**: **COMPLETED TRENDS SOURCE RATING SYSTEM** - Fixed source rating display to properly read from sentiment_analysis field, system now correctly shows emoji ratings (😊, 😐, etc.) based on saved analysis data instead of "Analyze" buttons
 - **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
 - **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
 - **2025-08-01**: **FIXED TREND COLLECTION USER NOTIFICATIONS** - Added immediate "Sбор начат" notification when trend collection starts, delayed helpful tips by 60 seconds
