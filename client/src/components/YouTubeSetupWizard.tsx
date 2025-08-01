@@ -304,9 +304,11 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
     } catch (error: any) {
       console.error('❌ [YouTube Wizard] Channel info error:', error);
       
-      // Если ошибка авторизации (401/404/Not Found), предлагаем повторную авторизацию
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized') || 
-          error.message?.includes('404') || error.message?.includes('Not Found')) {
+      // Проверяем тип ошибки
+      if (error.message?.includes('У вас нет YouTube канала')) {
+        console.log('🔄 [YouTube Wizard] No channel found - showing channel creation step');
+        setStep(5); // Переходим к шагу создания канала
+      } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         console.log('🔄 [YouTube Wizard] Authorization error detected, returning to step 1');
         setStep(1); // Возвращаемся к начальному шагу для повторной авторизации
         setAuthTokens({ accessToken: '', refreshToken: '' }); // Сбрасываем токены
@@ -446,6 +448,63 @@ export function YouTubeSetupWizard({ campaignId, initialSettings, onComplete }: 
               <ExternalLink className="h-4 w-4 mr-2" />
               Авторизоваться заново
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 5 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Youtube className="h-6 w-6 text-red-600" />
+              Создайте YouTube канал
+            </CardTitle>
+            <CardDescription>
+              У вас есть Google аккаунт, но нет YouTube канала для публикации видео
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h4 className="font-medium text-red-900 mb-2">Что нужно сделать:</h4>
+              <ol className="text-sm text-red-800 space-y-2 list-decimal list-inside">
+                <li>Откройте <a href="https://studio.youtube.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">YouTube Studio</a></li>
+                <li>Войдите в свой Google аккаунт</li>
+                <li>Создайте новый YouTube канал (следуйте инструкциям на экране)</li>
+                <li>Вернитесь сюда и нажмите "Повторить авторизацию"</li>
+              </ol>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">Альтернативный способ:</h4>
+              <p className="text-sm text-blue-800">
+                Также можно создать канал напрямую в <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">YouTube</a> - 
+                нажмите на аватар в правом верхнем углу → "Создать канал"
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => {
+                  window.open('https://studio.youtube.com', '_blank');
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Открыть YouTube Studio
+              </Button>
+              <Button 
+                onClick={() => {
+                  setStep(1);
+                  setAuthTokens({ accessToken: '', refreshToken: '' });
+                  setChannelInfo(null);
+                }}
+                className="flex-1"
+              >
+                <Youtube className="h-4 w-4 mr-2" />
+                Повторить авторизацию
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

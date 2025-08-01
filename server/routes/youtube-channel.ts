@@ -54,9 +54,12 @@ router.get('/youtube/channel-info', async (req, res) => {
     console.log('📊 [YOUTUBE-CHANNEL] YouTube API response:', JSON.stringify(channelData, null, 2));
 
     if (!channelData.items || channelData.items.length === 0) {
+      console.log('🔍 [YOUTUBE-CHANNEL] No channel found, checking if user needs to create one');
       return res.status(404).json({
         success: false,
-        error: 'No YouTube channel found for this access token'
+        error: 'У вас нет YouTube канала. Создайте канал в YouTube Studio, затем повторите авторизацию.',
+        errorCode: 'NO_CHANNEL',
+        details: 'Аккаунт Google авторизован, но не найден связанный YouTube канал'
       });
     }
 
