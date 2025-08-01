@@ -1376,96 +1376,96 @@ export function SocialMediaSettings({
                   <div>
                     <h4 className="font-medium text-blue-900 dark:text-blue-100">VK OAuth настройки</h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                      {vkSettings?.groupName ? `Группа: ${vkSettings.groupName}` : 'Настройте VK OAuth для этой кампании'}
+                      {vkSettings?.groupName ? `Группа: ${vkSettings.groupName}` : 'Вставьте URL с access_token от VK OAuth'}
                     </p>
                   </div>
-                  <Button 
-                    type="button" 
-                    variant={vkSettings?.configured ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowVkWizard(true)}
-                    disabled={loadingVkSettings}
-                  >
-                    {loadingVkSettings ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Загрузка...
-                      </>
-                    ) : (vkSettings?.configured ? 'Пересконфигурировать' : 'Настроить VK')}
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const vkOAuthUrl = 'https://oauth.vk.com/authorize?client_id=6121396&scope=1073737727&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1';
+                        window.open(vkOAuthUrl, '_blank', 'width=600,height=600');
+                      }}
+                    >
+                      🔗 Открыть VK OAuth
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant={vkSettings?.configured ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowVkWizard(true)}
+                      disabled={loadingVkSettings}
+                    >
+                      {loadingVkSettings ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Загрузка...
+                        </>
+                      ) : (vkSettings?.configured ? 'Пересконфигурировать' : 'Мастер настройки')}
+                    </Button>
+                  </div>
                 </div>
               </div>
 
-              {/* VK URL Parser and Groups */}
-              <div className="space-y-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-orange-800 dark:text-orange-200">🔗 Извлечь токен из URL</span>
-                </div>
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Вставьте полный URL с access_token из VK API..."
-                    value={vkUrlInput}
-                    onChange={(e) => setVkUrlInput(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleVkUrlParse}
-                    disabled={!vkUrlInput.trim()}
-                  >
-                    📋 Извлечь
-                  </Button>
-                </div>
-                <p className="text-xs text-orange-700 dark:text-orange-300">
-                  Вставьте полный URL, который получили при авторизации VK API (содержит access_token=...)
-                </p>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="vk.token"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Access Token</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="Введите токен доступа или используйте парсер URL выше" 
-                          {...field} 
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={validateVkToken}
-                        disabled={vkStatus.isLoading}
-                      >
-                        {vkStatus.isLoading ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          <AlertCircle className="h-4 w-4" />
+              {/* VK Access Token через URL */}
+              <div className="space-y-4">
+                <FormItem>
+                  <FormLabel className="text-base font-medium">VK Access Token</FormLabel>
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="https://oauth.vk.com/blank.html#access_token=vk1.a.enhtsafWTnsHKIpezjv..."
+                      value={vkUrlInput}
+                      onChange={(e) => {
+                        setVkUrlInput(e.target.value);
+                        
+                        // Автоматически извлекаем токен при вводе URL
+                        const inputValue = e.target.value.trim();
+                        if (inputValue.includes('access_token=')) {
+                          const token = parseVkUrl(inputValue);
+                          if (token) {
+                            form.setValue('vk.token', token);
+                          }
                         }
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="default" 
-                        size="sm"
-                        onClick={fetchVkGroups}
-                        disabled={loadingVkGroups || !field.value}
-                      >
-                        {loadingVkGroups ? 
-                          <Loader2 className="h-4 w-4 animate-spin" /> : 
-                          '📋 Получить группы'
-                        }
-                      </Button>
+                      }}
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={validateVkToken}
+                      disabled={vkStatus.isLoading || !form.watch('vk.token')}
+                    >
+                      {vkStatus.isLoading ? 
+                        <Loader2 className="h-4 w-4 animate-spin" /> : 
+                        <AlertCircle className="h-4 w-4" />
+                      }
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      size="sm"
+                      onClick={fetchVkGroups}
+                      disabled={loadingVkGroups || !form.watch('vk.token')}
+                    >
+                      {loadingVkGroups ? 
+                        <Loader2 className="h-4 w-4 animate-spin" /> : 
+                        '📋 Получить группы'
+                      }
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Вставьте полный URL с токеном от VK OAuth авторизации. Токен должен начинаться с <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">vk1.a.</code> и быть довольно длинным (100+ символов)
+                  </div>
+                  {form.watch('vk.token') && (
+                    <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      ✅ Токен извлечен: {form.watch('vk.token')?.substring(0, 20)}...
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  )}
+                </FormItem>
+              </div>
               
               {/* VK Groups Selection - Instagram Style */}
               {vkGroups.length > 0 && (
