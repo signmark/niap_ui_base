@@ -61,7 +61,6 @@ export function KeywordSelector({
       
       const data = await response.json();
       const keywords = data.map((item: any) => item.keyword);
-      console.log('KeywordSelector: Загружены ключевые слова:', keywords);
       setExistingKeywords(keywords);
       setSelectedItems(keywords);
       

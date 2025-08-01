@@ -4462,6 +4462,58 @@ ${text}
     }
   });
 
+  // Получение ключевых слов кампании
+  app.get("/api/keywords/:campaignId", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      
+      if (!campaignId) {
+        return res.status(400).json({ 
+          error: "Отсутствует ID кампании" 
+        });
+      }
+      
+      // Получаем токен из заголовка авторизации
+      const authHeader = req.headers['authorization'] as string;
+      const token = authHeader.replace('Bearer ', '');
+      
+      if (!token) {
+        return res.status(401).json({ 
+          error: "Отсутствует токен авторизации" 
+        });
+      }
+      
+      console.log(`[Keywords] Загрузка ключевых слов для кампании: ${campaignId}`);
+      
+      // Запрос к Directus для получения ключевых слов кампании
+      const response = await fetch(`${process.env.DIRECTUS_URL}/items/campaign_keywords?filter[campaign_id][_eq]=${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`[Keywords] Ошибка при загрузке ключевых слов: ${response.status} ${response.statusText}`);
+        return res.status(response.status).json({ 
+          error: `Ошибка при загрузке ключевых слов: ${response.status}` 
+        });
+      }
+      
+      const data = await response.json();
+      console.log(`[Keywords] Загружено ${data.data?.length || 0} ключевых слов для кампании ${campaignId}`);
+      
+      return res.json(data.data || []);
+      
+    } catch (error: any) {
+      console.error("[Keywords] Ошибка при загрузке ключевых слов кампании:", error);
+      return res.status(500).json({ 
+        error: "Внутренняя ошибка сервера", 
+        details: error.message 
+      });
+    }
+  });
+
   // Универсальный эндпоинт для поиска ключевых слов с поддержкой DeepSeek API
   app.post("/api/keywords/search", authenticateUser, async (req, res) => {
     try {
