@@ -33,7 +33,7 @@ export function AuthGuard({ children }: Props) {
     const validateToken = async (accessToken: string): Promise<boolean> => {
       try {
         // Проверяем действительность токена через API
-        const response = await fetch('/api/auth/check', {
+        const response = await fetch('/api/auth/status', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -53,9 +53,9 @@ export function AuthGuard({ children }: Props) {
         }
 
         const data = await response.json();
-        // Token validation result processed
+        // Token validation result processed from modular auth system
         
-        return data && data.valid === true;
+        return data && data.authenticated === true;
       } catch (error) {
         console.error('AuthGuard: Error validating token:', error);
         return false;

@@ -87,7 +87,7 @@ export async function validateCurrentToken(): Promise<boolean> {
   }
   
   try {
-    const response = await fetch('/api/auth/check', {
+    const response = await fetch('/api/auth/status', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
