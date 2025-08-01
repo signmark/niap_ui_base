@@ -87,6 +87,15 @@ interface ContentSource {
   created_at: string;
   status: string | null;
   description?: string;
+  sentiment_analysis?: {
+    emoji: string;
+    average_score: number;
+    overall_sentiment: string;
+    analyzed_trends: number;
+    positive_percentage: number;
+    negative_percentage: number;
+    neutral_percentage: number;
+  };
 }
 
 interface TrendTopic {
@@ -199,80 +208,27 @@ export default function Trends() {
   // Состояние для анализа источников
   const [isAnalyzingSource, setIsAnalyzingSource] = useState<string | null>(null);
   
-  // Функция для получения оценки источника на основе трендов с новой балльной системой
+  // Функция для получения оценки источника из поля sentiment_analysis
   const getSourceRating = (sourceId: string) => {
-    // Находим все тренды этого источника
-    const sourcesTrends = trends.filter((trend: TrendTopic) => 
-      (trend as any).source_id === sourceId
-    );
+    // Находим источник по ID
+    const source = sources.find(s => s.id === sourceId);
+    if (!source) return null;
     
-    if (!sourcesTrends.length) return null;
-    
-    // Подсчитываем баллы и анализы настроения
-    let totalScore = 0;
-    let totalAnalyses = 0;
-    let positiveCount = 0;
-    let negativeCount = 0;
-    let neutralCount = 0;
-    
-    sourcesTrends.forEach((trend: TrendTopic) => {
-      const sentiment = (trend as any).sentiment_analysis;
-      if (sentiment && sentiment.sentiment) {
-        totalAnalyses++;
-        
-        // Подсчитываем количество по типам
-        if (sentiment.sentiment === 'positive') positiveCount++;
-        else if (sentiment.sentiment === 'negative') negativeCount++;
-        else neutralCount++;
-        
-        // Подсчитываем общий балл
-        if (sentiment.score) {
-          totalScore += sentiment.score;
-        }
-      }
-    });
-    
-    if (totalAnalyses === 0) return null;
-    
-    // Вычисляем средний балл
-    const averageScore = Math.round(totalScore / totalAnalyses);
-    
-    // Определяем эмодзи на основе среднего балла (как в backend)
-    let emoji = '😐'; // нейтральный по умолчанию
-    let type = 'neutral';
-    
-    if (averageScore >= 90) {
-      emoji = '🔥';
-      type = 'excellent';
-    } else if (averageScore >= 80) {
-      emoji = '😍';
-      type = 'very-positive';
-    } else if (averageScore >= 70) {
-      emoji = '😊';
-      type = 'positive';
-    } else if (averageScore >= 60) {
-      emoji = '😌';
-      type = 'good';
-    } else if (averageScore >= 40) {
-      emoji = '😐';
-      type = 'neutral';
-    } else if (averageScore >= 25) {
-      emoji = '😕';
-      type = 'negative';
-    } else {
-      emoji = '😞';
-      type = 'very-negative';
+    // Проверяем поле sentiment_analysis источника
+    const sentimentAnalysis = (source as any).sentiment_analysis;
+    if (!sentimentAnalysis || !sentimentAnalysis.emoji || !sentimentAnalysis.average_score) {
+      return null;
     }
     
     return { 
-      emoji, 
-      type, 
-      score: averageScore,
-      totalAnalyses,
+      emoji: sentimentAnalysis.emoji, 
+      type: sentimentAnalysis.overall_sentiment || 'neutral', 
+      score: sentimentAnalysis.average_score,
+      totalAnalyses: sentimentAnalysis.analyzed_trends || 0,
       breakdown: {
-        positive: positiveCount,
-        negative: negativeCount,
-        neutral: neutralCount
+        positive: Math.round((sentimentAnalysis.positive_percentage || 0) / 100 * (sentimentAnalysis.analyzed_trends || 0)),
+        negative: Math.round((sentimentAnalysis.negative_percentage || 0) / 100 * (sentimentAnalysis.analyzed_trends || 0)),
+        neutral: Math.round((sentimentAnalysis.neutral_percentage || 0) / 100 * (sentimentAnalysis.analyzed_trends || 0))
       }
     };
   };
@@ -773,7 +729,7 @@ export default function Trends() {
         const response = await directusApi.get('/items/campaign_content_sources', {
           params: {
             'filter[campaign_id][_eq]': selectedCampaignId,
-            'fields[]': ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status']
+            'fields[]': ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status', 'sentiment_analysis']
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
