@@ -6,6 +6,11 @@ SMM Manager is an intelligent social media content management platform designed 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+- **2025-08-01**: Fixed image generation system to use global API keys from database instead of user-specific keys
+- **2025-08-01**: Updated site analysis to use direct Gemini API with GEMINI_API_KEY environment variable
+- **2025-08-01**: Removed dependency on Vertex AI credentials for site analysis functionality
+
 ### Technical Notes
 - **Stories API Authentication**: Always use user token (req.headers.authorization) for Directus API calls, never use admin token. User tokens work constantly in the system and have proper permissions for campaign_content collection.
 - **Database Storage**: All Stories data should be stored in campaign_content.metadata field as JSON, not in separate fields.

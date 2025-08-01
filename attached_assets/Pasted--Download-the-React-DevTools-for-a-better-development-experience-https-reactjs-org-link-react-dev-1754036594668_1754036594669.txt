@@ -1,0 +1,45 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+ Загрузка публикаций для кампании: fde4ae82-e492-4c94-965d-902bfe721d97
+client:536 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/?token=0XvztSP3t--O' failed: 
+setupWebSocket @ client:536
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=0XvztSP3t--O' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+ WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ /src/hooks/use-websocket.ts:9
+ Загрузка публикаций для кампании: fde4ae82-e492-4c94-965d-902bfe721d97
+/api/campaigns:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Failed to fetch campaigns
+    at queryFn (/src/pages/content/index.tsx:260:15)
+systemError @ /src/utils/logger.ts:72
+ Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке
+globalErrorHandler @ /src/lib/queryClient.ts:91
+directus.roboflow.space/auth/logout:1  Failed to load resource: the server responded with a status of 400 ()
+ Logout error: Error: Logout request failed
+    at handleLogout (/src/components/Layout.tsx:101:15)
+handleLogout @ /src/components/Layout.tsx:104
+/api/auth/login:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ Login response error: {"error":"Неверные учетные данные","message":"Неверный email или пароль"}
+onSubmit @ /src/pages/auth/login.tsx:62
+ Login error: Error: Ошибка при входе: Unauthorized
+    at onSubmit (/src/pages/auth/login.tsx:63:15)
+    at async chunk-BW5TH624.js:1675:9
+onSubmit @ /src/pages/auth/login.tsx:85
+/api/auth/login:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+ Login response error: {"error":"Неверные учетные данные","message":"Неверный email или пароль"}
+onSubmit @ /src/pages/auth/login.tsx:62
+ Login error: Error: Ошибка при входе: Unauthorized
+    at onSubmit (/src/pages/auth/login.tsx:63:15)
+    at async chunk-BW5TH624.js:1675:9
+onSubmit @ /src/pages/auth/login.tsx:85
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js:338
+/api/analyze-site/https%3A%2F%2Ffacebook.com?nocache=1754036581787:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+ API Error: 500 for GET /analyze-site/https%3A%2F%2Ffacebook.com?nocache=1754036581787 Object
+(anonymous) @ /src/lib/api.ts:98
+ Сервис недоступен: Временные технические проблемы. Обратитесь к администрации.
+serviceError @ /src/utils/logger.ts:78
+ Ошибка: Временные технические проблемы на сервере. Обратитесь к технической поддержке
+globalErrorHandler @ /src/lib/queryClient.ts:91
