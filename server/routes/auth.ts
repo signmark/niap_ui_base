@@ -27,7 +27,8 @@ router.get('/me', authenticateUser, async (req: any, res) => {
       }
     });
 
-    const user = userResponse.data;
+    // Directus returns data in {data: {...}} structure
+    const user = userResponse.data.data || userResponse.data;
     
     // Return sanitized user data
     const userInfo = {
@@ -75,9 +76,11 @@ router.post('/login', async (req, res) => {
       }
     });
 
-    const authData = authResponse.data;
+    // Directus returns data in {data: {...}} structure
+    const authData = authResponse.data.data || authResponse.data;
 
     if (!authData.access_token) {
+      console.log('Auth response structure:', JSON.stringify(authResponse.data, null, 2));
       throw new Error('No access token received');
     }
 
@@ -90,7 +93,8 @@ router.post('/login', async (req, res) => {
       }
     });
 
-    const user = userResponse.data;
+    // Directus returns data in {data: {...}} structure
+    const user = userResponse.data.data || userResponse.data;
 
     log('auth', `Successful login for user: ${user.email} (ID: ${user.id})`);
 
