@@ -43,7 +43,7 @@ export default function FacebookSetupWizard({
   onComplete,
   onCancel,
 }: FacebookSetupWizardProps) {
-  const [pages, setPages] = useState<any[]>([]);
+  const [pages, setPages] = useState<FacebookPage[]>([]);
   const [isPagesLoading, setIsPagesLoading] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const { toast } = useToast();
@@ -450,54 +450,43 @@ export default function FacebookSetupWizard({
       tokenValid: userToken.length > 50 && !userToken.includes('Facebook Wizard:')
     });
 
-    // Получаем токен конкретной страницы
-    try {
-      const response = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(userToken)}`);
-      const data = await response.json();
+    // Ищем токен страницы в уже загруженном списке страниц
+    const selectedPage = pages.find(page => page.id === pageId);
+    
+    if (selectedPage && selectedPage.access_token) {
+      console.log('Facebook Wizard: Найден токен страницы в списке:', {
+        pageId: selectedPage.id,
+        pageName: selectedPage.name,
+        hasPageToken: !!selectedPage.access_token,
+        pageTokenPreview: selectedPage.access_token.substring(0, 20) + '...'
+      });
       
-      console.log('Facebook Wizard: Токен страницы получен:', data);
-      
-      if (data.success && data.page) {
-        // Передаем оба токена: токен страницы для публикации и пользовательский для управления
-        onComplete({
-          token: data.page.access_token, // Токен страницы для публикации
-          pageId,
-          pageName,
-          userToken: userToken // Пользовательский токен для получения списка страниц
-        });
-        
-        toast({
-          title: "Страница выбрана",
-          description: `Выбрана страница: ${pageName} с персональным токеном`,
-        });
-      } else {
-        // Если не удалось получить токен страницы, используем основной токен
-        onComplete({
-          token: userToken, // Используем пользовательский токен как основной
-          pageId,
-          pageName,
-          userToken: userToken // Сохраняем пользовательский токен
-        });
-        
-        toast({
-          title: "Страница выбрана",
-          description: `Выбрана страница: ${pageName} с основным токеном`,
-        });
-      }
-    } catch (error) {
-      console.error('Facebook Wizard: Ошибка получения токена страницы:', error);
-      
-      // В случае ошибки используем основной токен
+      // Используем токен страницы из списка
       onComplete({
-        token: userToken,
+        token: selectedPage.access_token, // Токен страницы для публикации
         pageId,
         pageName,
-        userToken: userToken // Сохраняем пользовательский токен
+        userToken: userToken // Пользовательский токен для управления
       });
       
       toast({
         title: "Страница выбрана",
-        description: `Выбрана страница: ${pageName} (токен страницы недоступен)`,
+        description: `Выбрана страница: ${pageName} с персональным токеном`,
+      });
+    } else {
+      console.log('Facebook Wizard: Токен страницы не найден в списке, используем пользовательский токен');
+      
+      // Используем пользовательский токен как fallback
+      onComplete({
+        token: userToken,
+        pageId,
+        pageName,
+        userToken: userToken
+      });
+      
+      toast({
+        title: "Страница выбрана",
+        description: `Выбрана страница: ${pageName} с основным токеном`,
       });
     }
     

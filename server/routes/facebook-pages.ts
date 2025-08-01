@@ -115,7 +115,9 @@ router.get('/pages', async (req, res) => {
       category: account.category,
       tasks: account.tasks,
       link: account.link,
-      fan_count: account.fan_count
+      fan_count: account.fan_count,
+      hasAccessToken: !!account.access_token,
+      accessTokenPreview: account.access_token ? account.access_token.substring(0, 20) + '...' : 'none'
     })));
     
     // Фильтруем только Facebook СТРАНИЦЫ, исключаем группы и личные профили
@@ -181,7 +183,8 @@ router.get('/pages', async (req, res) => {
         id: page.id,
         name: page.name,
         category: page.category,
-        access_token: page.access_token || accessToken,
+        access_token: page.access_token, // Токен страницы, если доступен
+        user_token: accessToken, // Пользовательский токен как fallback
         link: page.link,
         fan_count: page.fan_count || 0
       }))
