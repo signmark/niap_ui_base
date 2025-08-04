@@ -1429,56 +1429,6 @@ export default function Trends() {
     }
   };
 
-      // Вычисляем статистику
-      const positiveCount = analyzedTrends.filter((t: any) => 
-        t.sentiment_analysis?.sentiment === 'positive'
-      ).length;
-      const negativeCount = analyzedTrends.filter((t: any) => 
-        t.sentiment_analysis?.sentiment === 'negative'
-      ).length;
-      const neutralCount = analyzedTrends.filter((t: any) => 
-        t.sentiment_analysis?.sentiment === 'neutral'
-      ).length;
-
-      const totalTrends = analyzedTrends.length;
-      const positivePercentage = (positiveCount / totalTrends) * 100;
-      const negativePercentage = (negativeCount / totalTrends) * 100;
-      const neutralPercentage = (neutralCount / totalTrends) * 100;
-
-      // Определяем общее настроение
-      const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
-      let overallSentiment = 'neutral';
-      let emoji = '😐';
-      if (maxCount === positiveCount) {
-        overallSentiment = 'positive';
-        emoji = '😊';
-      } else if (maxCount === negativeCount) {
-        overallSentiment = 'negative';
-        emoji = '😞';
-      }
-
-      // Вычисляем средний score (если есть)
-      const scoresWithValues = analyzedTrends
-        .map((t: any) => t.sentiment_analysis?.score)
-        .filter(score => score !== undefined && score !== null);
-
-      const averageScore = scoresWithValues.length > 0 
-        ? scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length
-        : 5; // Дефолтный средний score
-
-      // Создаем объект анализа источника
-      const analysisData = {
-        total_trends: sourcesTrends.length,
-        analyzed_trends: analyzedTrends.length,
-        positive_percentage: Math.round(positivePercentage),
-        negative_percentage: Math.round(negativePercentage),
-        neutral_percentage: Math.round(neutralPercentage),
-        overall_sentiment: overallSentiment,
-        average_score: Math.round(averageScore * 10) / 10,
-        emoji: emoji,
-        analyzed_at: new Date().toISOString()
-      };
-
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";

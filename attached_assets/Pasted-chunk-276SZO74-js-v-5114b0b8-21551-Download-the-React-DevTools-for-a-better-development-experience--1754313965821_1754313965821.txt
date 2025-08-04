@@ -1,0 +1,128 @@
+chunk-276SZO74.js?v=5114b0b8:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:1433 Uncaught ReferenceError: analyzedTrends is not defined
+    at Trends (index.tsx:1433:29)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+    at performUnitOfWork (chunk-276SZO74.js?v=5114b0b8:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=5114b0b8:19137:13)
+Trends @ index.tsx:1433
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18678
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+index.tsx:1433 Uncaught ReferenceError: analyzedTrends is not defined
+    at Trends (index.tsx:1433:29)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+    at performUnitOfWork (chunk-276SZO74.js?v=5114b0b8:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=5114b0b8:19137:13)
+Trends @ index.tsx:1433
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18684
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:14032 The above error occurred in the <Trends> component:
+
+    at Trends (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/trends/index.tsx:69:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=6pFjEEXbcSfd9Co_iXshY:83:23)
+    at _c12
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5114b0b8:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=6pFjEEXbcSfd9Co_iXshY:518:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=5114b0b8:14032
+update.callback @ chunk-276SZO74.js?v=5114b0b8:14052
+callCallback @ chunk-276SZO74.js?v=5114b0b8:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=5114b0b8:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=5114b0b8:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=5114b0b8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=5114b0b8:17920
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19353
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18760
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:19413 Uncaught ReferenceError: analyzedTrends is not defined
+    at Trends (index.tsx:1433:29)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19753:22)
+    at performUnitOfWork (chunk-276SZO74.js?v=5114b0b8:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=5114b0b8:19137:13)
+    at renderRootSync (chunk-276SZO74.js?v=5114b0b8:19116:15)
+    at recoverFromConcurrentError (chunk-276SZO74.js?v=5114b0b8:18736:28)
+    at performConcurrentWorkOnRoot (chunk-276SZO74.js?v=5114b0b8:18684:30)
+Trends @ index.tsx:1433
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19753
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18684
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+use-websocket.ts:83 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: WebSocket is closed before the connection is established.
+(anonymous) @ use-websocket.ts:83
+safelyCallDestroy @ chunk-276SZO74.js?v=5114b0b8:16748
+commitHookEffectListUnmount @ chunk-276SZO74.js?v=5114b0b8:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-276SZO74.js?v=5114b0b8:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-276SZO74.js?v=5114b0b8:18245
+commitPassiveUnmountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18181
+commitPassiveUnmountEffects @ chunk-276SZO74.js?v=5114b0b8:18169
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19489
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:19328
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
