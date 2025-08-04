@@ -393,7 +393,7 @@ export default function FacebookSetupWizard({
   };
 
   // Обработчик ручного выбора страницы
-  const handleManualPageSelect = () => {
+  const handleManualPageSelect = async () => {
     const formData = form.getValues();
     const token = formData.token;
     const manualPageId = formData.manualPageId;
@@ -417,15 +417,50 @@ export default function FacebookSetupWizard({
       return;
     }
 
+    const pageName = manualPageName || `Facebook Page ${manualPageId}`;
+
+    // АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ: Сохраняем настройки сразу после ручного выбора
+    try {
+      console.log('🔄 Facebook Wizard: Автоматическое сохранение ручных настроек...');
+      
+      const saveResponse = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          token: token,
+          page_id: manualPageId,
+          page_name: pageName,
+          user_token: token
+        })
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Ошибка сохранения настроек');
+      }
+
+      console.log('✅ Facebook Wizard: Ручные настройки автоматически сохранены');
+      
+      toast({
+        title: "Страница настроена и сохранена",
+        description: `Страница ${pageName} ручного ввода автоматически сохранена`,
+      });
+    } catch (error) {
+      console.error('❌ Facebook Wizard: Ошибка автоматического сохранения ручных настроек:', error);
+      toast({
+        title: "Страница выбрана, но не сохранена",
+        description: `Страница ${pageName} выбрана, но произошла ошибка сохранения. Сохраните настройки вручную.`,
+        variant: "destructive",
+      });
+    }
+
+    // Передаем данные в родительский компонент для обновления формы
     onComplete({
       token,
       pageId: manualPageId,
-      pageName: manualPageName || `Facebook Page ${manualPageId}`,
-    });
-
-    toast({
-      title: "Страница выбрана",
-      description: `Используется страница: ${manualPageName || manualPageId}`,
+      pageName: pageName,
     });
   };
 
@@ -453,6 +488,9 @@ export default function FacebookSetupWizard({
     // Ищем токен страницы в уже загруженном списке страниц
     const selectedPage = pages.find(page => page.id === pageId);
     
+    let pageToken = userToken;
+    let tokenType = "основным токеном";
+    
     if (selectedPage && selectedPage.access_token) {
       console.log('Facebook Wizard: Найден токен страницы в списке:', {
         pageId: selectedPage.id,
@@ -461,34 +499,56 @@ export default function FacebookSetupWizard({
         pageTokenPreview: selectedPage.access_token.substring(0, 20) + '...'
       });
       
-      // Используем токен страницы из списка
-      onComplete({
-        token: selectedPage.access_token, // Токен страницы для публикации
-        pageId,
-        pageName,
-        userToken: userToken // Пользовательский токен для управления
-      });
-      
-      toast({
-        title: "Страница выбрана",
-        description: `Выбрана страница: ${pageName} с персональным токеном`,
-      });
+      pageToken = selectedPage.access_token;
+      tokenType = "персональным токеном";
     } else {
       console.log('Facebook Wizard: Токен страницы не найден в списке, используем пользовательский токен');
+    }
+
+    // АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ: Сохраняем настройки сразу после выбора страницы
+    try {
+      console.log('🔄 Facebook Wizard: Автоматическое сохранение настроек...');
       
-      // Используем пользовательский токен как fallback
-      onComplete({
-        token: userToken,
-        pageId,
-        pageName,
-        userToken: userToken
+      const saveResponse = await fetch(`/api/campaigns/${campaignId}/facebook-settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          token: pageToken,
+          page_id: pageId,
+          page_name: pageName,
+          user_token: userToken
+        })
       });
+
+      if (!saveResponse.ok) {
+        throw new Error('Ошибка сохранения настроек');
+      }
+
+      console.log('✅ Facebook Wizard: Настройки автоматически сохранены');
       
       toast({
-        title: "Страница выбрана",
-        description: `Выбрана страница: ${pageName} с основным токеном`,
+        title: "Страница настроена и сохранена",
+        description: `Страница ${pageName} выбрана с ${tokenType} и автоматически сохранена`,
+      });
+    } catch (error) {
+      console.error('❌ Facebook Wizard: Ошибка автоматического сохранения:', error);
+      toast({
+        title: "Страница выбрана, но не сохранена",
+        description: `Страница ${pageName} выбрана, но произошла ошибка сохранения. Сохраните настройки вручную.`,
+        variant: "destructive",
       });
     }
+    
+    // Передаем данные в родительский компонент для обновления формы
+    onComplete({
+      token: pageToken,
+      pageId,
+      pageName,
+      userToken: userToken
+    });
     
     setPages([]); // Скрываем список страниц после выбора
     setShowManualInput(false); // Скрываем ручной ввод
