@@ -91,6 +91,17 @@ interface ContentSource {
   created_at: string;
   status: string | null;
   description?: string;
+  sentiment_analysis?: {
+    total_trends?: number;
+    analyzed_trends?: number;
+    positive_percentage?: number;
+    negative_percentage?: number;
+    neutral_percentage?: number;
+    overall_sentiment?: string;
+    average_score?: number;
+    emoji?: string;
+    analyzed_at?: string;
+  };
 }
 
 interface TrendTopic {
@@ -1278,6 +1289,112 @@ export default function Trends() {
     }
   };
 
+  // Функция для пересчета анализа настроения источника на основе трендов
+  const recalculateSourceSentiment = async (sourceId: string, sourceName: string) => {
+    try {
+      setAnalyzingSourceId(sourceId);
+      
+      // Получаем все тренды источника с анализом настроения
+      const sourcesTrends = trends.filter((t: any) => 
+        t.sourceId === sourceId || t.source_id === sourceId
+      );
+      const analyzedTrends = sourcesTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment
+      );
+      
+      if (analyzedTrends.length === 0) {
+        toast({
+          title: "Нет данных для анализа",
+          description: "Нет трендов с анализом настроения для пересчета",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Вычисляем статистику
+      const positiveCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'positive'
+      ).length;
+      const negativeCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'negative'
+      ).length;
+      const neutralCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'neutral'
+      ).length;
+
+      const totalTrends = analyzedTrends.length;
+      const positivePercentage = (positiveCount / totalTrends) * 100;
+      const negativePercentage = (negativeCount / totalTrends) * 100;
+      const neutralPercentage = (neutralCount / totalTrends) * 100;
+
+      // Определяем общее настроение
+      const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
+      let overallSentiment = 'neutral';
+      let emoji = '😐';
+      if (maxCount === positiveCount) {
+        overallSentiment = 'positive';
+        emoji = '😊';
+      } else if (maxCount === negativeCount) {
+        overallSentiment = 'negative';
+        emoji = '😞';
+      }
+
+      // Вычисляем средний score (если есть)
+      const scoresWithValues = analyzedTrends
+        .map((t: any) => t.sentiment_analysis?.score)
+        .filter(score => score !== undefined && score !== null);
+      const averageScore = scoresWithValues.length > 0 
+        ? Math.round(scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length)
+        : 50;
+
+      const sentimentData = {
+        total_trends: sourcesTrends.length,
+        analyzed_trends: totalTrends,
+        positive_percentage: Math.round(positivePercentage),
+        negative_percentage: Math.round(negativePercentage),
+        neutral_percentage: Math.round(neutralPercentage),
+        overall_sentiment: overallSentiment,
+        average_score: averageScore,
+        emoji: emoji,
+        analyzed_at: new Date().toISOString()
+      };
+
+      // Сохраняем в базу данных (используем пользовательский токен для UI операций)
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/sources/${sourceId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sentiment_analysis: sentimentData
+        })
+      });
+
+      if (response.ok) {
+        // Обновляем локальные данные
+        refetchSources();
+        
+        toast({
+          title: "Анализ пересчитан",
+          description: `${sourceName}: ${overallSentiment} (${totalTrends} трендов)`,
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Ошибка пересчета анализа источника:', error);
+      toast({
+        title: "Ошибка пересчета",
+        description: `Не удалось пересчитать анализ: ${(error as Error).message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzingSourceId(null);
+    }
+  };
+
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";
@@ -1460,7 +1577,12 @@ export default function Trends() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              analyzeSource(source.id, source.name);
+                              // Если есть уже сохраненный анализ, пересчитываем на основе трендов
+                              if (source.sentiment_analysis) {
+                                recalculateSourceSentiment(source.id, source.name);
+                              } else {
+                                analyzeSource(source.id, source.name);
+                              }
                             }}
                             title="Анализ источника"
                             disabled={analyzingSourceId === source.id}

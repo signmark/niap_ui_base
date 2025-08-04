@@ -6842,6 +6842,65 @@ ${commentsText.substring(0, 4000)}
     }
   });
 
+  // PATCH endpoint for updating sources with sentiment analysis
+  app.patch("/api/sources/:sourceId", authenticateUser, async (req, res) => {
+    try {
+      const sourceId = req.params.sourceId;
+      const token = req.headers.authorization?.split(' ')[1];
+      const updateData = req.body;
+
+      if (!sourceId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Требуется ID источника'
+        });
+      }
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован: Отсутствует токен авторизации'
+        });
+      }
+
+      console.log(`[PATCH-SOURCE] Обновление источника ${sourceId} пользователем ${req.user?.id}`);
+      console.log(`[PATCH-SOURCE] Данные для обновления:`, JSON.stringify(updateData, null, 2));
+
+      // Обновляем источник в коллекции trend_sources (используем пользовательский токен)
+      const response = await directusApi.patch(`/items/trend_sources/${sourceId}`, updateData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log(`[PATCH-SOURCE] Источник ${sourceId} успешно обновлен`);
+
+      return res.json({
+        success: true,
+        data: response.data.data,
+        message: 'Источник успешно обновлен'
+      });
+
+    } catch (error) {
+      console.error(`[PATCH-SOURCE] Ошибка обновления источника ${req.params.sourceId}:`, error);
+      
+      if (axios.isAxiosError(error) && error.response) {
+        console.error(`[PATCH-SOURCE] Directus API error:`, error.response.data);
+        return res.status(error.response.status || 500).json({
+          success: false,
+          error: 'Ошибка при обновлении источника',
+          details: error.response.data?.errors?.[0]?.message || error.message
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: 'Внутренняя ошибка сервера при обновлении источника',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      });
+    }
+  });
+
   // Single source crawling endpoint
   app.post("/api/sources/:sourceId/crawl", async (req, res) => {
     try {
