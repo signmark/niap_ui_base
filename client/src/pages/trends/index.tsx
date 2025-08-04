@@ -1374,7 +1374,7 @@ export default function Trends() {
 
       if (response.ok) {
         // Обновляем локальные данные
-        refetchSources();
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
         
         toast({
           title: "Анализ пересчитан",
