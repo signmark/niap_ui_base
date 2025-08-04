@@ -6576,9 +6576,9 @@ Return your response as a JSON array in this exact format:
         const successfulCollections = collectionResults.filter(r => r.success);
         console.log(`[SOURCE-ANALYSIS] Успешно отправлено ${successfulCollections.length} запросов на сбор`);
 
-        // Ждем завершения сбора комментариев (15 секунд)
-        console.log(`[SOURCE-ANALYSIS] Ждем 15 секунд для завершения сбора комментариев...`);
-        await new Promise(resolve => setTimeout(resolve, 15000));
+        // Ждем завершения сбора комментариев (5 секунд)
+        console.log(`[SOURCE-ANALYSIS] Ждем 5 секунд для завершения сбора комментариев...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         // 3. Проверяем трендочки снова после сбора
         for (const trend of trendsWithoutComments) {
