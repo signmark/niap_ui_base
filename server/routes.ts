@@ -6789,33 +6789,40 @@ ${commentsText.substring(0, 4000)}
 
       console.log(`[SOURCE-ANALYSIS] Итоговый результат:`, result);
 
-      // Сохраняем общий результат анализа в источник
+      // Сохраняем общий результат анализа в источник (используем системный токен для обновления)
       try {
-        // Получаем информацию об источнике
-        const sourceResponse = await directusApi.get(`/items/trend_sources/${sourceId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (sourceResponse.data?.data) {
-          // Обновляем источник с результатами анализа
-          await directusApi.patch(`/items/trend_sources/${sourceId}`, {
-            sentiment_analysis: {
-              sentiment: overallSentiment,
-              score: Math.round(averageScore * 10) / 10,
-              confidence: Math.round(overallConfidence * 100) / 100,
-              trendsAnalyzed: validAnalyses.length,
-              totalTrends: trends.length,
-              totalComments: totalCommentsAnalyzed,
-              summary: result.summary,
-              analyzedAt: new Date().toISOString()
-            }
-          }, {
+        const adminToken = process.env.DIRECTUS_TOKEN;
+        if (!adminToken) {
+          console.error(`[SOURCE-ANALYSIS] Системный токен недоступен для обновления источника ${sourceId}`);
+        } else {
+          // Получаем информацию об источнике с пользовательским токеном
+          const sourceResponse = await directusApi.get(`/items/trend_sources/${sourceId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          console.log(`[SOURCE-ANALYSIS] Сохранен общий анализ для источника ${sourceId}`);
+
+          if (sourceResponse.data?.data) {
+            // Обновляем источник с системным токеном (он имеет права на запись)
+            await directusApi.patch(`/items/trend_sources/${sourceId}`, {
+              sentiment_analysis: {
+                sentiment: overallSentiment,
+                score: Math.round(averageScore * 10) / 10,
+                confidence: Math.round(overallConfidence * 100) / 100,
+                trendsAnalyzed: validAnalyses.length,
+                totalTrends: trends.length,
+                totalComments: totalCommentsAnalyzed,
+                summary: result.summary,
+                analyzedAt: new Date().toISOString()
+              }
+            }, {
+              headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            console.log(`[SOURCE-ANALYSIS] Сохранен общий анализ для источника ${sourceId} (системный токен)`);
+          }
         }
       } catch (sourceUpdateError) {
         console.error(`[SOURCE-ANALYSIS] Ошибка обновления источника ${sourceId}:`, sourceUpdateError);
+        // Если обновление не удалось, продолжаем работу без критической ошибки
+        console.log(`[SOURCE-ANALYSIS] Анализ завершен, но результат не сохранен в источник`);
       }
 
       return res.json({

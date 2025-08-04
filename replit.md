@@ -7,12 +7,14 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
-- **2025-08-04**: **SOURCE SENTIMENT ANALYSIS FEATURE** - Implemented comprehensive source analysis functionality that replaces chart icon with sentiment emoji (😊/😞/😐/❓) based on comment sentiment analysis. System:
+- **2025-08-04**: **SOURCE SENTIMENT ANALYSIS FEATURE COMPLETE** - Implemented comprehensive source analysis functionality that replaces chart icon with sentiment emoji (😊/😞/😐/❓) based on comment sentiment analysis. System:
   1. Collects comments for each trend in the source using new "Собрать комментарии" button
-  2. Analyzes comment sentiment for each trend using AI
+  2. Analyzes comment sentiment for each trend using AI with proper webhook integration
   3. Saves sentiment scores (1-10) to individual trends
   4. Calculates average sentiment score for the source
-  5. Saves overall source analysis and displays appropriate emoji
+  5. Saves overall source analysis using system token and displays appropriate emoji
+  6. Fixed 403 permission errors by using DIRECTUS_TOKEN for source updates
+  7. Implemented proper webhook URL: https://n8n.roboflow.space/webhook/collect-comments
 - **2025-08-04**: **FACEBOOK SETUP WIZARD COMPLETE AUTOMATION** - Implemented fully automated Facebook page discovery and token generation. System now automatically shows ALL Facebook pages available to Instagram token by default, generates page-specific tokens upon selection, and saves settings immediately to database without manual clicks.
 - **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
 - **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
