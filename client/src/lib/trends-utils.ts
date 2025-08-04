@@ -7,10 +7,19 @@ export type SentimentCategory = "positive" | "negative" | "neutral" | "unknown";
 /**
  * Определяет категорию тональности на основе анализа
  */
-export function getSentimentCategory(sentimentAnalysis?: string): SentimentCategory {
+export function getSentimentCategory(sentimentAnalysis?: any): SentimentCategory {
   if (!sentimentAnalysis) return "unknown";
   
-  const text = sentimentAnalysis.toLowerCase();
+  // Если это объект, попытаемся извлечь строковое представление
+  let text = "";
+  if (typeof sentimentAnalysis === "string") {
+    text = sentimentAnalysis.toLowerCase();
+  } else if (typeof sentimentAnalysis === "object") {
+    // Попробуем найти текстовое поле в объекте
+    text = (sentimentAnalysis.result || sentimentAnalysis.sentiment || sentimentAnalysis.category || JSON.stringify(sentimentAnalysis)).toLowerCase();
+  } else {
+    text = String(sentimentAnalysis).toLowerCase();
+  }
   
   const positiveKeywords = [
     "положительн", "позитивн", "хорош", "отличн", "прекрасн", 
