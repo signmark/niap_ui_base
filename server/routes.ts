@@ -6796,13 +6796,13 @@ ${commentsText.substring(0, 4000)}
           console.error(`[SOURCE-ANALYSIS] Системный токен недоступен для обновления источника ${sourceId}`);
         } else {
           // Получаем информацию об источнике с пользовательским токеном
-          const sourceResponse = await directusApi.get(`/items/trend_sources/${sourceId}`, {
+          const sourceResponse = await directusApi.get(`/items/campaign_content_sources/${sourceId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
 
           if (sourceResponse.data?.data) {
             // Обновляем источник с системным токеном (он имеет права на запись)
-            await directusApi.patch(`/items/trend_sources/${sourceId}`, {
+            await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
               sentiment_analysis: {
                 sentiment: overallSentiment,
                 score: Math.round(averageScore * 10) / 10,
@@ -6866,8 +6866,8 @@ ${commentsText.substring(0, 4000)}
       console.log(`[PATCH-SOURCE] Обновление источника ${sourceId} пользователем ${req.user?.id}`);
       console.log(`[PATCH-SOURCE] Данные для обновления:`, JSON.stringify(updateData, null, 2));
 
-      // Обновляем источник в коллекции trend_sources (используем пользовательский токен)
-      const response = await directusApi.patch(`/items/trend_sources/${sourceId}`, updateData, {
+      // Обновляем источник в коллекции campaign_content_sources (используем пользовательский токен)
+      const response = await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, updateData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

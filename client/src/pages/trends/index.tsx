@@ -652,7 +652,7 @@ export default function Trends() {
         const response = await directusApi.get('/items/campaign_content_sources', {
           params: {
             'filter[campaign_id][_eq]': selectedCampaignId,
-            'fields[]': ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status']
+            'fields[]': ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'status', 'sentiment_analysis']
           },
           headers: {
             'Authorization': `Bearer ${authToken}`
