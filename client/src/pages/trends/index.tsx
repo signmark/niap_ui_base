@@ -1703,41 +1703,35 @@ export default function Trends() {
                           ? trends.filter((t: any) => t.sourceId === selectedSourceId || t.source_id === selectedSourceId)
                           : trends;
                         
-                        // Собираем статистику по сентиментам из источников
-                        const sourcesSentimentStats = sources.reduce((acc, source) => {
-                          if (!source.sentiment_analysis?.sentiment) return acc;
+                        // Собираем статистику по сентиментам - классифицируем каждый тренд на основе источника
+                        const sourcesSentimentStats = statsData.reduce((acc, trend) => {
+                          // Находим источник для этого тренда
+                          const sourceId = trend.sourceId || trend.source_id;
+                          const source = sources.find(s => s.id === sourceId);
                           
-                          // Считаем только тренды, относящиеся к этому источнику
-                          const sourceTrends = trends.filter((t: any) => 
-                            (t.sourceId === source.id || t.source_id === source.id)
-                          );
-                          
-                          if (sourceTrends.length === 0) return acc;
+                          if (!source || !source.sentiment_analysis?.sentiment) {
+                            acc.unknown += 1;
+                            return acc;
+                          }
                           
                           const sentiment = source.sentiment_analysis.sentiment;
-                          const trendsCount = source.sentiment_analysis.totalTrends || sourceTrends.length;
                           
                           switch (sentiment) {
                             case 'positive':
-                              acc.positive += trendsCount;
+                              acc.positive += 1;
                               break;
                             case 'negative':
-                              acc.negative += trendsCount;
+                              acc.negative += 1;
                               break;
                             case 'neutral':
-                              acc.neutral += trendsCount;
+                              acc.neutral += 1;
                               break;
                             default:
-                              acc.unknown += trendsCount;
+                              acc.unknown += 1;
                           }
                           
                           return acc;
                         }, { positive: 0, negative: 0, neutral: 0, unknown: 0 });
-                        
-                        // Если статистика по источникам пустая, показываем все тренды как неопределенные
-                        if (sourcesSentimentStats.positive === 0 && sourcesSentimentStats.negative === 0 && sourcesSentimentStats.neutral === 0) {
-                          sourcesSentimentStats.unknown = statsData.length;
-                        }
                         
                         return statsData.length > 0 && (
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">

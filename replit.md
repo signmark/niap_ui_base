@@ -18,6 +18,7 @@ Preferred communication style: Simple, everyday language.
   8. Fixed JavaScript duplicate authToken variable errors
   9. Integrated automatic comment collection into source analysis workflow
   10. **ALGORITHM TESTED**: Confirmed correct algorithm logic - successfully processes sources with 31 trends, correctly identifies lack of comment data, handles webhook collection process
+  11. **STATISTICS PANEL FIXED**: Fixed trends statistics panel to correctly count positive/negative/neutral trends by classifying each individual trend based on its source's sentiment analysis result
 - **2025-08-04**: **FACEBOOK SETUP WIZARD COMPLETE AUTOMATION** - Implemented fully automated Facebook page discovery and token generation. System now automatically shows ALL Facebook pages available to Instagram token by default, generates page-specific tokens upon selection, and saves settings immediately to database without manual clicks.
 - **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
 - **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
