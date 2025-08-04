@@ -228,12 +228,48 @@ export default function FacebookSetupWizard({
   // Функция для получения Facebook страниц
   const handleFetchPages = async () => {
     const formData = form.getValues();
-    const token = formData.token;
+    let token = formData.token;
+    
+    // АВТОМАТИЧЕСКОЕ ИСПОЛЬЗОВАНИЕ INSTAGRAM ТОКЕНА: Если токена нет, пробуем взять из Instagram
+    if (!token || token.length < 10) {
+      console.log('🔄 Токен отсутствует, пробуем автоматически использовать Instagram токен...');
+      
+      try {
+        const instagramResponse = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (instagramResponse.ok) {
+          const instagramData = await instagramResponse.json();
+          if (instagramData.success && instagramData.settings) {
+            const instagramSettings = instagramData.settings;
+            const instagramToken = instagramSettings.accessToken || 
+                                 instagramSettings.token ||
+                                 instagramSettings.longLivedToken;
+            
+            if (instagramToken && instagramToken.length > 50) {
+              console.log('✅ Автоматически используем Instagram токен для поиска Facebook страниц');
+              token = instagramToken;
+              form.setValue('token', token);
+              
+              toast({
+                title: "Instagram токен использован",
+                description: "Автоматически используется Instagram токен для поиска Facebook страниц",
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Ошибка получения Instagram токена:', error);
+      }
+    }
     
     if (!token || token.length < 10) {
       toast({
         title: "Ошибка",
-        description: "Введите действительный токен доступа",
+        description: "Введите действительный токен доступа или настройте Instagram",
         variant: "destructive",
       });
       return;
@@ -328,13 +364,70 @@ export default function FacebookSetupWizard({
               setTimeout(() => {
                 handleFetchPages();
               }, 500);
+              return; // Не проверяем Instagram если Facebook уже настроен
             } else {
               console.log('❌ Facebook token is corrupted, not loading');
             }
           }
         }
+
+        // АВТОМАТИЧЕСКАЯ ПРОВЕРКА INSTAGRAM: Если Facebook не настроен, проверяем Instagram
+        console.log('🔄 Facebook не настроен, проверяем настройки Instagram...');
+        await checkAndUseInstagramToken();
+
       } catch (error) {
         console.error('Error loading Facebook settings:', error);
+        // При ошибке тоже пробуем Instagram
+        await checkAndUseInstagramToken();
+      }
+    };
+
+    const checkAndUseInstagramToken = async () => {
+      try {
+        console.log('📋 Проверяем настройки Instagram для автоматического использования...');
+        const instagramResponse = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+
+        if (instagramResponse.ok) {
+          const instagramData = await instagramResponse.json();
+          console.log('📋 Instagram settings проверены:', instagramData);
+
+          if (instagramData.success && instagramData.settings) {
+            const instagramSettings = instagramData.settings;
+            const instagramToken = instagramSettings.accessToken || 
+                                 instagramSettings.token ||
+                                 instagramSettings.longLivedToken;
+            
+            if (instagramToken && instagramToken.length > 50) {
+              console.log('✅ Instagram токен найден, автоматически используем для поиска Facebook страниц');
+              
+              // Устанавливаем Instagram токен как пользовательский токен
+              form.setValue('token', instagramToken);
+              
+              // Автоматически загружаем страницы с Instagram токеном
+              setTimeout(() => {
+                console.log('🔄 Автоматически загружаем Facebook страницы с Instagram токеном...');
+                handleFetchPages();
+              }, 800);
+              
+              toast({
+                title: "Instagram токен найден",
+                description: "Автоматически используется Instagram токен для поиска Facebook страниц",
+              });
+            } else {
+              console.log('❌ Instagram токен не найден или некорректный');
+            }
+          } else {
+            console.log('❌ Instagram настройки не найдены');
+          }
+        } else {
+          console.log('❌ Ошибка получения Instagram настроек');
+        }
+      } catch (error) {
+        console.error('❌ Ошибка при проверке Instagram настроек:', error);
       }
     };
 
