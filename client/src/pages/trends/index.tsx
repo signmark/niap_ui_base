@@ -1533,7 +1533,7 @@ export default function Trends() {
                             <Card>
                               <CardContent className="p-3 text-center">
                                 <div className="text-lg font-bold text-green-600">
-                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'positive').length}
+                                  {statsData.filter((t: any) => getSentimentCategory(t.sentiment_analysis) === 'positive').length}
                                 </div>
                                 <div className="text-xs text-muted-foreground">😊 Позитивных</div>
                               </CardContent>
@@ -1541,7 +1541,7 @@ export default function Trends() {
                             <Card>
                               <CardContent className="p-3 text-center">
                                 <div className="text-lg font-bold text-gray-600">
-                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'neutral').length}
+                                  {statsData.filter((t: any) => getSentimentCategory(t.sentiment_analysis) === 'neutral').length}
                                 </div>
                                 <div className="text-xs text-muted-foreground">😐 Нейтральных</div>
                               </CardContent>
@@ -1549,7 +1549,7 @@ export default function Trends() {
                             <Card>
                               <CardContent className="p-3 text-center">
                                 <div className="text-lg font-bold text-red-600">
-                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'negative').length}
+                                  {statsData.filter((t: any) => getSentimentCategory(t.sentiment_analysis) === 'negative').length}
                                 </div>
                                 <div className="text-xs text-muted-foreground">😞 Негативных</div>
                               </CardContent>
@@ -1557,7 +1557,7 @@ export default function Trends() {
                             <Card>
                               <CardContent className="p-3 text-center">
                                 <div className="text-lg font-bold text-yellow-600">
-                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'unknown').length}
+                                  {statsData.filter((t: any) => getSentimentCategory(t.sentiment_analysis) === 'unknown').length}
                                 </div>
                                 <div className="text-xs text-muted-foreground">❓ Неопределенных</div>
                               </CardContent>
@@ -2055,7 +2055,7 @@ export default function Trends() {
                                         className="text-sm line-clamp-2 cursor-pointer flex items-start gap-2"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        <SentimentEmoji sentiment={topic.sentiment_analysis} size="sm" />
+                                        <SentimentEmoji sentimentAnalysis={topic.sentiment_analysis} className="text-sm" />
                                         <span className="flex-1">
                                           {topic.description ? topic.description.split('\n')[0] : topic.title}
                                         </span>

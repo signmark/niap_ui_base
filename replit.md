@@ -7,6 +7,7 @@ SMM Manager is an intelligent social media content management platform designed 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **2025-08-04**: **SOURCE SENTIMENT ANALYSIS FEATURE** - Implemented comprehensive source analysis functionality that replaces chart icon with sentiment emoji (😊/😞/😐/❓) based on overall analysis of all trends from that source. System analyzes all trends within a source, calculates sentiment averages, and displays appropriate emoji with tooltip showing analysis summary.
 - **2025-08-04**: **FACEBOOK SETUP WIZARD COMPLETE AUTOMATION** - Implemented fully automated Facebook page discovery and token generation. System now automatically shows ALL Facebook pages available to Instagram token by default, generates page-specific tokens upon selection, and saves settings immediately to database without manual clicks.
 - **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
 - **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
