@@ -6502,19 +6502,93 @@ Return your response as a JSON array in this exact format:
         });
       }
 
-      // Для каждого тренда собираем комментарии и анализируем
+      // Правильный алгоритм анализа источника:
+      // 1. Найти все тренды с комментариями ЗА ВЕСЬ ПЕРИОД
+      // 2. Отправить webhook запрос с ID тренда
+      // 3. Проверить наличие комментариев
+      // 4. Анализировать комментарии если есть
+      // 5. Сохранить анализ в БД
+      // 6. Вычислить общую оценку источника
+      
       const { geminiProxyService } = await import('./services/gemini-proxy');
       const trendAnalyses = [];
-      let totalCommentsCollected = 0;
+      let totalCommentsAnalyzed = 0;
       
-      console.log(`[SOURCE-ANALYSIS] Обрабатываем ${trends.length} трендов для анализа комментариев`);
+      console.log(`[SOURCE-ANALYSIS] Начинаем анализ ${trends.length} трендов источника ${sourceId} по правильному алгоритму`);
 
-      for (let i = 0; i < trends.length; i++) {
-        const trend = trends[i];
-        console.log(`[SOURCE-ANALYSIS] Обрабатываем тренд ${i + 1}/${trends.length}: ${trend.id}`);
+      // 1. Найти все тренды, имеющие комментарии ЗА ВЕСЬ ПЕРИОД
+      const trendsWithComments = [];
+      for (const trend of trends) {
+        try {
+          // Проверяем наличие комментариев в базе для этого тренда
+          const commentsCheckResponse = await directusApi.get('/items/post_comment', {
+            headers: { 'Authorization': `Bearer ${token}` },
+            params: {
+              filter: {
+                trent_post_id: { _eq: trend.id }
+              },
+              limit: 1  // Нужно только проверить наличие
+            }
+          });
+
+          const hasComments = (commentsCheckResponse.data?.data || []).length > 0;
+          if (hasComments) {
+            trendsWithComments.push(trend);
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} имеет комментарии, добавляем в анализ`);
+          }
+        } catch (checkError) {
+          console.error(`[SOURCE-ANALYSIS] Ошибка проверки комментариев для тренда ${trend.id}:`, checkError);
+        }
+      }
+
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithComments.length} трендов с комментариями из ${trends.length} общих`);
+
+      if (trendsWithComments.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            sentiment: 'unknown',
+            confidence: 0,
+            trendsCount: trends.length,
+            trendsWithCommentsCount: 0,
+            summary: 'Нет трендов с комментариями для анализа'
+          }
+        });
+      }
+
+      // 2-4. Для каждого тренда с комментариями: отправляем webhook → проверяем комментарии → анализируем
+      for (let i = 0; i < trendsWithComments.length; i++) {
+        const trend = trendsWithComments[i];
+        console.log(`[SOURCE-ANALYSIS] Обрабатываем тренд ${i + 1}/${trendsWithComments.length}: ${trend.id}`);
 
         try {
-          // 1. Сначала собираем комментарии для тренда
+          // 2. Отправляем webhook запрос для сбора свежих комментариев
+          const webhookUrl = 'https://n8n.roboflow.space/webhook/collect-comments';
+          try {
+            console.log(`[SOURCE-ANALYSIS] Отправляем webhook для тренда ${trend.id}, URL: ${trend.post_url}`);
+            const webhookResponse = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                trend_id: trend.id,
+                url: trend.post_url
+              })
+            });
+            
+            if (webhookResponse.ok) {
+              console.log(`[SOURCE-ANALYSIS] Webhook успешно отправлен для тренда ${trend.id}`);
+              // Ждем немного чтобы комментарии успели собраться
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            } else {
+              console.error(`[SOURCE-ANALYSIS] Webhook вернул статус ${webhookResponse.status} для тренда ${trend.id}`);
+            }
+          } catch (webhookError) {
+            console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}:`, webhookError);
+          }
+
+          // 3. Проверяем наличие комментариев после webhook
           const commentsResponse = await directusApi.get('/items/post_comment', {
             headers: { 'Authorization': `Bearer ${token}` },
             params: {
@@ -6522,28 +6596,28 @@ Return your response as a JSON array in this exact format:
                 trent_post_id: { _eq: trend.id }
               },
               sort: 'date',
-              limit: 50  // Ограничиваем количество комментариев для анализа
+              limit: 100  // Увеличиваем лимит для более точного анализа
             }
           });
 
           const comments = commentsResponse.data?.data || [];
-          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для тренда ${trend.id}`);
-          totalCommentsCollected += comments.length;
+          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для анализа тренда ${trend.id}`);
 
           if (comments.length === 0) {
-            // Если нет комментариев, пропускаем анализ
             trendAnalyses.push({
               trendId: trend.id,
               score: 5, // Нейтральная оценка
               sentiment: 'neutral',
               confidence: 0,
               commentsCount: 0,
-              summary: 'Нет комментариев для анализа'
+              summary: 'Комментарии не найдены после webhook'
             });
             continue;
           }
 
-          // 2. Подготавливаем текст комментариев
+          totalCommentsAnalyzed += comments.length;
+
+          // 4. Анализируем комментарии
           const commentsText = comments
             .map(c => c.text || c.content || '')
             .filter(Boolean)
@@ -6553,7 +6627,7 @@ Return your response as a JSON array in this exact format:
             trendAnalyses.push({
               trendId: trend.id,
               score: 5,
-              sentiment: 'neutral', 
+              sentiment: 'neutral',
               confidence: 0,
               commentsCount: comments.length,
               summary: 'Комментарии пустые'
@@ -6561,12 +6635,12 @@ Return your response as a JSON array in this exact format:
             continue;
           }
 
-          // 3. Анализируем тональность комментариев для этого тренда
+          // Анализируем тональность через Gemini
           try {
             const analysisPrompt = `Проанализируй тональность комментариев к посту и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
 
 Комментарии к посту:
-${commentsText.substring(0, 3000)}
+${commentsText.substring(0, 4000)}
 
 Ответь в JSON формате:
 {
@@ -6583,15 +6657,41 @@ ${commentsText.substring(0, 3000)}
 
             let analysisData;
             try {
-              analysisData = JSON.parse(analysisResult);
+              // Пытаемся извлечь JSON из ответа
+              const jsonMatch = analysisResult.match(/\{[^}]*\}/);
+              if (jsonMatch) {
+                analysisData = JSON.parse(jsonMatch[0]);
+              } else {
+                throw new Error('JSON не найден в ответе');
+              }
             } catch (parseError) {
               console.error(`[SOURCE-ANALYSIS] Ошибка парсинга JSON для тренда ${trend.id}:`, parseError);
-              // Fallback анализ
+              // Fallback анализ на основе ключевых слов
+              const positiveWords = ['хорошо', 'отлично', 'супер', 'класс', 'круто', 'лайк', '👍', '❤️', 'спасибо'];
+              const negativeWords = ['плохо', 'ужасно', 'отстой', 'не нравится', 'дизлайк', '👎', 'фу', 'гадость'];
+              
+              const positiveCount = positiveWords.reduce((count, word) => 
+                count + (commentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
+              const negativeCount = negativeWords.reduce((count, word) => 
+                count + (commentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
+              
+              const totalWords = positiveCount + negativeCount;
+              let score = 5;
+              let sentiment = 'neutral';
+              
+              if (totalWords > 0) {
+                score = Math.round(5 + (positiveCount - negativeCount) * 2.5 / Math.max(totalWords, 1));
+                score = Math.max(1, Math.min(10, score));
+                
+                if (score > 6) sentiment = 'positive';
+                else if (score < 4) sentiment = 'negative';
+              }
+              
               analysisData = {
-                score: 5,
-                sentiment: 'neutral',
+                score,
+                sentiment,
                 confidence: 0.3,
-                summary: 'Анализ не удался, задан нейтральный балл'
+                summary: 'Анализ выполнен по ключевым словам (fallback)'
               };
             }
 
@@ -6604,9 +6704,9 @@ ${commentsText.substring(0, 3000)}
               summary: analysisData.summary || 'Анализ выполнен'
             });
 
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id}: score=${analysisData.score}, sentiment=${analysisData.sentiment}`);
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id}: score=${analysisData.score}, sentiment=${analysisData.sentiment}, комментариев=${comments.length}`);
 
-            // Сохраняем результат анализа в тренд
+            // 5. Сохраняем результат анализа в тренд
             try {
               await directusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
                 sentiment_analysis: {
@@ -6682,7 +6782,7 @@ ${commentsText.substring(0, 3000)}
         confidence: Math.round(overallConfidence * 100) / 100,
         score: Math.round(averageScore * 10) / 10,
         trendsCount: trends.length,
-        commentsCount: totalCommentsCollected,
+        commentsCount: totalCommentsAnalyzed,
         analyzedTrends: validAnalyses.length,
         summary: `Анализ ${validAnalyses.length} трендов с комментариями: ${overallSentiment === 'positive' ? 'положительная' : overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная'} тональность (балл: ${Math.round(averageScore * 10) / 10})`
       };
@@ -6705,7 +6805,7 @@ ${commentsText.substring(0, 3000)}
               confidence: Math.round(overallConfidence * 100) / 100,
               trendsAnalyzed: validAnalyses.length,
               totalTrends: trends.length,
-              totalComments: totalCommentsCollected,
+              totalComments: totalCommentsAnalyzed,
               summary: result.summary,
               analyzedAt: new Date().toISOString()
             }
