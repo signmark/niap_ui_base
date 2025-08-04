@@ -6515,112 +6515,39 @@ Return your response as a JSON array in this exact format:
       
       console.log(`[SOURCE-ANALYSIS] ПРАВИЛЬНЫЙ алгоритм: проверяем ${trends.length} трендов источника ${sourceId}`);
 
-      // 1. Ищем тренды, которые ИМЕЮТ content (поле в таблице campaign_trend_topics)
-      const trendsWithContent = trends.filter(trend => trend.content && trend.content.trim().length > 0);
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithContent.length} трендов с контентом из ${trends.length} общих`);
+      // 1. Разделяем тренды на те, у которых ЕСТЬ комментарии (comments > 0) и у которых НЕТ
+      const trendsWithComments = trends.filter(trend => trend.comments && parseInt(trend.comments) > 0);
+      const trendsWithoutComments = trends.filter(trend => (!trend.comments || parseInt(trend.comments) === 0) && trend.url);
       
-      if (trendsWithContent.length === 0) {
-        return res.json({
-          success: true,
-          data: {
-            sentiment: 'unknown',
-            confidence: 0,
-            trendsCount: 0,
-            summary: 'Нет трендов с контентом для анализа'
-          }
-        });
-      }
-
-      // 2. Проверяем какие из трендов с контентом уже имеют комментарии
-      const trendsWithComments = [];
-      const trendsWithoutComments = [];
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithComments.length} трендов с комментариями (comments > 0) из ${trends.length} общих`);
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithoutComments.length} трендов БЕЗ комментариев - запускаем сбор`);
       
-      for (const trend of trendsWithContent) {
-        try {
-          const commentsCheckResponse = await directusApi.get('/items/post_comment', {
-            headers: { 'Authorization': `Bearer ${token}` },
-            params: {
-              filter: {
-                trent_post_id: { _eq: trend.id }
-              },
-              limit: 1
-            }
-          });
-
-          const hasComments = (commentsCheckResponse.data?.data || []).length > 0;
-          if (hasComments) {
-            trendsWithComments.push(trend);
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} уже имеет комментарии`);
-          } else if (trend.url) {
-            trendsWithoutComments.push(trend);
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} имеет контент но не имеет комментариев, добавляем в очередь сбора`);
-          }
-        } catch (checkError) {
-          console.error(`[SOURCE-ANALYSIS] Ошибка проверки комментариев для тренда ${trend.id}:`, checkError);
-        }
-      }
-
-      console.log(`[SOURCE-ANALYSIS] Найдено: ${trendsWithComments.length} трендов с комментариями, ${trendsWithoutComments.length} с контентом но без комментариев`);
-
-      // 3. Отправляем webhook только для трендов с контентом БЕЗ комментариев
+      // 2. Для трендов БЕЗ комментариев - запускаем сбор
       if (trendsWithoutComments.length > 0) {
-        console.log(`[SOURCE-ANALYSIS] Отправляем webhook для сбора комментариев ${trendsWithoutComments.length} трендов`);
+        console.log(`[SOURCE-ANALYSIS] Запускаем сбор комментариев для ${trendsWithoutComments.length} трендов`);
         
-        const commentCollectionPromises = trendsWithoutComments.map(trend => 
-          fetch(`https://n8n.roboflow.space/webhook/collect-comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              trend_id: trend.id,
-              url: trend.url
-            })
-          }).then(response => {
-            if (response.ok) {
-              console.log(`[SOURCE-ANALYSIS] Webhook успешно отправлен для тренда ${trend.id}`);
-              return { trendId: trend.id, success: true };
-            } else {
-              console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}: ${response.status}`);
-              return { trendId: trend.id, success: false };
-            }
-          }).catch(error => {
-            console.error(`[SOURCE-ANALYSIS] Ошибка отправки webhook для тренда ${trend.id}:`, error);
-            return { trendId: trend.id, success: false };
-          })
-        );
-
-        const collectionResults = await Promise.all(commentCollectionPromises);
-        const successfulCollections = collectionResults.filter(r => r.success);
-        console.log(`[SOURCE-ANALYSIS] Успешно отправлено ${successfulCollections.length} запросов на сбор`);
-
-        // Ждем завершения сбора комментариев (5 секунд)
-        console.log(`[SOURCE-ANALYSIS] Ждем 5 секунд для завершения сбора комментариев...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
-        // 4. Проверяем тренды с контентом снова после сбора
         for (const trend of trendsWithoutComments) {
           try {
-            const commentsAfterCollection = await directusApi.get('/items/post_comment', {
-              headers: { 'Authorization': `Bearer ${token}` },
-              params: {
-                filter: {
-                  trent_post_id: { _eq: trend.id }
-                },
-                limit: 1
-              }
+            await fetch('https://n8n.roboflow.space/webhook/collect-comments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                trend_id: trend.id,
+                url: trend.url
+              })
             });
-
-            const nowHasComments = (commentsAfterCollection.data?.data || []).length > 0;
-            if (nowHasComments && !trendsWithComments.some(t => t.id === trend.id)) {
-              trendsWithComments.push(trend);
-              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} теперь имеет комментарии после сбора`);
-            }
+            console.log(`[SOURCE-ANALYSIS] Webhook отправлен для тренда ${trend.id}`);
           } catch (error) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка повторной проверки комментариев для тренда ${trend.id}:`, error);
+            console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}:`, error);
           }
         }
+
+        // Ждем завершения сбора (5 секунд)
+        console.log(`[SOURCE-ANALYSIS] Ждем 5 секунд для завершения сбора...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
-      console.log(`[SOURCE-ANALYSIS] Итого для анализа: ${trendsWithComments.length} трендов с комментариями из ${trendsWithContent.length} с контентом`);
+      console.log(`[SOURCE-ANALYSIS] Итого для анализа: ${trendsWithComments.length} трендов с комментариями из ${trends.length} общих`);
 
       if (trendsWithComments.length === 0) {
         return res.json({
@@ -6629,78 +6556,32 @@ Return your response as a JSON array in this exact format:
             sentiment: 'unknown',
             confidence: 0,
             trendsCount: trends.length,
-            trendsWithCommentsCount: 0,
             summary: 'Нет трендов с комментариями для анализа'
           }
         });
       }
 
-      // 2-4. Для каждого тренда с комментариями: отправляем webhook → проверяем комментарии → анализируем
-      for (let i = 0; i < trendsWithComments.length; i++) {
-        const trend = trendsWithComments[i];
-        console.log(`[SOURCE-ANALYSIS] Обрабатываем тренд ${i + 1}/${trendsWithComments.length}: ${trend.id}`);
-
+      // 3. Анализируем комментарии для каждого тренда
+      for (const trend of trendsWithComments) {
         try {
-          // 2. Отправляем webhook запрос для сбора свежих комментариев
-          const webhookUrl = 'https://n8n.roboflow.space/webhook/collect-comments';
-          try {
-            console.log(`[SOURCE-ANALYSIS] Отправляем webhook для тренда ${trend.id}, URL: ${trend.post_url}`);
-            const webhookResponse = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                trend_id: trend.id,
-                url: trend.post_url
-              })
-            });
-            
-            if (webhookResponse.ok) {
-              console.log(`[SOURCE-ANALYSIS] Webhook успешно отправлен для тренда ${trend.id}`);
-              // Ждем немного чтобы комментарии успели собраться
-              await new Promise(resolve => setTimeout(resolve, 3000));
-            } else {
-              console.error(`[SOURCE-ANALYSIS] Webhook вернул статус ${webhookResponse.status} для тренда ${trend.id}`);
-            }
-          } catch (webhookError) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}:`, webhookError);
-          }
-
-          // 3. Проверяем наличие комментариев после webhook
           const commentsResponse = await directusApi.get('/items/post_comment', {
             headers: { 'Authorization': `Bearer ${token}` },
             params: {
-              filter: {
-                trent_post_id: { _eq: trend.id }
-              },
+              filter: { trent_post_id: { _eq: trend.id } },
               sort: 'date',
-              limit: 100  // Увеличиваем лимит для более точного анализа
+              limit: 100
             }
           });
 
           const comments = commentsResponse.data?.data || [];
-          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для анализа тренда ${trend.id}`);
+          console.log(`[SOURCE-ANALYSIS] Анализируем ${comments.length} комментариев для тренда ${trend.id}`);
 
           if (comments.length === 0) {
-            trendAnalyses.push({
-              trendId: trend.id,
-              score: 5, // Нейтральная оценка
-              sentiment: 'neutral',
-              confidence: 0,
-              commentsCount: 0,
-              summary: 'Комментарии не найдены после webhook'
-            });
             continue;
           }
 
           totalCommentsAnalyzed += comments.length;
-
-          // 4. Анализируем комментарии
-          const commentsText = comments
-            .map(c => c.text || c.content || '')
-            .filter(Boolean)
-            .join('\n');
+          const commentsText = comments.map(c => c.text || c.content || '').filter(Boolean).join('\n');
 
           if (!commentsText.trim()) {
             trendAnalyses.push({
