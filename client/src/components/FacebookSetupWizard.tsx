@@ -30,6 +30,7 @@ interface FacebookPage {
   access_token: string;
   category: string;
   tasks?: string[];
+  link?: string;
 }
 
 interface FacebookSetupWizardProps {
@@ -373,18 +374,18 @@ export default function FacebookSetupWizard({
 
         // АВТОМАТИЧЕСКАЯ ПРОВЕРКА INSTAGRAM: Если Facebook не настроен, проверяем Instagram
         console.log('🔄 Facebook не настроен, проверяем настройки Instagram...');
-        await checkAndUseInstagramToken();
+        await checkAndUseInstagramTokenAndLoadPages();
 
       } catch (error) {
         console.error('Error loading Facebook settings:', error);
         // При ошибке тоже пробуем Instagram
-        await checkAndUseInstagramToken();
+        await checkAndUseInstagramTokenAndLoadPages();
       }
     };
 
-    const checkAndUseInstagramToken = async () => {
+    const checkAndUseInstagramTokenAndLoadPages = async () => {
       try {
-        console.log('📋 Проверяем настройки Instagram для автоматического использования...');
+        console.log('📋 Автоматическая загрузка Facebook страниц через Instagram токен...');
         const instagramResponse = await fetch(`/api/campaigns/${campaignId}/instagram-settings`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
@@ -402,21 +403,43 @@ export default function FacebookSetupWizard({
                                  instagramSettings.longLivedToken;
             
             if (instagramToken && instagramToken.length > 50) {
-              console.log('✅ Instagram токен найден, автоматически используем для поиска Facebook страниц');
+              console.log('✅ Instagram токен найден, автоматически загружаем все доступные Facebook страницы');
               
               // Устанавливаем Instagram токен как пользовательский токен
               form.setValue('token', instagramToken);
               
-              // Автоматически загружаем страницы с Instagram токеном
-              setTimeout(() => {
-                console.log('🔄 Автоматически загружаем Facebook страницы с Instagram токеном...');
-                handleFetchPages();
-              }, 800);
-              
-              toast({
-                title: "Instagram токен найден",
-                description: "Автоматически используется Instagram токен для поиска Facebook страниц",
-              });
+              // СРАЗУ ЗАГРУЖАЕМ ВСЕ СТРАНИЦЫ по умолчанию
+              setIsPagesLoading(true);
+              try {
+                const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(instagramToken)}`);
+                const data = await response.json();
+
+                if (response.ok && data.pages && data.pages.length > 0) {
+                  setPages(data.pages);
+                  console.log(`🎯 Автоматически загружено ${data.pages.length} Facebook страниц с Instagram токеном`);
+                  
+                  toast({
+                    title: "Facebook страницы загружены",
+                    description: `Найдено ${data.pages.length} Facebook страниц через Instagram токен`,
+                  });
+                } else {
+                  console.log('❌ Страницы не найдены через Instagram токен');
+                  toast({
+                    title: "Страницы не найдены",
+                    description: "Instagram токен найден, но Facebook страницы недоступны",
+                    variant: "destructive",
+                  });
+                }
+              } catch (error) {
+                console.error('❌ Ошибка загрузки Facebook страниц через Instagram:', error);
+                toast({
+                  title: "Ошибка загрузки страниц",
+                  description: "Не удалось загрузить Facebook страницы через Instagram токен",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsPagesLoading(false);
+              }
             } else {
               console.log('❌ Instagram токен не найден или некорректный');
             }
@@ -571,31 +594,37 @@ export default function FacebookSetupWizard({
       return;
     }
     
-    console.log('Facebook Wizard: Выбрана страница:', {
+    console.log('🎯 Facebook Wizard: Выбрана страница, генерируем токен страницы:', {
       pageId,
       pageName,
-      userTokenLength: userToken.length,
-      tokenValid: userToken.length > 50 && !userToken.includes('Facebook Wizard:')
+      userTokenLength: userToken.length
     });
 
-    // Ищем токен страницы в уже загруженном списке страниц
-    const selectedPage = pages.find(page => page.id === pageId);
-    
+    // ГЕНЕРИРУЕМ ТОКЕН СТРАНИЦЫ через API
     let pageToken = userToken;
-    let tokenType = "основным токеном";
+    let tokenType = "пользовательским токеном";
     
-    if (selectedPage && selectedPage.access_token) {
-      console.log('Facebook Wizard: Найден токен страницы в списке:', {
-        pageId: selectedPage.id,
-        pageName: selectedPage.name,
-        hasPageToken: !!selectedPage.access_token,
-        pageTokenPreview: selectedPage.access_token.substring(0, 20) + '...'
-      });
+    try {
+      console.log(`🔑 Запрашиваем токен страницы для ${pageName} (${pageId})`);
       
-      pageToken = selectedPage.access_token;
-      tokenType = "персональным токеном";
-    } else {
-      console.log('Facebook Wizard: Токен страницы не найден в списке, используем пользовательский токен');
+      const pageTokenResponse = await fetch(`/api/facebook/page-token/${pageId}?token=${encodeURIComponent(userToken)}`);
+      const pageTokenData = await pageTokenResponse.json();
+
+      if (pageTokenResponse.ok && pageTokenData.success && pageTokenData.page && pageTokenData.page.access_token) {
+        pageToken = pageTokenData.page.access_token;
+        tokenType = "индивидуальным токеном страницы";
+        
+        console.log('✅ Токен страницы успешно сгенерирован:', {
+          pageId: pageTokenData.page.id,
+          pageName: pageTokenData.page.name,
+          tokenPreview: pageToken.substring(0, 20) + '...'
+        });
+      } else {
+        console.log('⚠️ Не удалось получить токен страницы, используем пользовательский токен');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка генерации токена страницы:', error);
+      console.log('⚠️ Используем пользовательский токен как fallback');
     }
 
     // АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ: Сохраняем настройки сразу после выбора страницы
@@ -610,9 +639,9 @@ export default function FacebookSetupWizard({
         },
         body: JSON.stringify({
           token: pageToken,
-          page_id: pageId,
-          page_name: pageName,
-          user_token: userToken
+          pageId: pageId,
+          pageName: pageName,
+          userToken: userToken
         })
       });
 
