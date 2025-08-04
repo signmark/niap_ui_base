@@ -1710,12 +1710,16 @@ export default function Trends() {
                           // Сначала проверяем анализ на уровне тренда
                           if (trend.sentiment_analysis?.sentiment) {
                             sentiment = trend.sentiment_analysis.sentiment;
+                            console.log(`Тренд ${trend.id} имеет анализ: ${sentiment}`);
                           } else {
                             // Если нет анализа тренда, проверяем источник
                             const sourceId = trend.sourceId || trend.source_id;
                             const source = sources.find(s => s.id === sourceId);
                             if (source?.sentiment_analysis?.sentiment) {
                               sentiment = source.sentiment_analysis.sentiment;
+                              console.log(`Тренд ${trend.id} использует анализ источника ${sourceId}: ${sentiment}`);
+                            } else {
+                              console.log(`Тренд ${trend.id} без анализа (sourceId: ${sourceId})`);
                             }
                           }
                           
@@ -1735,6 +1739,8 @@ export default function Trends() {
                           
                           return acc;
                         }, { positive: 0, negative: 0, neutral: 0, unknown: 0 });
+                        
+                        console.log('Итоговая статистика:', sourcesSentimentStats);
                         
                         return statsData.length > 0 && (
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
