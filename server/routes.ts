@@ -6502,104 +6502,228 @@ Return your response as a JSON array in this exact format:
         });
       }
 
-      // Анализируем каждый тренд с комментариями
-      const trendsWithSentiment = [];
+      // Для каждого тренда собираем комментарии и анализируем
+      const { geminiProxyService } = await import('./services/gemini-proxy');
+      const trendAnalyses = [];
+      let totalCommentsCollected = 0;
       
-      for (const trend of trends) {
-        if (trend.sentiment_analysis) {
-          trendsWithSentiment.push({
-            id: trend.id,
-            title: trend.title,
-            sentiment_analysis: trend.sentiment_analysis
+      console.log(`[SOURCE-ANALYSIS] Обрабатываем ${trends.length} трендов для анализа комментариев`);
+
+      for (let i = 0; i < trends.length; i++) {
+        const trend = trends[i];
+        console.log(`[SOURCE-ANALYSIS] Обрабатываем тренд ${i + 1}/${trends.length}: ${trend.id}`);
+
+        try {
+          // 1. Сначала собираем комментарии для тренда
+          const commentsResponse = await directusApi.get('/items/post_comment', {
+            headers: { 'Authorization': `Bearer ${token}` },
+            params: {
+              filter: {
+                trent_post_id: { _eq: trend.id }
+              },
+              sort: 'date',
+              limit: 50  // Ограничиваем количество комментариев для анализа
+            }
+          });
+
+          const comments = commentsResponse.data?.data || [];
+          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для тренда ${trend.id}`);
+          totalCommentsCollected += comments.length;
+
+          if (comments.length === 0) {
+            // Если нет комментариев, пропускаем анализ
+            trendAnalyses.push({
+              trendId: trend.id,
+              score: 5, // Нейтральная оценка
+              sentiment: 'neutral',
+              confidence: 0,
+              commentsCount: 0,
+              summary: 'Нет комментариев для анализа'
+            });
+            continue;
+          }
+
+          // 2. Подготавливаем текст комментариев
+          const commentsText = comments
+            .map(c => c.text || c.content || '')
+            .filter(Boolean)
+            .join('\n');
+
+          if (!commentsText.trim()) {
+            trendAnalyses.push({
+              trendId: trend.id,
+              score: 5,
+              sentiment: 'neutral', 
+              confidence: 0,
+              commentsCount: comments.length,
+              summary: 'Комментарии пустые'
+            });
+            continue;
+          }
+
+          // 3. Анализируем тональность комментариев для этого тренда
+          try {
+            const analysisPrompt = `Проанализируй тональность комментариев к посту и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
+
+Комментарии к посту:
+${commentsText.substring(0, 3000)}
+
+Ответь в JSON формате:
+{
+  "score": число от 1 до 10,
+  "confidence": число от 0 до 1,
+  "sentiment": "positive" | "negative" | "neutral",
+  "summary": "краткое описание тональности комментариев"
+}`;
+
+            const analysisResult = await geminiProxyService.generateText({
+              prompt: analysisPrompt,
+              model: 'gemini-2.5-flash'
+            });
+
+            let analysisData;
+            try {
+              analysisData = JSON.parse(analysisResult);
+            } catch (parseError) {
+              console.error(`[SOURCE-ANALYSIS] Ошибка парсинга JSON для тренда ${trend.id}:`, parseError);
+              // Fallback анализ
+              analysisData = {
+                score: 5,
+                sentiment: 'neutral',
+                confidence: 0.3,
+                summary: 'Анализ не удался, задан нейтральный балл'
+              };
+            }
+
+            trendAnalyses.push({
+              trendId: trend.id,
+              score: analysisData.score || 5,
+              sentiment: analysisData.sentiment || 'neutral',
+              confidence: analysisData.confidence || 0,
+              commentsCount: comments.length,
+              summary: analysisData.summary || 'Анализ выполнен'
+            });
+
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id}: score=${analysisData.score}, sentiment=${analysisData.sentiment}`);
+
+            // Сохраняем результат анализа в тренд
+            try {
+              await directusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
+                sentiment_analysis: {
+                  score: analysisData.score,
+                  sentiment: analysisData.sentiment,
+                  confidence: analysisData.confidence,
+                  summary: analysisData.summary,
+                  analyzedAt: new Date().toISOString(),
+                  commentsCount: comments.length
+                }
+              }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              console.log(`[SOURCE-ANALYSIS] Сохранен анализ для тренда ${trend.id}`);
+            } catch (saveError) {
+              console.error(`[SOURCE-ANALYSIS] Ошибка сохранения анализа тренда ${trend.id}:`, saveError);
+            }
+
+          } catch (aiError) {
+            console.error(`[SOURCE-ANALYSIS] Ошибка AI анализа для тренда ${trend.id}:`, aiError);
+            // Fallback для ошибки AI
+            trendAnalyses.push({
+              trendId: trend.id,
+              score: 5,
+              sentiment: 'neutral',
+              confidence: 0,
+              commentsCount: comments.length,
+              summary: 'Ошибка анализа AI'
+            });
+          }
+
+          // Небольшая пауза между запросами
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+        } catch (trendError) {
+          console.error(`[SOURCE-ANALYSIS] Ошибка обработки тренда ${trend.id}:`, trendError);
+          trendAnalyses.push({
+            trendId: trend.id,
+            score: 5,
+            sentiment: 'neutral',
+            confidence: 0,
+            commentsCount: 0,
+            summary: 'Ошибка сбора данных'
           });
         }
       }
 
-      console.log(`[SOURCE-ANALYSIS] ${trendsWithSentiment.length} трендов имеют анализ тональности`);
-
-      if (trendsWithSentiment.length === 0) {
-        return res.json({
-          success: true,
-          data: {
-            sentiment: 'unknown',
-            confidence: 0,
-            trendsCount: trends.length,
-            summary: 'Анализ тональности не выполнен для трендов этого источника'
-          }
-        });
-      }
-
-      // Вычисляем общую тональность источника
-      let totalPositive = 0;
-      let totalNeutral = 0;
-      let totalNegative = 0;
-      let totalConfidence = 0;
-      let validAnalyses = 0;
-
-      for (const trend of trendsWithSentiment) {
-        const analysis = trend.sentiment_analysis;
-        
-        if (typeof analysis === 'object' && analysis !== null) {
-          // Обрабатываем объект анализа
-          if (analysis.details && typeof analysis.details === 'object') {
-            totalPositive += analysis.details.positive || 0;
-            totalNeutral += analysis.details.neutral || 0;
-            totalNegative += analysis.details.negative || 0;
-          }
-          
-          if (typeof analysis.confidence === 'number') {
-            totalConfidence += analysis.confidence;
-            validAnalyses++;
-          }
-        } else if (typeof analysis === 'string') {
-          // Обрабатываем строковый анализ
-          if (analysis.includes('positive')) {
-            totalPositive += 70;
-            totalConfidence += 70;
-          } else if (analysis.includes('negative')) {
-            totalNegative += 70;
-            totalConfidence += 70;
-          } else {
-            totalNeutral += 70;
-            totalConfidence += 50;
-          }
-          validAnalyses++;
-        }
-      }
-
-      // Вычисляем средние значения
-      const avgPositive = totalPositive / trendsWithSentiment.length;
-      const avgNeutral = totalNeutral / trendsWithSentiment.length;
-      const avgNegative = totalNegative / trendsWithSentiment.length;
-      const avgConfidence = validAnalyses > 0 ? totalConfidence / validAnalyses : 0;
-
-      // Определяем общую тональность
+      // Вычисляем общий балл источника
+      const validAnalyses = trendAnalyses.filter(a => a.confidence > 0);
+      let averageScore = 5; // По умолчанию нейтральный
       let overallSentiment = 'neutral';
-      if (avgPositive > avgNeutral && avgPositive > avgNegative) {
-        overallSentiment = 'positive';
-      } else if (avgNegative > avgPositive && avgNegative > avgNeutral) {
-        overallSentiment = 'negative';
+      let overallConfidence = 0;
+
+      if (validAnalyses.length > 0) {
+        const totalScore = validAnalyses.reduce((sum, a) => sum + a.score, 0);
+        averageScore = totalScore / validAnalyses.length;
+
+        const totalConfidence = validAnalyses.reduce((sum, a) => sum + a.confidence, 0);
+        overallConfidence = totalConfidence / validAnalyses.length;
+
+        // Определяем общую тональность
+        if (averageScore >= 7) {
+          overallSentiment = 'positive';
+        } else if (averageScore <= 4) {
+          overallSentiment = 'negative';  
+        } else {
+          overallSentiment = 'neutral';
+        }
       }
 
       const result = {
         sentiment: overallSentiment,
-        confidence: Math.round(avgConfidence),
+        confidence: Math.round(overallConfidence * 100) / 100,
+        score: Math.round(averageScore * 10) / 10,
         trendsCount: trends.length,
-        analyzedTrends: trendsWithSentiment.length,
-        details: {
-          positive: Math.round(avgPositive),
-          neutral: Math.round(avgNeutral),
-          negative: Math.round(avgNegative)
-        },
-        summary: `Анализ ${trendsWithSentiment.length} трендов показывает ${overallSentiment === 'positive' ? 'положительную' : overallSentiment === 'negative' ? 'отрицательную' : 'нейтральную'} тональность`
+        commentsCount: totalCommentsCollected,
+        analyzedTrends: validAnalyses.length,
+        summary: `Анализ ${validAnalyses.length} трендов с комментариями: ${overallSentiment === 'positive' ? 'положительная' : overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная'} тональность (балл: ${Math.round(averageScore * 10) / 10})`
       };
 
-      console.log(`[SOURCE-ANALYSIS] Результат анализа источника:`, result);
+      console.log(`[SOURCE-ANALYSIS] Итоговый результат:`, result);
 
-      res.json({
+      // Сохраняем общий результат анализа в источник
+      try {
+        // Получаем информацию об источнике
+        const sourceResponse = await directusApi.get(`/items/trend_sources/${sourceId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (sourceResponse.data?.data) {
+          // Обновляем источник с результатами анализа
+          await directusApi.patch(`/items/trend_sources/${sourceId}`, {
+            sentiment_analysis: {
+              sentiment: overallSentiment,
+              score: Math.round(averageScore * 10) / 10,
+              confidence: Math.round(overallConfidence * 100) / 100,
+              trendsAnalyzed: validAnalyses.length,
+              totalTrends: trends.length,
+              totalComments: totalCommentsCollected,
+              summary: result.summary,
+              analyzedAt: new Date().toISOString()
+            }
+          }, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          console.log(`[SOURCE-ANALYSIS] Сохранен общий анализ для источника ${sourceId}`);
+        }
+      } catch (sourceUpdateError) {
+        console.error(`[SOURCE-ANALYSIS] Ошибка обновления источника ${sourceId}:`, sourceUpdateError);
+      }
+
+      return res.json({
         success: true,
         data: result
       });
+
+
 
     } catch (error) {
       console.error('[SOURCE-ANALYSIS] Ошибка анализа источника:', error);
