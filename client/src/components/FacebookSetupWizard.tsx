@@ -361,11 +361,8 @@ export default function FacebookSetupWizard({
               console.log('✅ Setting Facebook token in form:', token.substring(0, 20) + '...');
               form.setValue('token', token);
               
-              // Автоматически загружаем страницы если токен найден
-              setTimeout(() => {
-                handleFetchPages();
-              }, 500);
-              return; // Не проверяем Instagram если Facebook уже настроен
+              // НЕ ЗАГРУЖАЕМ СТРАНИЦЫ АВТОМАТИЧЕСКИ - всегда проверяем Instagram для получения всех доступных страниц
+              console.log('🔄 Facebook токен найден, но проверяем Instagram для получения всех доступных страниц...');
             } else {
               console.log('❌ Facebook token is corrupted, not loading');
             }
@@ -403,38 +400,42 @@ export default function FacebookSetupWizard({
                                  instagramSettings.longLivedToken;
             
             if (instagramToken && instagramToken.length > 50) {
-              console.log('✅ Instagram токен найден, автоматически загружаем все доступные Facebook страницы');
+              console.log('✅ Instagram токен найден, автоматически загружаем ВСЕ доступные Facebook страницы с ПОЛЬЗОВАТЕЛЬСКИМ токеном');
               
               // Устанавливаем Instagram токен как пользовательский токен
               form.setValue('token', instagramToken);
               
-              // СРАЗУ ЗАГРУЖАЕМ ВСЕ СТРАНИЦЫ по умолчанию
+              // СРАЗУ ЗАГРУЖАЕМ ВСЕ СТРАНИЦЫ с пользовательским токеном по умолчанию
               setIsPagesLoading(true);
               try {
-                const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(instagramToken)}`);
+                console.log('🔍 Ищем ВСЕ Facebook страницы доступные Instagram пользовательскому токену...');
+                
+                // ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ ПОЛЬЗОВАТЕЛЬСКИЙ ТОКЕН (НЕ ТОКЕН СТРАНИЦЫ) для получения всех страниц
+                const response = await fetch(`/api/facebook/pages?token=${encodeURIComponent(instagramToken)}&user_token=true`);
                 const data = await response.json();
 
                 if (response.ok && data.pages && data.pages.length > 0) {
                   setPages(data.pages);
-                  console.log(`🎯 Автоматически загружено ${data.pages.length} Facebook страниц с Instagram токеном`);
+                  console.log(`🎯 НАЙДЕНО ${data.pages.length} Facebook страниц с Instagram пользовательским токеном:`, 
+                    data.pages.map((p: any) => `${p.name} (${p.id})`).join(', '));
                   
                   toast({
-                    title: "Facebook страницы загружены",
-                    description: `Найдено ${data.pages.length} Facebook страниц через Instagram токен`,
+                    title: `${data.pages.length} Facebook страниц найдено`,
+                    description: `Все доступные страницы загружены через Instagram токен`,
                   });
                 } else {
-                  console.log('❌ Страницы не найдены через Instagram токен');
+                  console.log('❌ Страницы не найдены через Instagram пользовательский токен');
                   toast({
                     title: "Страницы не найдены",
-                    description: "Instagram токен найден, но Facebook страницы недоступны",
+                    description: "Instagram токен найден, но доступные Facebook страницы не обнаружены",
                     variant: "destructive",
                   });
                 }
               } catch (error) {
-                console.error('❌ Ошибка загрузки Facebook страниц через Instagram:', error);
+                console.error('❌ Ошибка загрузки всех Facebook страниц через Instagram:', error);
                 toast({
                   title: "Ошибка загрузки страниц",
-                  description: "Не удалось загрузить Facebook страницы через Instagram токен",
+                  description: "Не удалось загрузить все Facebook страницы через Instagram токен",
                   variant: "destructive",
                 });
               } finally {
@@ -718,16 +719,7 @@ export default function FacebookSetupWizard({
                         '📋 Получить страницы'
                       )}
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={handleFetchInstagramConnectedPages}
-                      disabled={isPagesLoading}
-                      size="sm"
-                      className="text-purple-600 border-purple-300 hover:bg-purple-100"
-                    >
-                      📋 Взять из Instagram
-                    </Button>
+
                   </div>
                   <FormMessage />
                   <div className="text-xs text-muted-foreground">
@@ -757,21 +749,6 @@ export default function FacebookSetupWizard({
                 </>
               ) : (
                 <>📋 Все страницы</>
-              )}
-            </Button>
-            
-            <Button 
-              onClick={handleFetchInstagramConnectedPages}
-              disabled={isPagesLoading}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {isPagesLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Получение...
-                </>
-              ) : (
-                <>📋 Взять из Instagram</>
               )}
             </Button>
             
