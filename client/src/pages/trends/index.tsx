@@ -1473,37 +1473,28 @@ export default function Trends() {
                                 className="text-lg" 
                               />
                             ) : (() => {
-                              // Вычисляем средний sentiment на основе трендов этого источника
-                              const sourcesTrends = trends.filter((t: any) => 
-                                t.sourceId === source.id || t.source_id === source.id
-                              );
-                              const analyzedTrends = sourcesTrends.filter((t: any) => 
-                                t.sentiment_analysis?.sentiment
-                              );
-                              
-                              if (analyzedTrends.length > 0) {
-                                const positiveCount = analyzedTrends.filter((t: any) => 
-                                  t.sentiment_analysis?.sentiment === 'positive'
-                                ).length;
-                                const negativeCount = analyzedTrends.filter((t: any) => 
-                                  t.sentiment_analysis?.sentiment === 'negative'
-                                ).length;
-                                const neutralCount = analyzedTrends.filter((t: any) => 
-                                  t.sentiment_analysis?.sentiment === 'neutral'
-                                ).length;
-                                
-                                // Определяем преобладающий sentiment
-                                const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
-                                let overallSentiment = 'neutral';
-                                if (maxCount === positiveCount) overallSentiment = 'positive';
-                                else if (maxCount === negativeCount) overallSentiment = 'negative';
-                                
-                                return (
-                                  <SentimentEmoji 
-                                    sentiment={{ sentiment: overallSentiment }} 
-                                    className="text-lg" 
-                                  />
-                                );
+                              // Используем сохраненные данные анализа настроения источника
+                              if (source.sentiment_analysis) {
+                                // Если есть готовое emoji в данных
+                                if (source.sentiment_analysis.emoji) {
+                                  return (
+                                    <span 
+                                      className="text-lg select-none" 
+                                      title={`Общая тональность: ${source.sentiment_analysis.overall_sentiment || 'не определена'}`}
+                                    >
+                                      {source.sentiment_analysis.emoji}
+                                    </span>
+                                  );
+                                }
+                                // Или используем overall_sentiment для создания emoji
+                                else if (source.sentiment_analysis.overall_sentiment) {
+                                  return (
+                                    <SentimentEmoji 
+                                      sentiment={{ sentiment: source.sentiment_analysis.overall_sentiment }} 
+                                      className="text-lg" 
+                                    />
+                                  );
+                                }
                               }
                               
                               return <BarChart className="h-4 w-4 text-blue-500" />;
