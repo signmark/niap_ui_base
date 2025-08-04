@@ -5663,6 +5663,76 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // Эндпоинт для сбора трендов конкретной кампании
+  app.post("/api/campaign-trend-topics/:campaignId/collect", authenticateUser, async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Не авторизован" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      console.log(`Starting trend collection for campaign: ${campaignId}`);
+      
+      // Проверяем существование кампании
+      try {
+        const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!campaignResponse.data?.data) {
+          return res.status(404).json({ error: "Campaign not found" });
+        }
+      } catch (error) {
+        console.error("Error fetching campaign from Directus:", error);
+        return res.status(500).json({ error: "Failed to verify campaign" });
+      }
+
+      // Отправляем запрос на N8N для сбора трендов
+      const n8nUrl = process.env.N8N_URL;
+      if (!n8nUrl) {
+        return res.status(500).json({ error: "N8N_URL не настроен" });
+      }
+
+      // Вызываем существующий endpoint сбора трендов
+      const collectResponse = await fetch(`${req.protocol}://${req.get('host')}/api/trends/collect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({
+          campaignId,
+          platforms: ['vk', 'telegram', 'instagram'], // По умолчанию собираем с основных платформ
+          collectSources: true
+        })
+      });
+
+      const collectResult = await collectResponse.json();
+      
+      if (!collectResponse.ok) {
+        throw new Error(collectResult.message || 'Failed to start trend collection');
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Сбор трендов запущен",
+        data: collectResult
+      });
+    } catch (error) {
+      console.error("Error in campaign trend collection:", error);
+      res.status(500).json({ 
+        error: "Failed to start trend collection", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Source Posts routes - для получения постов из источников
   app.get("/api/source-posts", async (req, res) => {
     try {

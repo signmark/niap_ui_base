@@ -55,6 +55,10 @@ import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
 import { BulkSourcesImportDialog } from "@/components/BulkSourcesImportDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TrendCard } from "@/components/trends/TrendCard";
+import { SentimentEmoji } from "@/components/trends/SentimentEmoji";
+import { TrendsCollection } from "@/components/trends/TrendsCollection";
+import { getSentimentCategory, formatNumber } from "@/lib/trends-utils";
 
 // Определение интерфейсов для типизации
 import {
@@ -113,6 +117,7 @@ interface TrendTopic {
   urlPost?: string;        // URL оригинального поста
   sourceDescription?: string; // Описание источника
   trendScore?: number;     // Оценка тренда
+  sentiment_analysis?: any; // Данные анализа тональности
 }
 
 interface SourcePost {
@@ -168,6 +173,8 @@ export default function Trends() {
   
   // Состояние для фильтра по соцсетям
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  // Состояние для фильтра по тональности
+  const [selectedSentiment, setSelectedSentiment] = useState<string>('all');
   // Используем глобальный стор кампаний
   const { selectedCampaign } = useCampaignStore();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
@@ -1231,6 +1238,9 @@ export default function Trends() {
           </p>
         </div>
         <div className="flex gap-2">
+          {isValidCampaignSelected && (
+            <TrendsCollection campaignId={selectedCampaignId} />
+          )}
           <Button
             variant="outline"
             onClick={() => collectTrends()}
@@ -1265,7 +1275,7 @@ export default function Trends() {
             ) : (
               <>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Собрать тренды
+                Альтернативный сбор
               </>
             )}
           </Button>
@@ -1421,6 +1431,50 @@ export default function Trends() {
                   </div>
                   <CollapsibleContent>
                     <div className="space-y-4">
+                      {/* Статистика по тональности */}
+                      {trends.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                          <Card>
+                            <CardContent className="p-3 text-center">
+                              <div className="text-lg font-bold">{trends.length}</div>
+                              <div className="text-xs text-muted-foreground">Всего трендов</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-3 text-center">
+                              <div className="text-lg font-bold text-green-600">
+                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'positive').length}
+                              </div>
+                              <div className="text-xs text-muted-foreground">😊 Позитивных</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-3 text-center">
+                              <div className="text-lg font-bold text-gray-600">
+                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'neutral').length}
+                              </div>
+                              <div className="text-xs text-muted-foreground">😐 Нейтральных</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-3 text-center">
+                              <div className="text-lg font-bold text-red-600">
+                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'negative').length}
+                              </div>
+                              <div className="text-xs text-muted-foreground">😞 Негативных</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-3 text-center">
+                              <div className="text-lg font-bold text-yellow-600">
+                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'unknown').length}
+                              </div>
+                              <div className="text-xs text-muted-foreground">❓ Неопределенных</div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+
                       <div className="border-b mb-4">
                         <div className="flex">
                           <button
@@ -1475,6 +1529,25 @@ export default function Trends() {
                             <SelectItem value="vk">VKontakte</SelectItem>
                             <SelectItem value="telegram">Telegram</SelectItem>
                             <SelectItem value="facebook">Facebook</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground mr-1">Тональность:</div>
+                        <Select
+                          value={selectedSentiment}
+                          onValueChange={(value: string) => setSelectedSentiment(value)}
+                        >
+                          <SelectTrigger className="w-[170px]">
+                            <SelectValue placeholder="Все тональности" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Все тональности</SelectItem>
+                            <SelectItem value="positive">😊 Позитивные</SelectItem>
+                            <SelectItem value="neutral">😐 Нейтральные</SelectItem>
+                            <SelectItem value="negative">😞 Негативные</SelectItem>
+                            <SelectItem value="unknown">❓ Неопределенные</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1613,7 +1686,7 @@ export default function Trends() {
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         <div className="flex items-center justify-between mb-3 border-b pb-2">
                           <div className="text-xs text-gray-500">
-                            Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform}
+                            Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform} | Тональность: {selectedSentiment === 'all' ? 'все' : selectedSentiment === 'positive' ? 'позитивные' : selectedSentiment === 'negative' ? 'негативные' : selectedSentiment === 'neutral' ? 'нейтральные' : 'неопределенные'}
                             {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
                           </div>
                           <div className="flex items-center gap-2">
@@ -1699,7 +1772,16 @@ export default function Trends() {
                               topic.source_id === selectedSourceId || 
                               topic.sourceId === selectedSourceId;
                             
-                            const finalResult = withinPeriod && matchesSearch && platformMatches && sourceMatches;
+                            // Фильтр по тональности
+                            let sentimentMatches = false;
+                            if (selectedSentiment === 'all') {
+                              sentimentMatches = true;
+                            } else {
+                              const sentimentCategory = getSentimentCategory(topic.sentiment_analysis);
+                              sentimentMatches = sentimentCategory === selectedSentiment;
+                            }
+                            
+                            const finalResult = withinPeriod && matchesSearch && platformMatches && sourceMatches && sentimentMatches;
                             
 
                             
@@ -1879,10 +1961,13 @@ export default function Trends() {
                                       
                                       {/* Первая строка описания поста (если есть) */}
                                       <div 
-                                        className="text-sm line-clamp-2 cursor-pointer"
+                                        className="text-sm line-clamp-2 cursor-pointer flex items-start gap-2"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        {topic.description ? topic.description.split('\n')[0] : topic.title}
+                                        <SentimentEmoji sentiment={topic.sentiment_analysis} size="sm" />
+                                        <span className="flex-1">
+                                          {topic.description ? topic.description.split('\n')[0] : topic.title}
+                                        </span>
                                       </div>
                                       
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
