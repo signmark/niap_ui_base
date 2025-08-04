@@ -1519,7 +1519,7 @@ export default function Trends() {
                       {(() => {
                         // Получаем тренды для статистики (учитывая выбранный источник)
                         const statsData = selectedSourceId 
-                          ? trends.filter(t => t.sourceId === selectedSourceId || t.source_id === selectedSourceId)
+                          ? trends.filter((t: any) => t.sourceId === selectedSourceId || t.source_id === selectedSourceId)
                           : trends;
                         
                         return statsData.length > 0 && (

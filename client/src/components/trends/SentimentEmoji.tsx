@@ -5,7 +5,7 @@ interface SentimentEmojiProps {
 
 export function SentimentEmoji({ sentimentAnalysis, className = "" }: SentimentEmojiProps) {
   const getSentimentEmoji = (sentimentAnalysis?: string): string => {
-    if (!sentimentAnalysis) return "❓";
+    if (!sentimentAnalysis || typeof sentimentAnalysis !== 'string') return "❓";
     
     const text = sentimentAnalysis.toLowerCase();
     

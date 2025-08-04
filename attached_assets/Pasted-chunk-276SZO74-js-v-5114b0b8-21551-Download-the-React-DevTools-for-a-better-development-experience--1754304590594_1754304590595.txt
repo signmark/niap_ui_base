@@ -1,0 +1,959 @@
+chunk-276SZO74.js?v=5114b0b8:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:940 Fetching source posts with params: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: '7days'}
+index.tsx:946 Using exact API URL format that works
+index.tsx:980 Source posts API response: {status: 200, dataLength: 0, firstPost: undefined, fullResponse: {…}}
+index.tsx:988 Returning posts array: {length: 0, isEmpty: true, campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: '7days'}
+index.tsx:874 Fetched trends data: {success: true, data: Array(104)}
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18874
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18874
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18874
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18874
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18879
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18879
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18879
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+SentimentEmoji.tsx:10 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-276SZO74.js?v=5114b0b8:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-276SZO74.js?v=5114b0b8:3699:24)
+    at invokeGuardedCallback (chunk-276SZO74.js?v=5114b0b8:3733:39)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19765:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19765
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18879
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:14032 The above error occurred in the <SentimentEmoji> component:
+
+    at SentimentEmoji (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/trends/SentimentEmoji.tsx:17:34)
+    at div
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:110:11
+    at Presence (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6JNF2OYQ.js?v=5114b0b8:24:11)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:103:13
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=5114b0b8:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:44:7
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at Trends (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/trends/index.tsx:69:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:83:23)
+    at _c12
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5114b0b8:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:518:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=5114b0b8:14032
+update.callback @ chunk-276SZO74.js?v=5114b0b8:14052
+callCallback @ chunk-276SZO74.js?v=5114b0b8:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=5114b0b8:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=5114b0b8:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=5114b0b8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=5114b0b8:17920
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19353
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:14032 The above error occurred in the <SentimentEmoji> component:
+
+    at SentimentEmoji (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/trends/SentimentEmoji.tsx:17:34)
+    at div
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:110:11
+    at Presence (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6JNF2OYQ.js?v=5114b0b8:24:11)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:103:13
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=5114b0b8:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:44:7
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at Trends (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/trends/index.tsx:69:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:83:23)
+    at _c12
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5114b0b8:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:518:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=5114b0b8:14032
+update.callback @ chunk-276SZO74.js?v=5114b0b8:14052
+callCallback @ chunk-276SZO74.js?v=5114b0b8:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=5114b0b8:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=5114b0b8:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=5114b0b8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=5114b0b8:17920
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19353
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:14032 The above error occurred in the <SentimentEmoji> component:
+
+    at SentimentEmoji (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/trends/SentimentEmoji.tsx:17:34)
+    at div
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:110:11
+    at Presence (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6JNF2OYQ.js?v=5114b0b8:24:11)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:103:13
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=5114b0b8:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:44:7
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at Trends (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/trends/index.tsx:69:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:83:23)
+    at _c12
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5114b0b8:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:518:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=5114b0b8:14032
+update.callback @ chunk-276SZO74.js?v=5114b0b8:14052
+callCallback @ chunk-276SZO74.js?v=5114b0b8:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=5114b0b8:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=5114b0b8:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=5114b0b8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=5114b0b8:17920
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19353
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:14032 The above error occurred in the <SentimentEmoji> component:
+
+    at SentimentEmoji (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/trends/SentimentEmoji.tsx:17:34)
+    at div
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:110:11
+    at Presence (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6JNF2OYQ.js?v=5114b0b8:24:11)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:103:13
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-7ZRT33Z6.js?v=5114b0b8:41:13
+    at Provider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QUKTJ62H.js?v=5114b0b8:38:15)
+    at https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-F2P7BKKQ.js?v=5114b0b8:44:7
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at Trends (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/trends/index.tsx:69:47)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:83:23)
+    at _c12
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5114b0b8:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5114b0b8:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=yyX72IETOymup6SmWA1t0:518:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-276SZO74.js?v=5114b0b8:14032
+update.callback @ chunk-276SZO74.js?v=5114b0b8:14052
+callCallback @ chunk-276SZO74.js?v=5114b0b8:11248
+commitUpdateQueue @ chunk-276SZO74.js?v=5114b0b8:11265
+commitLayoutEffectOnFiber @ chunk-276SZO74.js?v=5114b0b8:17093
+commitLayoutMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:17980
+commitLayoutEffects_begin @ chunk-276SZO74.js?v=5114b0b8:17969
+commitLayoutEffects @ chunk-276SZO74.js?v=5114b0b8:17920
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19353
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+chunk-276SZO74.js?v=5114b0b8:9129 Uncaught TypeError: sentimentAnalysis2.toLowerCase is not a function
+    at getSentimentEmoji (SentimentEmoji.tsx:10:36)
+    at getSentimentTitle (SentimentEmoji.tsx:43:19)
+    at SentimentEmoji (SentimentEmoji.tsx:60:14)
+    at renderWithHooks (chunk-276SZO74.js?v=5114b0b8:11548:26)
+    at mountIndeterminateComponent (chunk-276SZO74.js?v=5114b0b8:14926:21)
+    at beginWork (chunk-276SZO74.js?v=5114b0b8:15914:22)
+    at beginWork$1 (chunk-276SZO74.js?v=5114b0b8:19753:22)
+    at performUnitOfWork (chunk-276SZO74.js?v=5114b0b8:19198:20)
+    at workLoopSync (chunk-276SZO74.js?v=5114b0b8:19137:13)
+    at renderRootSync (chunk-276SZO74.js?v=5114b0b8:19116:15)
+getSentimentEmoji @ SentimentEmoji.tsx:10
+getSentimentTitle @ SentimentEmoji.tsx:43
+SentimentEmoji @ SentimentEmoji.tsx:60
+renderWithHooks @ chunk-276SZO74.js?v=5114b0b8:11548
+mountIndeterminateComponent @ chunk-276SZO74.js?v=5114b0b8:14926
+beginWork @ chunk-276SZO74.js?v=5114b0b8:15914
+beginWork$1 @ chunk-276SZO74.js?v=5114b0b8:19753
+performUnitOfWork @ chunk-276SZO74.js?v=5114b0b8:19198
+workLoopSync @ chunk-276SZO74.js?v=5114b0b8:19137
+renderRootSync @ chunk-276SZO74.js?v=5114b0b8:19116
+recoverFromConcurrentError @ chunk-276SZO74.js?v=5114b0b8:18736
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18879
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
+use-websocket.ts:83 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: WebSocket is closed before the connection is established.
+(anonymous) @ use-websocket.ts:83
+safelyCallDestroy @ chunk-276SZO74.js?v=5114b0b8:16748
+commitHookEffectListUnmount @ chunk-276SZO74.js?v=5114b0b8:16875
+commitPassiveUnmountInsideDeletedTreeOnFiber @ chunk-276SZO74.js?v=5114b0b8:18283
+commitPassiveUnmountEffectsInsideOfDeletedTree_begin @ chunk-276SZO74.js?v=5114b0b8:18245
+commitPassiveUnmountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18181
+commitPassiveUnmountEffects @ chunk-276SZO74.js?v=5114b0b8:18169
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19489
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5114b0b8:555
+flush @ @tanstack_react-query.js?v=5114b0b8:569
+batch @ @tanstack_react-query.js?v=5114b0b8:587
+dispatch_fn @ @tanstack_react-query.js?v=5114b0b8:996
+setData @ @tanstack_react-query.js?v=5114b0b8:696
+onSuccess @ @tanstack_react-query.js?v=5114b0b8:897
+resolve @ @tanstack_react-query.js?v=5114b0b8:456
+Promise.then
+run @ @tanstack_react-query.js?v=5114b0b8:498
+start @ @tanstack_react-query.js?v=5114b0b8:536
+fetch @ @tanstack_react-query.js?v=5114b0b8:926
+executeFetch_fn @ @tanstack_react-query.js?v=5114b0b8:2211
+onSubscribe @ @tanstack_react-query.js?v=5114b0b8:1898
+subscribe @ @tanstack_react-query.js?v=5114b0b8:24
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3022
+subscribeToStore @ chunk-276SZO74.js?v=5114b0b8:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=5114b0b8:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=5114b0b8:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=5114b0b8:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=5114b0b8:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=5114b0b8:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=5114b0b8:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=5114b0b8:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=5114b0b8:9119
+commitRootImpl @ chunk-276SZO74.js?v=5114b0b8:19432
+commitRoot @ chunk-276SZO74.js?v=5114b0b8:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=5114b0b8:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=5114b0b8:18718
+workLoop @ chunk-276SZO74.js?v=5114b0b8:197
+flushWork @ chunk-276SZO74.js?v=5114b0b8:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=5114b0b8:384
