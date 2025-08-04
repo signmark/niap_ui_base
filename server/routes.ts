@@ -6502,21 +6502,60 @@ Return your response as a JSON array in this exact format:
         });
       }
 
-      // Правильный алгоритм анализа источника:
-      // 1. Найти все тренды с комментариями ЗА ВЕСЬ ПЕРИОД
-      // 2. Отправить webhook запрос с ID тренда
-      // 3. Проверить наличие комментариев
-      // 4. Анализировать комментарии если есть
-      // 5. Сохранить анализ в БД
-      // 6. Вычислить общую оценку источника
+      // ИСПРАВЛЕННЫЙ алгоритм анализа источника:
+      // 1. Сначала собираем комментарии для ВСЕХ трендов через webhook N8N
+      // 2. Ждем завершения сбора комментариев
+      // 3. Анализируем комментарии для трендов с комментариями
+      // 4. Сохранить анализ в БД
+      // 5. Вычислить общую оценку источника
       
       const { geminiProxyService } = await import('./services/gemini-proxy');
       const trendAnalyses = [];
       let totalCommentsAnalyzed = 0;
       
-      console.log(`[SOURCE-ANALYSIS] Начинаем анализ ${trends.length} трендов источника ${sourceId} по правильному алгоритму`);
+      console.log(`[SOURCE-ANALYSIS] ИСПРАВЛЕННЫЙ алгоритм: сначала собираем комментарии для ${trends.length} трендов источника ${sourceId}`);
 
-      // 1. Найти все тренды, имеющие комментарии ЗА ВЕСЬ ПЕРИОД
+      // 1. Сначала отправляем запросы на сбор комментариев для всех трендов
+      const commentCollectionPromises = [];
+      
+      for (const trend of trends) {
+        if (trend.url) {
+          console.log(`[SOURCE-ANALYSIS] Отправляем webhook для сбора комментариев тренда ${trend.id}: ${trend.url}`);
+          
+          const webhookPromise = fetch(`https://n8n.roboflow.space/webhook/collect-comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              trend_id: trend.id,
+              url: trend.url
+            })
+          }).then(response => {
+            if (response.ok) {
+              console.log(`[SOURCE-ANALYSIS] Webhook успешно отправлен для тренда ${trend.id}`);
+              return { trendId: trend.id, success: true };
+            } else {
+              console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}: ${response.status}`);
+              return { trendId: trend.id, success: false };
+            }
+          }).catch(error => {
+            console.error(`[SOURCE-ANALYSIS] Ошибка отправки webhook для тренда ${trend.id}:`, error);
+            return { trendId: trend.id, success: false };
+          });
+          
+          commentCollectionPromises.push(webhookPromise);
+        }
+      }
+
+      // Ждем завершения всех запросов на сбор комментариев
+      const collectionResults = await Promise.all(commentCollectionPromises);
+      const successfulCollections = collectionResults.filter(r => r.success);
+      console.log(`[SOURCE-ANALYSIS] Успешно отправлено ${successfulCollections.length} запросов на сбор комментариев из ${collectionResults.length}`);
+
+      // Даем время N8N собрать комментарии (30 секунд)
+      console.log(`[SOURCE-ANALYSIS] Ждем 30 секунд для завершения сбора комментариев...`);
+      await new Promise(resolve => setTimeout(resolve, 30000));
+
+      // 2. Теперь ищем тренды с комментариями после сбора
       const trendsWithComments = [];
       for (const trend of trends) {
         try {
@@ -6534,14 +6573,14 @@ Return your response as a JSON array in this exact format:
           const hasComments = (commentsCheckResponse.data?.data || []).length > 0;
           if (hasComments) {
             trendsWithComments.push(trend);
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} имеет комментарии, добавляем в анализ`);
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} имеет комментарии после сбора, добавляем в анализ`);
           }
         } catch (checkError) {
           console.error(`[SOURCE-ANALYSIS] Ошибка проверки комментариев для тренда ${trend.id}:`, checkError);
         }
       }
 
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithComments.length} трендов с комментариями из ${trends.length} общих`);
+      console.log(`[SOURCE-ANALYSIS] После сбора найдено ${trendsWithComments.length} трендов с комментариями из ${trends.length} общих`);
 
       if (trendsWithComments.length === 0) {
         return res.json({
