@@ -11,7 +11,13 @@ interface TrendCardProps {
     id: string;
     title: string;
     description?: string;
-    sentiment_analysis?: any;
+    sentiment_analysis?: {
+      score?: number;
+      sentiment?: string;
+      confidence?: number;
+      commentsCount?: number;
+      [key: string]: any;
+    };
     date_created?: string;
     created_at?: string;
     reactions?: number;
@@ -74,10 +80,12 @@ export function TrendCard({ trend, onClick }: TrendCardProps) {
                   </div>
                 )}
                 
-                {trend.comments !== undefined && (
+                {(trend.comments !== undefined || trend.sentiment_analysis?.commentsCount !== undefined) && (
                   <div className="flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" />
-                    <span>{formatNumber(trend.comments)}</span>
+                    <span>{formatNumber(
+                      trend.sentiment_analysis?.commentsCount ?? trend.comments ?? 0
+                    )}</span>
                   </div>
                 )}
                 
