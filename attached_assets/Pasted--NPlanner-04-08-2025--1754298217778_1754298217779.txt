@@ -1,0 +1,292 @@
+# Техническое задание: Авторизация социальных сетей в NPlanner
+
+## Дата создания: 04.08.2025
+
+## Общая архитектура авторизации
+
+### Принципы работы
+1. **OAuth 2.0 Flow** - все платформы используют стандартный OAuth 2.0
+2. **Popup Windows** - авторизация происходит в отдельных popup окнах
+3. **PostMessage Communication** - обмен данными между popup и родительским окном
+4. **Automatic Token Updates** - автоматическое обновление токенов в форме
+5. **Individual Platform Handlers** - каждая платформа имеет свой обработчик
+
+## Поддерживаемые платформы
+
+### 1. Facebook
+**Endpoint авторизации**: `/api/oauth/facebook`
+**Callback URL**: `/oauth/facebook/callback`
+**Размер popup**: 600x700px
+**Требуемые токены**:
+- Page Access Token (основной, для публикации)
+- User Access Token (для получения списка страниц)
+
+**Особенности**:
+- Получает список всех страниц пользователя
+- Сохраняет отдельные токены для каждой страницы
+- Автоматически определяет Instagram Business Account ID
+
+### 2. Instagram
+**Endpoint авторизации**: `/api/oauth/instagram`
+**Callback URL**: `/oauth/instagram/callback`
+**Размер popup**: 600x700px
+**Требуемые токены**:
+- Access Token (от Facebook Graph API)
+- Business Account ID
+
+**Особенности**:
+- Использует Facebook OAuth для доступа к Instagram
+- Автоматически ищет Instagram Business аккаунты
+- Сохраняет связь с Facebook страницей
+
+### 3. VK
+**Endpoint авторизации**: `/api/oauth/vk`
+**Callback URL**: `/oauth/vk/callback`
+**Размер popup**: 685x670px (оптимизированный размер)
+**Требуемые токены**:
+- Access Token
+- User ID
+
+**Особенности**:
+- Фиксированный размер popup для избежания скроллинга
+- Поддержка групп и личных страниц
+- Долгосрочные токены
+
+### 4. YouTube
+**Endpoint авторизации**: `/api/oauth/youtube`
+**Callback URL**: `/oauth/youtube/callback`
+**Размер popup**: 600x700px
+**Требуемые токены**:
+- Access Token
+- Refresh Token
+- Channel ID
+
+**Особенности**:
+- Обязательное наличие YouTube канала
+- Автоматическое обновление токенов через Refresh Token
+- Инструкции по созданию канала для новых пользователей
+
+## Техническая реализация
+
+### Frontend компоненты
+1. **SocialMediaSettings.tsx** - основная форма настроек
+2. **FacebookSetupWizard.tsx** - мастер настройки Facebook
+3. **InstagramSetupWizard.tsx** - мастер настройки Instagram
+4. **VKSetupWizard.tsx** - мастер настройки VK
+5. **YouTubeSetupWizard.tsx** - мастер настройки YouTube
+
+### Callback страницы
+- `/oauth/facebook/callback` - обработка Facebook OAuth
+- `/oauth/instagram/callback` - обработка Instagram OAuth
+- `/oauth/vk/callback` - обработка VK OAuth
+- `/oauth/youtube/callback` - обработка YouTube OAuth
+
+### API endpoints (Backend)
+```
+GET  /api/campaigns/:id/facebook-settings
+POST /api/campaigns/:id/facebook-settings
+GET  /api/campaigns/:id/instagram-settings
+POST /api/campaigns/:id/instagram-settings
+GET  /api/campaigns/:id/vk-settings
+POST /api/campaigns/:id/vk-settings
+GET  /api/campaigns/:id/youtube-settings
+POST /api/campaigns/:id/youtube-settings
+```
+
+## Схема данных в Directus
+
+### Коллекция: facebook_settings
+```json
+{
+  "id": "uuid",
+  "campaign_id": "uuid",
+  "token": "string (Page Access Token)",
+  "user_token": "string (User Access Token)",
+  "page_id": "string",
+  "page_name": "string",
+  "app_id": "string",
+  "app_secret": "string"
+}
+```
+
+### Коллекция: instagram_settings
+```json
+{
+  "id": "uuid",
+  "campaign_id": "uuid",
+  "token": "string (Access Token)",
+  "access_token": "string (Duplicate for compatibility)",
+  "business_account_id": "string",
+  "app_id": "string",
+  "app_secret": "string"
+}
+```
+
+### Коллекция: vk_settings
+```json
+{
+  "id": "uuid",
+  "campaign_id": "uuid",
+  "token": "string",
+  "user_id": "string",
+  "group_id": "string (optional)"
+}
+```
+
+### Коллекция: youtube_settings
+```json
+{
+  "id": "uuid",
+  "campaign_id": "uuid",
+  "access_token": "string",
+  "refresh_token": "string",
+  "channel_id": "string"
+}
+```
+
+## Процесс авторизации
+
+### 1. Инициация OAuth
+```javascript
+// Открытие popup окна
+const popup = window.open(
+  oauthUrl,
+  'oauth',
+  `width=${width},height=${height},scrollbars=yes,resizable=yes`
+);
+```
+
+### 2. Обработка callback
+```javascript
+// В callback странице
+window.opener.postMessage({
+  type: 'OAUTH_SUCCESS',
+  platform: 'facebook',
+  data: { token, pageId, pageName }
+}, '*');
+```
+
+### 3. Обновление формы
+```javascript
+// В родительском окне
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'OAUTH_SUCCESS') {
+    // Обновление полей формы
+    form.setValue('token', event.data.data.token);
+  }
+});
+```
+
+## Обработка ошибок
+
+### Типичные ошибки
+1. **Отсутствие YouTube канала** - показ инструкций по созданию
+2. **Истекшие токены** - автоматическое обновление через refresh token
+3. **Недостаточные права** - запрос дополнительных permissions
+4. **Сетевые ошибки** - повторные попытки с экспоненциальной задержкой
+
+### Логирование
+- Все OAuth события логируются в консоль
+- Ошибки сохраняются с контекстом для отладки
+- Успешные авторизации отмечаются в логах
+
+## Безопасность
+
+### Хранение токенов
+- Все токены шифруются перед сохранением в базу
+- Refresh токены хранятся отдельно от access токенов
+- Регулярная ротация токенов для платформ, которые это поддерживают
+
+### CORS и домены
+- Callback URLs ограничены доменом приложения
+- Проверка origin в postMessage handlers
+- Валидация state параметров в OAuth
+
+## Интеграция с публикацией
+
+### N8N Webhooks
+Все авторизованные платформы передают токены в N8N для публикации:
+- Facebook: Page Access Token
+- Instagram: Business Account Token
+- VK: User/Group Token
+- YouTube: Channel Access Token с Refresh
+
+### Проверка статуса
+Перед публикацией проверяется:
+1. Наличие актуальных токенов
+2. Права доступа на публикацию
+3. Статус аккаунта (не заблокирован)
+
+## Тестирование
+
+### Автоматические тесты
+- Unit тесты для каждого OAuth провайдера
+- Integration тесты для полного flow
+- Mock провайдеры для CI/CD
+
+### Ручное тестирование
+1. Авторизация новых аккаунтов
+2. Повторная авторизация существующих
+3. Обработка истекших токенов
+4. Тестирование в разных браузерах
+
+## Мониторинг
+
+### Метрики
+- Успешность авторизации по платформам
+- Время отклика OAuth провайдеров
+- Частота обновления токенов
+
+### Алерты
+- Высокий процент неудачных авторизаций
+- Массовое истечение токенов
+- Недоступность OAuth провайдеров
+
+## Совместимость версий
+
+### Поддерживаемые API версии
+- Facebook Graph API: v18.0+
+- Instagram Basic Display API: v18.0+
+- VK API: v5.131+
+- YouTube Data API: v3
+
+### Обратная совместимость
+- Поддержка старых форматов токенов
+- Миграция данных при обновлении схемы
+- Graceful degradation при недоступности новых фич
+
+---
+
+## Чеклист для проверки
+
+### Facebook
+- [ ] Popup открывается корректно (600x700px)
+- [ ] Получается Page Access Token
+- [ ] Список страниц загружается
+- [ ] Токен сохраняется в campaign_facebook_settings
+- [ ] Instagram Business Account ID определяется автоматически
+
+### Instagram
+- [ ] Использует Facebook OAuth
+- [ ] Получается Business Account ID
+- [ ] Токен валиден для Instagram API
+- [ ] Настройки сохраняются в campaign_instagram_settings
+
+### VK
+- [ ] Popup имеет размер 685x670px
+- [ ] Получается долгосрочный токен
+- [ ] Поддерживаются группы и личные страницы
+- [ ] Настройки сохраняются в campaign_vk_settings
+
+### YouTube
+- [ ] Проверяется наличие канала
+- [ ] Получается Refresh Token
+- [ ] Показываются инструкции для новых пользователей
+- [ ] Настройки сохраняются в campaign_youtube_settings
+
+### Общее
+- [ ] PostMessage работает корректно
+- [ ] Формы обновляются автоматически
+- [ ] Ошибки обрабатываются gracefully
+- [ ] Логирование работает
+- [ ] Все callback URLs настроены
