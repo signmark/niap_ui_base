@@ -1703,18 +1703,21 @@ export default function Trends() {
                           ? trends.filter((t: any) => t.sourceId === selectedSourceId || t.source_id === selectedSourceId)
                           : trends;
                         
-                        // Собираем статистику по сентиментам - классифицируем каждый тренд на основе источника
+                        // Собираем статистику по сентиментам - проверяем как анализ тренда, так и источника
                         const sourcesSentimentStats = statsData.reduce((acc, trend) => {
-                          // Находим источник для этого тренда
-                          const sourceId = trend.sourceId || trend.source_id;
-                          const source = sources.find(s => s.id === sourceId);
+                          let sentiment = null;
                           
-                          if (!source || !source.sentiment_analysis?.sentiment) {
-                            acc.unknown += 1;
-                            return acc;
+                          // Сначала проверяем анализ на уровне тренда
+                          if (trend.sentiment_analysis?.sentiment) {
+                            sentiment = trend.sentiment_analysis.sentiment;
+                          } else {
+                            // Если нет анализа тренда, проверяем источник
+                            const sourceId = trend.sourceId || trend.source_id;
+                            const source = sources.find(s => s.id === sourceId);
+                            if (source?.sentiment_analysis?.sentiment) {
+                              sentiment = source.sentiment_analysis.sentiment;
+                            }
                           }
-                          
-                          const sentiment = source.sentiment_analysis.sentiment;
                           
                           switch (sentiment) {
                             case 'positive':
