@@ -6515,11 +6515,27 @@ Return your response as a JSON array in this exact format:
       
       console.log(`[SOURCE-ANALYSIS] ПРАВИЛЬНЫЙ алгоритм: проверяем ${trends.length} трендов источника ${sourceId}`);
 
-      // 1. Сначала проверяем какие тренды уже имеют комментарии
+      // 1. Ищем тренды, которые ИМЕЮТ content (поле в таблице campaign_trend_topics)
+      const trendsWithContent = trends.filter(trend => trend.content && trend.content.trim().length > 0);
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithContent.length} трендов с контентом из ${trends.length} общих`);
+      
+      if (trendsWithContent.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            sentiment: 'unknown',
+            confidence: 0,
+            trendsCount: 0,
+            summary: 'Нет трендов с контентом для анализа'
+          }
+        });
+      }
+
+      // 2. Проверяем какие из трендов с контентом уже имеют комментарии
       const trendsWithComments = [];
       const trendsWithoutComments = [];
       
-      for (const trend of trends) {
+      for (const trend of trendsWithContent) {
         try {
           const commentsCheckResponse = await directusApi.get('/items/post_comment', {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -6537,16 +6553,16 @@ Return your response as a JSON array in this exact format:
             console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} уже имеет комментарии`);
           } else if (trend.url) {
             trendsWithoutComments.push(trend);
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} не имеет комментариев, добавляем в очередь сбора`);
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} имеет контент но не имеет комментариев, добавляем в очередь сбора`);
           }
         } catch (checkError) {
           console.error(`[SOURCE-ANALYSIS] Ошибка проверки комментариев для тренда ${trend.id}:`, checkError);
         }
       }
 
-      console.log(`[SOURCE-ANALYSIS] Найдено: ${trendsWithComments.length} трендов с комментариями, ${trendsWithoutComments.length} без комментариев`);
+      console.log(`[SOURCE-ANALYSIS] Найдено: ${trendsWithComments.length} трендов с комментариями, ${trendsWithoutComments.length} с контентом но без комментариев`);
 
-      // 2. Отправляем webhook только для трендов БЕЗ комментариев
+      // 3. Отправляем webhook только для трендов с контентом БЕЗ комментариев
       if (trendsWithoutComments.length > 0) {
         console.log(`[SOURCE-ANALYSIS] Отправляем webhook для сбора комментариев ${trendsWithoutComments.length} трендов`);
         
@@ -6580,7 +6596,7 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Ждем 5 секунд для завершения сбора комментариев...`);
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // 3. Проверяем трендочки снова после сбора
+        // 4. Проверяем тренды с контентом снова после сбора
         for (const trend of trendsWithoutComments) {
           try {
             const commentsAfterCollection = await directusApi.get('/items/post_comment', {
@@ -6604,7 +6620,7 @@ Return your response as a JSON array in this exact format:
         }
       }
 
-      console.log(`[SOURCE-ANALYSIS] Итого для анализа: ${trendsWithComments.length} трендов с комментариями`);
+      console.log(`[SOURCE-ANALYSIS] Итого для анализа: ${trendsWithComments.length} трендов с комментариями из ${trendsWithContent.length} с контентом`);
 
       if (trendsWithComments.length === 0) {
         return res.json({

@@ -1294,7 +1294,36 @@ export default function Trends() {
     try {
       setAnalyzingSourceId(sourceId);
       
-      // Получаем все тренды источника с анализом настроения
+      // Сначала запускаем полноценный анализ источника через backend (который собирает комментарии)
+      const authToken = localStorage.getItem('auth_token');
+      const response = await fetch(`/api/sources/${sourceId}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Результат анализа источника:', data);
+        
+        // Обновляем локальные данные
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+        
+        toast({
+          title: "Анализ источника завершен",
+          description: `${sourceName}: ${data.data.summary}`,
+        });
+        return; // Выходим, так как полный анализ уже выполнен
+      } else {
+        console.log('Backend анализ не сработал, выполняем клиентский пересчет...');
+      }
+
+      // FALLBACK: если backend анализ не сработал, делаем клиентский пересчет существующих данных
       const sourcesTrends = trends.filter((t: any) => 
         t.sourceId === sourceId || t.source_id === sourceId
       );
@@ -1305,7 +1334,7 @@ export default function Trends() {
       if (analyzedTrends.length === 0) {
         toast({
           title: "Нет данных для анализа",
-          description: "Нет трендов с анализом настроения для пересчета",
+          description: "Нет трендов с анализом настроения. Используйте кнопку 'Собрать комментарии' для трендов.",
           variant: "destructive"
         });
         return;
@@ -1343,57 +1372,112 @@ export default function Trends() {
       const scoresWithValues = analyzedTrends
         .map((t: any) => t.sentiment_analysis?.score)
         .filter(score => score !== undefined && score !== null);
-      const averageScore = scoresWithValues.length > 0 
-        ? Math.round(scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length)
-        : 50;
 
-      const sentimentData = {
+      const averageScore = scoresWithValues.length > 0 
+        ? scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length
+        : 5; // Дефолтный средний score
+
+      // Создаем объект анализа источника
+      const analysisData = {
         total_trends: sourcesTrends.length,
-        analyzed_trends: totalTrends,
+        analyzed_trends: analyzedTrends.length,
         positive_percentage: Math.round(positivePercentage),
         negative_percentage: Math.round(negativePercentage),
         neutral_percentage: Math.round(neutralPercentage),
         overall_sentiment: overallSentiment,
-        average_score: averageScore,
+        average_score: Math.round(averageScore * 10) / 10,
         emoji: emoji,
         analyzed_at: new Date().toISOString()
       };
 
-      // Сохраняем в базу данных (используем пользовательский токен для UI операций)
-      const authToken = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/sources/${sourceId}`, {
+      // Сохраняем анализ источника
+      const updateResponse = await fetch(`/api/sources/${sourceId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sentiment_analysis: sentimentData
+          sentiment_analysis: analysisData
         })
       });
 
-      if (response.ok) {
-        // Обновляем локальные данные
-        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+      if (updateResponse.ok) {
+        // Обновляем локальное состояние
+        setSources(prev => prev.map(source => 
+          source.id === sourceId 
+            ? { ...source, sentiment_analysis: analysisData }
+            : source
+        ));
         
         toast({
-          title: "Анализ пересчитан",
-          description: `${sourceName}: ${overallSentiment} (${totalTrends} трендов)`,
+          title: "Анализ источника завершен",
+          description: `${sourceName}: ${overallSentiment === 'positive' ? 'Положительное' : overallSentiment === 'negative' ? 'Отрицательное' : 'Нейтральное'} настроение`,
         });
       } else {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error('Не удалось сохранить анализ источника');
       }
     } catch (error) {
-      console.error('Ошибка пересчета анализа источника:', error);
+      console.error('Ошибка анализа источника:', error);
       toast({
-        title: "Ошибка пересчета",
-        description: `Не удалось пересчитать анализ: ${(error as Error).message}`,
+        title: "Ошибка анализа",
+        description: `Ошибка: ${(error as Error).message}`,
         variant: "destructive"
       });
     } finally {
       setAnalyzingSourceId(null);
     }
   };
+
+      // Вычисляем статистику
+      const positiveCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'positive'
+      ).length;
+      const negativeCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'negative'
+      ).length;
+      const neutralCount = analyzedTrends.filter((t: any) => 
+        t.sentiment_analysis?.sentiment === 'neutral'
+      ).length;
+
+      const totalTrends = analyzedTrends.length;
+      const positivePercentage = (positiveCount / totalTrends) * 100;
+      const negativePercentage = (negativeCount / totalTrends) * 100;
+      const neutralPercentage = (neutralCount / totalTrends) * 100;
+
+      // Определяем общее настроение
+      const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
+      let overallSentiment = 'neutral';
+      let emoji = '😐';
+      if (maxCount === positiveCount) {
+        overallSentiment = 'positive';
+        emoji = '😊';
+      } else if (maxCount === negativeCount) {
+        overallSentiment = 'negative';
+        emoji = '😞';
+      }
+
+      // Вычисляем средний score (если есть)
+      const scoresWithValues = analyzedTrends
+        .map((t: any) => t.sentiment_analysis?.score)
+        .filter(score => score !== undefined && score !== null);
+
+      const averageScore = scoresWithValues.length > 0 
+        ? scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length
+        : 5; // Дефолтный средний score
+
+      // Создаем объект анализа источника
+      const analysisData = {
+        total_trends: sourcesTrends.length,
+        analyzed_trends: analyzedTrends.length,
+        positive_percentage: Math.round(positivePercentage),
+        negative_percentage: Math.round(negativePercentage),
+        neutral_percentage: Math.round(neutralPercentage),
+        overall_sentiment: overallSentiment,
+        average_score: Math.round(averageScore * 10) / 10,
+        emoji: emoji,
+        analyzed_at: new Date().toISOString()
+      };
 
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
