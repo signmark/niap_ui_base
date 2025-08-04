@@ -1468,12 +1468,46 @@ export default function Trends() {
                             {analyzingSourceId === source.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : sourceAnalysisData[source.id] ? (
-                              <span className="text-lg" title={`Тональность: ${sourceAnalysisData[source.id].summary}`}>
-                                {getSentimentEmoji(sourceAnalysisData[source.id].sentiment as any)}
-                              </span>
-                            ) : (
-                              <BarChart className="h-4 w-4 text-blue-500" />
-                            )}
+                              <SentimentEmoji 
+                                sentiment={sourceAnalysisData[source.id].sentiment} 
+                                className="text-lg" 
+                              />
+                            ) : (() => {
+                              // Вычисляем средний sentiment на основе трендов этого источника
+                              const sourcesTrends = trends.filter((t: any) => 
+                                t.sourceId === source.id || t.source_id === source.id
+                              );
+                              const analyzedTrends = sourcesTrends.filter((t: any) => 
+                                t.sentiment_analysis?.sentiment
+                              );
+                              
+                              if (analyzedTrends.length > 0) {
+                                const positiveCount = analyzedTrends.filter((t: any) => 
+                                  t.sentiment_analysis?.sentiment === 'positive'
+                                ).length;
+                                const negativeCount = analyzedTrends.filter((t: any) => 
+                                  t.sentiment_analysis?.sentiment === 'negative'
+                                ).length;
+                                const neutralCount = analyzedTrends.filter((t: any) => 
+                                  t.sentiment_analysis?.sentiment === 'neutral'
+                                ).length;
+                                
+                                // Определяем преобладающий sentiment
+                                const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
+                                let overallSentiment = 'neutral';
+                                if (maxCount === positiveCount) overallSentiment = 'positive';
+                                else if (maxCount === negativeCount) overallSentiment = 'negative';
+                                
+                                return (
+                                  <SentimentEmoji 
+                                    sentiment={{ sentiment: overallSentiment }} 
+                                    className="text-lg" 
+                                  />
+                                );
+                              }
+                              
+                              return <BarChart className="h-4 w-4 text-blue-500" />;
+                            })()}
                           </Button>
 
                           <Button
@@ -2055,7 +2089,7 @@ export default function Trends() {
                                         className="text-sm line-clamp-2 cursor-pointer flex items-start gap-2"
                                         onClick={() => setSelectedTrendTopic(topic)}
                                       >
-                                        <SentimentEmoji sentimentAnalysis={topic.sentiment_analysis} className="text-sm" />
+                                        <SentimentEmoji sentiment={topic.sentiment_analysis} className="text-sm" />
                                         <span className="flex-1">
                                           {topic.description ? topic.description.split('\n')[0] : topic.title}
                                         </span>
