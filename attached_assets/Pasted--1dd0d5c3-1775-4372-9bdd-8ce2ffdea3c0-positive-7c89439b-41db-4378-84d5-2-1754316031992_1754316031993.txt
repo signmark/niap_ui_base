@@ -1,0 +1,125 @@
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}negative: 0neutral: 1positive: 3unknown: 6[[Prototype]]: Object
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Итоговая статистика: {positive: 0, negative: 0, neutral: 0, unknown: 0}
+ Fetching source posts with params: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: '30days'}
+ Using exact API URL format that works
+ Source posts API response: {status: 200, dataLength: 0, firstPost: undefined, fullResponse: {…}}
+ Returning posts array: {length: 0, isEmpty: true, campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: '30days'}
+ Итоговая статистика: {positive: 0, negative: 0, neutral: 0, unknown: 0}
+ Fetched trends data: {success: true, data: Array(125)}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
+ Итоговая статистика: {positive: 0, negative: 0, neutral: 0, unknown: 0}
+ Fetching source posts with params: {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: 'all'}
+ Using exact API URL format that works
+ Source posts API response: {status: 200, dataLength: 50, firstPost: {…}, fullResponse: {…}}
+ Returning posts array: {length: 50, isEmpty: false, campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e', period: 'all'}
+ Итоговая статистика: {positive: 0, negative: 0, neutral: 0, unknown: 0}
+ sourcePosts loaded: 50 posts
+ Fetched trends data: {success: true, data: Array(320)}
+ Тренд 1dd0d5c3-1775-4372-9bdd-8ce2ffdea3c0 имеет анализ: positive
+ Тренд 7c89439b-41db-4378-84d5-2eb781ea728e имеет анализ: neutral
+ Тренд c5511e9c-f8a0-4af6-9a20-5d3b005bcbda без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 2f566f4b-99f8-4260-8122-3248701cec47 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 51f3bb2b-b499-4620-b98c-d3dde9cc8860 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 82b29263-2240-4c9d-8f45-a49d9821d02c имеет анализ: positive
+ Тренд 0a2a0648-c2fa-4f7e-b82b-976237d8a906 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 03785ba7-55b6-41ff-af63-af6837ebcaa0 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд 7261d156-b264-48b9-b6b1-487449dafb51 без анализа (sourceId: db1994d9-2191-4e30-890a-25b49a931cb7)
+ Тренд daaf9c9a-964e-440e-b80c-74e283aa154c имеет анализ: positive
+ Итоговая статистика: {positive: 3, negative: 0, neutral: 1, unknown: 6}
