@@ -1306,7 +1306,22 @@ export default function Trends() {
               <Collapsible open={isDataSourcesExpanded} onOpenChange={setIsDataSourcesExpanded}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Источники данных</h2>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-lg font-semibold">Источники данных</h2>
+                      {sources.length > 0 && (
+                        <Button
+                          variant={selectedSourceId === null ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSourceId(null);
+                            setIsTrendsExpanded(true);
+                          }}
+                          className="h-7 px-2 text-xs"
+                        >
+                          Все источники
+                        </Button>
+                      )}
+                    </div>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm" className="p-1 h-auto">
                         {isDataSourcesExpanded ? 
@@ -1391,21 +1406,7 @@ export default function Trends() {
                         </div>
                       </div>
                     ))}
-                    {sources.length > 0 && (
-                      <div className="mt-4 pt-2 border-t">
-                        <Button
-                          variant={selectedSourceId === null ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSourceId(null);
-                            setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов
-                          }}
-                          className="w-full"
-                        >
-                          Все источники
-                        </Button>
-                      </div>
-                    )}
+
                   </div>
                 )}
                   </CollapsibleContent>
