@@ -6451,6 +6451,166 @@ Return your response as a JSON array in this exact format:
     }
   });
 
+  // Source sentiment analysis endpoint
+  app.post("/api/sources/:sourceId/analyze", async (req, res) => {
+    try {
+      const authHeader = req.headers['authorization'];
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          error: 'Не авторизован: Отсутствует заголовок авторизации'
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const sourceId = req.params.sourceId;
+      const { campaignId } = req.body;
+
+      if (!sourceId || !campaignId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Отсутствуют обязательные параметры: sourceId и campaignId'
+        });
+      }
+
+      console.log(`[SOURCE-ANALYSIS] Анализ источника ${sourceId} для кампании ${campaignId}`);
+
+      // Получаем все тренды для этого источника
+      const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        params: {
+          filter: {
+            campaign_id: { _eq: campaignId },
+            source_id: { _eq: sourceId }
+          },
+          limit: -1
+        }
+      });
+
+      const trends = trendsResponse.data?.data || [];
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trends.length} трендов для источника ${sourceId}`);
+
+      if (trends.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            sentiment: 'unknown',
+            confidence: 0,
+            trendsCount: 0,
+            summary: 'Нет данных для анализа'
+          }
+        });
+      }
+
+      // Анализируем каждый тренд с комментариями
+      const trendsWithSentiment = [];
+      
+      for (const trend of trends) {
+        if (trend.sentiment_analysis) {
+          trendsWithSentiment.push({
+            id: trend.id,
+            title: trend.title,
+            sentiment_analysis: trend.sentiment_analysis
+          });
+        }
+      }
+
+      console.log(`[SOURCE-ANALYSIS] ${trendsWithSentiment.length} трендов имеют анализ тональности`);
+
+      if (trendsWithSentiment.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            sentiment: 'unknown',
+            confidence: 0,
+            trendsCount: trends.length,
+            summary: 'Анализ тональности не выполнен для трендов этого источника'
+          }
+        });
+      }
+
+      // Вычисляем общую тональность источника
+      let totalPositive = 0;
+      let totalNeutral = 0;
+      let totalNegative = 0;
+      let totalConfidence = 0;
+      let validAnalyses = 0;
+
+      for (const trend of trendsWithSentiment) {
+        const analysis = trend.sentiment_analysis;
+        
+        if (typeof analysis === 'object' && analysis !== null) {
+          // Обрабатываем объект анализа
+          if (analysis.details && typeof analysis.details === 'object') {
+            totalPositive += analysis.details.positive || 0;
+            totalNeutral += analysis.details.neutral || 0;
+            totalNegative += analysis.details.negative || 0;
+          }
+          
+          if (typeof analysis.confidence === 'number') {
+            totalConfidence += analysis.confidence;
+            validAnalyses++;
+          }
+        } else if (typeof analysis === 'string') {
+          // Обрабатываем строковый анализ
+          if (analysis.includes('positive')) {
+            totalPositive += 70;
+            totalConfidence += 70;
+          } else if (analysis.includes('negative')) {
+            totalNegative += 70;
+            totalConfidence += 70;
+          } else {
+            totalNeutral += 70;
+            totalConfidence += 50;
+          }
+          validAnalyses++;
+        }
+      }
+
+      // Вычисляем средние значения
+      const avgPositive = totalPositive / trendsWithSentiment.length;
+      const avgNeutral = totalNeutral / trendsWithSentiment.length;
+      const avgNegative = totalNegative / trendsWithSentiment.length;
+      const avgConfidence = validAnalyses > 0 ? totalConfidence / validAnalyses : 0;
+
+      // Определяем общую тональность
+      let overallSentiment = 'neutral';
+      if (avgPositive > avgNeutral && avgPositive > avgNegative) {
+        overallSentiment = 'positive';
+      } else if (avgNegative > avgPositive && avgNegative > avgNeutral) {
+        overallSentiment = 'negative';
+      }
+
+      const result = {
+        sentiment: overallSentiment,
+        confidence: Math.round(avgConfidence),
+        trendsCount: trends.length,
+        analyzedTrends: trendsWithSentiment.length,
+        details: {
+          positive: Math.round(avgPositive),
+          neutral: Math.round(avgNeutral),
+          negative: Math.round(avgNegative)
+        },
+        summary: `Анализ ${trendsWithSentiment.length} трендов показывает ${overallSentiment === 'positive' ? 'положительную' : overallSentiment === 'negative' ? 'отрицательную' : 'нейтральную'} тональность`
+      };
+
+      console.log(`[SOURCE-ANALYSIS] Результат анализа источника:`, result);
+
+      res.json({
+        success: true,
+        data: result
+      });
+
+    } catch (error) {
+      console.error('[SOURCE-ANALYSIS] Ошибка анализа источника:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка при анализе источника',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      });
+    }
+  });
+
   // Single source crawling endpoint
   app.post("/api/sources/:sourceId/crawl", async (req, res) => {
     try {

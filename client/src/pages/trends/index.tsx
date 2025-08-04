@@ -53,12 +53,12 @@ import { TrendContentGenerator } from "@/components/TrendContentGenerator";
 import { SocialNetworkSelectorDialog } from "@/components/SocialNetworkSelectorDialog";
 import { SourcesSearchDialog } from "@/components/SourcesSearchDialog";
 import { Badge } from "@/components/ui/badge";
+import { getSentimentEmoji, getSentimentCategory, formatNumber } from "@/lib/trends-utils";
 import { BulkSourcesImportDialog } from "@/components/BulkSourcesImportDialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TrendCard } from "@/components/trends/TrendCard";
 import { SentimentEmoji } from "@/components/trends/SentimentEmoji";
 import { TrendsCollection } from "@/components/trends/TrendsCollection";
-import { getSentimentCategory, formatNumber } from "@/lib/trends-utils";
 
 // Определение интерфейсов для типизации
 import {
@@ -202,6 +202,16 @@ export default function Trends() {
     trend_level?: any;
     source_level?: any;
   }>({});
+  
+  // Состояние для анализа источников
+  const [sourceAnalysisData, setSourceAnalysisData] = useState<{
+    [sourceId: string]: {
+      sentiment: string;
+      confidence: number;
+      summary: string;
+    }
+  }>({});
+  const [analyzingSourceId, setAnalyzingSourceId] = useState<string | null>(null);
   
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
@@ -1216,6 +1226,58 @@ export default function Trends() {
     }
   });
 
+  // Функция для анализа источника
+  const analyzeSource = async (sourceId: string, sourceName: string) => {
+    try {
+      setAnalyzingSourceId(sourceId);
+      const authToken = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`/api/sources/${sourceId}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          campaignId: selectedCampaignId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Результат анализа источника:', data);
+        
+        // Сохраняем результат анализа
+        setSourceAnalysisData(prev => ({
+          ...prev,
+          [sourceId]: data.data
+        }));
+        
+        toast({
+          title: "Анализ источника завершен",
+          description: `${sourceName}: ${data.data.summary}`,
+        });
+      } else {
+        const errorText = await response.text();
+        console.error('Ошибка анализа источника:', response.status, errorText);
+        toast({
+          title: "Ошибка анализа",
+          description: `Не удалось проанализировать источник: ${response.status}`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка анализа источника:', error);
+      toast({
+        title: "Ошибка анализа",
+        description: `Ошибка подключения: ${(error as Error).message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzingSourceId(null);
+    }
+  };
+
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
     selectedCampaignId !== "empty";
@@ -1398,15 +1460,20 @@ export default function Trends() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              // TODO: Добавить анализ источника
-                              toast({
-                                title: "Анализ источника",
-                                description: "Функция анализа источника будет добавлена"
-                              });
+                              analyzeSource(source.id, source.name);
                             }}
                             title="Анализ источника"
+                            disabled={analyzingSourceId === source.id}
                           >
-                            <BarChart className="h-4 w-4 text-blue-500" />
+                            {analyzingSourceId === source.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : sourceAnalysisData[source.id] ? (
+                              <span className="text-lg" title={`Тональность: ${sourceAnalysisData[source.id].summary}`}>
+                                {getSentimentEmoji(sourceAnalysisData[source.id].sentiment as any)}
+                              </span>
+                            ) : (
+                              <BarChart className="h-4 w-4 text-blue-500" />
+                            )}
                           </Button>
 
                           <Button
