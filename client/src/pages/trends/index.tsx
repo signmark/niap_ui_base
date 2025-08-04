@@ -1398,6 +1398,22 @@ export default function Trends() {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
+                              // TODO: Добавить анализ источника
+                              toast({
+                                title: "Анализ источника",
+                                description: "Функция анализа источника будет добавлена"
+                              });
+                            }}
+                            title="Анализ источника"
+                          >
+                            <BarChart className="h-4 w-4 text-blue-500" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               deleteSource(source.id);
                             }}
                           >
@@ -1433,48 +1449,55 @@ export default function Trends() {
                   <CollapsibleContent>
                     <div className="space-y-4">
                       {/* Статистика по тональности */}
-                      {trends.length > 0 && (
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                          <Card>
-                            <CardContent className="p-3 text-center">
-                              <div className="text-lg font-bold">{trends.length}</div>
-                              <div className="text-xs text-muted-foreground">Всего трендов</div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardContent className="p-3 text-center">
-                              <div className="text-lg font-bold text-green-600">
-                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'positive').length}
-                              </div>
-                              <div className="text-xs text-muted-foreground">😊 Позитивных</div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardContent className="p-3 text-center">
-                              <div className="text-lg font-bold text-gray-600">
-                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'neutral').length}
-                              </div>
-                              <div className="text-xs text-muted-foreground">😐 Нейтральных</div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardContent className="p-3 text-center">
-                              <div className="text-lg font-bold text-red-600">
-                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'negative').length}
-                              </div>
-                              <div className="text-xs text-muted-foreground">😞 Негативных</div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardContent className="p-3 text-center">
-                              <div className="text-lg font-bold text-yellow-600">
-                                {trends.filter(t => getSentimentCategory(t.sentiment_analysis) === 'unknown').length}
-                              </div>
-                              <div className="text-xs text-muted-foreground">❓ Неопределенных</div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      )}
+                      {(() => {
+                        // Получаем тренды для статистики (учитывая выбранный источник)
+                        const statsData = selectedSourceId 
+                          ? trends.filter(t => t.sourceId === selectedSourceId || t.source_id === selectedSourceId)
+                          : trends;
+                        
+                        return statsData.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                            <Card>
+                              <CardContent className="p-3 text-center">
+                                <div className="text-lg font-bold">{statsData.length}</div>
+                                <div className="text-xs text-muted-foreground">Всего трендов</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardContent className="p-3 text-center">
+                                <div className="text-lg font-bold text-green-600">
+                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'positive').length}
+                                </div>
+                                <div className="text-xs text-muted-foreground">😊 Позитивных</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardContent className="p-3 text-center">
+                                <div className="text-lg font-bold text-gray-600">
+                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'neutral').length}
+                                </div>
+                                <div className="text-xs text-muted-foreground">😐 Нейтральных</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardContent className="p-3 text-center">
+                                <div className="text-lg font-bold text-red-600">
+                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'negative').length}
+                                </div>
+                                <div className="text-xs text-muted-foreground">😞 Негативных</div>
+                              </CardContent>
+                            </Card>
+                            <Card>
+                              <CardContent className="p-3 text-center">
+                                <div className="text-lg font-bold text-yellow-600">
+                                  {statsData.filter(t => getSentimentCategory(t.sentiment_analysis) === 'unknown').length}
+                                </div>
+                                <div className="text-xs text-muted-foreground">❓ Неопределенных</div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      })()}
 
                       <div className="border-b mb-4">
                         <div className="flex">
