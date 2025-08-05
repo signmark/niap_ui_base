@@ -314,7 +314,7 @@ export default function CampaignDetails() {
 
       // Используем новый API для анализа ключевых слов
       console.log('🔍 Отправляем запрос к API:', normalizedUrl);
-      const response = await api.post('/api/keywords/analyze-website', {
+      const response = await api.post('/keywords/analyze-website', {
         url: normalizedUrl
       });
       
