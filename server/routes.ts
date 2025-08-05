@@ -13438,7 +13438,6 @@ ${datesText}
       let siteContent = '';
       try {
         console.log(`📥 Загружаем содержимое сайта: ${url}`);
-        const axios = require('axios');
         const response = await axios.get(url, {
           timeout: 10000,
           headers: {
