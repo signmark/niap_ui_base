@@ -89,18 +89,22 @@ export class GeminiProxyService {
     async sendRequest(url, body, isVertexAI = false) {
         let retries = 0;
         let lastError = null;
+        
+        // Создаем базовые опции один раз для использования в fallback
+        const baseFetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        };
+        
         while (retries < this.maxRetries) {
             try {
                 // Маскируем API ключ в URL для логов
                 const safeUrl = url.replace(/key=[^&]+/, 'key=****');
                 logger.log(`[gemini-proxy] Отправка запроса к: ${safeUrl}`, 'gemini');
-                const fetchOptions = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                };
+                const fetchOptions = { ...baseFetchOptions };
                 // Для Vertex AI используем Service Account авторизацию
                 if (url.includes('aiplatform.googleapis.com')) {
                     logger.log(`[gemini-proxy] Используется Vertex AI, получаем Service Account токен`, 'gemini');
@@ -117,21 +121,15 @@ export class GeminiProxyService {
                         throw new Error('Не удалось получить Service Account токен для Vertex AI');
                     }
                 }
-                // Используем прокси для доступа к Gemini API (обязательно для продакшена)
-                // В Replit среде отключаем прокси для предотвращения ошибок подключения
-                const isReplit = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
-                if (this.agent && !isReplit) {
+                // КРИТИЧЕСКИ ВАЖНО: Используем прокси для доступа к Gemini API во ВСЕХ средах
+                // Прямое соединение к Gemini заблокировано по региону - нужен SOCKS5 прокси
+                if (this.agent) {
                     // Используем прокси для ВСЕХ запросов (включая Vertex AI)
                     fetchOptions.agent = this.agent;
                     logger.log(`[gemini-proxy] Используется SOCKS5 прокси: ${this.proxyUrl?.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'gemini');
                 }
                 else {
-                    if (isReplit) {
-                        logger.log(`[gemini-proxy] Replit среда - прямое соединение без прокси`, 'gemini');
-                    }
-                    else {
-                        logger.log(`[gemini-proxy] Прокси недоступен - прямое соединение`, 'gemini');
-                    }
+                    logger.warn(`[gemini-proxy] ⚠️ ПРОКСИ НЕДОСТУПЕН! Прямое соединение может не работать из-за региональных ограничений Gemini API`, 'gemini');
                 }
                 // Выполняем запрос
                 const response = await fetch(url, fetchOptions);
@@ -151,6 +149,33 @@ export class GeminiProxyService {
             catch (error) {
                 lastError = error;
                 retries++;
+                
+                // Если ошибка подключения к прокси, попробуем без прокси на последней попытке
+                if (retries === this.maxRetries && error.message.includes('ECONNREFUSED') && this.agent) {
+                    logger.warn(`[gemini-proxy] ⚠️ SOCKS5 прокси недоступен. Пробуем прямое соединение как fallback...`, 'gemini');
+                    try {
+                        // Создаем новые опции без прокси для fallback
+                        const fallbackOptions = { ...baseFetchOptions };
+                        // НЕ добавляем agent (прокси) для прямого соединения
+                        
+                        const fallbackResponse = await fetch(url, fallbackOptions);
+                        const status = fallbackResponse.status;
+                        logger.log(`[gemini-proxy] Fallback ответ со статусом: ${status}`, 'gemini');
+                        
+                        if (status === 200) {
+                            const data = await fallbackResponse.json();
+                            logger.log(`[gemini-proxy] ✅ Fallback успешен - прямое соединение работает`, 'gemini');
+                            return data;
+                        } else {
+                            const errorText = await fallbackResponse.text();
+                            throw new Error(`HTTP error ${status}: ${errorText}`);
+                        }
+                    } catch (fallbackError) {
+                        logger.error(`[gemini-proxy] ❌ Fallback также неудачен: ${fallbackError.message}`, 'gemini');
+                        // Продолжаем к обычной обработке ошибки
+                    }
+                }
+                
                 if (retries < this.maxRetries) {
                     const backoffTime = Math.pow(2, retries) * 500; // Экспоненциальная задержка
                     logger.warn(`[gemini-proxy] Попытка ${retries} из ${this.maxRetries} не удалась. Повтор через ${backoffTime}ms. Ошибка: ${lastError.message}`, 'gemini');
