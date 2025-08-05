@@ -11118,13 +11118,27 @@ ${websiteContent}`;
         
         console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini API...');
         const geminiProxyServiceInstance = new GeminiProxyService({ apiKey: geminiKey });
-        analysisResponse = await geminiProxyServiceInstance.generateText({
-          prompt: prompt,
-          model: 'gemini-1.5-flash',
-          temperature: 0.3,
-          maxOutputTokens: 4000
-        });
-        console.log('✅ Gemini 2.5 через Vertex AI вернул ответ для анализа сайта');
+        
+        // Попробуем сначала прямой Vertex AI (работает без прокси на staging)
+        try {
+          console.log('🚀 Используем прямой Vertex AI для анализа бизнес-анкеты');
+          analysisResponse = await geminiProxyServiceInstance.generateText({
+            prompt: prompt,
+            model: 'gemini-2.5-flash',
+            useVertexAI: true,
+            temperature: 0.3,
+            maxOutputTokens: 4000
+          });
+        } catch (vertexError) {
+          console.log('⚠️ Vertex AI недоступен для анкеты, используем fallback через прокси');
+          analysisResponse = await geminiProxyServiceInstance.generateText({
+            prompt: prompt,
+            model: 'gemini-2.5-flash',
+            temperature: 0.3,
+            maxOutputTokens: 4000
+          });
+        }
+        console.log('✅ Gemini API вернул ответ для анализа сайта');
         console.log(`[WEBSITE-ANALYSIS] ✅ Полный ответ от Gemini: ${analysisResponse.substring(0, 200)}...`);
         
       } catch (aiError) {
@@ -13512,10 +13526,22 @@ ${siteContent}
 - competition (1-100): уровень конкуренции`;
 
       try {
-        const analysisResult = await geminiProxy.generateText({ 
-          prompt: analysisPrompt, 
-          model: 'gemini-2.0-flash-exp' 
-        });
+        // Попробуем сначала прямой Vertex AI (работает без прокси на staging)
+        let analysisResult;
+        try {
+          console.log('🚀 Используем прямой Vertex AI для анализа ключевых слов');
+          analysisResult = await geminiProxy.generateText({ 
+            prompt: analysisPrompt, 
+            model: 'gemini-2.5-flash',
+            useVertexAI: true 
+          });
+        } catch (vertexError) {
+          console.log('⚠️ Vertex AI недоступен, используем fallback через прокси');
+          analysisResult = await geminiProxy.generateText({ 
+            prompt: analysisPrompt, 
+            model: 'gemini-2.5-flash' 
+          });
+        }
         
         // Парсим JSON ответ (убираем префикс "json" если есть)
         let keywordsData;

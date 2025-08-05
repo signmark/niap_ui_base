@@ -1,0 +1,44 @@
+smm-1  | 🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥
+smm-1  | 🔥 URL: /api/generate-content
+smm-1  | 🔥 PATH: /api/generate-content
+smm-1  | 🔥 BODY: {
+smm-1  |   "prompt": "Бичи",
+smm-1  |   "keywords": [
+smm-1  |     "сервис для врачей диетологов",
+smm-1  |     "программа для составления рациона"
+smm-1  |   ],
+smm-1  |   "tone": "informative",
+smm-1  |   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e",
+smm-1  |   "platform": "facebook",
+smm-1  |   "service": "gemini-2.5-flash",
+smm-1  |   "useCampaignData": false
+smm-1  | }
+smm-1  | 🚀🚀🚀 ЗАПРОС НА ГЕНЕРАЦИЮ КОНТЕНТА ПОЛУЧЕН 🚀🚀🚀
+smm-1  | 📋📋📋 ПАРАМЕТРЫ ЗАПРОСА: {
+smm-1  |   "prompt": "Бичи",
+smm-1  |   "keywords": [
+smm-1  |     "сервис для врачей диетологов",
+smm-1  |     "программа для составления рациона"
+smm-1  |   ],
+smm-1  |   "tone": "informative",
+smm-1  |   "campaignId": "46868c44-c6a4-4bed-accf-9ad07bba790e",
+smm-1  |   "platform": "facebook",
+smm-1  |   "service": "gemini-2.5-flash",
+smm-1  |   "useCampaignData": false
+smm-1  | }
+smm-1  | 🔍 useCampaignData в запросе: false
+smm-1  | 🔍 campaignId в запросе: 46868c44-c6a4-4bed-accf-9ad07bba790e
+smm-1  | 🔍 service в запросе: gemini-2.5-flash
+smm-1  | 🔍 Заголовки авторизации: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsInJvbGUiOiIyODViZGU2OS0yZjA0LTRmM2YtOTg5Yy1mN2RmZWMzZGQ0MDUiLCJhcHBfYWNjZXNzIjp0cnVlLCJhZG1pbl9hY2Nlc3MiOnRydWUsImlhdCI6MTc1NDM4NDM3MSwiZXhwIjoxNzU0Mzg1MjcxLCJpc3MiOiJkaXJlY3R1cyJ9.kQN0xb1C2NCtxU_Wq_04aYMrAeLHv7nurvfo9MDA76Q
+smm-1  | 🔑 Извлеченный токен: Присутствует
+smm-1  | 🔍 ПРОВЕРКА УСЛОВИЯ: service === "claude"
+smm-1  | 🔍 service тип: string
+smm-1  | 🔍 service значение: "gemini-2.5-flash"
+smm-1  | 🔍 Результат сравнения: false
+smm-1  | [gemini] Обработка запроса Gemini без авторизации
+smm-1  | [gemini-2.5] Пробуем прямой Vertex AI для модели gemini-2.5-flash
+smm-1  | [gemini-2.5] Генерация контента с полным названием модели: gemini-2.5-flash
+smm-1  | 9:08:41 AM [DEV] [info] [gemini-vertex-direct] Запрос генерации текста с моделью: gemini-2.5-flash
+smm-1  | 9:08:41 AM [DEV] [info] [gemini-vertex-direct] Получаем прямой access token
+smm-1  | 9:08:42 AM [DEV] [info] [gemini-vertex-direct] Access token получен успешно
+smm-1  | 9:08:42 AM [DEV] [info] [gemini-vertex-direct] Отправляем запрос к: https://us-central1-aiplatform.googleapis.com/v1/projects/laboratory-449308/locations/us-central1/publishers/google/models/gemini-2.5-flash:generateContent

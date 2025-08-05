@@ -36,12 +36,12 @@ Preferred communication style: Simple, everyday language.
 - **Comment Collection & Sentiment Analysis**: Collects comments from social platforms and performs sentiment analysis using AI, with results stored in Directus.
 - **Stories Editor**: Provides functionality for creating and editing Instagram Stories with element persistence and streamlined workflows.
 - **Website Analysis for Business Questionnaire**: Automatically populates business questionnaire fields by analyzing website content and extracting relevant information.
-- **Keyword Analysis**: AI-powered website keyword analysis using Gemini AI through SOCKS5 proxy. Analyzes any website URL and returns SEO-relevant keywords with metrics (relevance, category, trend score, competition). Fully integrated into campaign management workflow.
+- **Keyword Analysis**: AI-powered website keyword analysis using Gemini 2.5 through Vertex AI (primary) with SOCKS5 proxy fallback. Analyzes any website URL and returns SEO-relevant keywords with real website content analysis. Features automatic fallback logic for maximum reliability.
 
 ## External Dependencies
 
 ### AI Services
-- **Gemini API (Google)**: Primary for content generation, research, trend analysis, sentiment analysis, website analysis, and keyword analysis. All Gemini API calls use `GeminiProxyService` with a SOCKS5 proxy for geo-bypass. API endpoint `/api/keywords/analyze-website` provides comprehensive keyword analysis with relevance scoring, categorization, and competition metrics.
+- **Gemini API (Google)**: Primary for content generation, research, trend analysis, sentiment analysis, website analysis, and keyword analysis. Uses Vertex AI (Gemini 2.5) as primary method with SOCKS5 proxy fallback. API endpoint `/api/keywords/analyze-website` provides comprehensive keyword analysis with real website content loading and AI-powered relevance scoring, categorization, and competition metrics.
 - **FAL AI**: Used for image and video generation.
 
 ### Social Media APIs (via N8N)
