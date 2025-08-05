@@ -3013,15 +3013,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'gemini-2.0-flash':
         case 'gemini-pro':
           try {
-            // Используем geminiProxyService для унификации с трендами
-            console.log('[gemini] Используем geminiProxyService для унификации');
-            const { geminiProxyService } = await import('./services/gemini-proxy');
+            // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API
+            console.log('[gemini] Используем прямой Gemini API');
             
-            generatedContent = await geminiProxyService.generateText({ 
-              prompt: enrichedPrompt, 
-              model: 'gemini-2.5-flash'  // Унифицированная модель
-            });
-            console.log('[gemini] Контент успешно сгенерирован через прокси');
+            const geminiResponse = await axios.post(
+              'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+              {
+                contents: [{ parts: [{ text: enrichedPrompt }] }],
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 2000
+                }
+              },
+              {
+                headers: { 'Content-Type': 'application/json' },
+                params: { key: process.env.GEMINI_API_KEY },
+                timeout: 8000
+              }
+            );
+            
+            generatedContent = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            console.log('[gemini] Контент успешно сгенерирован через прямой API');
           } catch (geminiError) {
             console.error('[gemini] Ошибка при генерации:', geminiError);
             return res.status(500).json({
@@ -5251,18 +5263,27 @@ ${siteContent.substring(0, 2000)}
           const userId = req.user?.id || 'guest';
           const token = req.user?.token || req.headers.authorization?.replace('Bearer ', '');
           
-          // Try using available AI services for site analysis
-          const { geminiProxyService } = await import('./services/gemini-proxy');
-          
+          // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API для анализа
           try {
             const analysisPrompt = `Analyze this website "${normalizedUrl}" and extract 5-10 relevant SEO keywords that best describe its content and purpose. Focus on business-related terms, services, and target audience keywords.
 
 Return your response as a JSON array in this exact format:
 [{"keyword": "business planning", "trend": 3500, "competition": 75}, {"keyword": "planning tools", "trend": 2800, "competition": 60}]`;
 
-            const analysisResult = await geminiProxyService.generateText({
-              prompt: analysisPrompt
-            });
+            const geminiResponse = await axios.post(
+              'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+              {
+                contents: [{ parts: [{ text: analysisPrompt }] }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+              },
+              {
+                headers: { 'Content-Type': 'application/json' },
+                params: { key: process.env.GEMINI_API_KEY },
+                timeout: 8000
+              }
+            );
+            
+            const analysisResult = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             
             if (analysisResult) {
               const match = analysisResult.match(/\[\s*\{.*\}\s*\]/s);
@@ -6541,7 +6562,7 @@ Return your response as a JSON array in this exact format:
       // 4. Анализировать все тренды с комментариями
       // 5. Сохранить анализ в БД и вычислить общую оценку источника
       
-      const { geminiProxyService } = await import('./services/gemini-proxy');
+      // ВРЕМЕННОЕ РЕШЕНИЕ: прямой вызов Gemini API вместо прокси
       const trendAnalyses = [];
       let totalCommentsAnalyzed = 0;
       
@@ -6688,10 +6709,20 @@ ${commentsText.substring(0, 4000)}
   "summary": "краткое описание тональности комментариев"
 }`;
 
-            const analysisResult = await geminiProxyService.generateText({
-              prompt: analysisPrompt,
-              model: 'gemini-2.5-flash'
-            });
+            const geminiResponse = await axios.post(
+              'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+              {
+                contents: [{ parts: [{ text: analysisPrompt }] }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+              },
+              {
+                headers: { 'Content-Type': 'application/json' },
+                params: { key: process.env.GEMINI_API_KEY },
+                timeout: 8000
+              }
+            );
+            
+            const analysisResult = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
             let analysisData;
             try {
@@ -8197,9 +8228,7 @@ ${commentsText.substring(0, 4000)}
         
         console.log(`[POST /api/trend-sentiment] Отправляем ${commentTexts.length} символов на анализ в Gemini`);
         
-        // Используем Gemini для анализа настроения
-        const { geminiProxyService } = await import('./services/gemini-proxy');
-        
+        // ВРЕМЕННОЕ РЕШЕНИЕ: Прямой вызов Gemini API для анализа настроения
         const analysisPrompt = `Проанализируй настроение этих комментариев к посту в социальной сети. 
 Верни результат в JSON формате:
 {
@@ -8216,19 +8245,31 @@ ${commentsText.substring(0, 4000)}
 Комментарии для анализа:
 ${commentTexts}`;
 
-        // Пробуем Vertex AI если прокси не работает, иначе стандартный Gemini
+        // Используем прямой Gemini API
         let result;
         try {
-          result = await geminiProxyService.generateText({ 
-            prompt: analysisPrompt, 
-            model: 'gemini-2.5-flash'  // Vertex AI модель
-          });
-        } catch (proxyError) {
-          console.log(`[POST /api/trend-sentiment] ⚠️ Прокси не работает, пробуем Vertex AI:`, proxyError.message);
-          // Fallback на Vertex AI
-          result = await geminiProxyService.generateText({ 
-            prompt: analysisPrompt, 
-            model: 'gemini-2.5-flash'  // Vertex AI
+          const geminiResponse = await axios.post(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+            {
+              contents: [{ parts: [{ text: analysisPrompt }] }],
+              generationConfig: { temperature: 0.2, maxOutputTokens: 800 }
+            },
+            {
+              headers: { 'Content-Type': 'application/json' },
+              params: { key: process.env.GEMINI_API_KEY },
+              timeout: 10000
+            }
+          );
+          
+          result = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        } catch (geminiError) {
+          console.error(`[POST /api/trend-sentiment] ❌ Ошибка Gemini API:`, geminiError.message);
+          // Возвращаем нейтральный результат при ошибке
+          result = JSON.stringify({
+            sentiment: 'neutral',
+            confidence: 50,
+            details: { positive: 33, negative: 33, neutral: 34 },
+            summary: 'Анализ недоступен из-за технической ошибки'
           });
         }
         
@@ -8380,9 +8421,7 @@ ${commentTexts}`;
         
         console.log(`[POST /api/analyze-comments] Отправляем анализ на уровне ${level} в Gemini`);
         
-        // Используем Gemini для многоуровневого анализа
-        const { geminiProxyService } = await import('./services/gemini-proxy');
-        
+        // ВРЕМЕННОЕ РЕШЕНИЕ: Прямой вызов Gemini API для многоуровневого анализа
         const analysisPrompt = level === 'trend' 
           ? `Проанализируй комментарии к посту на уровне ТРЕНДА. Сфокусируйся на общих реакциях пользователей, популярности контента и вовлеченности аудитории.
           
@@ -8414,10 +8453,20 @@ ${commentTexts}`
 Комментарии:
 ${commentTexts}`;
 
-        const result = await geminiProxyService.generateText({ 
-          prompt: analysisPrompt, 
-          model: 'gemini-2.5-flash'
-        });
+        const geminiResponse = await axios.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+          {
+            contents: [{ parts: [{ text: analysisPrompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            params: { key: process.env.GEMINI_API_KEY },
+            timeout: 10000
+          }
+        );
+        
+        const result = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         
         console.log(`[POST /api/analyze-comments] Получен ответ от Gemini, парсим JSON`);
         
@@ -10897,8 +10946,7 @@ ${commentTexts}`;
           throw new Error('Gemini API ключ недоступен');
         }
         
-        // Используем Gemini через прокси
-        const { geminiProxyService } = await import('./services/gemini-proxy');
+        // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API для анализа сайта
         
         // Создаем умный промпт для любых типов сайтов
         const prompt = `Ты - эксперт по анализу веб-сайтов и бизнеса. Проанализируй содержимое ЛЮБОГО сайта и заполни бизнес-анкету в формате JSON.
@@ -10952,13 +11000,21 @@ ${websiteContent}`;
 
         console.log(`[WEBSITE-ANALYSIS] 🔍 Размер промпта: ${prompt.length} символов`);
         
-        console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini 2.5 через Vertex AI...');
-        const geminiResponse = await geminiProxyService.generateText({ 
-          prompt: prompt,
-          model: 'gemini-2.5-flash'
-        });
+        console.log('[WEBSITE-ANALYSIS] 🤖 Отправляем запрос к Gemini API...');
+        const geminiApiResponse = await axios.post(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 4000 }
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            params: { key: process.env.GEMINI_API_KEY },
+            timeout: 15000
+          }
+        );
         
-        analysisResponse = geminiResponse;
+        analysisResponse = geminiApiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         console.log('✅ Gemini 2.5 через Vertex AI вернул ответ для анализа сайта');
         console.log(`[WEBSITE-ANALYSIS] ✅ Полный ответ от Gemini: ${analysisResponse.substring(0, 200)}...`);
         
