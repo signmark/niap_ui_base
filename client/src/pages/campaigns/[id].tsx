@@ -319,6 +319,7 @@ export default function CampaignDetails() {
       });
       
       console.log('📋 Получен ответ:', response.data);
+      console.log('📋 Ключевые слова из API:', response.data?.data?.keywords);
       
       if (!response.data?.success || !response.data?.data?.keywords?.length) {
         console.error('❌ Неудачный ответ API:', response.data);
@@ -326,7 +327,9 @@ export default function CampaignDetails() {
       }
 
       // Возвращаем массив строк ключевых слов
-      return response.data.data.keywords.map((kw: any) => kw.keyword || kw);
+      const keywords = response.data.data.keywords.map((kw: any) => kw.keyword || kw);
+      console.log('📋 Обработанные ключевые слова:', keywords);
+      return keywords;
     },
     onSuccess: (data) => {
       const formattedKeywords = data.map((keyword: string) => ({
