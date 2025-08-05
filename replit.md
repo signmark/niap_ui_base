@@ -6,80 +6,6 @@ SMM Manager is an intelligent social media content management platform designed 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes
-- **2025-08-05**: **GEMINI API INTEGRATION FULLY CORRECTED** - Systematically fixed all direct Gemini API calls to use global keys from database instead of environment variables:
-  1. **ALL geminiProxyService imports replaced** - Removed 6+ broken geminiProxyService imports across server/routes.ts
-  2. **Database key integration** - All Gemini API calls now properly use apiKeyService.getGlobalKeys() to fetch keys from Directus
-  3. **Fixed API endpoints**: /api/generate-content, /api/analyze-site, /api/trend-sentiment, /api/analyze-comments, and source analysis
-  4. **Error handling improved** - Added proper fallback and error messages when global keys unavailable
-  5. **Syntax errors resolved** - Fixed critical try-catch blocks and removed extra brackets that caused LSP errors
-  6. **Server stability confirmed** - All endpoints now working correctly with 200 responses and proper Gemini integration
-  7. **Site analysis endpoint fixed** - Successfully returning keyword analysis results with proper authentication
-  8. **Production deployment ready** - All environment variable dependencies removed, system uses only database-stored global keys
-- **2025-08-04**: **SOURCE SENTIMENT ANALYSIS FEATURE COMPLETE & TESTED** - Fully implemented and tested comprehensive source analysis functionality that replaces chart icon with sentiment emoji (😊/😞/😐/❓) based on comment sentiment analysis. System:
-  1. Analyzes trends that have content in campaign_trend_topics.content field
-  2. Checks existing comments for these content trends first using correct field names (trent_post_id, date sorting)
-  3. Sends webhook requests only for content trends WITHOUT comments to collect missing data
-  4. Waits 5 seconds for N8N collection completion (optimized timing)
-  5. Analyzes sentiment for all content trends with comments using Gemini AI (1-10 scale)
-  6. Calculates average sentiment score and saves to campaign_content_sources.sentiment_analysis field
-  7. Fixed collection inconsistency: uses campaign_content_sources throughout
-  8. Fixed JavaScript duplicate authToken variable errors
-  9. Integrated automatic comment collection into source analysis workflow
-  10. **ALGORITHM TESTED**: Confirmed correct algorithm logic - successfully processes sources with 31 trends, correctly identifies lack of comment data, handles webhook collection process
-  11. **STATISTICS PANEL FULLY FUNCTIONAL**: Complete sentiment analysis statistics system working correctly - displays 3 positive, 1 neutral, 6 unknown trends based on individual trend analysis. Ready for staging deployment.
-- **2025-08-04**: **FACEBOOK SETUP WIZARD COMPLETE AUTOMATION** - Implemented fully automated Facebook page discovery and token generation. System now automatically shows ALL Facebook pages available to Instagram token by default, generates page-specific tokens upon selection, and saves settings immediately to database without manual clicks.
-- **2025-08-01**: **FIXED FACEBOOK PAGE TOKEN RETRIEVAL** - Corrected Facebook OAuth to properly fetch and use individual page access tokens instead of user tokens for publishing
-- **2025-08-01**: **CORRECTED FACEBOOK TOKEN STRUCTURE** - Fixed Facebook OAuth to properly store page token in main "token" field and handle Instagram token separately according to user specification
-- **2025-08-01**: **FIXED TREND COLLECTION USER NOTIFICATIONS** - Added immediate "Sбор начат" notification when trend collection starts, delayed helpful tips by 60 seconds
-- **2025-08-01**: **OPTIMIZED VK OAUTH WINDOW SIZE** - Set precise 685x670px dimensions for VK authorization popup to eliminate scrolling issues
-- **2025-08-01**: **FIXED CROSS-PLATFORM OAUTH TOKEN SYNCHRONIZATION** - Resolved critical bug where OAuth tokens didn't automatically update in form fields
-- **2025-08-01**: Enhanced Instagram OAuth with automatic postMessage handling and form field updates
-- **2025-08-01**: Fixed VK OAuth workflow - added proper message listener and corrected redirect URI to use local callback page
-- **2025-08-01**: Improved parent-child component communication between setup wizards and main settings form
-- **2025-08-01**: Added custom event dispatching for Instagram settings updates with automatic form synchronization
-- **2025-08-01**: Fixed YouTube OAuth workflow - resolved "Not Found" errors for users without YouTube channels
-- **2025-08-01**: Added comprehensive YouTube channel creation instructions with clickable links
-- **2025-08-01**: Cleaned up YouTube API logging to reduce console noise while maintaining error handling
-- **2025-08-01**: Improved YouTube wizard UX with clear step-by-step guidance for channel setup
-- **2025-08-01**: Fixed image generation system to use global API keys from database instead of user-specific keys
-- **2025-08-01**: Updated site analysis to use direct Gemini API with GEMINI_API_KEY environment variable
-- **2025-08-01**: Implemented universal API key search supporting both uppercase and lowercase service names for maximum compatibility
-- **2025-08-01**: **IMPLEMENTED COMPREHENSIVE TESTING INFRASTRUCTURE** - Created extensive Jest-based test suite covering Facebook token validation, YouTube OAuth flow, and system utilities (40 new tests total)
-
-### Technical Notes
-- **Stories API Authentication**: Always use user token (req.headers.authorization) for Directus API calls, never use admin token. User tokens work constantly in the system and have proper permissions for campaign_content collection.
-- **Database Storage**: All Stories data should be stored in campaign_content.metadata field as JSON, not in separate fields.
-- **Database**: System does not use PostgreSQL - uses Directus as primary database/CMS with external hosted instance.
-- **Testing & Scheduler**: DIRECTUS_TOKEN environment variable can be used for:
-  - API testing and development scripts
-  - Scheduler operations and automated tasks
-  - Direct Directus API access when user tokens unavailable
-  - Website analysis and other server-side operations
-- **Request Processing**: Every user request must be properly self-prompted to ensure complete understanding and systematic execution.
-- **DEBUG PHILOSOPHY**: ВСЕГДА ИЩИТЕ ПРОБЛЕМЫ В КОДЕ ПЕРВУЮ ОЧЕРЕДЬ, а не в сервисах/API. API работают - ищите баги в логике, кэше, выполнении кода. Промптируйте себя правильно для поиска багов в коде.
-- **Production Code Quality**: All debug artifacts (console.log statements, UI debug information, temporary development text) must be completely removed before production deployment. System maintains clean, professional interface without any visible debug elements.
-- **CRITICAL RECURRING BUGS TO CHECK FIRST**:
-  - **Comments API Field Names**: Collection `post_comment` uses field `trent_post_id` (NOT `trend_id`), sorting by `date` (NOT `date_created`)
-  - **Comments API Authorization**: Use user token from headers, NOT system token. Check token validity first.
-  - **Website Analysis Performance**: extractFullSiteContent functions ALWAYS hang server with regex forEach loops - replace with for loops, 8000ms timeout, 2MB limit
-  - **Platform Field Names**: Always verify actual database field names in Directus admin before writing API queries
-  - **403 Errors**: Usually wrong field names or collection permissions, NOT authentication issues
-- **TOKEN USAGE RULES**:
-  - **UI/Frontend**: ALWAYS use user tokens from headers/authorization for ALL user-facing operations
-  - **System Operations**: System tokens (DIRECTUS_TOKEN) ONLY for scheduler, automated tasks, and backend operations NOT triggered by user
-  - **Mixed Operations**: If API needs both user verification AND system access, verify user token first, then use system token for restricted collections
-- **React JSX**: Avoid JSX comments inside conditional renders - use regular JS comments outside JSX or structure conditionals to return valid React elements only.
-- **Stories Store Management**: Stories creation through /stories/new route automatically clears localStorage and resets store state. System ensures clean slate for new Stories without old content interference.
-- **Stories Navigation**: All Stories creation routes use simple /stories/new path without query parameters. localStorage clearing is handled internally by StoryEditor component.
-- **CRITICAL SITE ANALYSIS PERFORMANCE ISSUE**: The extractFullSiteContent functions in server/routes.ts ALWAYS cause server hangs due to regex forEach loops and long HTTP timeouts. When this issue appears:
-  1. Find ALL extractFullSiteContent functions (there are multiple)
-  2. Replace ALL forEach loops with for loops with Math.min() limits
-  3. Set axios timeout to 8000ms MAX, maxContentLength to 2MB
-  4. Add content length limits (20KB) with truncation
-  5. Never use while loops with regex.exec() - they cause infinite loops
-  6. This is a recurring problem that needs immediate fixing when reported
-
 ## System Architecture
 
 ### Technology Stack
@@ -93,14 +19,15 @@ Preferred communication style: Simple, everyday language.
 - **Deployment**: Docker with Traefik reverse proxy
 
 ### Core Architectural Decisions
-- **Monolithic to Modular Transition**: Ongoing effort to break down monolithic files (e.g., `routes.ts`) into modular components for better maintainability and scalability.
-- **N8N-centric Publishing**: All social media platforms (YouTube, Facebook, Instagram, VK, Telegram) publish exclusively through N8N webhooks to ensure consistent architecture and centralized management. No direct API calls from the main application for publishing.
+- **Monolithic to Modular Transition**: Ongoing effort to break down monolithic files into modular components for better maintainability and scalability.
+- **N8N-centric Publishing**: All social media platforms publish exclusively through N8N webhooks to ensure consistent architecture and centralized management.
 - **Comprehensive Duplicate Prevention**: A 4-level system prevents duplicate posts across platforms using `postUrl` checks, extended caching, a Publication Tracker service, and Lock Manager integration.
 - **Intelligent Website Analysis**: A multi-tier fallback system for website analysis uses Gemini AI for content extraction and business questionnaire auto-filling. It prioritizes AI analysis and falls back to intelligent content-based classification if AI services fail.
 - **Robust Authentication & Authorization**: JWT token management with automatic refresh and role-based access control (SMM User, SMM Admin). Strict separation of user tokens (for UI) and system tokens (for backend tasks).
-- **Social Media API Wizards**: Guided setup wizards (e.g., for Instagram, YouTube, VK) simplify complex API configurations, including OAuth flows and token management, by automating steps and providing clear user guidance.
-- **Dynamic Environment Detection**: The system automatically detects development (Replit), staging, and production environments to configure API endpoints and credentials accordingly.
+- **Social Media API Wizards**: Guided setup wizards simplify complex API configurations, including OAuth flows and token management, by automating steps and providing clear user guidance.
+- **Dynamic Environment Detection**: The system automatically detects development, staging, and production environments to configure API endpoints and credentials accordingly.
 - **Centralized API Key Management**: Global API keys for services like YouTube are stored in the database for centralized administration.
+- **UI/UX Decisions**: The system maintains a clean, professional interface without any visible debug elements. Stories creation through `/stories/new` automatically clears localStorage and resets store state to ensure a clean slate for new Stories.
 
 ### Feature Specifications
 - **AI-Powered Content Generation**: Utilizes AI for multi-language content creation based on campaign context.

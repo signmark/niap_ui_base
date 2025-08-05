@@ -87,26 +87,46 @@ export function WebsiteKeywordAnalyzer({ campaignId, onKeywordsSelected }: Websi
     }
 
     try {
-      // Используем новый эндпоинт для анализа сайта
-      const encodedUrl = encodeURIComponent(normalizedUrl);
-      const nocache = Date.now(); // Добавляем параметр для предотвращения кеширования
-      const response = await api.get(`/analyze-site/${encodedUrl}?nocache=${nocache}`);
+      // Используем новый эндпоинт для подбора ключевых слов
+      const response = await fetch('/api/keywords/analyze-website', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          url: normalizedUrl
+        })
+      });
+
+      const data = await response.json();
       
-      if (!response.data?.data?.keywords?.length) {
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка при анализе сайта');
+      }
+      
+      if (!data.success || !data.data?.keywords?.length) {
         toast({
           title: "Нет результатов",
-          description: "Не удалось извлечь ключевые слова с сайта",
+          description: "Не удалось подобрать ключевые слова для сайта",
         });
         return;
       }
 
-      const extractedKeywords = response.data.data.keywords;
+      const extractedKeywords = data.data.keywords.map(kw => ({
+        keyword: kw.keyword,
+        relevance: kw.relevance,
+        category: kw.category,
+        trend: kw.trend_score || 50,
+        competition: kw.competition || 50
+      }));
+      
       setKeywords(extractedKeywords);
       
       // Уведомляем пользователя
       toast({
-        title: "Анализ завершен",
-        description: `Найдено ${extractedKeywords.length} ключевых слов`,
+        title: "Подбор завершен",
+        description: `Найдено ${extractedKeywords.length} ключевых слов ${data.data.note ? '(базовые)' : ''}`,
       });
     } catch (error) {
       console.error("Ошибка при анализе сайта:", error);

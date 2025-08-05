@@ -104,6 +104,7 @@ export class GeminiProxyService {
                 // Для Vertex AI используем Service Account авторизацию
                 if (url.includes('aiplatform.googleapis.com')) {
                     logger.log(`[gemini-proxy] Используется Vertex AI, получаем Service Account токен`, 'gemini');
+                    logger.log(`[gemini-proxy] Данные для Vertex AI: ${JSON.stringify(body, null, 2)}`, 'gemini');
                     const accessToken = await vertexAIAuth.getAccessToken();
                     if (accessToken) {
                         fetchOptions.headers = {
