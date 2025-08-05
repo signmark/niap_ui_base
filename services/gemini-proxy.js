@@ -265,13 +265,22 @@ export class GeminiProxyService {
      */
     async generateText(params) {
         try {
-            const { prompt, model = 'gemini-2.5-flash' } = params;
-            logger.log(`[gemini-proxy] Generating text with model: ${model}`, 'gemini');
+            // Если передана строка вместо объекта, используем её как prompt
+            let prompt, model;
+            if (typeof params === 'string') {
+                prompt = params;
+                model = 'gemini-2.0-flash-exp';
+            } else {
+                prompt = params.prompt;
+                model = params.model || 'gemini-2.0-flash-exp';
+            }
+            logger.log(`[gemini-proxy] Generating text with model: ${model}, prompt: "${prompt?.substring(0, 100)}..."`, 'gemini');
             // Преобразуем модель в правильное название API
             const apiModel = this.mapModelToApiName(model);
             logger.log(`[gemini-proxy] Mapped model ${model} to API model: ${apiModel}`, 'gemini');
             // Определяем правильную версию API для модели
             const { baseUrl, isVertexAI } = this.getApiVersionForModel(apiModel);
+            logger.log(`[gemini-proxy] API версия: baseUrl=${baseUrl}, isVertexAI=${isVertexAI}`, 'gemini');
             let url;
             if (isVertexAI) {
                 // Для Vertex AI baseUrl уже содержит полный путь с моделью
@@ -281,6 +290,13 @@ export class GeminiProxyService {
                 // Для генеративного API используем стандартный формат
                 url = `${baseUrl}/models/${apiModel}:generateContent?key=${this.apiKey}`;
             }
+            // Проверяем что prompt не пустой
+            if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+                throw new Error('Prompt не может быть пустым');
+            }
+            
+            logger.log(`[gemini-proxy] Отправляем prompt длиной: ${prompt.length} символов`, 'gemini');
+            
             // Формируем запрос
             const requestData = {
                 contents: [
@@ -288,7 +304,7 @@ export class GeminiProxyService {
                         role: "user",
                         parts: [
                             {
-                                text: prompt
+                                text: prompt.trim()
                             }
                         ]
                     }
