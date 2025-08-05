@@ -1123,10 +1123,10 @@ async function extractFullSiteContent(url: string): Promise<string> {
       normalizedUrl = `https://${normalizedUrl}`;
     }
     
-    // Загрузка с увеличенным лимитом для лучшего анализа
+    // Загрузка с безопасными лимитами
     const response = await axios.get(normalizedUrl, {
-      timeout: 8000,
-      maxContentLength: 2 * 1024 * 1024, // 2MB для большего контента
+      timeout: 5000,
+      maxContentLength: 1024 * 1024, // 1MB для безопасности
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -1142,16 +1142,37 @@ async function extractFullSiteContent(url: string): Promise<string> {
     const description = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() || '';
     const keywords = htmlContent.match(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']+)["']/i)?.[1]?.trim() || '';
     
-    // Извлекаем заголовки
-    const h1Tags = htmlContent.match(/<h1[^>]*>([^<]+)<\/h1>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 10) || [];
-    const h2Tags = htmlContent.match(/<h2[^>]*>([^<]+)<\/h2>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 15) || [];
-    const h3Tags = htmlContent.match(/<h3[^>]*>([^<]+)<\/h3>/gi)?.map(h => h.replace(/<[^>]+>/g, '').trim()).filter(Boolean).slice(0, 20) || [];
+    // Безопасное извлечение заголовков с ограничениями
+    const h1Tags = [];
+    const h1Regex = /<h1[^>]*>([^<]+)<\/h1>/gi;
+    let h1Match;
+    let h1Count = 0;
+    while ((h1Match = h1Regex.exec(htmlContent)) !== null && h1Count < 10) {
+      const text = h1Match[1]?.trim();
+      if (text) h1Tags.push(text);
+      h1Count++;
+    }
     
-    // Извлекаем параграфы
-    const paragraphs = htmlContent.match(/<p[^>]*>([^<]+)<\/p>/gi)?.map(p => p.replace(/<[^>]+>/g, '').trim()).filter(p => p.length > 20).slice(0, 30) || [];
+    const h2Tags = [];
+    const h2Regex = /<h2[^>]*>([^<]+)<\/h2>/gi;
+    let h2Match;
+    let h2Count = 0;
+    while ((h2Match = h2Regex.exec(htmlContent)) !== null && h2Count < 15) {
+      const text = h2Match[1]?.trim();
+      if (text) h2Tags.push(text);
+      h2Count++;
+    }
     
-    // Извлекаем списки
-    const listItems = htmlContent.match(/<li[^>]*>([^<]+)<\/li>/gi)?.map(li => li.replace(/<[^>]+>/g, '').trim()).filter(li => li.length > 10).slice(0, 20) || [];
+    // Извлекаем параграфы (ограниченно)
+    const paragraphs = [];
+    const pRegex = /<p[^>]*>([^<]+)<\/p>/gi;
+    let pMatch;
+    let pCount = 0;
+    while ((pMatch = pRegex.exec(htmlContent)) !== null && pCount < 30) {
+      const text = pMatch[1]?.trim();
+      if (text && text.length > 20) paragraphs.push(text);
+      pCount++;
+    }
     
     // ИЗВЛЕКАЕМ КОНТАКТНУЮ ИНФОРМАЦИЮ С ФОКУСОМ НА FOOTER И КОНЕЦ СТРАНИЦЫ
     
@@ -1193,9 +1214,9 @@ async function extractFullSiteContent(url: string): Promise<string> {
     const allPhones = priorityPhones.length > 0 ? priorityPhones : (htmlContent.match(phoneRegex) || []);
     const allEmails = priorityEmails.length > 0 ? priorityEmails : (htmlContent.match(emailRegex) || []);
     
-    // Обрабатываем телефоны
-    for (const phone of allPhones) {
-      const cleanPhone = phone.trim();
+    // Обрабатываем телефоны с ограниченным циклом
+    for (let i = 0; i < Math.min(allPhones.length, 10); i++) {
+      const cleanPhone = allPhones[i].trim();
       const digits = cleanPhone.replace(/\D/g, '');
       // Проверяем что это действительно телефон (10-11 цифр)
       if (digits.length >= 10 && digits.length <= 11 && 
@@ -1204,15 +1225,15 @@ async function extractFullSiteContent(url: string): Promise<string> {
       }
     }
     
-    // Обрабатываем email
-    for (const email of allEmails) {
-      const cleanEmail = email.trim().toLowerCase();
+    // Обрабатываем email с ограниченным циклом
+    for (let i = 0; i < Math.min(allEmails.length, 10); i++) {
+      const cleanEmail = allEmails[i].trim().toLowerCase();
       // Проверяем что это не служебный email (избегаем false positive)
       if (!cleanEmail.includes('example.') && !cleanEmail.includes('@example') && 
           !cleanEmail.includes('test@') && !cleanEmail.includes('name@') &&
           !cleanEmail.includes('noreply') && !cleanEmail.includes('no-reply') &&
           cleanEmail.includes('.') && cleanEmail.length >= 5) {
-        emails.push(email.trim());
+        emails.push(allEmails[i].trim());
       }
     }
     
@@ -5008,10 +5029,10 @@ ${siteContent.substring(0, 2000)}
         normalizedUrl = `https://${normalizedUrl}`;
       }
       
-      // Загрузка с увеличенным лимитом для лучшего анализа
+      // Загрузка с безопасными лимитами  
       const response = await axios.get(normalizedUrl, {
-        timeout: 8000,
-        maxContentLength: 2 * 1024 * 1024, // 2MB для большего контента
+        timeout: 5000,
+        maxContentLength: 1024 * 1024, // 1MB для безопасности
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -5066,9 +5087,9 @@ ${siteContent.substring(0, 2000)}
       const allPhones = priorityPhones.length > 0 ? priorityPhones : (htmlContent.match(phoneRegex) || []);
       const allEmails = priorityEmails.length > 0 ? priorityEmails : (htmlContent.match(emailRegex) || []);
       
-      // Обрабатываем телефоны
-      for (const phone of allPhones) {
-        const cleanPhone = phone.trim();
+      // Обрабатываем телефоны с ограниченным циклом
+      for (let i = 0; i < Math.min(allPhones.length, 10); i++) {
+        const cleanPhone = allPhones[i].trim();
         const digits = cleanPhone.replace(/\D/g, '');
         // Проверяем что это действительно телефон (10-11 цифр)
         if (digits.length >= 10 && digits.length <= 11 && 
@@ -5077,15 +5098,15 @@ ${siteContent.substring(0, 2000)}
         }
       }
       
-      // Обрабатываем email
-      for (const email of allEmails) {
-        const cleanEmail = email.trim().toLowerCase();
+      // Обрабатываем email с ограниченным циклом
+      for (let i = 0; i < Math.min(allEmails.length, 10); i++) {
+        const cleanEmail = allEmails[i].trim().toLowerCase();
         // Проверяем что это не служебный email (избегаем false positive)
         if (!cleanEmail.includes('example.') && !cleanEmail.includes('@example') && 
             !cleanEmail.includes('test@') && !cleanEmail.includes('name@') &&
             !cleanEmail.includes('noreply') && !cleanEmail.includes('no-reply') &&
             cleanEmail.includes('.') && cleanEmail.length >= 5) {
-          emails.push(email.trim());
+          emails.push(allEmails[i].trim());
         }
       }
       
