@@ -3013,8 +3013,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'gemini-2.0-flash':
         case 'gemini-pro':
           try {
-            // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API
-            console.log('[gemini] Используем прямой Gemini API');
+            // ИСПРАВЛЕНО: Используем глобальный ключ из базы данных
+            console.log('[gemini] Получаем глобальный Gemini ключ из базы');
+            
+            let geminiKey;
+            try {
+              const globalKeys = await apiKeyService.getGlobalKeys();
+              geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+            } catch (keyError) {
+              console.error('[gemini] Ошибка получения глобального ключа:', keyError);
+              throw new Error('Gemini ключ недоступен');
+            }
+            
+            if (!geminiKey) {
+              throw new Error('Gemini ключ не найден в глобальных настройках');
+            }
             
             const geminiResponse = await axios.post(
               'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
@@ -3027,7 +3040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               {
                 headers: { 'Content-Type': 'application/json' },
-                params: { key: process.env.GEMINI_API_KEY },
+                params: { key: geminiKey },
                 timeout: 8000
               }
             );
@@ -5263,12 +5276,22 @@ ${siteContent.substring(0, 2000)}
           const userId = req.user?.id || 'guest';
           const token = req.user?.token || req.headers.authorization?.replace('Bearer ', '');
           
-          // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API для анализа
+          // ИСПРАВЛЕНО: Используем глобальный ключ из базы данных
           try {
             const analysisPrompt = `Analyze this website "${normalizedUrl}" and extract 5-10 relevant SEO keywords that best describe its content and purpose. Focus on business-related terms, services, and target audience keywords.
 
 Return your response as a JSON array in this exact format:
 [{"keyword": "business planning", "trend": 3500, "competition": 75}, {"keyword": "planning tools", "trend": 2800, "competition": 60}]`;
+
+            // Получаем глобальный Gemini ключ
+            let geminiKey;
+            try {
+              const globalKeys = await apiKeyService.getGlobalKeys();
+              geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+            } catch (keyError) {
+              console.error(`[${requestId}] Ошибка получения Gemini ключа:`, keyError);
+              throw new Error('Gemini ключ недоступен');
+            }
 
             const geminiResponse = await axios.post(
               'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
@@ -5278,7 +5301,7 @@ Return your response as a JSON array in this exact format:
               },
               {
                 headers: { 'Content-Type': 'application/json' },
-                params: { key: process.env.GEMINI_API_KEY },
+                params: { key: geminiKey },
                 timeout: 8000
               }
             );
@@ -6694,7 +6717,7 @@ Return your response as a JSON array in this exact format:
             continue;
           }
 
-          // Анализируем тональность через Gemini
+          // Анализируем тональность через Gemini с глобальным ключом
           try {
             const analysisPrompt = `Проанализируй тональность комментариев к посту и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
 
@@ -6709,6 +6732,16 @@ ${commentsText.substring(0, 4000)}
   "summary": "краткое описание тональности комментариев"
 }`;
 
+            // Получаем глобальный Gemini ключ
+            let geminiKey;
+            try {
+              const globalKeys = await apiKeyService.getGlobalKeys();
+              geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+            } catch (keyError) {
+              console.error(`[SOURCE-ANALYSIS] Ошибка получения Gemini ключа:`, keyError);
+              throw new Error('Gemini ключ недоступен');
+            }
+
             const geminiResponse = await axios.post(
               'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
               {
@@ -6717,7 +6750,7 @@ ${commentsText.substring(0, 4000)}
               },
               {
                 headers: { 'Content-Type': 'application/json' },
-                params: { key: process.env.GEMINI_API_KEY },
+                params: { key: geminiKey },
                 timeout: 8000
               }
             );
@@ -8245,9 +8278,19 @@ ${commentsText.substring(0, 4000)}
 Комментарии для анализа:
 ${commentTexts}`;
 
-        // Используем прямой Gemini API
+        // Используем глобальный Gemini ключ из базы данных
         let result;
         try {
+          // Получаем глобальный Gemini ключ
+          let geminiKey;
+          try {
+            const globalKeys = await apiKeyService.getGlobalKeys();
+            geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+          } catch (keyError) {
+            console.error(`[POST /api/trend-sentiment] Ошибка получения Gemini ключа:`, keyError);
+            throw new Error('Gemini ключ недоступен');
+          }
+
           const geminiResponse = await axios.post(
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
             {
@@ -8256,7 +8299,7 @@ ${commentTexts}`;
             },
             {
               headers: { 'Content-Type': 'application/json' },
-              params: { key: process.env.GEMINI_API_KEY },
+              params: { key: geminiKey },
               timeout: 10000
             }
           );
@@ -8453,6 +8496,16 @@ ${commentTexts}`
 Комментарии:
 ${commentTexts}`;
 
+        // Получаем глобальный Gemini ключ
+        let geminiKey;
+        try {
+          const globalKeys = await apiKeyService.getGlobalKeys();
+          geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+        } catch (keyError) {
+          console.error(`[POST /api/analyze-comments] Ошибка получения Gemini ключа:`, keyError);
+          throw new Error('Gemini ключ недоступен');
+        }
+
         const geminiResponse = await axios.post(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
           {
@@ -8461,7 +8514,7 @@ ${commentTexts}`;
           },
           {
             headers: { 'Content-Type': 'application/json' },
-            params: { key: process.env.GEMINI_API_KEY },
+            params: { key: geminiKey },
             timeout: 10000
           }
         );
@@ -10932,18 +10985,19 @@ ${commentTexts}`;
       console.log(`[WEBSITE-ANALYSIS] 🔍 Первые 500 символов контента: ${websiteContent.substring(0, 500)}...`);
       
       try {
-        // Пробуем получить Gemini ключ
+        // Получаем глобальный Gemini ключ
         let geminiKey;
         try {
-          geminiKey = await apiKeyService.getApiKey(userId, 'gemini', token);
-        } catch (error) {
-          console.log('Пробуем получить глобальный Gemini ключ...');
+          console.log('Получаем глобальный Gemini ключ для анализа сайта...');
           const globalKeys = await apiKeyService.getGlobalKeys();
-          geminiKey = globalKeys?.gemini;
+          geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+        } catch (error) {
+          console.error('Ошибка получения глобального Gemini ключа:', error);
+          throw new Error('Gemini API ключ недоступен в глобальных настройках');
         }
         
         if (!geminiKey) {
-          throw new Error('Gemini API ключ недоступен');
+          throw new Error('Gemini API ключ не найден в глобальных настройках');
         }
         
         // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API для анализа сайта
@@ -11009,7 +11063,7 @@ ${websiteContent}`;
           },
           {
             headers: { 'Content-Type': 'application/json' },
-            params: { key: process.env.GEMINI_API_KEY },
+            params: { key: geminiKey },
             timeout: 15000
           }
         );
