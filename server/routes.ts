@@ -4,7 +4,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
-import { geminiProxyService } from '../services/gemini-proxy.js';
+// import { geminiProxyService } from '../services/gemini-proxy.js'; // ВРЕМЕННО ОТКЛЮЧЁН
 import { VertexAIService } from './services/vertex-ai';
 import { VertexAICredentialsService } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
@@ -4955,16 +4955,30 @@ ${siteContent.substring(0, 2000)}
   {"keyword": "другое релевантное слово", "trend": 75, "competition": 45}
 ]`;
 
-          // Используем GeminiProxyService с SOCKS5 прокси
-          console.log(`[${requestId}] 🚀 ПРОКСИ: Используем GeminiProxyService для запроса к Gemini`);
-          const response = await geminiProxyService.generateContent(contextualPrompt, {
-            temperature: 0.2,
-            maxOutputTokens: 1000,
-            model: 'gemini-1.5-flash'
-          });
-          console.log(`[${requestId}] 🚀 ПРОКСИ: Получен ответ от GeminiProxyService`, response ? 'успешно' : 'ошибка');
+          // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API с переменной окружения
+          console.log(`[${requestId}] 🚀 GEMINI: Используем прямой Gemini API с переменной окружения`);
+          const geminiResponse = await axios.post(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+            {
+              contents: [{ parts: [{ text: contextualPrompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 1000
+              }
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              params: {
+                key: process.env.GEMINI_API_KEY
+              },
+              timeout: 8000
+            }
+          );
+          console.log(`[${requestId}] 🚀 GEMINI: Получен ответ от Gemini API`, geminiResponse.status);
 
-          const geminiText = response; // GeminiProxyService возвращает сразу текст
+          const geminiText = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
           
           if (geminiText) {
             console.log(`[${requestId}] Ответ от Gemini API:`, geminiText.substring(0, 200));
