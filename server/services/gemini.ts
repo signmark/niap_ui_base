@@ -23,7 +23,7 @@ export class GeminiService {
    */
   async testApiKey(): Promise<boolean> {
     try {
-      logger.log('[gemini-service] Проверка API ключа через прокси-сервис');
+      // Проверка API ключа
       return await geminiProxyService.testApiKey();
     } catch (error) {
       logger.error('[gemini-service] Error testing API key:', error);
@@ -39,10 +39,7 @@ export class GeminiService {
    */
   async generateText(prompt: string, modelName: string = 'gemini-1.5-flash'): Promise<string> {
     try {
-      logger.log(`[gemini-service] Generating text with model: ${modelName}`);
-      
-      // Используем прокси сервис для генерации текста через SOCKS5
-      logger.log(`[gemini-service] Используется SOCKS5 прокси для генерации текста`, 'gemini');
+      // Генерация текста через прокси-сервис
       
       return await geminiProxyService.generateText({ 
         prompt, 
@@ -65,7 +62,7 @@ export class GeminiService {
     model?: string;
   }): Promise<string> {
     try {
-      logger.log(`[gemini-service] Improving text with model: ${model}`, 'gemini');
+      // Улучшение текста
       
       // Используем прокси сервис для улучшения текста
       return await geminiProxyService.improveText({

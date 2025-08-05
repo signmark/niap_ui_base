@@ -54,7 +54,6 @@ export class GeminiProxyService {
         this.apiKey = options.apiKey;
         
         // ВРЕМЕННО ОТКЛЮЧЕН: прокси не работает в текущей среде
-        logger.log(`[gemini-proxy] Инициализация без прокси - используем прямое соединение`, 'gemini');
         this.agent = null;
         this.proxyUrl = null;
     }
@@ -94,7 +93,7 @@ export class GeminiProxyService {
                             ...fetchOptions.headers,
                             'Authorization': `Bearer ${accessToken}`
                         };
-                        logger.log(`[gemini-proxy] Service Account токен добавлен для Vertex AI`, 'gemini');
+                        // Service Account токен добавлен для Vertex AI
                     }
                     else {
                         throw new Error('Не удалось получить Service Account токен для Vertex AI');
@@ -102,7 +101,7 @@ export class GeminiProxyService {
                 }
                 // Для Vertex AI не используем прокси (работает напрямую на staging)
                 if (url.includes('aiplatform.googleapis.com')) {
-                    logger.log(`[gemini-proxy] Vertex AI запрос - используем прямое соединение`, 'gemini');
+                    // Vertex AI запрос через прямое соединение
                 } else if (this.agent) {
                     // Используем прокси только для стандартного Gemini API
                     fetchOptions.agent = this.agent;
@@ -113,7 +112,7 @@ export class GeminiProxyService {
                 // Выполняем запрос
                 const response = await fetch(url, fetchOptions);
                 const status = response.status;
-                logger.log(`[gemini-proxy] Получен ответ со статусом: ${status}`, 'gemini');
+                // Получен ответ от API
                 if (status === 200) {
                     // Успешный ответ
                     const data = await response.json();
@@ -159,7 +158,7 @@ export class GeminiProxyService {
                         
                         const fallbackResponse = await fetch(fallbackUrl, fallbackOptions);
                         const status = fallbackResponse.status;
-                        logger.log(`[gemini-proxy] Fallback ответ со статусом: ${status}`, 'gemini');
+                        // Fallback ответ получен
                         
                         if (status === 200) {
                             const data = await fallbackResponse.json();
