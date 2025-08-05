@@ -1,0 +1,536 @@
+mm-1  | 10:48:28 AM [DEV] [claude] [claude-routes] Claude API key: sk-ant-a...0QAA
+smm-1  | 10:48:28 AM [DEV] [claude] [claude-routes] Claude service initialized successfully
+smm-1  | 10:48:28 AM [DEV] [claude] [claude-routes] Calling improveText with model claude-3-5-sonnet-20241022
+smm-1  | 10:48:28 AM [DEV] [claude] Improving text with Claude AI...
+smm-1  | 10:48:28 AM [claude] Making Claude API request to https://api.anthropic.com/v1/messages (попытка 1/3)
+smm-1  | 10:48:28 AM [claude] Using model: claude-3-5-sonnet-20241022
+smm-1  | 10:48:28 AM [claude] Request headers: Content-Type: application/json, anthropic-version: 2023-06-01
+smm-1  | 10:48:28 AM [claude] Request content preview: Улучши этот текст, с...
+smm-1  | 10:48:28 AM [DEV] [express] Claude API error: 403 claude
+smm-1  | 10:48:28 AM [claude] Making Claude API request to https://api.anthropic.com/v1/messages (попытка 2/3)
+smm-1  | 10:48:28 AM [claude] Using model: claude-3-5-sonnet-20241022
+smm-1  | 10:48:28 AM [claude] Request headers: Content-Type: application/json, anthropic-version: 2023-06-01
+smm-1  | 10:48:28 AM [claude] Request content preview: Улучши этот текст, с...
+smm-1  | 10:48:29 AM [DEV] [express] Claude API error: 403 claude
+smm-1  | 10:48:29 AM [claude] Making Claude API request to https://api.anthropic.com/v1/messages (попытка 3/3)
+smm-1  | 10:48:29 AM [claude] Using model: claude-3-5-sonnet-20241022
+smm-1  | 10:48:29 AM [claude] Request headers: Content-Type: application/json, anthropic-version: 2023-06-01
+smm-1  | 10:48:29 AM [claude] Request content preview: Улучши этот текст, с...
+smm-1  | 10:48:29 AM [DEV] [express] Claude API error: 403 claude
+smm-1  | Claude API Full Error: AxiosError: Request failed with status code 403
+smm-1  |     at settle (file:///app/node_modules/axios/lib/core/settle.js:19:12)
+smm-1  |     at Unzip.handleStreamEnd (file:///app/node_modules/axios/lib/adapters/http.js:599:11)
+smm-1  |     at Unzip.emit (node:events:529:35)
+smm-1  |     at endReadableNT (node:internal/streams/readable:1400:12)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+smm-1  |     at Axios.request (file:///app/node_modules/axios/lib/core/Axios.js:45:41)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async ClaudeService.makeRequest (file:///app/server/services/claude.ts:67:1445)
+smm-1  |     at async ClaudeService.improveText (file:///app/server/services/claude.ts:23:325)
+smm-1  |     at async file:///app/server/routes-claude.ts:1:5133 {
+smm-1  |   code: 'ERR_BAD_REQUEST',
+smm-1  |   config: {
+smm-1  |     transitional: {
+smm-1  |       silentJSONParsing: true,
+smm-1  |       forcedJSONParsing: true,
+smm-1  |       clarifyTimeoutError: false
+smm-1  |     },
+smm-1  |     adapter: [ 'xhr', 'http', 'fetch' ],
+smm-1  |     transformRequest: [ [Function: transformRequest] ],
+smm-1  |     transformResponse: [ [Function: transformResponse] ],
+smm-1  |     timeout: 0,
+smm-1  |     xsrfCookieName: 'XSRF-TOKEN',
+smm-1  |     xsrfHeaderName: 'X-XSRF-TOKEN',
+smm-1  |     maxContentLength: -1,
+smm-1  |     maxBodyLength: -1,
+smm-1  |     env: { FormData: [Function [FormData]], Blob: [class Blob] },
+smm-1  |     validateStatus: [Function: validateStatus],
+smm-1  |     headers: Object [AxiosHeaders] {
+smm-1  |       Accept: 'application/json, text/plain, */*',
+smm-1  |       'Content-Type': 'application/json',
+smm-1  |       'x-api-key': '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',
+smm-1  |       'anthropic-version': '2023-06-01',
+smm-1  |       'User-Agent': 'axios/1.8.4',
+smm-1  |       'Content-Length': '7367',
+smm-1  |       'Accept-Encoding': 'gzip, compress, deflate, br'
+smm-1  |     },
+smm-1  |     method: 'post',
+smm-1  |     url: 'https://api.anthropic.com/v1/messages',
+smm-1  |     data: '{"model":"claude-3-5-sonnet-20241022","max_tokens":7000,"temperature":0.7,"messages":[{"role":"user","content":"Улучши этот текст, сделай его более привлекательным и интересным для чтения. Сохрани стиль и формат, но сделай его более ярким и запоминающимся. ВАЖНО: Используй **жирный текст** для ключевых слов, *курсив* для акцентов, ~~зачеркнутый~~ для изменений, __подчеркнутый__ для важных моментов в markdown формате.\\n\\nКРИТИЧЕСКИ ВАЖНО: \\n1. ОБЯЗАТЕЛЬНО верни ПОЛНЫЙ улучшенный текст БЕЗ СОКРАЩЕНИЙ\\n2. Сохрани ВСЕ HTML-теги и структуру форматирования\\n3. НЕ ОБРЕЗАЙ текст на середине предложения\\n4. НЕ добавляй комментарии, объяснения или служебный текст\\n5. Начни ответ сразу с улучшенного текста\\n6. Завершай текст только после полной обработки всего исходного контента\\n\\nИсходный текст для улучшения:\\n<h2>SMM Manager: Инновационная AI-Платформа для Эффективного Управления Социальными Сетями</h2><p>В эпоху высокой конкуренции в социальных медиа, где борьба за внимание аудитории становится все интенсивнее, ключевыми факторами успеха являются эффективность и инновации. <strong>SMM Manager</strong> — это революционная AI-платформа, созданная для трансформации подходов к управлению социальными сетями.</p><p><strong>SMM Manager</strong> — ваш интеллектуальный помощник в мире SMM. Платформа автоматизирует ключевые процессы: от анализа трендов до создания качественного контента и его публикации. Используя возможности искусственного интеллекта, <strong>SMM Manager</strong> повышает эффективность вашей SMM-стратегии, позволяя сосредоточиться на стратегическом планировании.</p><h3>Ключевые Возможности SMM Manager:</h3><ul><li><p><strong>AI-платформа для SMM</strong>: Комплексное решение с интуитивно понятным интерфейсом для управления социальными сетями.</p></li><li><p><strong>AI-генерация контента</strong>: Создание текстов, изображений и видео с помощью передовых моделей ИИ (<strong>DeepSeek, Gemini, Claude</strong>):</p><ul><li><p><strong>Тексты</strong>: Посты, статьи, заголовки, оптимизированные под алгоритмы соцсетей.</p></li><li><p><strong>Изображения</strong>: Визуально привлекательный контент для повышения вовлеченности.</p></li><li><p><strong>Видео</strong>: Автоматическое создание роликов для Stories, Reels и других форматов.</p></li></ul></li><li><p><strong>Аналитика</strong>: Глубокие инсайты о производительности кампаний и поведении аудитории.</p></li><li><p><strong>Планировщик публикаций</strong>: Организация контент-плана и автоматизация публикаций.</p></li><li><p><strong>Централизованное управление</strong>: Контроль всех публикаций на разных платформах.</p></li><li><p><strong>Автоматизация SMM</strong>: Мониторинг упоминаний, анализ настроений и другие рутинные задачи.</p></li></ul><h3>Для Кого Подходит SMM Manager?</h3><ul><li><p><strong>SMM-специалисты</strong>: Повышение продуктивности за счет автоматизации.</p></li><li><p><strong>Маркетологи</strong>: Оптимизация кампаний и повышение ROI.</p></li><li><p><strong>Агентства</strong>: Масштабирование услуг без увеличения штата.</p></li><li><p><strong>Предприниматели</strong>: Эффективное продвижение бренда с минимальными затратами.</p></li><li><p><strong>Компании</strong>: Улучшение онлайн-присутствия и взаимодействия с клиентами.</p></li></ul><h3>Преимущества Платформы:</h3><ul><li><p>Автоматизация процессов SMM с помощью ИИ</p></li><li><p>Экономия времени и ресурсов</p></li><li><p>Высокое качество генерируемого контента</p></li><li><p>Детальная аналитика для принятия решений</p></li><li><p>Масштабируемость для работы с множеством аккаунтов</p></li></ul><h3>Отзывы Пользователей:</h3><blockquote><p><em>\\"SMM Manager кардинально упростил мою работу. AI-генерация контента позволяет создавать профессиональные материалы за минуты.\\"</em> — Ольга, SMM-специалист</p></blockquote><blockquote><p><em>\\"Мы получили мощный инструмент для автоматизации SMM с понятной аналитикой и планировщиком.\\"</em> — Дмитрий, Руководитель отдела маркетинга</p></blockquote><blockquote><p><em>\\"Как владелец бизнеса, я экономлю массу времени на ведении соцсетей благодаря SMM Manager.\\"</em> — Елена, Предприниматель</p></blockquote><h3>Начните Преобразование Вашего SMM Сегодня!</h3><p><strong>SMM Manager</strong> — это современное решение для автоматизации, анализа и создания контента в социальных сетях. Раскройте потенциал искусственного интеллекта для достижения ваших бизнес-целей.</p><p>Для получения дополнительной информации о возможностях <strong>SMM Manager</strong> следите за нашими обновлениями.</p>\\n\\nУлучшенная версия:"}]}',
+smm-1  |     allowAbsoluteUrls: true
+smm-1  |   },
+smm-1  |   request: <ref *1> ClientRequest {
+smm-1  |     _events: [Object: null prototype] {
+smm-1  |       abort: [Function (anonymous)],
+smm-1  |       aborted: [Function (anonymous)],
+smm-1  |       connect: [Function (anonymous)],
+smm-1  |       error: [Function (anonymous)],
+smm-1  |       socket: [Function (anonymous)],
+smm-1  |       timeout: [Function (anonymous)],
+smm-1  |       finish: [Function: requestOnFinish]
+smm-1  |     },
+smm-1  |     _eventsCount: 7,
+smm-1  |     _maxListeners: undefined,
+smm-1  |     outputData: [],
+smm-1  |     outputSize: 0,
+smm-1  |     writable: true,
+smm-1  |     destroyed: true,
+smm-1  |     _last: true,
+smm-1  |     chunkedEncoding: false,
+smm-1  |     shouldKeepAlive: false,
+smm-1  |     maxRequestsOnConnectionReached: false,
+smm-1  |     _defaultKeepAlive: true,
+smm-1  |     useChunkedEncodingByDefault: true,
+smm-1  |     sendDate: false,
+smm-1  |     _removedConnection: false,
+smm-1  |     _removedContLen: false,
+smm-1  |     _removedTE: false,
+smm-1  |     strictContentLength: false,
+smm-1  |     _contentLength: '7367',
+smm-1  |     _hasBody: true,
+smm-1  |     _trailer: '',
+smm-1  |     finished: true,
+smm-1  |     _headerSent: true,
+smm-1  |     _closed: true,
+smm-1  |     socket: TLSSocket {
+smm-1  |       _tlsOptions: [Object],
+smm-1  |       _secureEstablished: true,
+smm-1  |       _securePending: false,
+smm-1  |       _newSessionPending: false,
+smm-1  |       _controlReleased: true,
+smm-1  |       secureConnecting: false,
+smm-1  |       _SNICallback: null,
+smm-1  |       servername: 'api.anthropic.com',
+smm-1  |       alpnProtocol: false,
+smm-1  |       authorized: true,
+smm-1  |       authorizationError: null,
+smm-1  |       encrypted: true,
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 9,
+smm-1  |       connecting: false,
+smm-1  |       _hadError: false,
+smm-1  |       _parent: null,
+smm-1  |       _host: 'api.anthropic.com',
+smm-1  |       _closeAfterHandlingError: false,
+smm-1  |       _readableState: [ReadableState],
+smm-1  |       _maxListeners: undefined,
+smm-1  |       _writableState: [WritableState],
+smm-1  |       allowHalfOpen: false,
+smm-1  |       _sockname: null,
+smm-1  |       _pendingData: null,
+smm-1  |       _pendingEncoding: '',
+smm-1  |       server: undefined,
+smm-1  |       _server: null,
+smm-1  |       ssl: null,
+smm-1  |       _requestCert: true,
+smm-1  |       _rejectUnauthorized: true,
+smm-1  |       parser: null,
+smm-1  |       _httpMessage: [Circular *1],
+smm-1  |       write: [Function: writeAfterFIN],
+smm-1  |       [Symbol(alpncallback)]: null,
+smm-1  |       [Symbol(res)]: null,
+smm-1  |       [Symbol(verified)]: true,
+smm-1  |       [Symbol(pendingSession)]: null,
+smm-1  |       [Symbol(async_id_symbol)]: 80505,
+smm-1  |       [Symbol(kHandle)]: null,
+smm-1  |       [Symbol(lastWriteQueueSize)]: 0,
+smm-1  |       [Symbol(timeout)]: null,
+smm-1  |       [Symbol(kBuffer)]: null,
+smm-1  |       [Symbol(kBufferCb)]: null,
+smm-1  |       [Symbol(kBufferGen)]: null,
+smm-1  |       [Symbol(kCapture)]: false,
+smm-1  |       [Symbol(kSetNoDelay)]: false,
+smm-1  |       [Symbol(kSetKeepAlive)]: true,
+smm-1  |       [Symbol(kSetKeepAliveInitialDelay)]: 60,
+smm-1  |       [Symbol(kBytesRead)]: 362,
+smm-1  |       [Symbol(kBytesWritten)]: 7761,
+smm-1  |       [Symbol(connect-options)]: [Object]
+smm-1  |     },
+smm-1  |     _header: 'POST /v1/messages HTTP/1.1\r\n' +
+smm-1  |       'Accept: application/json, text/plain, */*\r\n' +
+smm-1  |       'Content-Type: application/json\r\n' +
+smm-1  |       'x-api-key: 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\r\n' +
+smm-1  |       'anthropic-version: 2023-06-01\r\n' +
+smm-1  |       'User-Agent: axios/1.8.4\r\n' +
+smm-1  |       'Content-Length: 7367\r\n' +
+smm-1  |       'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+smm-1  |       'Host: api.anthropic.com\r\n' +
+smm-1  |       'Connection: close\r\n' +
+smm-1  |       '\r\n',
+smm-1  |     _keepAliveTimeout: 0,
+smm-1  |     _onPendingData: [Function: nop],
+smm-1  |     agent: Agent {
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 2,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       defaultPort: 443,
+smm-1  |       protocol: 'https:',
+smm-1  |       options: [Object: null prototype],
+smm-1  |       requests: [Object: null prototype] {},
+smm-1  |       sockets: [Object: null prototype] {},
+smm-1  |       freeSockets: [Object: null prototype] {},
+smm-1  |       keepAliveMsecs: 1000,
+smm-1  |       keepAlive: false,
+smm-1  |       maxSockets: Infinity,
+smm-1  |       maxFreeSockets: 256,
+smm-1  |       scheduling: 'lifo',
+smm-1  |       maxTotalSockets: Infinity,
+smm-1  |       totalSocketCount: 0,
+smm-1  |       maxCachedSessions: 100,
+smm-1  |       _sessionCache: [Object],
+smm-1  |       [Symbol(kCapture)]: false
+smm-1  |     },
+smm-1  |     socketPath: undefined,
+smm-1  |     method: 'POST',
+smm-1  |     maxHeaderSize: undefined,
+smm-1  |     insecureHTTPParser: undefined,
+smm-1  |     joinDuplicateHeaders: undefined,
+smm-1  |     path: '/v1/messages',
+smm-1  |     _ended: true,
+smm-1  |     res: IncomingMessage {
+smm-1  |       _readableState: [ReadableState],
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 4,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       socket: [TLSSocket],
+smm-1  |       httpVersionMajor: 1,
+smm-1  |       httpVersionMinor: 1,
+smm-1  |       httpVersion: '1.1',
+smm-1  |       complete: true,
+smm-1  |       rawHeaders: [Array],
+smm-1  |       rawTrailers: [],
+smm-1  | 10:48:29 AM [DEV] [express] [claude-routes] Error improving text with Claude: Error: Failed to improve text with Claude: Request not allowed
+smm-1  |     at ClaudeService.improveText (file:///app/server/services/claude.ts:23:2071)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-claude.ts:1:5133
+smm-1  | 10:48:29 AM [DEV] [express] [claude-routes] Error message: Failed to improve text with Claude: Request not allowed claude 
+smm-1  | 10:48:29 AM [DEV] [express] [claude-routes] Error stack: Error: Failed to improve text with Claude: Request not allowed   
+smm-1  |     at ClaudeService.improveText (file:///app/server/services/claude.ts:23:2071)
+smm-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+smm-1  |     at async file:///app/server/routes-claude.ts:1:5133 claude
+smm-1  |       joinDuplicateHeaders: undefined,
+smm-1  |       aborted: false,
+smm-1  |       upgrade: false,
+smm-1  |       url: '',
+smm-1  |       method: null,
+smm-1  |       statusCode: 403,
+smm-1  |       statusMessage: 'Forbidden',
+smm-1  |       client: [TLSSocket],
+smm-1  |       _consuming: true,
+smm-1  |       _dumped: false,
+smm-1  |       req: [Circular *1],
+smm-1  |       responseUrl: 'https://api.anthropic.com/v1/messages',
+smm-1  |       redirects: [],
+smm-1  |       [Symbol(kCapture)]: false,
+smm-1  |       [Symbol(kHeaders)]: [Object],
+smm-1  |       [Symbol(kHeadersCount)]: 18,
+smm-1  |       [Symbol(kTrailers)]: null,
+smm-1  |       [Symbol(kTrailersCount)]: 0
+smm-1  |     },
+smm-1  |     aborted: false,
+smm-1  |     timeoutCb: null,
+smm-1  |     upgradeOrConnect: false,
+smm-1  |     parser: null,
+smm-1  |     maxHeadersCount: null,
+smm-1  |     reusedSocket: false,
+smm-1  |     host: 'api.anthropic.com',
+smm-1  |     protocol: 'https:',
+smm-1  |     _redirectable: Writable {
+smm-1  |       _writableState: [WritableState],
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 3,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       _options: [Object],
+smm-1  |       _ended: true,
+smm-1  |       _ending: true,
+smm-1  |       _redirectCount: 0,
+smm-1  |       _redirects: [],
+smm-1  |       _requestBodyLength: 7367,
+smm-1  |       _requestBodyBuffers: [],
+smm-1  |       _onNativeResponse: [Function (anonymous)],
+smm-1  |       _currentRequest: [Circular *1],
+smm-1  |       _currentUrl: 'https://api.anthropic.com/v1/messages',
+smm-1  |       [Symbol(kCapture)]: false
+smm-1  |     },
+smm-1  |     [Symbol(kCapture)]: false,
+smm-1  |     [Symbol(kBytesWritten)]: 0,
+smm-1  |     [Symbol(kNeedDrain)]: false,
+smm-1  |     [Symbol(corked)]: 0,
+smm-1  |     [Symbol(kOutHeaders)]: [Object: null prototype] {
+smm-1  |       accept: [Array],
+smm-1  |       'content-type': [Array],
+smm-1  |       'x-api-key': [Array],
+smm-1  |       'anthropic-version': [Array],
+smm-1  |       'user-agent': [Array],
+smm-1  |       'content-length': [Array],
+smm-1  |       'accept-encoding': [Array],
+smm-1  |       host: [Array]
+smm-1  |     },
+smm-1  |     [Symbol(errored)]: null,
+smm-1  |     [Symbol(kHighWaterMark)]: 16384,
+smm-1  |     [Symbol(kRejectNonStandardBodyWrites)]: false,
+smm-1  |     [Symbol(kUniqueHeaders)]: null
+smm-1  |   },
+smm-1  |   response: {
+smm-1  |     status: 403,
+smm-1  |     statusText: 'Forbidden',
+smm-1  |     headers: Object [AxiosHeaders] {
+smm-1  |       date: 'Tue, 05 Aug 2025 10:48:29 GMT',
+smm-1  |       'content-type': 'application/json',
+smm-1  |       'transfer-encoding': 'chunked',
+smm-1  |       connection: 'close',
+smm-1  |       vary: 'Accept-Encoding',
+smm-1  |       'x-robots-tag': 'none',
+smm-1  |       server: 'cloudflare',
+smm-1  |       'cf-ray': '96a5b8ee1d453ee7-ARN'
+smm-1  |     },
+smm-1  |     config: {
+smm-1  |       transitional: [Object],
+smm-1  |       adapter: [Array],
+smm-1  |       transformRequest: [Array],
+smm-1  |       transformResponse: [Array],
+smm-1  |       timeout: 0,
+smm-1  |       xsrfCookieName: 'XSRF-TOKEN',
+smm-1  |       xsrfHeaderName: 'X-XSRF-TOKEN',
+smm-1  |       maxContentLength: -1,
+smm-1  |       maxBodyLength: -1,
+smm-1  |       env: [Object],
+smm-1  |       validateStatus: [Function: validateStatus],
+smm-1  |       headers: [Object [AxiosHeaders]],
+smm-1  |       method: 'post',
+smm-1  |       url: 'https://api.anthropic.com/v1/messages',
+smm-1  |       data: '{"model":"claude-3-5-sonnet-20241022","max_tokens":7000,"temperature":0.7,"messages":[{"role":"user","content":"Улучши этот текст, сделай его более привлекательным и интересным для чтения. Сохрани стиль и формат, но сделай его более ярким и запоминающимся. ВАЖНО: Используй **жирный текст** для ключевых слов, *курсив* для акцентов, ~~зачеркнутый~~ для изменений, __подчеркнутый__ для важных моментов в markdown формате.\\n\\nКРИТИЧЕСКИ ВАЖНО: \\n1. ОБЯЗАТЕЛЬНО верни ПОЛНЫЙ улучшенный текст БЕЗ СОКРАЩЕНИЙ\\n2. Сохрани ВСЕ HTML-теги и структуру форматирования\\n3. НЕ ОБРЕЗАЙ текст на середине предложения\\n4. НЕ добавляй комментарии, объяснения или служебный текст\\n5. Начни ответ сразу с улучшенного текста\\n6. Завершай текст только после полной обработки всего исходного контента\\n\\nИсходный текст для улучшения:\\n<h2>SMM Manager: Инновационная AI-Платформа для Эффективного Управления Социальными Сетями</h2><p>В эпоху высокой конкуренции в социальных медиа, где борьба за внимание аудитории становится все интенсивнее, ключевыми факторами успеха являются эффективность и инновации. <strong>SMM Manager</strong> — это революционная AI-платформа, созданная для трансформации подходов к управлению социальными сетями.</p><p><strong>SMM Manager</strong> — ваш интеллектуальный помощник в мире SMM. Платформа автоматизирует ключевые процессы: от анализа трендов до создания качественного контента и его публикации. Используя возможности искусственного интеллекта, <strong>SMM Manager</strong> повышает эффективность вашей SMM-стратегии, позволяя сосредоточиться на стратегическом планировании.</p><h3>Ключевые Возможности SMM Manager:</h3><ul><li><p><strong>AI-платформа для SMM</strong>: Комплексное решение с интуитивно понятным интерфейсом для управления социальными сетями.</p></li><li><p><strong>AI-генерация контента</strong>: Создание текстов, изображений и видео с помощью передовых моделей ИИ (<strong>DeepSeek, Gemini, Claude</strong>):</p><ul><li><p><strong>Тексты</strong>: Посты, статьи, заголовки, оптимизированные под алгоритмы соцсетей.</p></li><li><p><strong>Изображения</strong>: Визуально привлекательный контент для повышения вовлеченности.</p></li><li><p><strong>Видео</strong>: Автоматическое создание роликов для Stories, Reels и других форматов.</p></li></ul></li><li><p><strong>Аналитика</strong>: Глубокие инсайты о производительности кампаний и поведении аудитории.</p></li><li><p><strong>Планировщик публикаций</strong>: Организация контент-плана и автоматизация публикаций.</p></li><li><p><strong>Централизованное управление</strong>: Контроль всех публикаций на разных платформах.</p></li><li><p><strong>Автоматизация SMM</strong>: Мониторинг упоминаний, анализ настроений и другие рутинные задачи.</p></li></ul><h3>Для Кого Подходит SMM Manager?</h3><ul><li><p><strong>SMM-специалисты</strong>: Повышение продуктивности за счет автоматизации.</p></li><li><p><strong>Маркетологи</strong>: Оптимизация кампаний и повышение ROI.</p></li><li><p><strong>Агентства</strong>: Масштабирование услуг без увеличения штата.</p></li><li><p><strong>Предприниматели</strong>: Эффективное продвижение бренда с минимальными затратами.</p></li><li><p><strong>Компании</strong>: Улучшение онлайн-присутствия и взаимодействия с клиентами.</p></li></ul><h3>Преимущества Платформы:</h3><ul><li><p>Автоматизация процессов SMM с помощью ИИ</p></li><li><p>Экономия времени и ресурсов</p></li><li><p>Высокое качество генерируемого контента</p></li><li><p>Детальная аналитика для принятия решений</p></li><li><p>Масштабируемость для работы с множеством аккаунтов</p></li></ul><h3>Отзывы Пользователей:</h3><blockquote><p><em>\\"SMM Manager кардинально упростил мою работу. AI-генерация контента позволяет создавать профессиональные материалы за минуты.\\"</em> — Ольга, SMM-специалист</p></blockquote><blockquote><p><em>\\"Мы получили мощный инструмент для автоматизации SMM с понятной аналитикой и планировщиком.\\"</em> — Дмитрий, Руководитель отдела маркетинга</p></blockquote><blockquote><p><em>\\"Как владелец бизнеса, я экономлю массу времени на ведении соцсетей благодаря SMM Manager.\\"</em> — Елена, Предприниматель</p></blockquote><h3>Начните Преобразование Вашего SMM Сегодня!</h3><p><strong>SMM Manager</strong> — это современное решение для автоматизации, анализа и создания контента в социальных сетях. Раскройте потенциал искусственного интеллекта для достижения ваших бизнес-целей.</p><p>Для получения дополнительной информации о возможностях <strong>SMM Manager</strong> следите за нашими обновлениями.</p>\\n\\nУлучшенная версия:"}]}',
+smm-1  |       allowAbsoluteUrls: true
+smm-1  |     },
+smm-1  |     request: <ref *1> ClientRequest {
+smm-1  |       _events: [Object: null prototype],
+smm-1  |       _eventsCount: 7,
+smm-1  |       _maxListeners: undefined,
+smm-1  |       outputData: [],
+smm-1  |       outputSize: 0,
+smm-1  |       writable: true,
+smm-1  |       destroyed: true,
+smm-1  |       _last: true,
+smm-1  |       chunkedEncoding: false,
+smm-1  |       shouldKeepAlive: false,
+smm-1  |       maxRequestsOnConnectionReached: false,
+smm-1  |       _defaultKeepAlive: true,
+smm-1  |       useChunkedEncodingByDefault: true,
+smm-1  |       sendDate: false,
+smm-1  |       _removedConnection: false,
+smm-1  |       _removedContLen: false,
+smm-1  |       _removedTE: false,
+smm-1  |       strictContentLength: false,
+smm-1  |       _contentLength: '7367',
+smm-1  |       _hasBody: true,
+smm-1  |       _trailer: '',
+smm-1  |       finished: true,
+smm-1  |       _headerSent: true,
+smm-1  |       _closed: true,
+smm-1  |       socket: [TLSSocket],
+smm-1  |       _header: 'POST /v1/messages HTTP/1.1\r\n' +
+smm-1  |         'Accept: application/json, text/plain, */*\r\n' +
+smm-1  |         'Content-Type: application/json\r\n' +
+smm-1  |         'x-api-key: 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\r\n' +
+smm-1  |         'anthropic-version: 2023-06-01\r\n' +
+smm-1  |         'User-Agent: axios/1.8.4\r\n' +
+smm-1  |         'Content-Length: 7367\r\n' +
+smm-1  |         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+smm-1  |         'Host: api.anthropic.com\r\n' +
+smm-1  |         'Connection: close\r\n' +
+smm-1  |         '\r\n',
+smm-1  |       _keepAliveTimeout: 0,
+smm-1  |       _onPendingData: [Function: nop],
+smm-1  |       agent: [Agent],
+smm-1  |       socketPath: undefined,
+smm-1  |       method: 'POST',
+smm-1  |       maxHeaderSize: undefined,
+smm-1  |       insecureHTTPParser: undefined,
+smm-1  |       joinDuplicateHeaders: undefined,
+smm-1  |       path: '/v1/messages',
+smm-1  |       _ended: true,
+smm-1  |       res: [IncomingMessage],
+smm-1  |       aborted: false,
+smm-1  |       timeoutCb: null,
+smm-1  |       upgradeOrConnect: false,
+smm-1  |       parser: null,
+smm-1  |       maxHeadersCount: null,
+smm-1  |       reusedSocket: false,
+smm-1  |       host: 'api.anthropic.com',
+smm-1  |       protocol: 'https:',
+smm-1  |       _redirectable: [Writable],
+smm-1  |       [Symbol(kCapture)]: false,
+smm-1  |       [Symbol(kBytesWritten)]: 0,
+smm-1  |       [Symbol(kNeedDrain)]: false,
+smm-1  |       [Symbol(corked)]: 0,
+smm-1  |       [Symbol(kOutHeaders)]: [Object: null prototype],
+smm-1  |       [Symbol(errored)]: null,
+smm-1  |       [Symbol(kHighWaterMark)]: 16384,
+smm-1  |       [Symbol(kRejectNonStandardBodyWrites)]: false,
+smm-1  |       [Symbol(kUniqueHeaders)]: null
+smm-1  |     },
+smm-1  |     data: { error: [Object] }
+smm-1  |   },
+smm-1  |   status: 403
+smm-1  | }
+smm-1  | Claude API Response status: 403
+smm-1  | Claude API Response data: { error: { type: 'forbidden', message: 'Request not allowed' } }
+smm-1  | 10:48:29 AM [DEV] [express] POST /api/claude/improve-text 500 in 342ms :: {"success":false,"error":"Failed …
+smm-1  | npm notice
+smm-1  | npm notice New major version of npm available! 10.8.2 -> 11.5.2
+smm-1  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+smm-1  | npm notice To update run: npm install -g npm@11.5.2
+smm-1  | npm notice
+smm-1 exited with code 143
+smm-1 has been recreated
+smm-1  | 
+smm-1  | > rest-express@1.0.0 dev
+smm-1  | > tsx server/index.ts
+smm-1  |
+smm-1  | API Key Service initialized
+smm-1  | DeepSeek service initialized. API keys will be obtained ONLY from Directus user settings.
+smm-1  | 10:48:34 AM [DEV] [fal-ai] FalAiClient создан
+smm-1  | 10:48:34 AM [DEV] [vertex-ai] [vertex-ai-auth] Инициализирован для проекта laboratory-449308
+smm-1  | 10:48:34 AM [DEV] [gemini] [gemini-proxy] Инициализирован SOCKS5 прокси: socks5://m54GSv:***@38.170.253.124:9362
+smm-1  | 10:48:34 AM [DEV] [gemini] [gemini-proxy] Инициализирован с API ключом: AIzaSyDaYt...
+smm-1  | 10:48:34 AM [DEV] [vertex-ai] [vertex-ai-auth] Инициализирован для проекта laboratory-449308
+smm-1  | 10:48:34 AM [DEV] [gemini] [gemini-proxy] Инициализирован с API ключом: AIzaSyDaYt...
+smm-1  | 10:48:34 AM [imgur-uploader] ImgurUploaderService инициализирован
+smm-1  | 10:48:35 AM [beget-s3-storage] Beget S3 Storage service initialized
+smm-1  | 10:48:35 AM [DEV] [directus-auth] DirectusAuthManager initialized
+smm-1  | 10:48:35 AM [DEV] [directus-auth] Session refresh interval started (300000ms)
+smm-1  | 10:48:35 AM [DEV] [directus-storage] DirectusStorageAdapter initialized
+smm-1  | 10:48:35 AM [beget-s3-api] Created temporary directory for S3 uploads: /tmp/beget-s3-uploads
+smm-1  | 10:48:35 AM [beget-s3-video-api] Created temporary directory for video uploads: /tmp/beget-s3-video-uploads
+smm-1  | 10:48:36 AM [imgur-uploader] Временная директория создана: /app/uploads/temp
+smm-1  | Директория для загрузки изображений создана: /app/uploads/images
+smm-1  | [Simple Analytics] 🚀 Регистрируем API эндпоинт /server-api/analytics
+smm-1  | 10:48:36 AM [DEV] [express] Global API keys routes registered early to avoid Vite middleware interception
+smm-1  | 10:48:36 AM [DEV] [api-keys-routes] Маршруты для работы с личными API ключами успешно зарегистрированы
+smm-1  | 10:48:36 AM [DEV] [express] User API keys routes registered early to avoid Vite middleware interception
+smm-1  | 10:48:36 AM [DEV] [express] Instagram Setup Wizard routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Facebook Pages routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Facebook Debug routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Facebook Page URL routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Facebook Groups Discovery routes registered
+smm-1  | 10:48:36 AM [DEV] [express] YouTube Auth and Settings routes registered early to avoid 404 errors
+smm-1  | 10:48:36 AM [DEV] [express] Instagram Campaign Settings routes will be registered after main routes
+smm-1  | === SERVER INITIALIZATION START ===
+smm-1  | 10:48:36 AM [DEV] [express] Starting server initialization...
+smm-1  | Registering test API routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering test API routes first...
+smm-1  | Test API routes registered
+smm-1  | Registering Claude AI routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Claude AI routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude AI routes registered
+smm-1  | Registering DeepSeek routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering DeepSeek routes...
+smm-1  | DeepSeek routes registered
+smm-1  | Registering Qwen routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Qwen routes...
+smm-1  | Qwen routes registered
+smm-1  | Qwen routes registered
+smm-1  | Registering Gemini routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Gemini routes...
+smm-1  | API Key Service initialized
+smm-1  | Gemini routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering Claude routes...
+smm-1  | API Key Service initialized
+smm-1  | Claude routes registered
+smm-1  | Registering YouTube Channel routes EARLY...
+smm-1  | 10:48:36 AM [DEV] [express] Registering YouTube Channel routes EARLY...
+smm-1  | 📍 [YOUTUBE-ROUTER] Router imported successfully: true
+smm-1  | 📍 [YOUTUBE-ROUTER] Registering at /api prefix EARLY
+smm-1  | YouTube Channel routes registered EARLY
+smm-1  | Registering YouTube OAuth routes EARLY...
+smm-1  | 10:48:36 AM [DEV] [express] Registering YouTube OAuth routes EARLY...
+smm-1  | YouTube OAuth routes registered EARLY
+smm-1  | 10:48:36 AM [DEV] [express] Registering main routes after YouTube routes...
+smm-1  | Starting route registration...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | [express] FAL.AI redirect routes registered
+smm-1  | Starting route registration...
+smm-1  | Creating HTTP server...
+smm-1  | HTTP server created successfully
+smm-1  | Registering validation routes...
+smm-1  | 10:48:36 AM [DEV] [api-validation] API валидационные маршруты зарегистрированы
+smm-1  | Registering content generation routes...
+smm-1  | Registering direct webhook routes for social platforms...
+smm-1  | Social publishing router registered successfully
+smm-1  | Registering publishing routes...
+smm-1  | [publishing-routes] Регистрация маршрутов управления публикациями...
+smm-1  | API routes registered successfully
+smm-1  | Gemini API test routes registered successfully
+smm-1  | Регистрация тестового маршрута для Instagram
+smm-1  | Тестовый маршрут для Instagram зарегистрирован
+smm-1  | 10:48:36 AM [DEV] [express] Тестовый маршрут для Instagram карусели зарегистрирован
+smm-1  | Test Instagram routes registered
+smm-1  | Instagram settings routes already registered in index.ts
+smm-1  | Social platform webhook routes registered successfully
+smm-1  | 10:48:36 AM [DEV] [token-routes] Регистрация маршрутов для работы с админским токеном...
+smm-1  | 10:48:36 AM [DEV] [token-routes] Маршруты для работы с админским токеном зарегистрированы
+smm-1  | ✅ Планировщик публикаций инициализирован через синглтон
+smm-1  | 10:48:36 AM [DEV] [status-checker] Запуск сервиса проверки статусов публикаций (интервал: 1 минут)
+smm-1  | 10:48:36 AM [DEV] [status-checker] Проверка статусов публикаций
+smm-1  | 10:48:36 AM [DEV] [status-checker] Следующая проверка статусов через 1 минуту
+smm-1  | Route registration completed
+smm-1  | Registering Instagram Campaign Settings routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Instagram Campaign Settings routes...
+smm-1  | Instagram Campaign Settings routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Instagram Campaign Settings routes registered with priority
+smm-1  | Registering Instagram OAuth routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Instagram OAuth routes...
+smm-1  | Instagram OAuth routes registered
+smm-1  | Registering VK OAuth routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering VK OAuth routes...
+smm-1  | VK OAuth routes registered
+smm-1  | Registering VK Campaign Settings routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering VK Campaign Settings routes...
+smm-1  | VK Campaign Settings routes registered
+smm-1  | Registering Facebook Campaign Settings routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Facebook Campaign Settings routes...
+smm-1  | Facebook Campaign Settings routes registered
+smm-1  | Registering Facebook Debug routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Facebook Debug routes...
+smm-1  | Facebook Debug routes registered
+smm-1  | Registering Facebook Groups Discovery routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Facebook Groups Discovery routes...
+smm-1  | Facebook Groups Discovery routes registered
+smm-1  | Registering YouTube Campaign Settings routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering YouTube Campaign Settings routes...
+smm-1  | YouTube Campaign Settings routes registered
+smm-1  | Registering Stories routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Stories routes...
+smm-1  | Stories routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering Analytics routes...
+smm-1  | 📊 [Analytics] Analytics routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering XMLRiver API routes...
+smm-1  | 10:48:36 AM [DEV] [express] Registering FAL.AI Universal Image Generation routes...
+smm-1  | [express] FAL.AI Universal Image Generation routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering Imgur Uploader routes...
+smm-1  | Imgur routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering DeepSeek Models route...
+smm-1  | 10:48:36 AM [DEV] [express] Registering Beget S3 routes...
+smm-1  | 10:48:36 AM [DEV] [beget-s3-routes] Registering Beget S3 storage routes...
+smm-1  | 10:48:36 AM [DEV] [beget-s3-routes] Beget S3 basic storage routes registered
+smm-1  | 10:48:36 AM [DEV] [beget-s3-routes] Beget S3 video routes registered
+smm-1  | 10:48:36 AM [DEV] [express] Registering clear cache routes...
+smm-1  | 10:48:36 AM [DEV] [express] User API keys routes already registered early
+smm-1  | Route registration completed
+smm-1  | 10:48:36 AM [DEV] [express] Setting up Vite in development mode...
+smm-1  | 10:48:37 AM [DEV] [express] Vite setup completed
+smm-1  | === STARTING SERVER ON PORT 5000 ===
+smm-1  | 10:48:37 AM [DEV] [express] Attempting to start server on port 5000...
+smm-1  | === SERVER SUCCESSFULLY STARTED ON PORT 5000 ===
+smm-1  | 10:48:37 AM [DEV] [express] Server successfully started on port 5000
+smm-1  | === SERVER URL: http://0.0.0.0:5000 ===
+smm-1  | 10:48:37 AM [DEV] [env] Running in development mode
+smm-1  | 10:48:37 AM [DEV] [env] Log level: debug
+smm-1  | 10:48:37 AM [DEV] [env] Directus URL: https://directus.roboflow.space
+smm-1  | 10:48:37 AM [DEV] [env] Verbose logs: enabled
+smm-1  | [DEBUG-LOG] 2025-08-05T10:48:37.031Z [env] Verbose logs: enabled
+smm-1  | 10:48:37 AM [DEV] [env] Debug scheduler: true
+smm-1  | [DEBUG-LOG] 2025-08-05T10:48:37.031Z [env] Debug scheduler: true
+smm-1  | 10:48:37 AM [express] Начало инициализации тяжелых сервисов после успешного запуска сервера...
+smm-1  | 10:48:47 AM [express] Планировщик аналитики отключен

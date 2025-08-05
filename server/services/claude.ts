@@ -51,7 +51,7 @@ interface SocialContentParams {
 export class ClaudeService {
   private apiKey: string | null = null;
   private apiUrl = 'https://api.anthropic.com/v1/messages';
-  private defaultModel = 'claude-3-5-sonnet-20241022'; // Current stable Claude model
+  private defaultModel = 'claude-3-haiku-20240307'; // Fallback to more accessible model
   private isInitialized = false;
   private globalApiKeysService: GlobalApiKeysService;
 
