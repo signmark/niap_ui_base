@@ -20,6 +20,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Architectural Decisions
 - **Monolithic to Modular Transition**: Ongoing effort to break down monolithic files into modular components for better maintainability and scalability.
+- **January 2025**: Successfully implemented Gemini 2.5 integration via Vertex AI for keyword analysis and business questionnaire features, providing real website content analysis and specific keyword extraction with high accuracy.
 - **N8N-centric Publishing**: All social media platforms publish exclusively through N8N webhooks to ensure consistent architecture and centralized management.
 - **Comprehensive Duplicate Prevention**: A 4-level system prevents duplicate posts across platforms using `postUrl` checks, extended caching, a Publication Tracker service, and Lock Manager integration.
 - **Intelligent Website Analysis**: A multi-tier fallback system for website analysis uses Gemini AI for content extraction and business questionnaire auto-filling. It prioritizes AI analysis and falls back to intelligent content-based classification if AI services fail.
