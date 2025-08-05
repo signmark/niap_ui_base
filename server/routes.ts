@@ -1,5 +1,6 @@
 import { deepseekService, DeepSeekMessage, DeepSeekService } from './services/deepseek';
 import { ClaudeService } from './services/claude';
+import { claudeService } from './services/claude';
 import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
@@ -1280,11 +1281,8 @@ async function extractFullSiteContent(url: string): Promise<string> {
     }
     
     // Добавляем остальной контент
-    if (h1Tags.length > 0) contentParts.push(`ОСНОВНЫЕ ЗАГОЛОВКИ H1:\n${h1Tags.map(h => `- ${h}`).join('\n')}`);
-    if (h2Tags.length > 0) contentParts.push(`ЗАГОЛОВКИ H2:\n${h2Tags.map(h => `- ${h}`).join('\n')}`);
-    if (h3Tags.length > 0) contentParts.push(`ЗАГОЛОВКИ H3:\n${h3Tags.map(h => `- ${h}`).join('\n')}`);
-    if (paragraphs.length > 0) contentParts.push(`ОСНОВНОЙ ТЕКСТ:\n${paragraphs.map(p => `- ${p}`).join('\n')}`);
-    if (listItems.length > 0) contentParts.push(`СПИСКИ И ПУНКТЫ:\n${listItems.map(li => `- ${li}`).join('\n')}`);
+    if (h1Tags.length > 0) contentParts.push(`ОСНОВНЫЕ ЗАГОЛОВКИ H1:\n${h1Tags.map((h: string) => `- ${h}`).join('\n')}`);
+    if (h2Tags.length > 0) contentParts.push(`ЗАГОЛОВКИ H2:\n${h2Tags.map((h: string) => `- ${h}`).join('\n')}`);
     
     let structuredContent = contentParts.filter(Boolean).join('\n\n');
     
@@ -1294,7 +1292,7 @@ async function extractFullSiteContent(url: string): Promise<string> {
     }
     
     console.log(`✅ Улучшенный скрапинг завершен (${structuredContent.length} символов)`);
-    console.log(`📊 Извлечено: ${allContacts.length} контактов (${phones.length} тел., ${emails.length} email), ${h1Tags.length} H1, ${h2Tags.length} H2, ${h3Tags.length} H3, ${paragraphs.length} параграфов, ${listItems.length} элементов списков`);
+    console.log(`📊 Извлечено: ${allContacts.length} контактов (${phones.length} тел., ${emails.length} email), ${h1Tags.length} H1, ${h2Tags.length} H2, ${paragraphs.length} параграфов`);
     
     return structuredContent;
     

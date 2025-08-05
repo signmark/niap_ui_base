@@ -657,3 +657,6 @@ ${text}
     throw new Error('Claude API недоступен после всех попыток');
   }
 }
+
+// Экспортируем singleton экземпляр для совместимости
+export const claudeService = new ClaudeService();

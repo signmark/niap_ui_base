@@ -520,7 +520,7 @@ export class ApiKeyService {
           });
           
           // Инвалидируем кэш
-          this.invalidateCache(userId, 'fal_ai');
+          this.invalidateCache(userId, ApiServiceName.FAL_AI);
           
           console.log(`[fal_ai] Ключ успешно обновлен в БД с правильным форматом`);
           return true;

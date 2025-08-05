@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { ClaudeService } from './services/claude';
-import { ApiKeyService } from './services/api-keys';
+import { ApiKeyService, ApiServiceName } from './services/api-keys';
 import * as logger from './utils/logger';
 
 /**
@@ -128,7 +128,7 @@ export function registerClaudeRoutes(app: Router) {
       }
       
       // Сохраняем ключ в хранилище
-      const success = await apiKeyServiceInstance.saveApiKey(userId, 'claude', apiKey);
+      const success = await apiKeyServiceInstance.saveApiKey(userId, ApiServiceName.CLAUDE, apiKey);
       
       if (!success) {
         return res.status(500).json({
