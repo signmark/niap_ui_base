@@ -2,6 +2,7 @@
 
 /**
  * Диагностика сетевого подключения для Claude API
+ * Использование: node check-network-connectivity.cjs
  */
 
 const https = require('https');

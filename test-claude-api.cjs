@@ -2,7 +2,7 @@
 
 /**
  * Тестовый скрипт для проверки Claude API на стейдже
- * Использование: node test-claude-api.js
+ * Использование: node test-claude-api.cjs
  */
 
 const axios = require('axios');
