@@ -11038,19 +11038,28 @@ ${commentTexts}`;
       console.log(`[WEBSITE-ANALYSIS] 🔍 Первые 500 символов контента: ${websiteContent.substring(0, 500)}...`);
       
       try {
-        // Получаем глобальный Gemini ключ
+        // Получаем глобальный Gemini ключ ПРАВИЛЬНЫМ способом (как в анализе ключевых слов)
         let geminiKey;
         try {
-          console.log('Получаем глобальный Gemini ключ для анализа сайта...');
-          const globalKeys = await globalApiKeysService.getGlobalApiKeys();
-          geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+          console.log('🔑 Получаем глобальный Gemini ключ для анализа сайта...');
+          const globalKeysArray = await globalApiKeysService.getGlobalApiKeys();
+          const geminiKeyRecord = globalKeysArray.find(key => 
+            key.service_name === 'gemini' && key.is_active
+          );
+          
+          if (!geminiKeyRecord) {
+            throw new Error('Gemini ключ не найден в базе данных');
+          }
+          
+          geminiKey = geminiKeyRecord.api_key;
+          console.log('✅ Gemini ключ успешно получен для анализа сайта');
         } catch (error) {
-          console.error('Ошибка получения глобального Gemini ключа:', error);
-          throw new Error('Gemini API ключ недоступен в глобальных настройках');
-        }
-        
-        if (!geminiKey) {
-          throw new Error('Gemini API ключ не найден в глобальных настройках');
+          console.error('❌ Ошибка получения глобального Gemini ключа:', error);
+          geminiKey = process.env.GEMINI_API_KEY;
+          if (!geminiKey) {
+            throw new Error('Gemini API ключ недоступен в глобальных настройках и переменных среды');
+          }
+          console.log('⚠️ Используем резервный Gemini ключ из переменных среды');
         }
         
         // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API для анализа сайта
