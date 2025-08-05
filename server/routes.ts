@@ -9335,18 +9335,23 @@ ${commentTexts}`;
         const now = new Date().toISOString();
         
         // Построение фильтра для Directus API: контент, у которого scheduled_at в будущем
+        // Показываем посты со статусом scheduled или partial (частично опубликованные)
         const filter = {
           user_id: {
             _eq: userId
           },
-          status: {
-            _eq: "scheduled"
-          },
           scheduled_at: {
-            _gt: now
+            _gt: now,
+            _nnull: true  // Убеждаемся что scheduled_at не null
+          },
+          status: {
+            _in: ["scheduled", "partial"]  // Показываем запланированные и частично опубликованные
           },
           ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
         };
+        
+        console.log(`[Scheduled] Filter being used:`, JSON.stringify(filter, null, 2));
+        console.log(`[Scheduled] Current time: ${now}`);
         
         // Выполняем запрос к Directus API
         const response = await directusApi.get('/items/campaign_content', {
