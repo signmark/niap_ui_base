@@ -4,6 +4,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
+import { geminiProxyService } from '../services/gemini-proxy.js';
 import { VertexAIService } from './services/vertex-ai';
 import { VertexAICredentialsService } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
@@ -4954,20 +4955,16 @@ ${siteContent.substring(0, 2000)}
   {"keyword": "другое релевантное слово", "trend": 75, "competition": 45}
 ]`;
 
-          // Используем прямой Gemini API
-          const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-            contents: [{
-              parts: [{
-                text: contextualPrompt
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 1000
-            }
+          // Используем GeminiProxyService с SOCKS5 прокси
+          console.log(`[${requestId}] 🚀 ПРОКСИ: Используем GeminiProxyService для запроса к Gemini`);
+          const response = await geminiProxyService.generateContent(contextualPrompt, {
+            temperature: 0.2,
+            maxOutputTokens: 1000,
+            model: 'gemini-1.5-flash'
           });
+          console.log(`[${requestId}] 🚀 ПРОКСИ: Получен ответ от GeminiProxyService`, response ? 'успешно' : 'ошибка');
 
-          const geminiText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          const geminiText = response; // GeminiProxyService возвращает сразу текст
           
           if (geminiText) {
             console.log(`[${requestId}] Ответ от Gemini API:`, geminiText.substring(0, 200));
