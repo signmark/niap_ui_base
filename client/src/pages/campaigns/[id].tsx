@@ -313,11 +313,15 @@ export default function CampaignDetails() {
       }
 
       // Используем новый API для анализа ключевых слов
+      console.log('🔍 Отправляем запрос к API:', normalizedUrl);
       const response = await api.post('/api/keywords/analyze-website', {
         url: normalizedUrl
       });
       
+      console.log('📋 Получен ответ:', response.data);
+      
       if (!response.data?.success || !response.data?.data?.keywords?.length) {
+        console.error('❌ Неудачный ответ API:', response.data);
         throw new Error("Не удалось извлечь ключевые слова с сайта");
       }
 
