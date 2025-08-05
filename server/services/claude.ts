@@ -186,20 +186,29 @@ export class ClaudeService {
       throw new Error('Claude API key is not configured');
     }
     
-    // Маппинг старых названий моделей на новые поддерживаемые
-    const modelMapping: Record<string, string> = {
-      'claude-3-haiku-20240307': 'claude-3-5-haiku-20241022',
-      'claude-3-sonnet-20240229': 'claude-3-5-sonnet-20241022', 
-      'claude-3-opus-20240229': 'claude-3-5-sonnet-20241022',
-      'claude-3-5-sonnet-20240620': 'claude-3-5-sonnet-20241022',
-      'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022'
-    };
+    // Приоритет моделей для fallback (от самой доступной к более требовательной)
+    const modelPriority = [
+      'claude-3-haiku-20240307',
+      'claude-3-sonnet-20240229',
+      'claude-3-5-sonnet-20241022'
+    ];
     
-    const requestModel = (model ? (modelMapping[model] || model) : this.defaultModel);
+    const requestModel = model || this.defaultModel;
     
-    try {
-      // Определяем, содержит ли текст HTML-теги
-      const containsHtml = /<[^>]+>/.test(text);
+    // Если указана конкретная модель, попробуем её, но добавим fallback
+    const modelsToTry = requestModel === this.defaultModel 
+      ? modelPriority 
+      : [requestModel, ...modelPriority.filter(m => m !== requestModel)];
+    
+    let lastError: any = null;
+    
+    // Попробуем разные модели до тех пор, пока одна не сработает
+    for (const tryModel of modelsToTry) {
+      try {
+        logger.log(`Trying Claude model: ${tryModel}`, 'claude');
+        
+        // Определяем, содержит ли текст HTML-теги
+        const containsHtml = /<[^>]+>/.test(text);
       
       // Если текст содержит HTML, добавляем специальные инструкции для сохранения форматирования
       let contentPrompt = '';
@@ -232,29 +241,29 @@ ${text}
 Улучшенный текст:`;
       }
       
-      // Используем правильные лимиты для разных моделей Claude
-      let maxTokens = 4000; // По умолчанию безопасный лимит
-      
-      // Устанавливаем лимиты в зависимости от модели
-      if (requestModel.includes('claude-3-5-sonnet-20241022')) {
-        maxTokens = 7000; // Для новой модели можем использовать больше
-      } else if (requestModel.includes('claude-3-5-sonnet')) {
-        maxTokens = 6000; // Для обычных моделей Sonnet
-      } else if (requestModel.includes('claude-3-haiku')) {
-        maxTokens = 4000; // Для Haiku меньший лимит
-      }
-      
-      const result = await this.makeRequest({
-        model: requestModel,
-        max_tokens: maxTokens,
-        temperature: 0.7,
-        messages: [
-          {
-            role: 'user',
-            content: contentPrompt
-          }
-        ]
-      });
+        // Используем правильные лимиты для разных моделей Claude
+        let maxTokens = 4000; // По умолчанию безопасный лимит
+        
+        // Устанавливаем лимиты в зависимости от модели
+        if (tryModel.includes('claude-3-5-sonnet-20241022')) {
+          maxTokens = 7000; // Для новой модели можем использовать больше
+        } else if (tryModel.includes('claude-3-5-sonnet')) {
+          maxTokens = 6000; // Для обычных моделей Sonnet
+        } else if (tryModel.includes('claude-3-haiku')) {
+          maxTokens = 4000; // Для Haiku меньший лимит
+        }
+        
+        const result = await this.makeRequest({
+          model: tryModel,
+          max_tokens: maxTokens,
+          temperature: 0.7,
+          messages: [
+            {
+              role: 'user',
+              content: contentPrompt
+            }
+          ]
+        });
       
       if (!result || !result.content || result.content.length === 0) {
         throw new Error('Claude API returned empty response');
@@ -308,16 +317,31 @@ ${text}
           .join('\n');
       }
       
-      logger.log('Text successfully improved with Claude AI', 'claude');
-      return improvedText;
-    } catch (error: any) {
-      console.log('Claude API Full Error:', error);
-      console.log('Claude API Response status:', error.response?.status);
-      console.log('Claude API Response data:', error.response?.data);
-      logger.error('Error improving text with Claude:', error, 'claude');
-      const errorMessage = error.response?.data?.error?.message || error.message || String(error);
-      throw new Error('Failed to improve text with Claude: ' + errorMessage);
+        logger.log(`Text successfully improved with Claude AI using model: ${tryModel}`, 'claude');
+        return improvedText;
+        
+      } catch (error: any) {
+        lastError = error;
+        logger.log(`Model ${tryModel} failed: ${error.response?.status} - ${error.message}`, 'claude');
+        
+        // Если это 403, попробуем следующую модель
+        if (error.response?.status === 403) {
+          continue;
+        }
+        
+        // Для других ошибок тоже попробуем следующую модель
+        continue;
+      }
     }
+    
+    // Если все модели не сработали, выбрасываем ошибку
+    console.log('Claude API Full Error:', lastError);
+    console.log('Claude API Response status:', lastError?.response?.status);
+    console.log('Claude API Response data:', lastError?.response?.data);
+    logger.error('Error improving text with Claude (all models failed):', lastError, 'claude');
+    
+    const errorMessage = lastError?.response?.data?.error?.message || lastError?.message || String(lastError);
+    throw new Error(`Failed to improve text with Claude (tried ${modelsToTry.length} models): ` + errorMessage);
   }
 
   /**
