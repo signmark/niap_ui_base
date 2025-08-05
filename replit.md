@@ -19,7 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **Deployment**: Docker with Traefik reverse proxy
 
 ### Core Architectural Decisions
-- **Monolithic to Modular Transition**: Ongoing effort to break down monolithic files into modular components for better maintainability and scalability.
+- **Monolithic Refactoring (January 2025)**: Active cleanup of monolithic architecture - removed duplicate endpoints, standardizing API responses, eliminating redundant code layers.
 - **January 2025**: Successfully implemented Gemini 2.5 integration via Vertex AI for keyword analysis and business questionnaire features, providing real website content analysis and specific keyword extraction with high accuracy.
 - **Claude API Environment Issues**: Claude API works in Replit development and production environments but fails with 403 "Request not allowed" on staging due to network/geographic restrictions. All TypeScript compilation errors resolved with fallback model logic implemented.
 - **N8N-centric Publishing**: All social media platforms publish exclusively through N8N webhooks to ensure consistent architecture and centralized management.
