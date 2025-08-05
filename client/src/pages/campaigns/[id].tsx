@@ -312,12 +312,12 @@ export default function CampaignDetails() {
         normalizedUrl = `https://${normalizedUrl}`;
       }
 
-      // Используем наш рабочий эндпоинт для анализа сайта
-      const encodedUrl = encodeURIComponent(normalizedUrl);
-      const nocache = Date.now(); // Добавляем параметр для предотвращения кеширования
-      const response = await api.get(`/analyze-site/${encodedUrl}?nocache=${nocache}`);
+      // Используем новый API для анализа ключевых слов
+      const response = await api.post('/api/keywords/analyze-website', {
+        url: normalizedUrl
+      });
       
-      if (!response.data?.data?.keywords?.length) {
+      if (!response.data?.success || !response.data?.data?.keywords?.length) {
         throw new Error("Не удалось извлечь ключевые слова с сайта");
       }
 
