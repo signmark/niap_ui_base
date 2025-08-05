@@ -313,7 +313,8 @@ export default function CampaignDetails() {
       }
 
       // Используем новый API для анализа ключевых слов
-      console.log('🔍 Отправляем запрос к API:', normalizedUrl);
+      console.log('🔍 CAMPAIGNS PAGE: Отправляем запрос к NEW API:', normalizedUrl);
+      console.log('🔍 CAMPAIGNS PAGE: Используется endpoint /keywords/analyze-website');
       const response = await api.post('/keywords/analyze-website', {
         url: normalizedUrl
       });
