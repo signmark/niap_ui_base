@@ -592,6 +592,16 @@ ${text}
         logger.debug(`Making Claude API request to ${this.apiUrl} (попытка ${attempt}/${maxRetries})`, 'claude');
         logger.debug(`Using model: ${requestData.model}`, 'claude');
         
+        // ДИАГНОСТИКА СЕТИ для выявления разности между Replit и стейджем
+        const maskedKey = this.apiKey.substring(0, 8) + '...' + this.apiKey.substring(this.apiKey.length - 4);
+        console.log(`[NETWORK-DEBUG] Claude API call environment check:`);
+        console.log(`[NETWORK-DEBUG] - API URL: ${this.apiUrl}`);
+        console.log(`[NETWORK-DEBUG] - API Key (masked): ${maskedKey}`);
+        console.log(`[NETWORK-DEBUG] - Model: ${requestData.model}`);
+        console.log(`[NETWORK-DEBUG] - User-Agent: SMM-Manager/1.0`);
+        console.log(`[NETWORK-DEBUG] - NODE_ENV: ${process.env.NODE_ENV}`);
+        console.log(`[NETWORK-DEBUG] - Server IP attempt detection...`);
+        
         // Вывод заголовков (без API ключа)
         logger.debug('Request headers: Content-Type: application/json, anthropic-version: 2023-06-01', 'claude');
         
@@ -606,13 +616,29 @@ ${text}
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': this.apiKey,
-              'anthropic-version': '2023-06-01'
+              'anthropic-version': '2023-06-01',
+              'User-Agent': 'SMM-Manager/1.0'
+            },
+            timeout: 60000, // Увеличиваем таймаут до 60 секунд
+            validateStatus: function (status) {
+              return status < 500; // Принимаем 4xx статусы для детального анализа
             }
           }
         );
         
         if (response.status !== 200) {
-          throw new Error(`Claude API responded with status code ${response.status}`);
+          console.log(`[NETWORK-DEBUG] Claude API non-200 response:`);
+          console.log(`[NETWORK-DEBUG] - Status: ${response.status}`);
+          console.log(`[NETWORK-DEBUG] - Response data: ${JSON.stringify(response.data)}`);
+          console.log(`[NETWORK-DEBUG] - Response headers: ${JSON.stringify(response.headers)}`);
+          
+          if (response.status === 403) {
+            throw new Error(`Request not allowed (403). Environment: ${process.env.NODE_ENV}. Response: ${JSON.stringify(response.data)}`);
+          } else if (response.status === 401) {
+            throw new Error(`Invalid API key (401). Response: ${JSON.stringify(response.data)}`);
+          } else {
+            throw new Error(`Claude API responded with status code ${response.status}. Response: ${JSON.stringify(response.data)}`);
+          }
         }
         
         logger.debug(`Claude API response received with status: ${response.status}`, 'claude');
