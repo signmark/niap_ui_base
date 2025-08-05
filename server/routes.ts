@@ -4980,8 +4980,23 @@ ${siteContent.substring(0, 2000)}
   {"keyword": "другое релевантное слово", "trend": 75, "competition": 45}
 ]`;
 
-          // ВРЕМЕННОЕ РЕШЕНИЕ: Используем прямой Gemini API с переменной окружения
-          console.log(`[${requestId}] 🚀 GEMINI: Используем прямой Gemini API с переменной окружения`);
+          // ИСПРАВЛЕНО: Используем глобальный ключ из базы данных
+          console.log(`[${requestId}] 🚀 GEMINI: Получаем глобальный ключ из базы данных`);
+          
+          // Получаем глобальный Gemini ключ
+          let geminiKey;
+          try {
+            const globalKeys = await apiKeyService.getGlobalKeys();
+            geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+          } catch (keyError) {
+            console.error(`[${requestId}] Ошибка получения Gemini ключа:`, keyError);
+            throw new Error('Gemini ключ недоступен');
+          }
+
+          if (!geminiKey) {
+            throw new Error('Gemini ключ не найден в глобальных настройках');
+          }
+
           const geminiResponse = await axios.post(
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
             {
@@ -4996,12 +5011,12 @@ ${siteContent.substring(0, 2000)}
                 'Content-Type': 'application/json'
               },
               params: {
-                key: process.env.GEMINI_API_KEY
+                key: geminiKey
               },
               timeout: 8000
             }
           );
-          console.log(`[${requestId}] 🚀 GEMINI: Получен ответ от Gemini API`, geminiResponse.status);
+          console.log(`[${requestId}] 🚀 GEMINI: Получен ответ от Gemini API (глобальный ключ)`, geminiResponse.status);
 
           const geminiText = geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
           
