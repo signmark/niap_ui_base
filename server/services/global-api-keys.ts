@@ -181,77 +181,98 @@ export class GlobalApiKeysService {
   }
 
   /**
-   * Получает конфигурацию YouTube из базы данных
+   * Получает конфигурацию YouTube из базы данных с fallback на переменные окружения
    * @returns Конфигурация YouTube или null, если ключи не найдены
    */
   async getYouTubeConfig(): Promise<YouTubeConfig | null> {
     try {
-      // Получаем системный токен
+      // Сначала пробуем получить из базы данных
       const systemToken = await this.getSystemToken();
       
-      if (!systemToken) {
-        console.error('[global-api-keys] Не удалось получить системный токен для YouTube конфигурации');
-        return null;
-      }
-      
-      // Получаем все YouTube ключи из базы данных
-      const response = await this.directusApi.get('/items/global_api_keys', {
-        params: {
-          fields: ['service_name', 'api_key'],
-          filter: {
-            service_name: { _in: ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET', 'YOUTUBE_REDIRECT_URI'] },
-            is_active: { _eq: true }
+      if (systemToken) {
+        try {
+          // Получаем все YouTube ключи из базы данных
+          const response = await this.directusApi.get('/items/global_api_keys', {
+            params: {
+              fields: ['service_name', 'api_key'],
+              filter: {
+                service_name: { _in: ['YOUTUBE_CLIENT_ID', 'YOUTUBE_CLIENT_SECRET', 'YOUTUBE_REDIRECT_URI'] },
+                is_active: { _eq: true }
+              }
+            },
+            headers: {
+              Authorization: `Bearer ${systemToken}`
+            }
+          });
+          
+          const apiKeys = response.data?.data || [];
+          console.log(`[global-api-keys] Получено ${apiKeys.length} YouTube ключей из базы данных`);
+          
+          if (apiKeys.length > 0) {
+            // Создаем объект конфигурации из базы данных
+            const config: Partial<YouTubeConfig> = {};
+            
+            for (const keyData of apiKeys) {
+              switch (keyData.service_name) {
+                case 'YOUTUBE_CLIENT_ID':
+                  config.clientId = keyData.api_key;
+                  break;
+                case 'YOUTUBE_CLIENT_SECRET':
+                  config.clientSecret = keyData.api_key;
+                  break;
+                case 'YOUTUBE_REDIRECT_URI':
+                  // НЕ используем redirect URI из базы данных, пусть система автоопределит
+                  console.log('[global-api-keys] Игнорируем redirect URI из базы для автоопределения среды');
+                  break;
+              }
+            }
+            
+            // Проверяем, что есть обязательные поля из базы
+            if (config.clientId && config.clientSecret) {
+              console.log('[global-api-keys] YouTube конфигурация успешно загружена из базы данных');
+              const finalConfig = config as YouTubeConfig;
+              console.log('[global-api-keys] Final config from DB:', { 
+                clientId: finalConfig.clientId ? '***' : 'null',
+                clientSecret: finalConfig.clientSecret ? '***' : 'null', 
+                redirectUri: finalConfig.redirectUri || 'не задан'
+              });
+              return finalConfig;
+            }
           }
-        },
-        headers: {
-          Authorization: `Bearer ${systemToken}`
-        }
-      });
-      
-      const apiKeys = response.data?.data || [];
-      console.log(`[global-api-keys] Получено ${apiKeys.length} YouTube ключей из базы данных`);
-      
-      // Создаем объект конфигурации
-      const config: Partial<YouTubeConfig> = {};
-      
-      for (const keyData of apiKeys) {
-        switch (keyData.service_name) {
-          case 'YOUTUBE_CLIENT_ID':
-            config.clientId = keyData.api_key;
-            break;
-          case 'YOUTUBE_CLIENT_SECRET':
-            config.clientSecret = keyData.api_key;
-            break;
-          case 'YOUTUBE_REDIRECT_URI':
-            // НЕ используем redirect URI из базы данных, пусть система автоопределит
-            console.log('[global-api-keys] Игнорируем redirect URI из базы для автоопределения среды');
-            break;
+        } catch (dbError: any) {
+          console.warn('[global-api-keys] Ошибка доступа к базе данных, используем fallback:', dbError.response?.status || dbError.message);
         }
       }
       
-      console.log('[global-api-keys] Config parsed from DB:', { 
-        clientId: config.clientId ? '***' : 'null',
-        clientSecret: config.clientSecret ? '***' : 'null', 
-        redirectUri: config.redirectUri || 'не задан'
-      });
-
-      // Проверяем, что есть обязательные поля
-      if (!config.clientId || !config.clientSecret) {
-        console.error('[global-api-keys] YouTube конфигурация неполная:', config);
-        return null;
+      // Fallback: используем переменные окружения
+      console.log('[global-api-keys] Используем fallback на переменные окружения для YouTube');
+      
+      const envClientId = process.env.YOUTUBE_CLIENT_ID;
+      const envClientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+      const envRedirectUri = process.env.YOUTUBE_REDIRECT_URI;
+      
+      if (envClientId && envClientSecret) {
+        const envConfig: YouTubeConfig = {
+          clientId: envClientId,
+          clientSecret: envClientSecret,
+          redirectUri: envRedirectUri
+        };
+        
+        console.log('[global-api-keys] YouTube конфигурация загружена из переменных окружения');
+        console.log('[global-api-keys] Env config:', { 
+          clientId: envConfig.clientId ? '***' : 'null',
+          clientSecret: envConfig.clientSecret ? '***' : 'null', 
+          redirectUri: envConfig.redirectUri || 'не задан'
+        });
+        
+        return envConfig;
       }
       
-      console.log('[global-api-keys] YouTube конфигурация успешно загружена из базы данных');
-      const finalConfig = config as YouTubeConfig;
-      console.log('[global-api-keys] Final config object:', { 
-        clientId: finalConfig.clientId ? '***' : 'null',
-        clientSecret: finalConfig.clientSecret ? '***' : 'null', 
-        redirectUri: finalConfig.redirectUri || 'не задан'
-      });
-      return finalConfig;
+      console.error('[global-api-keys] YouTube конфигурация недоступна ни в базе данных, ни в переменных окружения');
+      return null;
       
     } catch (error) {
-      console.error('[global-api-keys] Ошибка при получении YouTube конфигурации:', error);
+      console.error('[global-api-keys] Критическая ошибка при получении YouTube конфигурации:', error);
       return null;
     }
   }
