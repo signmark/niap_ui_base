@@ -1,0 +1,37 @@
+🚀 [YouTube Wizard] Starting OAuth process...
+  POST https://smm.nplanner.ru/api/youtube/auth/start 500 (Internal Server Error)
+handleOAuthStart @ /src/components/YouT…eSetupWizard.tsx:77
+callCallback2 @ /@fs/app/node_module….js?v=4634385b:3674
+invokeGuardedCallbackDev @ /@fs/app/node_module….js?v=4634385b:3699
+invokeGuardedCallback @ /@fs/app/node_module….js?v=4634385b:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/app/node_module….js?v=4634385b:3736
+executeDispatch @ /@fs/app/node_module….js?v=4634385b:7014
+processDispatchQueueItemsInOrder @ /@fs/app/node_module….js?v=4634385b:7034
+processDispatchQueue @ /@fs/app/node_module….js?v=4634385b:7043
+dispatchEventsForPlugins @ /@fs/app/node_module….js?v=4634385b:7051
+(anonymous) @ /@fs/app/node_module….js?v=4634385b:7174
+batchedUpdates$1 @ /@fs/app/node_module…js?v=4634385b:18913
+batchedUpdates @ /@fs/app/node_module….js?v=4634385b:3579
+dispatchEventForPluginEventSystem @ /@fs/app/node_module….js?v=4634385b:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/app/node_module….js?v=4634385b:5478
+dispatchEvent @ /@fs/app/node_module….js?v=4634385b:5472
+dispatchDiscreteEvent @ /@fs/app/node_module….js?v=4634385b:5449
+ ❌ [YouTube Wizard] OAuth start error: Error: OAuth start failed: 
+    at handleOAuthStart (/src/components/YouT…tupWizard.tsx:86:15)
+handleOAuthStart @ /src/components/YouT…SetupWizard.tsx:182
+await in handleOAuthStart
+callCallback2 @ /@fs/app/node_module….js?v=4634385b:3674
+invokeGuardedCallbackDev @ /@fs/app/node_module….js?v=4634385b:3699
+invokeGuardedCallback @ /@fs/app/node_module….js?v=4634385b:3733
+invokeGuardedCallbackAndCatchFirstError @ /@fs/app/node_module….js?v=4634385b:3736
+executeDispatch @ /@fs/app/node_module….js?v=4634385b:7014
+processDispatchQueueItemsInOrder @ /@fs/app/node_module….js?v=4634385b:7034
+processDispatchQueue @ /@fs/app/node_module….js?v=4634385b:7043
+dispatchEventsForPlugins @ /@fs/app/node_module….js?v=4634385b:7051
+(anonymous) @ /@fs/app/node_module….js?v=4634385b:7174
+batchedUpdates$1 @ /@fs/app/node_module…js?v=4634385b:18913
+batchedUpdates @ /@fs/app/node_module….js?v=4634385b:3579
+dispatchEventForPluginEventSystem @ /@fs/app/node_module….js?v=4634385b:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ /@fs/app/node_module….js?v=4634385b:5478
+dispatchEvent @ /@fs/app/node_module….js?v=4634385b:5472
+dispatchDiscreteEvent @ /@fs/app/node_module….js?v=4634385b:5449
