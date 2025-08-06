@@ -5,6 +5,7 @@ import { socialPublishingService } from './social/index';
 import { directusCrud } from './directus-crud';
 import { publicationLockManager } from './publication-lock-manager';
 import { publicationTracker } from './publication-tracking';
+import { directusAuthManager } from './directus-auth-manager';
 
 /**
  * Исправленный класс для планирования и выполнения автоматической публикации контента
@@ -103,6 +104,8 @@ export class PublishScheduler {
     this.isRunning = false;
     this.isProcessing = false;
   }
+
+
 
 
 

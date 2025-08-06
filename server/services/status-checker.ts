@@ -76,16 +76,25 @@ class PublicationStatusChecker {
    * Получает токен администратора для API запросов
    * с кэшированием для минимизации авторизаций
    */
-  private async getAdminToken(): Promise<string | null> {
+  private async getAdminToken(forceRefresh: boolean = false): Promise<string | null> {
     // Проверяем режим вывода логов
     const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
     
-    // Проверяем кэш
-    if (this.adminTokenCache && (Date.now() - this.adminTokenTimestamp) < this.tokenExpirationMs) {
+    // Проверяем кэш (если не принудительное обновление)
+    if (!forceRefresh && this.adminTokenCache && (Date.now() - this.adminTokenTimestamp) < this.tokenExpirationMs) {
       if (isVerboseMode) {
         log('Использование кэшированного токена администратора', 'status-checker');
       }
       return this.adminTokenCache;
+    }
+    
+    // Если принудительное обновление, очищаем кэш
+    if (forceRefresh) {
+      this.adminTokenCache = null;
+      this.adminTokenTimestamp = 0;
+      if (isVerboseMode) {
+        log('Принудительное обновление токена администратора', 'status-checker');
+      }
     }
     
     // Сначала пробуем получить токен из переменной окружения
@@ -214,15 +223,53 @@ class PublicationStatusChecker {
       const filters = includeStatuses.map(status => `filter[status][_eq]=${status}`).join('&');
       
       // Бóльшие лимиты для проверки большего количества контента за раз
-      const response = await axios.get(
-        `${directusUrl}/items/campaign_content?${filters}&limit=100`, 
-        {
-          headers: {
-            'Authorization': `Bearer ${adminToken}`,
-            'Content-Type': 'application/json'
+      let response;
+      try {
+        response = await axios.get(
+          `${directusUrl}/items/campaign_content?${filters}&limit=100`, 
+          {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
           }
+        );
+      } catch (error: any) {
+        // Если получили 401 ошибку, пробуем обновить токен
+        if (error.response?.status === 401) {
+          if (isVerboseMode) {
+            log('Получена 401 ошибка, обновляем токен администратора', 'status-checker');
+          }
+          
+          const refreshedToken = await this.getAdminToken(true); // Принудительное обновление
+          if (refreshedToken) {
+            // Повторяем запрос с новым токеном
+            try {
+              response = await axios.get(
+                `${directusUrl}/items/campaign_content?${filters}&limit=100`, 
+                {
+                  headers: {
+                    'Authorization': `Bearer ${refreshedToken}`,
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              if (isVerboseMode) {
+                log('Запрос выполнен успешно с обновленным токеном', 'status-checker');
+              }
+            } catch (retryError: any) {
+              log(`Ошибка после обновления токена: ${retryError.message}`, 'status-checker');
+              return;
+            }
+          } else {
+            log('Не удалось обновить токен администратора', 'status-checker');
+            return;
+          }
+        } else {
+          log(`Ошибка при получении контента: ${error.message}`, 'status-checker');
+          return;
         }
-      );
+      }
       
       if (!response?.data?.data || !Array.isArray(response.data.data)) {
         if (isVerboseMode) {
