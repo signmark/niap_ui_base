@@ -41,39 +41,50 @@ export class YouTubeOAuth {
     console.log('[getDefaultRedirectUri] DIRECTUS_URL:', process.env.DIRECTUS_URL || 'НЕ ЗАДАН');
     console.log('[getDefaultRedirectUri] VITE_DIRECTUS_URL:', process.env.VITE_DIRECTUS_URL || 'НЕ ЗАДАН');
     console.log('[getDefaultRedirectUri] REPL_ID:', process.env.REPL_ID || 'НЕ ЗАДАН');
+    console.log('[getDefaultRedirectUri] NODE_ENV:', process.env.NODE_ENV || 'НЕ ЗАДАН');
     
-    // ВРЕМЕННО ОТКЛЮЧЕНО: Игнорируем YOUTUBE_REDIRECT_URI для автоопределения среды
-    if (process.env.YOUTUBE_REDIRECT_URI) {
-      console.log('[getDefaultRedirectUri] Игнорируем устаревшую YOUTUBE_REDIRECT_URI, используем автоопределение');
-      // НЕ возвращаем process.env.YOUTUBE_REDIRECT_URI - продолжаем автоопределение
+    // ПРИОРИТЕТ 1: Определяем продакшен по домену Directus
+    const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
+    console.log('[getDefaultRedirectUri] directusUrl для проверки:', directusUrl);
+    
+    if (directusUrl?.includes('nplanner.ru')) {
+      // Продакшен среда (nplanner.ru домен)
+      console.log('[getDefaultRedirectUri] Определена ПРОДАКШЕН среда (nplanner.ru)');
+      return 'https://smm.nplanner.ru/api/youtube/auth/callback';
     }
     
-    // ИСПРАВЛЕНО: REPL_ID имеет приоритет над всем (Replit development)
-    if (process.env.REPL_ID) {
-      // Dev среда (Replit) - формируем URL из REPL_ID
-      const replId = process.env.REPL_ID;
+    if (directusUrl?.includes('roboflow.space')) {
+      // Стейдж среда (roboflow.space домен)
+      console.log('[getDefaultRedirectUri] Определена СТЕЙДЖ среда (roboflow.space)');
+      return 'https://smm.roboflow.space/api/youtube/auth/callback';
+    }
+    
+    // ПРИОРИТЕТ 2: Replit среда (только если есть РЕАЛЬНЫЙ REPL_ID)
+    const replId = process.env.REPL_ID;
+    if (replId && replId !== '${REPL_ID}' && !replId.includes('$')) {
+      // Dev среда (Replit) - формируем URL из REPL_ID только если это реальное значение
       const replUrl = `https://${replId}-00-m8pxe5e85z61.worf.replit.dev`;
       
-      console.log('[getDefaultRedirectUri] Определена Replit среда (REPL_ID найден):');
+      console.log('[getDefaultRedirectUri] Определена REPLIT среда (REPL_ID найден):');
       console.log('[getDefaultRedirectUri] REPL_ID:', replId);
       console.log('[getDefaultRedirectUri] Полный URL:', replUrl);
       
       return `${replUrl}/api/youtube/auth/callback`;
     }
     
-    // Определяем среду по URL Directus только если НЕТ REPL_ID
-    const directusUrl = process.env.DIRECTUS_URL || process.env.VITE_DIRECTUS_URL;
-    console.log('[getDefaultRedirectUri] directusUrl для проверки:', directusUrl);
-    
-    if (directusUrl?.includes('roboflow.space')) {
-      // Стейдж среда (только если нет REPL_ID)
-      console.log('[getDefaultRedirectUri] Определена staging среда (roboflow.space)');
-      return 'https://smm.roboflow.space/api/youtube/auth/callback';
-    } else {
-      // Fallback для локальной разработки
-      console.log('[getDefaultRedirectUri] Используем localhost fallback');
-      return 'http://localhost:5000/api/youtube/auth/callback';
+    // ПРИОРИТЕТ 3: Если есть устаревший YOUTUBE_REDIRECT_URI, игнорируем только если он от Replit
+    if (process.env.YOUTUBE_REDIRECT_URI && !process.env.YOUTUBE_REDIRECT_URI.includes('replit.dev')) {
+      console.log('[getDefaultRedirectUri] Используем YOUTUBE_REDIRECT_URI (не replit):', process.env.YOUTUBE_REDIRECT_URI);
+      return process.env.YOUTUBE_REDIRECT_URI;
     }
+    
+    if (process.env.YOUTUBE_REDIRECT_URI) {
+      console.log('[getDefaultRedirectUri] Игнорируем устаревший YOUTUBE_REDIRECT_URI от replit.dev');
+    }
+    
+    // Fallback для локальной разработки
+    console.log('[getDefaultRedirectUri] Используем localhost fallback');
+    return 'http://localhost:5000/api/youtube/auth/callback';
   }
 
   getAuthUrl(): string {
