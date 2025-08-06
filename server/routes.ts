@@ -9305,6 +9305,9 @@ ${commentTexts}`;
 
   // УДАЛЕН: дублирующий endpoint - используется /api/publish/scheduled
 
+  // === НОВЫЙ STORIES API ===
+  // TODO: добавить Stories API после исправления импортов
+
   // Маршрут для адаптации контента для социальных сетей
   app.post("/api/content/:id/adapt", async (req, res) => {
     try {

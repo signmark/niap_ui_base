@@ -62,6 +62,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
+import NewStoriesEditorPage from "@/pages/stories/new-editor";
 import VideoEditor from "@/pages/video";
 import YouTubeCallback from "@/pages/youtube-callback";
 import InstagramCallback from "@/pages/instagram-callback";
@@ -115,6 +116,8 @@ function Router() {
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
       <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/fabric" component={() => <WithLayout Component={NewStoriesEditorPage} />} />
+      <Route path="/stories/fabric/:campaignId" component={() => <WithLayout Component={NewStoriesEditorPage} />} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
