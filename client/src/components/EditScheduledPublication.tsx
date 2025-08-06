@@ -161,13 +161,13 @@ export default function EditScheduledPublication({
         console.warn('Ошибка обновления токена:', refreshError);
       }
       
-      // ВАЖНО: Начинаем с копии существующих данных всех платформ
-      const socialPlatforms: Record<string, any> = JSON.parse(JSON.stringify(content.socialPlatforms || {}));
+      // НОВАЯ ЛОГИКА: Формируем socialPlatforms только с выбранными платформами
+      const socialPlatforms: Record<string, any> = {};
       
       Object.entries(selectedPlatforms).forEach(([platform, isSelected]) => {
         if (isSelected) {
           // Получаем существующие данные для платформы
-          const existingData = socialPlatforms[platform] || {};
+          const existingData = content.socialPlatforms?.[platform] || {};
           
           // Создаем дату публикации для этой платформы
           const platformDate = new Date(scheduledAt);
@@ -191,21 +191,8 @@ export default function EditScheduledPublication({
             // Сохраняем publishedAt если контент уже опубликован
             publishedAt: existingData.publishedAt || null
           };
-        } else {
-          // ИСПРАВЛЕНИЕ: Если платформа НЕ выбрана - отменяем её публикацию
-          const existingData = socialPlatforms[platform] || {};
-          
-          // Только отменяем если статус не published (опубликованное не трогаем)
-          if (existingData.status !== 'published') {
-            socialPlatforms[platform] = {
-              ...existingData,
-              status: 'cancelled',
-              scheduledAt: existingData.scheduledAt || null,
-              publishedAt: existingData.publishedAt || null
-            };
-          }
-          // Если уже опубликовано - оставляем как есть
         }
+        // ЕСЛИ ПЛАТФОРМА НЕ ВЫБРАНА - ПРОСТО НЕ ДОБАВЛЯЕМ ЕЁ В JSON
       });
       
       // Проверяем, есть ли хотя бы одна активная платформа (не cancelled)
