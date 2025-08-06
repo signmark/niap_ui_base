@@ -191,13 +191,26 @@ export default function EditScheduledPublication({
             // Сохраняем publishedAt если контент уже опубликован
             publishedAt: existingData.publishedAt || null
           };
+        } else {
+          // ИСПРАВЛЕНИЕ: Если платформа НЕ выбрана - отменяем её публикацию
+          const existingData = socialPlatforms[platform] || {};
+          
+          // Только отменяем если статус не published (опубликованное не трогаем)
+          if (existingData.status !== 'published') {
+            socialPlatforms[platform] = {
+              ...existingData,
+              status: 'cancelled',
+              scheduledAt: existingData.scheduledAt || null,
+              publishedAt: existingData.publishedAt || null
+            };
+          }
+          // Если уже опубликовано - оставляем как есть
         }
-        // Если платформа НЕ выбрана - сохраняем существующие данные без изменений
       });
       
       // Проверяем, есть ли хотя бы одна активная платформа (не cancelled)
       const activePlatforms = Object.values(socialPlatforms).filter(
-        (platform: any) => platform.status === 'scheduled'
+        (platform: any) => platform.status === 'scheduled' || platform.status === 'published'
       );
       
       if (activePlatforms.length === 0) {
