@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Social Media API Wizards**: Guided setup wizards simplify complex API configurations, including OAuth flows and token management, by automating steps and providing clear user guidance.
 - **Dynamic Environment Detection**: The system automatically detects development, staging, and production environments to configure API endpoints and credentials accordingly.
 - **Centralized API Key Management**: Global API keys for services like YouTube are stored in the database for centralized administration.
+- **Enhanced Stories Architecture (January 2025)**: Enhanced Stories editor uses independent local state management to prevent conflicts with base Stories editor. Features extended type system for interactive elements and loads content from Directus `metadata` field rather than `content` field.
 - **UI/UX Decisions**: The system maintains a clean, professional interface without any visible debug elements. Stories creation through `/stories/new` automatically clears localStorage and resets store state to ensure a clean slate for new Stories.
 
 ### Feature Specifications
@@ -37,6 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Multi-Platform Publishing**: Supports publishing to Facebook, Instagram, VK, Telegram, and YouTube.
 - **Comment Collection & Sentiment Analysis**: Collects comments from social platforms and performs sentiment analysis using AI, with results stored in Directus.
 - **Stories Editor**: Provides functionality for creating and editing Instagram Stories with element persistence and streamlined workflows.
+- **Enhanced Stories Editor (January 2025)**: Advanced Stories editor with extended interactive elements (polls, questions, music stickers, location stickers, countdown timers). Features independent state management, real-time drag-and-drop positioning, and loads content from Directus metadata field. Bypasses Instagram API limitations by rendering all elements as static graphics.
 - **Website Analysis for Business Questionnaire**: Automatically populates business questionnaire fields by analyzing website content and extracting relevant information.
 - **Keyword Analysis**: AI-powered website keyword analysis using Gemini 2.5 through Vertex AI (primary) with SOCKS5 proxy fallback. Analyzes any website URL and returns SEO-relevant keywords with real website content analysis. Features automatic fallback logic for maximum reliability.
 
