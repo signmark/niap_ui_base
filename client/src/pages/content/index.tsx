@@ -1679,20 +1679,15 @@ export default function ContentPage() {
                   onClick={() => {
                     queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
                   }}
-                  disabled={isLoadingKeywords}
                   className="h-8 w-8 p-0"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
+                  <RefreshCw className="h-4 w-4" />
                   <span className="sr-only">Обновить</span>
                 </Button>
               </div>
               <Card>
                 <CardContent className="p-4">
-                  {isLoadingKeywords ? (
-                    <div className="flex justify-center p-4">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : !campaignKeywords.length ? (
+                  {!campaignKeywords.length ? (
                     <p className="text-center text-muted-foreground py-2">
                       Нет ключевых слов для этой кампании
                     </p>
@@ -2068,20 +2063,15 @@ export default function ContentPage() {
                     onClick={() => {
                       queryClient.invalidateQueries({ queryKey: ["/api/keywords", selectedCampaignId] });
                     }}
-                    disabled={isLoadingKeywords}
                     className="h-8 w-8 p-0"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isLoadingKeywords ? 'animate-spin' : ''}`} />
+                    <RefreshCw className="h-4 w-4" />
                     <span className="sr-only">Обновить</span>
                   </Button>
                 </div>
                 <Card>
                   <CardContent className="p-4">
-                    {isLoadingKeywords ? (
-                      <div className="flex justify-center p-4">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      </div>
-                    ) : !campaignKeywords.length ? (
+                    {!campaignKeywords.length ? (
                       <p className="text-center text-muted-foreground py-2">
                         Нет ключевых слов для этой кампании
                       </p>
