@@ -125,13 +125,27 @@ export class SocialPublishingService {
       throw new Error('N8N_URL не настроен в переменных окружения');
     }
     
+    // Проверяем тип контента для Instagram Stories
+    const isStory = content.content_type === 'story' || 
+                   (content.metadata && (
+                     (typeof content.metadata === 'string' && content.metadata.includes('storyType')) ||
+                     (typeof content.metadata === 'object' && content.metadata.storyType)
+                   ));
+    
+    log(`🎬 ДЕТАЛЬНАЯ ПРОВЕРКА STORIES: Контент ${content.id}`, 'social-publishing');
+    log(`  - content.content_type: ${content.content_type}`, 'social-publishing');
+    log(`  - content.metadata: ${JSON.stringify(content.metadata)}`, 'social-publishing');
+    log(`  - isStory результат: ${isStory}`, 'social-publishing');
+    
     const webhookUrls = {
       'vk': `${baseN8nUrl}/webhook/publish-vk`,
       'telegram': `${baseN8nUrl}/webhook/publish-telegram`, 
-      'instagram': `${baseN8nUrl}/webhook/publish-instagram`,
+      'instagram': isStory ? `${baseN8nUrl}/webhook/publish-stories` : `${baseN8nUrl}/webhook/publish-instagram`,
       'facebook': `${baseN8nUrl}/webhook/publish-facebook`,
       'youtube': `${baseN8nUrl}/webhook/publish-youtube`
     };
+    
+    log(`🎬 WEBHOOK ВЫБОР: ${platform} -> ${webhookUrls[platform as keyof typeof webhookUrls]}`, 'social-publishing');
 
     const webhookUrl = webhookUrls[platform as keyof typeof webhookUrls];
     

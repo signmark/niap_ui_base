@@ -217,7 +217,7 @@ export class PublishScheduler {
 
         // Обрабатываем каждый контент для определения неопубликованных платформ
         for (const content of allContent) {
-          log(`Планировщик: Обрабатываем контент ${content.id} (статус: ${content.status})`, 'scheduler');
+          log(`Планировщик: Обрабатываем контент ${content.id} (статус: ${content.status}, тип: ${content.content_type})`, 'scheduler');
           processedCount++;
           
           // Получаем данные платформ
@@ -591,17 +591,26 @@ export class PublishScheduler {
    * Публикует контент через N8N webhook
    */
   private async publishThroughN8nWebhook(content: any, platform: string) {
+    // Проверяем тип контента для Instagram Stories
+    const isStory = content.content_type === 'story' || 
+                   (content.metadata && (
+                     (typeof content.metadata === 'string' && content.metadata.includes('storyType')) ||
+                     (typeof content.metadata === 'object' && content.metadata.storyType)
+                   ));
+
     // Маппинг платформ на N8N webhook endpoints
     const webhookMap: Record<string, string> = {
       'telegram': 'publish-telegram',
       'vk': 'publish-vk',
-      'instagram': 'publish-instagram', 
+      'instagram': isStory ? 'publish-stories' : 'publish-instagram', 
       'facebook': 'publish-facebook',
       'youtube': 'publish-youtube'
     };
 
     const platformString = platform.toLowerCase();
     const webhookName = webhookMap[platformString] || `publish-${platformString}`;
+    
+    log(`🎬 Планировщик: Контент ${content.id} - тип: ${content.content_type}, является Stories: ${isStory}, webhook: ${webhookName}`, 'scheduler');
 
     // Формируем URL для N8N webhook
     const n8nBaseUrl = process.env.N8N_URL;
