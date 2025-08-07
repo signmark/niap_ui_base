@@ -33,6 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Dynamic Environment Detection**: The system automatically detects development, staging, and production environments to configure API endpoints and credentials accordingly.
 - **Centralized API Key Management**: Global API keys for services like YouTube are stored in the database for centralized administration.
 - **Enhanced Stories Architecture (January 2025)**: Enhanced Stories editor uses independent local state management to prevent conflicts with base Stories editor. Features extended type system for interactive elements and loads content from Directus `metadata` field rather than `content` field.
+- **Stories N8N Integration (January 2025)**: Stories publication now integrated with N8N webhook system via `/webhook/publish-stories` endpoint. System sends comprehensive story data including metadata, platforms, and scheduling information to N8N for centralized publishing workflow management.
 - **UI/UX Decisions**: The system maintains a clean, professional interface without any visible debug elements. Stories creation through `/stories/new` automatically clears localStorage and resets store state to ensure a clean slate for new Stories.
 
 ### Feature Specifications

@@ -175,7 +175,12 @@ router.get('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const story = await directusCrud.read('campaign_content', id);
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = response.data.data;
 
     if (!story || story.user_id !== userId) {
       return res.status(404).json({ error: 'Story not found' });
@@ -258,6 +263,42 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       }
     });
     const updatedStory = updateResponse.data.data;
+
+    // Send to N8N webhook for stories publication
+    try {
+      const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+      const webhookUrl = `${n8nUrl}/webhook/publish-stories`;
+      
+      console.log('[DEV] [stories] Sending story to N8N webhook:', webhookUrl);
+
+      const webhookPayload = {
+        storyId: updatedStory.id,
+        storyData: updatedStory,
+        platforms: platforms,
+        scheduledAt: scheduledAt,
+        userId: userId,
+        campaignId: story.campaign_id,
+        metadata: story.metadata ? JSON.parse(story.metadata) : {},
+        timestamp: new Date().toISOString()
+      };
+
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+
+      if (webhookResponse.ok) {
+        console.log('[DEV] [stories] N8N webhook called successfully');
+      } else {
+        console.warn('[DEV] [stories] N8N webhook returned error:', webhookResponse.status, webhookResponse.statusText);
+      }
+    } catch (webhookError) {
+      console.error('[DEV] [stories] Error calling N8N webhook:', webhookError);
+      // Continue execution - webhook failure shouldn't block the API response
+    }
 
     res.json({ 
       success: true, 
