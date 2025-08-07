@@ -105,13 +105,7 @@ export default function CalendarView() {
             Просмотр запланированных публикаций в календарном виде
           </p>
           
-          {/* Индикатор загрузки */}
-          {(isLoadingContent || isFetchingContent) && (
-            <div className="flex items-center gap-2 mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{isLoadingContent ? 'Загрузка календаря...' : 'Обновление данных...'}</span>
-            </div>
-          )}
+
         </div>
         <div className="flex gap-2">
           <Button

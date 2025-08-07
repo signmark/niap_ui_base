@@ -349,13 +349,7 @@ export default function ScheduledPublications() {
           Управление запланированными к публикации материалами
         </p>
         
-        {/* Индикатор загрузки */}
-        {(scheduledLoading || scheduledFetching) && (
-          <div className="flex items-center gap-2 mb-6 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md border border-blue-200">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>{scheduledLoading ? 'Загрузка публикаций...' : 'Обновление данных...'}</span>
-          </div>
-        )}
+
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
