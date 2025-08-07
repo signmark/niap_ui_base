@@ -277,23 +277,6 @@ export default function Posts() {
           <p className="text-muted-foreground mt-2">
             Календарь всех опубликованных постов со ссылками на социальные сети
           </p>
-          
-          {/* Временный индикатор состояния для отладки */}
-          {isLoadingContent && (
-            <div className="text-sm text-blue-600 mt-2">
-              Загрузка данных...
-            </div>
-          )}
-          {!isLoadingContent && campaignContent.length === 0 && (
-            <div className="text-sm text-amber-600 mt-2">
-              Нет данных для отображения
-            </div>
-          )}
-          {!isLoadingContent && campaignContent.length > 0 && (
-            <div className="text-sm text-green-600 mt-2">
-              Загружено {campaignContent.length} записей
-            </div>
-          )}
 
         </div>
         
