@@ -272,14 +272,10 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       console.log('[DEV] [stories] Sending story to N8N webhook:', webhookUrl);
 
       const webhookPayload = {
-        storyId: updatedStory.id,
-        storyData: updatedStory,
+        contentId: updatedStory.id, // Основной ID как в остальных вебхуках
+        contentType: 'story', // Указываем тип контента для N8N
         platforms: platforms,
-        scheduledAt: scheduledAt,
-        userId: userId,
-        campaignId: story.campaign_id,
-        metadata: story.metadata ? JSON.parse(story.metadata) : {},
-        timestamp: new Date().toISOString()
+        scheduledAt: scheduledAt
       };
 
       const webhookResponse = await fetch(webhookUrl, {
