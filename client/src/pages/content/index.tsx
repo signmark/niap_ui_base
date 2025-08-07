@@ -1189,12 +1189,7 @@ export default function ContentPage() {
             </Tabs>
           </CardHeader>
           <CardContent>
-            {isLoadingContent ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Загружаем контент кампании...</p>
-              </div>
-            ) : !filteredContent.length ? (
+            {!filteredContent.length ? (
               <p className="text-center text-muted-foreground py-8">
                 Нет контента для этой кампании
                 {(dateRange.from || dateRange.to) && (
