@@ -264,35 +264,92 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
     });
     const updatedStory = updateResponse.data.data;
 
-    // Send to N8N webhook for stories publication
+    // Send to N8N webhooks - Instagram Stories отдельно от других платформ
     try {
       const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
-      const webhookUrl = `${n8nUrl}/webhook/publish-stories`;
       
-      console.log('[DEV] [stories] Sending story to N8N webhook:', webhookUrl);
+      // Разделяем платформы: Instagram Stories отдельно
+      const instagramPlatforms = platforms.filter((p: string) => p === 'instagram');
+      const otherPlatforms = platforms.filter((p: string) => p !== 'instagram');
 
-      const webhookPayload = {
-        contentId: updatedStory.id, // Основной ID как в остальных вебхуках
-        contentType: 'story', // Указываем тип контента для N8N
-        platforms: platforms,
-        scheduledAt: scheduledAt
-      };
+      const webhookPromises = [];
 
-      const webhookResponse = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookPayload)
+      // Instagram Stories через отдельный webhook (с fallback на общий)
+      if (instagramPlatforms.length > 0) {
+        const instagramWebhookUrl = `${n8nUrl}/webhook/publish-instagram-stories`;
+        const instagramPayload = {
+          contentId: updatedStory.id,
+          contentType: 'story',
+          platforms: instagramPlatforms,
+          scheduledAt: scheduledAt
+        };
+        
+        console.log('[DEV] [stories] Sending to Instagram Stories webhook:', instagramWebhookUrl);
+        
+        webhookPromises.push(
+          fetch(instagramWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(instagramPayload)
+          }).then(async (response) => {
+            // Если Instagram webhook недоступен (404), используем fallback
+            if (response.status === 404) {
+              console.log('[DEV] [stories] Instagram webhook not found (404), using general webhook as fallback');
+              const fallbackUrl = `${n8nUrl}/webhook/publish-stories`;
+              
+              const fallbackResponse = await fetch(fallbackUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(instagramPayload)
+              });
+              
+              return { type: 'instagram-fallback', response: fallbackResponse };
+            }
+            
+            return { type: 'instagram', response };
+          })
+        );
+      }
+
+      // Остальные платформы через общий Stories webhook
+      if (otherPlatforms.length > 0) {
+        const generalWebhookUrl = `${n8nUrl}/webhook/publish-stories`;
+        const generalPayload = {
+          contentId: updatedStory.id,
+          contentType: 'story',
+          platforms: otherPlatforms,
+          scheduledAt: scheduledAt
+        };
+        
+        console.log('[DEV] [stories] Sending to general Stories webhook:', generalWebhookUrl);
+        
+        webhookPromises.push(
+          fetch(generalWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(generalPayload)
+          }).then(response => ({ type: 'general', response }))
+        );
+      }
+
+      // Ждем все webhook вызовы
+      const results = await Promise.allSettled(webhookPromises);
+      
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          const { type, response } = result.value;
+          if (response.ok) {
+            console.log(`[DEV] [stories] ${type} webhook called successfully`);
+          } else {
+            console.warn(`[DEV] [stories] ${type} webhook returned error:`, response.status, response.statusText);
+          }
+        } else {
+          console.error('[DEV] [stories] Webhook promise rejected:', result.reason);
+        }
       });
 
-      if (webhookResponse.ok) {
-        console.log('[DEV] [stories] N8N webhook called successfully');
-      } else {
-        console.warn('[DEV] [stories] N8N webhook returned error:', webhookResponse.status, webhookResponse.statusText);
-      }
     } catch (webhookError) {
-      console.error('[DEV] [stories] Error calling N8N webhook:', webhookError);
+      console.error('[DEV] [stories] Error calling N8N webhooks:', webhookError);
       // Continue execution - webhook failure shouldn't block the API response
     }
 
