@@ -329,6 +329,16 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
+      // Сначала проверяем, есть ли комментарии у этого тренда в поле comments
+      const trendTopic = trends?.find(t => t.id === trendId);
+      if (!trendTopic || !trendTopic.comments || trendTopic.comments === 0) {
+        console.log(`Тренд ${trendId} не имеет комментариев (comments: ${trendTopic?.comments || 0})`);
+        setTrendComments([]);
+        return;
+      }
+
+      console.log(`Загружаем комментарии для тренда ${trendId}, количество: ${trendTopic.comments}`);
+
       const response = await fetch(`/api/trend-comments/${trendId}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -1263,6 +1273,9 @@ export default function Trends() {
           ...prev,
           [sourceId]: data.data
         }));
+
+        // Обновляем кэш источников для отображения emoji
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
         
         toast({
           title: "Анализ источника завершен",
@@ -1403,12 +1416,8 @@ export default function Trends() {
       });
 
       if (updateResponse.ok) {
-        // Обновляем локальное состояние
-        setSources(prev => prev.map(source => 
-          source.id === sourceId 
-            ? { ...source, sentiment_analysis: analysisData }
-            : source
-        ));
+        // Обновляем кэш источников
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
         
         toast({
           title: "Анализ источника завершен",
@@ -1625,7 +1634,7 @@ export default function Trends() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : sourceAnalysisData[source.id] ? (
                               <SentimentEmoji 
-                                sentiment={sourceAnalysisData[source.id].sentiment} 
+                                sentiment={{sentiment: sourceAnalysisData[source.id].overall_sentiment || 'unknown'}} 
                                 className="text-lg" 
                               />
                             ) : (() => {
@@ -1646,7 +1655,7 @@ export default function Trends() {
                                 else if (source.sentiment_analysis.overall_sentiment) {
                                   return (
                                     <SentimentEmoji 
-                                      sentiment={{ sentiment: source.sentiment_analysis.overall_sentiment }} 
+                                      sentiment={{sentiment: source.sentiment_analysis.overall_sentiment}} 
                                       className="text-lg" 
                                     />
                                   );
@@ -2267,7 +2276,10 @@ export default function Trends() {
                                       {/* Первая строка описания поста (если есть) */}
                                       <div 
                                         className="text-sm line-clamp-2 cursor-pointer flex items-start gap-2"
-                                        onClick={() => setSelectedTrendTopic(topic)}
+                                        onClick={() => {
+                                          console.log('Тренд выбран:', topic.title, 'sentiment_analysis:', topic.sentiment_analysis);
+                                          setSelectedTrendTopic(topic);
+                                        }}
                                       >
                                         <SentimentEmoji sentiment={topic.sentiment_analysis} className="text-sm" />
                                         <span className="flex-1">
@@ -2324,9 +2336,10 @@ export default function Trends() {
                                           <span>Превью</span>
                                         </button>
                                         
-                                        {/* Кнопка сбора комментариев для ВК и ТГ */}
+                                        {/* Кнопка сбора комментариев для ВК и ТГ, только если есть комментарии */}
                                         {(topic.urlPost?.includes('vk.com') || topic.urlPost?.includes('t.me') || 
-                                          topic.accountUrl?.includes('vk.com') || topic.accountUrl?.includes('t.me')) && (
+                                          topic.accountUrl?.includes('vk.com') || topic.accountUrl?.includes('t.me')) && 
+                                          topic.comments && topic.comments > 0 && (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -2368,9 +2381,10 @@ export default function Trends() {
                                 Источник: {selectedTrendTopic.accountUrl || selectedTrendTopic.urlPost}
                               </p>
                             </div>
-                            {/* Кнопка для сбора комментариев если это ВК или ТГ тренд */}
+                            {/* Кнопка для сбора комментариев если это ВК или ТГ тренд и есть комментарии */}
                             {(selectedTrendTopic.urlPost?.includes('vk.com') || selectedTrendTopic.urlPost?.includes('t.me') || 
-                              selectedTrendTopic.accountUrl?.includes('vk.com') || selectedTrendTopic.accountUrl?.includes('t.me')) && (
+                              selectedTrendTopic.accountUrl?.includes('vk.com') || selectedTrendTopic.accountUrl?.includes('t.me')) && 
+                              selectedTrendTopic.comments && selectedTrendTopic.comments > 0 && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -2493,40 +2507,40 @@ export default function Trends() {
                                 {isAnalyzingSentiment ? 'Анализируем...' : 'Анализ настроения'}
                               </Button>
                               
+
                               <Button
-                                onClick={() => analyzeCommentsMutation.mutate({ 
-                                  trendId: selectedTrendTopic.id, 
-                                  level: 'trend' 
-                                })}
-                                disabled={analyzeCommentsMutation.isPending || trendComments.length === 0}
+                                onClick={() => {
+                                  // Получаем sourceId для текущего тренда
+                                  const sourceId = selectedTrendTopic.source_id || selectedTrendTopic.sourceId;
+                                  const source = sources.find(s => s.id === sourceId);
+                                  const sourceName = source?.name || 'Источник';
+                                  
+                                  if (sourceId) {
+                                    // Используем ту же логику что и в списке источников
+                                    if (source?.sentiment_analysis) {
+                                      recalculateSourceSentiment(sourceId, sourceName);
+                                    } else {
+                                      analyzeSource(sourceId, sourceName);
+                                    }
+                                  } else {
+                                    toast({
+                                      title: "Ошибка",
+                                      description: "Не удалось определить источник для анализа",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
+                                disabled={analyzingSourceId !== null}
                                 size="sm"
                                 variant="outline"
                                 className="gap-2"
                               >
-                                {analyzeCommentsMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Target className="h-4 w-4" />
-                                )}
-                                {analyzeCommentsMutation.isPending ? 'Анализируем...' : 'Анализ на уровне тренда'}
-                              </Button>
-                              
-                              <Button
-                                onClick={() => analyzeCommentsMutation.mutate({ 
-                                  trendId: selectedTrendTopic.id, 
-                                  level: 'source' 
-                                })}
-                                disabled={analyzeCommentsMutation.isPending || trendComments.length === 0}
-                                size="sm"
-                                variant="outline"
-                                className="gap-2"
-                              >
-                                {analyzeCommentsMutation.isPending ? (
+                                {analyzingSourceId !== null ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   <Building className="h-4 w-4" />
                                 )}
-                                {analyzeCommentsMutation.isPending ? 'Анализируем...' : 'Анализ на уровне источника'}
+                                {analyzingSourceId !== null ? 'Анализируем...' : 'Анализ источника'}
                               </Button>
                             </div>
                             

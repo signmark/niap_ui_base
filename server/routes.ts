@@ -5659,7 +5659,7 @@ Return your response as a JSON array in this exact format:
               _eq: true
             }
           },
-          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at']
+          fields: ['id', 'name', 'url', 'type', 'is_active', 'campaign_id', 'created_at', 'sentiment_analysis']
         },
         headers: {
           'Authorization': authToken
@@ -6602,6 +6602,7 @@ Return your response as a JSON array in this exact format:
   // Source sentiment analysis endpoint
   app.post("/api/sources/:sourceId/analyze", async (req, res) => {
     try {
+      // Проверяем авторизацию пользователя (UI должен передавать пользовательский токен)
       const authHeader = req.headers['authorization'];
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
@@ -6610,7 +6611,7 @@ Return your response as a JSON array in this exact format:
         });
       }
 
-      const token = authHeader.replace('Bearer ', '');
+      const userToken = authHeader.replace('Bearer ', '');
       const sourceId = req.params.sourceId;
       const { campaignId } = req.body;
 
@@ -6623,20 +6624,75 @@ Return your response as a JSON array in this exact format:
 
       console.log(`[SOURCE-ANALYSIS] Анализ источника ${sourceId} для кампании ${campaignId}`);
 
-      // Получаем все тренды для этого источника
+      // Используем административный токен для внутренних операций с Directus
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN || process.env.ADMIN_TOKEN;
+      if (!adminToken) {
+        console.error('[SOURCE-ANALYSIS] Не удалось получить админский токен из переменных окружения');
+        return res.status(500).json({
+          success: false,
+          error: 'Ошибка авторизации системы'
+        });
+      }
+
+      console.log(`[SOURCE-ANALYSIS] Анализируем источник ID: ${sourceId} для кампании ${campaignId}`);
+
+      // Получаем тренды напрямую по source_id (согласно схеме БД у трендов есть поле source_id)
       const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 'Authorization': `Bearer ${adminToken}` },
         params: {
           filter: {
-            campaign_id: { _eq: campaignId },
-            source_id: { _eq: sourceId }
+            source_id: { _eq: sourceId },
+            campaign_id: { _eq: campaignId }
           },
-          limit: -1
+          sort: '-created_at',
+          limit: 500
         }
       });
 
       const trends = trendsResponse.data?.data || [];
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trends.length} трендов для источника ${sourceId}`);
+      
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trends.length} трендов напрямую по source_id: ${sourceId}`);
+      
+      // Если нет прямых связей, попробуем найти все тренды кампании и найти связанные
+      if (trends.length === 0) {
+        console.log(`[SOURCE-ANALYSIS] Прямых связей нет, ищем среди всех трендов кампании...`);
+        
+        const allTrendsResponse = await directusApi.get('/items/campaign_trend_topics', {
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+          params: {
+            filter: {
+              campaign_id: { _eq: campaignId }
+            },
+            sort: '-created_at',
+            limit: 1000
+          }
+        });
+
+        const allTrends = allTrendsResponse.data?.data || [];
+        console.log(`[SOURCE-ANALYSIS] Всего трендов в кампании: ${allTrends.length}`);
+        
+        // Выводим все уникальные source_id для диагностики
+        const uniqueSourceIds = [...new Set(allTrends.map(trend => trend.source_id))].filter(id => id);
+        console.log(`[SOURCE-ANALYSIS] Найдено ${uniqueSourceIds.length} уникальных source_id`);
+        console.log(`[SOURCE-ANALYSIS] Первые 5 source_id: [${uniqueSourceIds.slice(0, 5).join(', ')}]`);
+        console.log(`[SOURCE-ANALYSIS] Ищем source_id: ${sourceId}`);
+        console.log(`[SOURCE-ANALYSIS] Есть ли наш source_id среди найденных: ${uniqueSourceIds.includes(sourceId)}`);
+        
+        console.log(`[SOURCE-ANALYSIS] Первые 5 трендов для проверки:`);
+        allTrends.slice(0, 5).forEach((trend, i) => {
+          console.log(`[SOURCE-ANALYSIS] Тренд ${i + 1}: id=${trend.id}, source_id=${trend.source_id || 'null'}, comments=${trend.comments || 0}, title="${trend.title?.substring(0, 50) || 'нет'}"`);
+        });
+        
+        // Ищем тренды для нашего источника среди всех
+        const sourceRelatedTrends = allTrends.filter(trend => trend.source_id === sourceId);
+        console.log(`[SOURCE-ANALYSIS] Найдено ${sourceRelatedTrends.length} трендов с source_id = ${sourceId}`);
+        
+        if (sourceRelatedTrends.length > 0) {
+          // Переназначаем trends на найденные
+          trends.push(...sourceRelatedTrends);
+          console.log(`[SOURCE-ANALYSIS] Добавлено ${sourceRelatedTrends.length} трендов в обработку`);
+        }
+      }
 
       if (trends.length === 0) {
         return res.json({
@@ -6645,61 +6701,70 @@ Return your response as a JSON array in this exact format:
             sentiment: 'unknown',
             confidence: 0,
             trendsCount: 0,
-            summary: 'Нет данных для анализа'
+            commentsCount: 0,
+            summary: `Нет трендов для источника ${sourceId}`
           }
         });
       }
 
-      // ПРАВИЛЬНЫЙ алгоритм анализа источника:
-      // 1. Сначала найти тренды с существующими комментариями
-      // 2. Для трендов БЕЗ комментариев отправить webhook на сбор
-      // 3. Подождать завершения сбора
-      // 4. Анализировать все тренды с комментариями
-      // 5. Сохранить анализ в БД и вычислить общую оценку источника
-      
-      // ВРЕМЕННОЕ РЕШЕНИЕ: прямой вызов Gemini API вместо прокси
+      console.log(`[SOURCE-ANALYSIS] Найдено ${trends.length} трендов для анализа источника ${sourceId}`);
+
+      // Инициализируем переменные для анализа
       const trendAnalyses = [];
       let totalCommentsAnalyzed = 0;
-      
-      console.log(`[SOURCE-ANALYSIS] ПРАВИЛЬНЫЙ алгоритм: проверяем ${trends.length} трендов источника ${sourceId}`);
+      const allCommentsTexts = [];
 
-      // 1. Ищем тренды с комментариями для анализа сентимента
-      const trendsWithComments = [];
-      const trendsNeedCollection = [];
+      console.log(`[SOURCE-ANALYSIS] Собираем все комментарии для всех трендов источника ${sourceId}`);
+
+      // 1. Собираем комментарии и запускаем сбор если нужно
+      const trendsNeedingCollection = [];
       
       for (const trend of trends) {
-        // Проверяем комментарии для анализа сентимента
-        const commentsCount = parseInt(trend.comments) || 0;
-        if (commentsCount > 0) {
-          try {
-            const commentsResponse = await directusApi.get('/items/post_comment', {
-              headers: { 'Authorization': `Bearer ${token}` },
-              params: {
-                filter: { trent_post_id: { _eq: trend.id } },
-                limit: 1
-              }
-            });
-            
-            const hasStoredComments = (commentsResponse.data?.data || []).length > 0;
-            if (hasStoredComments) {
-              trendsWithComments.push(trend);
-            } else if (trend.url) {
-              trendsNeedCollection.push(trend);
+        console.log(`[SOURCE-ANALYSIS] Проверяем комментарии для тренда ${trend.id}`);
+        
+        try {
+          // Получаем существующие комментарии для данного тренда
+          const commentsResponse = await directusApi.get('/items/post_comment', {
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+            params: {
+              filter: { trent_post_id: { _eq: trend.id } },
+              sort: 'date',
+              limit: 1000
             }
-          } catch (error) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка проверки комментариев для тренда ${trend.id}:`, error);
+          });
+
+          const comments = commentsResponse.data?.data || [];
+          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для тренда ${trend.id}`);
+
+          if (comments.length > 0) {
+            // Добавляем существующие комментарии
+            const commentsTexts = comments
+              .map(c => (c.text || c.content || '').trim())
+              .filter(Boolean);
+            
+            allCommentsTexts.push(...commentsTexts);
+            totalCommentsAnalyzed += comments.length;
+            console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} комментариев из тренда ${trend.id}`);
+          } else {
+            // Нужно собрать комментарии для этого тренда
+            const commentsCount = parseInt(trend.comments) || 0;
+            const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+            if (commentsCount > 0 && trendUrl) {
+              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} требует сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
+              trendsNeedingCollection.push({...trend, url: trendUrl});
+            }
           }
+        } catch (error) {
+          console.error(`[SOURCE-ANALYSIS] Ошибка получения комментариев для тренда ${trend.id}:`, error);
         }
       }
-      
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithComments.length} трендов с сохраненными комментариями`);
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsNeedCollection.length} трендов требующих сбора комментариев`);
-      
-      // 2. Запускаем сбор комментариев если у нас мало данных для анализа
-      if (trendsNeedCollection.length > 0 && trendsWithComments.length < 5) {
-        console.log(`[SOURCE-ANALYSIS] Запускаем сбор для ${trendsNeedCollection.slice(0, 10).length} трендов (максимум 10)`);
+
+      // 2. Запускаем сбор для трендов без комментариев
+      if (trendsNeedingCollection.length > 0) {
+        console.log(`[SOURCE-ANALYSIS] Запускаем сбор комментариев для ${trendsNeedingCollection.length} трендов`);
+        console.log(`[SOURCE-ANALYSIS] Список трендов для сбора:`, trendsNeedingCollection.map(t => `${t.id}: ${t.comments} комментариев`));
         
-        for (const trend of trendsNeedCollection.slice(0, 10)) {
+        for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
             await fetch('https://n8n.roboflow.space/webhook/collect-comments', {
               method: 'POST',
@@ -6715,277 +6780,214 @@ Return your response as a JSON array in this exact format:
           }
         }
 
-        // Ждем завершения сбора (5 секунд)
-        console.log(`[SOURCE-ANALYSIS] Ждем 5 секунд для завершения сбора...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Ждем завершения сбора
+        console.log(`[SOURCE-ANALYSIS] Ждем 8 секунд для завершения сбора комментариев...`);
+        await new Promise(resolve => setTimeout(resolve, 8000));
         
-        // Проверяем снова после сбора
-        for (const trend of trendsNeedCollection.slice(0, 10)) {
+        // Собираем новые комментарии после сбора
+        for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
             const commentsAfter = await directusApi.get('/items/post_comment', {
-              headers: { 'Authorization': `Bearer ${token}` },
+              headers: { 'Authorization': `Bearer ${adminToken}` },
               params: {
                 filter: { trent_post_id: { _eq: trend.id } },
-                limit: 1
+                sort: 'date',
+                limit: 1000
               }
             });
             
-            if ((commentsAfter.data?.data || []).length > 0) {
-              trendsWithComments.push(trend);
-              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} теперь имеет комментарии после сбора`);
+            const newComments = commentsAfter.data?.data || [];
+            if (newComments.length > 0) {
+              const commentsTexts = newComments
+                .map(c => (c.text || c.content || '').trim())
+                .filter(Boolean);
+              
+              allCommentsTexts.push(...commentsTexts);
+              totalCommentsAnalyzed += newComments.length;
+              console.log(`[SOURCE-ANALYSIS] Собрано ${newComments.length} новых комментариев для тренда ${trend.id}`);
             }
           } catch (error) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка повторной проверки тренда ${trend.id}:`, error);
+            console.error(`[SOURCE-ANALYSIS] Ошибка сбора новых комментариев для тренда ${trend.id}:`, error);
           }
         }
       }
       
-      console.log(`[SOURCE-ANALYSIS] Найдено ${trendsWithComments.length} трендов с комментариями для анализа`);
+      console.log(`[SOURCE-ANALYSIS] Собрано всего ${totalCommentsAnalyzed} комментариев для анализа источника ${sourceId}`);
 
-      if (trendsWithComments.length === 0) {
+      if (allCommentsTexts.length === 0) {
         return res.json({
           success: true,
           data: {
             sentiment: 'unknown',
             confidence: 0,
             trendsCount: trends.length,
-            summary: 'Нет трендов с комментариями для анализа'
+            commentsCount: 0,
+            summary: 'Нет комментариев для анализа источника'
           }
         });
       }
 
-      // 3. Анализируем комментарии для каждого тренда
-      for (const trend of trendsWithComments) {
+      // 3. Анализируем ВСЕ собранные комментарии источника через AI
+      let overallSentiment = 'neutral';
+      let overallScore = 5;
+      let overallConfidence = 0;
+      let analysisSuccess = false;
+
+      if (allCommentsTexts.length > 0) {
+        console.log(`[SOURCE-ANALYSIS] Анализируем ${allCommentsTexts.length} комментариев через AI для источника ${sourceId}`);
+        
+        // Объединяем все комментарии для общего анализа
+        const allCommentsText = allCommentsTexts.slice(0, 500).join('\n'); // Берем первые 500 комментариев
+        
         try {
-          // Получаем комментарии для анализа сентимента
-          const commentsResponse = await directusApi.get('/items/post_comment', {
-            headers: { 'Authorization': `Bearer ${token}` },
-            params: {
-              filter: { trent_post_id: { _eq: trend.id } },
-              sort: 'date',
-              limit: 100
-            }
-          });
+          const analysisPrompt = `Проанализируй общую тональность всех комментариев к источнику контента и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
 
-          const comments = commentsResponse.data?.data || [];
-          console.log(`[SOURCE-ANALYSIS] Анализируем ${comments.length} комментариев для тренда ${trend.id}`);
-
-          if (comments.length === 0) {
-            continue;
-          }
-
-          totalCommentsAnalyzed += comments.length;
-          const commentsText = comments.map(c => c.text || c.content || '').filter(Boolean).join('\n');
-
-          if (!commentsText.trim()) {
-            trendAnalyses.push({
-              trendId: trend.id,
-              score: 5,
-              sentiment: 'neutral',
-              confidence: 0,
-              commentsCount: comments.length,
-              summary: 'Комментарии пустые'
-            });
-            continue;
-          }
-
-          // Анализируем тональность через Gemini с глобальным ключом
-          try {
-            const analysisPrompt = `Проанализируй тональность комментариев к посту и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
-
-Комментарии к посту:
-${commentsText.substring(0, 4000)}
+Все комментарии к источнику:
+${allCommentsText.substring(0, 8000)}
 
 Ответь в JSON формате:
 {
   "score": число от 1 до 10,
   "confidence": число от 0 до 1,
   "sentiment": "positive" | "negative" | "neutral",
-  "summary": "краткое описание тональности комментариев"
+  "summary": "краткое описание общей тональности комментариев к источнику"
 }`;
 
-            // Получаем глобальный Gemini ключ
-            let geminiKey;
-            try {
-              const globalKeys = await globalApiKeysService.getGlobalApiKeys();
-              geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
-            } catch (keyError) {
-              console.error(`[SOURCE-ANALYSIS] Ошибка получения Gemini ключа:`, keyError);
-              throw new Error('Gemini ключ недоступен');
+          console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${allCommentsTexts.length} комментариев`);
+          
+          // Используем прямой Vertex AI для анализа источника (как в генерации контента)
+          console.log(`[SOURCE-ANALYSIS] Используем прямой Vertex AI для анализа источника`);
+          
+          const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
+          console.log(`[SOURCE-ANALYSIS] Прямой Vertex AI импортирован, вызываем generateContent...`);
+          
+          const analysisResult = await geminiVertexDirect.generateContent({
+            prompt: analysisPrompt,
+            model: 'gemini-2.5-flash',
+            temperature: 0.2,
+            maxTokens: 500
+          });
+          
+          console.log(`[SOURCE-ANALYSIS] Vertex AI ответ получен:`, analysisResult?.substring(0, 200));
+
+          let analysisData;
+          try {
+            // Пытаемся извлечь JSON из ответа
+            const jsonMatch = analysisResult.match(/\{[^}]*\}/);
+            if (jsonMatch) {
+              analysisData = JSON.parse(jsonMatch[0]);
+              overallScore = analysisData.score || 5;
+              overallSentiment = analysisData.sentiment || 'neutral';
+              overallConfidence = analysisData.confidence || 0.5;
+              analysisSuccess = true;
+              console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
+            } else {
+              throw new Error('JSON не найден в ответе');
             }
-
-            const geminiProxyServiceInstance = new GeminiProxyService({ apiKey: geminiKey });
-            const analysisResult = await geminiProxyServiceInstance.generateText({
-              prompt: analysisPrompt,
-              model: 'gemini-1.5-flash',
-              temperature: 0.2,
-              maxOutputTokens: 500
-            });
-
-            let analysisData;
-            try {
-              // Пытаемся извлечь JSON из ответа
-              const jsonMatch = analysisResult.match(/\{[^}]*\}/);
-              if (jsonMatch) {
-                analysisData = JSON.parse(jsonMatch[0]);
-              } else {
-                throw new Error('JSON не найден в ответе');
-              }
-            } catch (parseError) {
-              console.error(`[SOURCE-ANALYSIS] Ошибка парсинга JSON для тренда ${trend.id}:`, parseError);
-              // Fallback анализ на основе ключевых слов
-              const positiveWords = ['хорошо', 'отлично', 'супер', 'класс', 'круто', 'лайк', '👍', '❤️', 'спасибо'];
-              const negativeWords = ['плохо', 'ужасно', 'отстой', 'не нравится', 'дизлайк', '👎', 'фу', 'гадость'];
-              
-              const positiveCount = positiveWords.reduce((count, word) => 
-                count + (commentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
-              const negativeCount = negativeWords.reduce((count, word) => 
-                count + (commentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
-              
-              const totalWords = positiveCount + negativeCount;
-              let score = 5;
-              let sentiment = 'neutral';
-              
-              if (totalWords > 0) {
-                score = Math.round(5 + (positiveCount - negativeCount) * 2.5 / Math.max(totalWords, 1));
-                score = Math.max(1, Math.min(10, score));
-                
-                if (score > 6) sentiment = 'positive';
-                else if (score < 4) sentiment = 'negative';
-              }
-              
-              analysisData = {
-                score,
-                sentiment,
-                confidence: 0.3,
-                summary: 'Анализ выполнен по ключевым словам (fallback)'
-              };
-            }
-
-            trendAnalyses.push({
-              trendId: trend.id,
-              score: analysisData.score || 5,
-              sentiment: analysisData.sentiment || 'neutral',
-              confidence: analysisData.confidence || 0,
-              commentsCount: comments.length,
-              summary: analysisData.summary || 'Анализ выполнен'
-            });
-
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id}: score=${analysisData.score}, sentiment=${analysisData.sentiment}, комментариев=${comments.length}`);
-
-            // 5. Сохраняем результат анализа в тренд
-            try {
-              await directusApi.patch(`/items/campaign_trend_topics/${trend.id}`, {
-                sentiment_analysis: {
-                  score: analysisData.score,
-                  sentiment: analysisData.sentiment,
-                  confidence: analysisData.confidence,
-                  summary: analysisData.summary,
-                  analyzedAt: new Date().toISOString(),
-                  commentsCount: comments.length
-                }
-              }, {
-                headers: { 'Authorization': `Bearer ${token}` }
-              });
-              console.log(`[SOURCE-ANALYSIS] Сохранен анализ для тренда ${trend.id}`);
-            } catch (saveError) {
-              console.error(`[SOURCE-ANALYSIS] Ошибка сохранения анализа тренда ${trend.id}:`, saveError);
-            }
-
-          } catch (aiError) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка AI анализа для тренда ${trend.id}:`, aiError);
-            // Fallback для ошибки AI
-            trendAnalyses.push({
-              trendId: trend.id,
-              score: 5,
-              sentiment: 'neutral',
-              confidence: 0,
-              commentsCount: comments.length,
-              summary: 'Ошибка анализа AI'
-            });
+          } catch (parseError) {
+            console.error(`[SOURCE-ANALYSIS] Ошибка парсинга JSON:`, parseError);
+            throw parseError;
           }
 
-          // Небольшая пауза между запросами
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-        } catch (trendError) {
-          console.error(`[SOURCE-ANALYSIS] Ошибка обработки тренда ${trend.id}:`, trendError);
-          trendAnalyses.push({
-            trendId: trend.id,
-            score: 5,
-            sentiment: 'neutral',
-            confidence: 0,
-            commentsCount: 0,
-            summary: 'Ошибка сбора данных'
-          });
+        } catch (aiError) {
+          console.error(`[SOURCE-ANALYSIS] Ошибка AI анализа:`, aiError);
+          
+          // Fallback анализ на основе ключевых слов
+          console.log(`[SOURCE-ANALYSIS] Используем fallback анализ по ключевым словам`);
+          const positiveWords = ['хорошо', 'отлично', 'супер', 'класс', 'круто', 'лайк', '👍', '❤️', 'спасибо', 'молодец', 'красиво'];
+          const negativeWords = ['плохо', 'ужасно', 'отстой', 'не нравится', 'дизлайк', '👎', 'фу', 'гадость', 'ужас', 'отвратительно'];
+          
+          const positiveCount = positiveWords.reduce((count, word) => 
+            count + (allCommentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
+          const negativeCount = negativeWords.reduce((count, word) => 
+            count + (allCommentsText.toLowerCase().match(new RegExp(word, 'g')) || []).length, 0);
+          
+          const totalWords = positiveCount + negativeCount;
+          
+          if (totalWords > 0) {
+            overallScore = Math.round(5 + (positiveCount - negativeCount) * 2.5 / Math.max(totalWords, 1));
+            overallScore = Math.max(1, Math.min(10, overallScore));
+            
+            if (overallScore > 6) overallSentiment = 'positive';
+            else if (overallScore < 4) overallSentiment = 'negative';
+            else overallSentiment = 'neutral';
+            
+            overallConfidence = 0.3;
+            analysisSuccess = true;
+          }
         }
       }
 
-      // Вычисляем общий балл источника
-      const validAnalyses = trendAnalyses.filter(a => a.confidence > 0);
-      let averageScore = 5; // По умолчанию нейтральный
-      let overallSentiment = 'neutral';
-      let overallConfidence = 0;
-
-      if (validAnalyses.length > 0) {
-        const totalScore = validAnalyses.reduce((sum, a) => sum + a.score, 0);
-        averageScore = totalScore / validAnalyses.length;
-
-        const totalConfidence = validAnalyses.reduce((sum, a) => sum + a.confidence, 0);
-        overallConfidence = totalConfidence / validAnalyses.length;
-
-        // Определяем общую тональность
-        if (averageScore >= 7) {
-          overallSentiment = 'positive';
-        } else if (averageScore <= 4) {
-          overallSentiment = 'negative';  
-        } else {
-          overallSentiment = 'neutral';
-        }
-      }
-
+      // 4. Формируем итоговый результат анализа источника
       const result = {
         sentiment: overallSentiment,
         confidence: Math.round(overallConfidence * 100) / 100,
-        score: Math.round(averageScore * 10) / 10,
+        score: Math.round(overallScore * 10) / 10,
         trendsCount: trends.length,
         commentsCount: totalCommentsAnalyzed,
-        analyzedTrends: validAnalyses.length,
-        summary: `Анализ ${validAnalyses.length} трендов с комментариями: ${overallSentiment === 'positive' ? 'положительная' : overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная'} тональность (балл: ${Math.round(averageScore * 10) / 10})`
+        commentsAnalyzed: allCommentsTexts.length,
+        analysisMethod: analysisSuccess ? (overallConfidence > 0.5 ? 'AI' : 'keywords') : 'basic',
+        summary: analysisSuccess 
+          ? `Анализ ${allCommentsTexts.length} комментариев к источнику: ${overallSentiment === 'positive' ? 'положительная' : overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная'} тональность (балл: ${Math.round(overallScore * 10) / 10})`
+          : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`
       };
 
       console.log(`[SOURCE-ANALYSIS] Итоговый результат:`, result);
 
-      // Сохраняем общий результат анализа в источник (используем системный токен для обновления)
+      // Сохраняем общий результат анализа в источник (используем пользовательский токен)
       try {
-        const adminToken = process.env.DIRECTUS_TOKEN;
-        if (!adminToken) {
-          console.error(`[SOURCE-ANALYSIS] Системный токен недоступен для обновления источника ${sourceId}`);
-        } else {
-          // Получаем информацию об источнике с пользовательским токеном
-          const sourceResponse = await directusApi.get(`/items/campaign_content_sources/${sourceId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+        console.log(`[SOURCE-ANALYSIS] Используем пользовательский токен для обновления источника ${sourceId}`);
+        // Обновляем источник с пользовательским токеном (проверяем правильную таблицу)
+        try {
+          // Генерируем emoji на основе sentiment
+          const getEmojiForSentiment = (sentiment: string) => {
+            switch (sentiment) {
+              case 'positive': return '😊';
+              case 'negative': return '😞';
+              case 'neutral': return '😐';
+              default: return '❓';
+            }
+          };
 
-          if (sourceResponse.data?.data) {
-            // Обновляем источник с системным токеном (он имеет права на запись)
-            await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
-              sentiment_analysis: {
-                sentiment: overallSentiment,
-                score: Math.round(averageScore * 10) / 10,
-                confidence: Math.round(overallConfidence * 100) / 100,
-                trendsAnalyzed: validAnalyses.length,
-                totalTrends: trends.length,
-                totalComments: totalCommentsAnalyzed,
-                summary: result.summary,
-                analyzedAt: new Date().toISOString()
-              }
-            }, {
-              headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            console.log(`[SOURCE-ANALYSIS] Сохранен общий анализ для источника ${sourceId} (системный токен)`);
-          }
+          await directusApi.patch(`/items/campaign_content_sources/${sourceId}`, {
+            sentiment_analysis: {
+              overall_sentiment: overallSentiment, // UI ожидает именно это поле
+              emoji: getEmojiForSentiment(overallSentiment), // UI проверяет сначала это поле
+              sentiment: overallSentiment, // Для совместимости
+              score: Math.round(overallScore * 10) / 10,
+              confidence: Math.round(overallConfidence * 100) / 100,
+              trendsAnalyzed: trends.length,
+              totalTrends: trends.length,
+              totalComments: totalCommentsAnalyzed,
+              summary: result.summary,
+              analyzedAt: new Date().toISOString()
+            }
+          }, {
+            headers: { 'Authorization': req.headers.authorization }
+          });
+          console.log(`[SOURCE-ANALYSIS] Результат анализа сохранен в campaign_content_sources/${sourceId}`);
+        } catch (contentSourcesError) {
+          console.log(`[SOURCE-ANALYSIS] Ошибка обновления campaign_content_sources, пробуем campaign_sources...`);
+          await directusApi.patch(`/items/campaign_sources/${sourceId}`, {
+            sentiment_analysis: {
+              overall_sentiment: overallSentiment, // UI ожидает именно это поле
+              emoji: getEmojiForSentiment(overallSentiment), // UI проверяет сначала это поле
+              sentiment: overallSentiment, // Для совместимости
+              score: Math.round(overallScore * 10) / 10,
+              confidence: Math.round(overallConfidence * 100) / 100,
+              trendsAnalyzed: trends.length,
+              totalTrends: trends.length,
+              totalComments: totalCommentsAnalyzed,
+              summary: result.summary,
+              analyzedAt: new Date().toISOString()
+            }
+          }, {
+            headers: { 'Authorization': req.headers.authorization }
+          });
+          console.log(`[SOURCE-ANALYSIS] Результат анализа сохранен в campaign_sources/${sourceId}`);
         }
+        console.log(`[SOURCE-ANALYSIS] Сохранен общий анализ для источника ${sourceId} (пользовательский токен)`);
+        
       } catch (sourceUpdateError) {
         console.error(`[SOURCE-ANALYSIS] Ошибка обновления источника ${sourceId}:`, sourceUpdateError);
         // Если обновление не удалось, продолжаем работу без критической ошибки
