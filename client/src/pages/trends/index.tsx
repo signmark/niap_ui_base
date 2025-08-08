@@ -1645,17 +1645,17 @@ export default function Trends() {
                                   return (
                                     <span 
                                       className="text-lg select-none" 
-                                      title={`Общая тональность: ${source.sentiment_analysis.overall_sentiment || 'не определена'}`}
+                                      title={`Общая тональность: ${source.sentiment_analysis.sentiment || 'не определена'}`}
                                     >
                                       {source.sentiment_analysis.emoji}
                                     </span>
                                   );
                                 }
-                                // Или используем overall_sentiment для создания emoji
-                                else if (source.sentiment_analysis.overall_sentiment) {
+                                // Используем sentiment для создания emoji  
+                                else if (source.sentiment_analysis.sentiment) {
                                   return (
                                     <SentimentEmoji 
-                                      sentiment={{sentiment: source.sentiment_analysis.overall_sentiment}} 
+                                      sentiment={{sentiment: source.sentiment_analysis.sentiment, score: source.sentiment_analysis.score, confidence: source.sentiment_analysis.confidence}} 
                                       className="text-lg" 
                                     />
                                   );

@@ -229,7 +229,7 @@ type PlatformRequirements = {
 // Image proxy function to handle Telegram images and Video thumbnails
 async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: boolean; forceType?: string | null; isVideoThumbnail?: boolean } = {}) {
   try {
-    console.log(`Proxying image/media: ${url}`);
+    // Обрабатываем запрос прокси
     
     // Проверяем, является ли это запросом на превью видео
     if (options.isVideoThumbnail) {
@@ -296,7 +296,7 @@ async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: bo
       headers['Referer'] = 'https://nplanner.ru/';
     }
     
-    console.log(`Sending request to ${fixedUrl} with headers:`, headers);
+    // Отправляем запрос с необходимыми заголовками
     
     // Set a timeout to prevent hanging requests
     const response = await axios.get(fixedUrl, {
@@ -385,9 +385,6 @@ async function fetchAndProxyImage(url: string, res: any, options: { isRetry?: bo
       res.setHeader('Content-Length', response.headers['content-length']);
     }
 
-    // Log success
-    console.log(`Successfully proxied media ${fixedUrl} with content type ${contentType}`);
-
     // Send the media data
     res.send(response.data);
   } catch (error) {
@@ -410,7 +407,7 @@ async function streamVideo(videoUrl: string, res: any, options: {
   itemId?: string;
 } = {}) {
   try {
-    console.log(`Streaming video from: ${videoUrl}${options.forceType ? ` (forced type: ${options.forceType})` : ''}`);
+    // Стримим видео
     
     // Определяем тип видео для специфической обработки
     const isVk = videoUrl.includes('vk.com') || 
@@ -4732,8 +4729,6 @@ ${text}
     const isVideoThumbnail = req.query.isVideo === 'true';
     const timestamp = req.query._t || Date.now(); // Для предотвращения кеширования
     
-    console.log(`[Image proxy] Requested URL: ${imageUrl}${isRetry ? ' (retry attempt)' : ''}${forceType ? ` (forced type: ${forceType})` : ''}${isVideoThumbnail ? ' (video thumbnail)' : ''}${itemId ? ` (item ID: ${itemId})` : ''}`);
-
     try {
       // Decode the URL if it's encoded
       const decodedUrl = decodeURIComponent(imageUrl);
