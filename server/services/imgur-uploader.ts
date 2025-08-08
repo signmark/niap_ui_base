@@ -100,12 +100,25 @@ export class ImgurUploaderService {
       formData.append('key', this.imgurApiKey);
       formData.append('image', fs.createReadStream(filePath));
 
-      // Отправляем запрос на Imgur API
+      // Отправляем запрос на Imgur API с таймаутом и повторными попытками
       const response = await axios.post(this.uploadEndpoint, formData, {
         headers: {
           ...formData.getHeaders(),
         },
+        timeout: 30000, // 30 секунд таймаут
+        validateStatus: (status) => status < 500, // Не бросать ошибку на 4xx
       });
+
+      log(`Ответ от API: статус ${response.status}, данные: ${JSON.stringify(response.data)}`);
+
+      // Проверяем статус ответа
+      if (response.status >= 400) {
+        log(`Ошибка API: ${response.status} - ${response.statusText}`);
+        if (response.data?.error?.message) {
+          log(`Сообщение об ошибке: ${response.data.error.message}`);
+        }
+        return null;
+      }
 
       // Проверяем ответ
       if (response.data && response.data.success && response.data.data && response.data.data.url) {

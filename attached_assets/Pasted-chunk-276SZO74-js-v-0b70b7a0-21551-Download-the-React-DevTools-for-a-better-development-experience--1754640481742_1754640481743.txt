@@ -1,0 +1,30 @@
+chunk-276SZO74.js?v=0b70b7a0:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg', key: 'stories/Я.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:92 📁 ПРОСТАЯ ЗАГРУЗКА: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg', key: 'stories/Я.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx?t=1754640409312:92 📁 ПРОСТАЯ ЗАГРУЗКА: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx?t=1754640409312:93 📁 Старое значение currentImageUrl: 
+simple.tsx?t=1754640409312:96 📁 Установлено новое значение, принудительный рендер
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: фака.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg', key: 'stories/фака.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg
+simple.tsx:81 📁 ПРОСТАЯ ЗАГРУЗКА: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg
+simple.tsx:82 📁 Старое значение currentImageUrl: 
+simple.tsx:84 📁 Устанавливаю URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg
+simple.tsx:85 📁 Устанавливаю renderKey: 1754640475266
+simple.tsx:88 📁 State установлен, ждем рендер...
+simple.tsx:92 📁 После setTimeout - currentImageUrl должен быть: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/фака.jpg

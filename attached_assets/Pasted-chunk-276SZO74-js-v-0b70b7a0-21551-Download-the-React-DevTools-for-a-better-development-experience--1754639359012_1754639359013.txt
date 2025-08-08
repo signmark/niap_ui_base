@@ -1,0 +1,28 @@
+chunk-276SZO74.js?v=0b70b7a0:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+simple.tsx:138 📝 storyData в рендере: {title: '', imageUrl: ''}
+simple.tsx:139 🖼️ storyData.imageUrl: 
+simple.tsx:140 📏 storyData.imageUrl length: 0
+simple.tsx:29 🔄 useEffect: storyData изменилось: {title: '', imageUrl: ''}
+simple.tsx:138 📝 storyData в рендере: {title: '', imageUrl: ''}
+simple.tsx:139 🖼️ storyData.imageUrl: 
+simple.tsx:140 📏 storyData.imageUrl length: 0
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg', key: 'stories/Я.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:114 📁 handleImageUpload вызван с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:115 📁 handleImageUpload текущее состояние до обновления: {title: '', imageUrl: ''}
+simple.tsx:122 📁 handleImageUpload prev состояние: {title: '', imageUrl: ''}
+simple.tsx:124 📁 handleImageUpload новое состояние: {title: '', imageUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg'}
+simple.tsx:138 📝 storyData в рендере: {title: '', imageUrl: ''}
+simple.tsx:139 🖼️ storyData.imageUrl: 
+simple.tsx:140 📏 storyData.imageUrl length: 0
+simple.tsx:29 🔄 useEffect: storyData изменилось: {title: '', imageUrl: ''}
+simple.tsx:131 📁 Принудительный ре-рендер, ref содержит: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:138 📝 storyData в рендере: {title: '', imageUrl: ''}
+simple.tsx:139 🖼️ storyData.imageUrl: 
+simple.tsx:140 📏 storyData.imageUrl length: 0
+simple.tsx:29 🔄 useEffect: storyData изменилось: {title: '', imageUrl: ''}

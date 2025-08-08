@@ -1,0 +1,49 @@
+chunk-276SZO74.js?v=0b70b7a0:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+simple.tsx:111 🖼️ previewImageUrl в рендере: 
+simple.tsx:112 📝 storyData.imageUrl в рендере: 
+simple.tsx:111 🖼️ previewImageUrl в рендере: 
+simple.tsx:112 📝 storyData.imageUrl в рендере: 
+BegetS3Uploader.tsx:46 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:50  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/beget-s3/upload 401 (Unauthorized)
+handleFileSelect @ BegetS3Uploader.tsx:50
+callCallback2 @ chunk-276SZO74.js?v=0b70b7a0:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=0b70b7a0:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=0b70b7a0:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=0b70b7a0:3736
+executeDispatch @ chunk-276SZO74.js?v=0b70b7a0:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=0b70b7a0:7034
+processDispatchQueue @ chunk-276SZO74.js?v=0b70b7a0:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=0b70b7a0:7051
+(anonymous) @ chunk-276SZO74.js?v=0b70b7a0:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=0b70b7a0:18913
+batchedUpdates @ chunk-276SZO74.js?v=0b70b7a0:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=0b70b7a0:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=0b70b7a0:5478
+dispatchEvent @ chunk-276SZO74.js?v=0b70b7a0:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=0b70b7a0:5449
+BegetS3Uploader.tsx:71 ❌ Ошибка загрузки в Beget S3: Error: Unauthorized: Invalid token
+    at handleFileSelect (BegetS3Uploader.tsx:68:15)
+handleFileSelect @ BegetS3Uploader.tsx:71
+await in handleFileSelect
+callCallback2 @ chunk-276SZO74.js?v=0b70b7a0:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=0b70b7a0:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=0b70b7a0:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=0b70b7a0:3736
+executeDispatch @ chunk-276SZO74.js?v=0b70b7a0:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=0b70b7a0:7034
+processDispatchQueue @ chunk-276SZO74.js?v=0b70b7a0:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=0b70b7a0:7051
+(anonymous) @ chunk-276SZO74.js?v=0b70b7a0:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=0b70b7a0:18913
+batchedUpdates @ chunk-276SZO74.js?v=0b70b7a0:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=0b70b7a0:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=0b70b7a0:5478
+dispatchEvent @ chunk-276SZO74.js?v=0b70b7a0:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=0b70b7a0:5449
+simple.tsx:111 🖼️ previewImageUrl в рендере: 
+simple.tsx:112 📝 storyData.imageUrl в рендере: 
+simple.tsx:111 🖼️ previewImageUrl в рендере: 
+simple.tsx:112 📝 storyData.imageUrl в рендере: 
+simple.tsx:111 🖼️ previewImageUrl в рендере: 
+simple.tsx:112 📝 storyData.imageUrl в рендере: 

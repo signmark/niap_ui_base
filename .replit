@@ -61,3 +61,6 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_gemini==1.0.0"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-fdf3c7e9-36ae-4877-8e02-4ddd7a58e655"

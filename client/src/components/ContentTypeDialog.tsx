@@ -10,6 +10,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import StoriesTypeDialog from './StoriesTypeDialog';
 
 interface ContentTypeDialogProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface ContentTypeDialogProps {
 
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
   const { featureFlags, isEnabled } = useFeatureFlags();
+  const [showStoriesTypeDialog, setShowStoriesTypeDialog] = useState(false);
   
   const contentTypes = [
     {
@@ -52,64 +54,78 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
   ];
 
   const handleSelect = (type: 'text' | 'text-image' | 'video' | 'story') => {
-    onSelectType(type);
-    onClose();
+    if (type === 'story') {
+      // Для Stories показываем диалог выбора типа
+      setShowStoriesTypeDialog(true);
+      onClose(); // Закрываем текущий диалог
+    } else {
+      onSelectType(type);
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Выберите тип контента</DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          {contentTypes.map((type) => {
-            const IconComponent = type.icon;
-            
-            // Check if Instagram Stories is disabled
-            if (type.id === 'story' && !isEnabled('instagramStories')) {
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Выберите тип контента</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {contentTypes.map((type) => {
+              const IconComponent = type.icon;
+              
+              // Check if Instagram Stories is disabled
+              if (type.id === 'story' && !isEnabled('instagramStories')) {
+                return (
+                  <Card key={type.id} className="opacity-50 cursor-not-allowed bg-gray-50 border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gray-100">
+                          <IconComponent className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-500">{type.title}</h3>
+                          <p className="text-sm text-gray-400">
+                            Функция временно отключена
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+              
               return (
-                <Card key={type.id} className="opacity-50 cursor-not-allowed bg-gray-50 border-gray-200">
+                <Card 
+                  key={type.id}
+                  className={`cursor-pointer transition-colors ${type.color}`}
+                  onClick={() => handleSelect(type.id as 'text' | 'text-image' | 'video' | 'story')}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gray-100">
-                        <IconComponent className="w-5 h-5 text-gray-400" />
+                      <div className="p-2 rounded-lg bg-white">
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-500">{type.title}</h3>
-                        <p className="text-sm text-gray-400">
-                          Функция временно отключена
-                        </p>
+                        <h3 className="font-medium">{type.title}</h3>
+                        <p className="text-sm text-gray-600">{type.description}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               );
-            }
-            
-            return (
-              <Card 
-                key={type.id}
-                className={`cursor-pointer transition-colors ${type.color}`}
-                onClick={() => handleSelect(type.id as 'text' | 'text-image' | 'video' | 'story')}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-white">
-                      <IconComponent className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{type.title}</h3>
-                      <p className="text-sm text-gray-600">{type.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </DialogContent>
-    </Dialog>
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог выбора типа Stories */}
+      <StoriesTypeDialog 
+        isOpen={showStoriesTypeDialog}
+        onClose={() => setShowStoriesTypeDialog(false)}
+      />
+    </>
   );
 }

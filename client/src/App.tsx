@@ -62,6 +62,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useWebSocket } from "@/hooks/use-websocket";
 import StoriesPage from "@/pages/stories";
+import SimpleStoriesPage from "@/pages/stories/simple";
 import VideoEditor from "@/pages/video";
 import YouTubeCallback from "@/pages/youtube-callback";
 import InstagramCallback from "@/pages/instagram-callback";
@@ -114,6 +115,13 @@ function Router() {
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
       <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/simple/new" component={() => <WithLayout Component={SimpleStoriesPage} />} />
+      <Route path="/stories/simple" component={() => <WithLayout Component={SimpleStoriesPage} />} />
+      <Route path="/stories/test" component={() => <WithLayout Component={() => {
+        const SimpleTestPage = React.lazy(() => import('./pages/stories/simple-test'));
+        return <React.Suspense fallback={<div>Загрузка...</div>}><SimpleTestPage /></React.Suspense>;
+      }} />} />
       <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />

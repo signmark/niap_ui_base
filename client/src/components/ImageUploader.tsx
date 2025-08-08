@@ -168,7 +168,10 @@ export function ImageUploader({
           id={id}
           placeholder={placeholder}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            console.log('🔗 ImageUploader: URL введен:', e.target.value);
+            onChange(e.target.value);
+          }}
           className="flex-1"
         />
         <div className="relative flex-shrink-0">

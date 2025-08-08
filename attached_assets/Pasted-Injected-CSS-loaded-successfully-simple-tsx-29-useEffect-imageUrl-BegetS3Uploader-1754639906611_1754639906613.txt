@@ -1,0 +1,26 @@
+Injected CSS loaded successfully
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: 
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg', key: 'stories/Я.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:85 📁 Файл загружен, URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:86 📁 Текущий imageUrl перед обновлением: 
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: 
+simple.tsx:92 📁 setImageUrl вызван с задержкой: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: 
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: https://i.ibb.co/b5p410fW/1754637007536-836400145.jpg
+simple.tsx:207 ✅ Превью загружено для URL: https://i.ibb.co/b5p410fW/1754637007536-836400145.jpg
+BegetS3Uploader.tsx:47 🚀 Загружаем файл в Beget S3: Я.jpg
+BegetS3Uploader.tsx:61 📦 Response status: 200
+BegetS3Uploader.tsx:62 📦 Response ok: true
+BegetS3Uploader.tsx:71 📦 Полный ответ от сервера: {success: true, url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg', key: 'stories/Я.jpg'}
+BegetS3Uploader.tsx:74 ✅ Файл успешно загружен в Beget S3: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+BegetS3Uploader.tsx:75 🎯 Вызываем onUpload с URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:85 📁 Файл загружен, URL: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:86 📁 Текущий imageUrl перед обновлением: https://i.ibb.co/b5p410fW/1754637007536-836400145.jpg
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: 
+simple.tsx:92 📁 setImageUrl вызван с задержкой: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/stories/Я.jpg
+simple.tsx:29 🔄 useEffect: imageUrl изменился на: 

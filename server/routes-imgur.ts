@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { imgurUploaderService } from './services/imgur-uploader';
+import { imgurAlternativeService } from './services/imgur-alternative';
 import { socialPublishingWithImgurService } from './services/social-publishing-with-imgur';
 import { storage } from './storage';
 import multer from 'multer';
@@ -51,6 +52,17 @@ const upload = multer({
  * Маршруты для работы с загрузкой изображений на Imgur
  */
 export function registerImgurRoutes(router: Router) {
+  // Роут для обслуживания локальных изображений
+  router.get('/uploads/images/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadsDir, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Файл не найден' });
+    }
+    
+    res.sendFile(filePath);
+  });
   // Маршрут для загрузки изображения по URL
   router.post('/api/imgur/upload-from-url', async (req, res) => {
     try {
@@ -426,8 +438,8 @@ export function registerImgurRoutes(router: Router) {
       const filePath = req.file.path;
       console.log(`Файл успешно загружен: ${filePath}`);
       
-      // Загружаем файл на Imgur
-      const imgurUrl = await imgurUploaderService.uploadImageFromFile(filePath);
+      // Загружаем файл на Imgur через альтернативный сервис
+      const imgurUrl = await imgurAlternativeService.uploadImage(filePath);
       
       if (!imgurUrl) {
         return res.status(500).json({

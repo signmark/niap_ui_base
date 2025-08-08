@@ -4,31 +4,59 @@ import { directusApi } from '../directus';
 
 const router = express.Router();
 
-// Create a new story
+// Create a new story (supports both multi-slide and simple stories)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, campaignId, slides } = req.body;
+    const { title, campaign_id, campaignId, slides, metadata, image_url, content_type } = req.body;
     const userId = req.user?.id;
+    const finalCampaignId = campaign_id || campaignId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
+    console.log('[DEV] [stories] Creating story:', { 
+      title, 
+      campaignId: finalCampaignId, 
+      slidesCount: slides?.length, 
+      metadata, 
+      image_url,
+      content_type 
+    });
+
+    // Determine story type based on metadata or slides
+    let storyMetadata;
+    if (metadata) {
+      // Simple story from frontend
+      storyMetadata = metadata;
+    } else if (slides) {
+      // Multi-slide story
+      storyMetadata = { 
+        slides: slides,
+        storyType: 'instagram',
+        format: '9:16',
+        type: 'multi'
+      };
+    } else {
+      // Default empty story
+      storyMetadata = { 
+        slides: [],
+        storyType: 'instagram',
+        format: '9:16',
+        type: 'multi'
+      };
+    }
 
     // Create story content in campaign_content collection
     const storyData = {
-      campaign_id: campaignId,
+      campaign_id: finalCampaignId,
       user_id: userId,
       title: title || 'Новая история',
-      content_type: 'story',
+      content_type: content_type || 'story',
       status: 'draft',
       content: '', // Empty content for stories
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16'
-      }),
+      image_url: image_url || null, // Support for simple stories with single image
+      metadata: JSON.stringify(storyMetadata),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -81,71 +109,47 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Create a new story
-router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { title, campaignId, slides } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
-
-    // Create story content in campaign_content collection
-    const storyData = {
-      campaign_id: campaignId,
-      user_id: userId,
-      title: title || 'Новая история',
-      content_type: 'story',
-      status: 'draft',
-      content: '', // Empty content for stories
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16'
-      }),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = createResponse.data.data;
-
-    console.log('[DEV] [stories] Story created with ID:', story.id);
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error creating story:', error);
-    res.status(500).json({ error: 'Failed to create story' });
-  }
-});
-
 // Update story - SPECIFIC ROUTE FOR STORIES ONLY
 router.put('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, slides } = req.body;
+    const { title, slides, metadata } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] Updating story:', id, { title, slidesCount: slides?.length });
+    console.log('[DEV] [stories] Updating story:', id, { title, slidesCount: slides?.length, metadata });
+
+    // Determine story type based on metadata or slides
+    let storyMetadata;
+    if (metadata) {
+      // Simple story update
+      storyMetadata = metadata;
+    } else if (slides) {
+      // Multi-slide story update
+      storyMetadata = { 
+        slides: slides,
+        storyType: 'instagram',
+        format: '9:16',
+        type: 'multi',
+        version: '1.0'
+      };
+    } else {
+      // Keep existing metadata if none provided
+      storyMetadata = { 
+        slides: [],
+        storyType: 'instagram',
+        format: '9:16',
+        type: 'multi',
+        version: '1.0'
+      };
+    }
 
     const updateData = {
       title: title || 'Новая история',
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16',
-        version: '1.0'
-      }),
+      metadata: JSON.stringify(storyMetadata),
       updated_at: new Date().toISOString()
     };
 
@@ -175,25 +179,30 @@ router.get('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    console.log('[DEV] [stories] Fetching story by ID:', id);
+
     const response = await directusApi.get(`/items/campaign_content/${id}`, {
       headers: {
         'Authorization': req.headers.authorization
       }
     });
-    const story = response.data.data;
 
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
+    const story = response.data.data;
+    
+    // Verify user has access to this story
+    if (story.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
+    console.log('[DEV] [stories] Story fetched successfully');
     res.json({ success: true, data: story });
   } catch (error) {
     console.error('Error fetching story:', error);
-    res.status(500).json({ error: 'Не удалось загрузить историю' });
+    res.status(500).json({ error: 'Failed to fetch story' });
   }
 });
 
-// Delete story - SPECIFIC ROUTE FOR STORIES ONLY
+// Delete story
 router.delete('/story/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -203,166 +212,33 @@ router.delete('/story/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Verify ownership с пользовательским токеном
-    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+    console.log('[DEV] [stories] Deleting story:', id);
+
+    // First verify the story belongs to the user
+    const getResponse = await directusApi.get(`/items/campaign_content/${id}`, {
       headers: {
         'Authorization': req.headers.authorization
       }
     });
-    const story = response.data.data;
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
+
+    const story = getResponse.data.data;
+    if (story.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Delete the story
     await directusApi.delete(`/items/campaign_content/${id}`, {
       headers: {
         'Authorization': req.headers.authorization
       }
     });
 
-    res.json({ success: true, message: 'Story deleted successfully' });
+    console.log('[DEV] [stories] Story deleted successfully');
+    res.json({ success: true });
   } catch (error) {
     console.error('Error deleting story:', error);
     res.status(500).json({ error: 'Failed to delete story' });
   }
 });
 
-// Publish story - SPECIFIC ROUTE FOR STORIES ONLY
-router.post('/story/:id/publish', authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { platforms, scheduledAt } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    // Get story с пользовательским токеном
-    const response = await directusApi.get(`/items/campaign_content/${id}`, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = response.data.data;
-    if (!story || story.user_id !== userId) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-
-    // Update story status and platforms
-    const updateData = {
-      status: scheduledAt ? 'scheduled' : 'published',
-      scheduled_time: scheduledAt || new Date().toISOString(),
-      platforms: JSON.stringify(platforms),
-      updated_at: new Date().toISOString()
-    };
-
-    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const updatedStory = updateResponse.data.data;
-
-    // Send to N8N webhooks - Instagram Stories отдельно от других платформ
-    try {
-      const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
-      
-      // Разделяем платформы: Instagram Stories отдельно
-      const instagramPlatforms = platforms.filter((p: string) => p === 'instagram');
-      const otherPlatforms = platforms.filter((p: string) => p !== 'instagram');
-
-      const webhookPromises = [];
-
-      // Instagram Stories через отдельный webhook (с fallback на общий)
-      if (instagramPlatforms.length > 0) {
-        const instagramWebhookUrl = `${n8nUrl}/webhook/publish-instagram-stories`;
-        const instagramPayload = {
-          contentId: updatedStory.id,
-          contentType: 'story',
-          platforms: instagramPlatforms,
-          scheduledAt: scheduledAt
-        };
-        
-        console.log('[DEV] [stories] Sending to Instagram Stories webhook:', instagramWebhookUrl);
-        
-        webhookPromises.push(
-          fetch(instagramWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(instagramPayload)
-          }).then(async (response) => {
-            // Если Instagram webhook недоступен (404), используем fallback
-            if (response.status === 404) {
-              console.log('[DEV] [stories] Instagram webhook not found (404), using general webhook as fallback');
-              const fallbackUrl = `${n8nUrl}/webhook/publish-stories`;
-              
-              const fallbackResponse = await fetch(fallbackUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(instagramPayload)
-              });
-              
-              return { type: 'instagram-fallback', response: fallbackResponse };
-            }
-            
-            return { type: 'instagram', response };
-          })
-        );
-      }
-
-      // Остальные платформы через общий Stories webhook
-      if (otherPlatforms.length > 0) {
-        const generalWebhookUrl = `${n8nUrl}/webhook/publish-stories`;
-        const generalPayload = {
-          contentId: updatedStory.id,
-          contentType: 'story',
-          platforms: otherPlatforms,
-          scheduledAt: scheduledAt
-        };
-        
-        console.log('[DEV] [stories] Sending to general Stories webhook:', generalWebhookUrl);
-        
-        webhookPromises.push(
-          fetch(generalWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(generalPayload)
-          }).then(response => ({ type: 'general', response }))
-        );
-      }
-
-      // Ждем все webhook вызовы
-      const results = await Promise.allSettled(webhookPromises);
-      
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          const { type, response } = result.value;
-          if (response.ok) {
-            console.log(`[DEV] [stories] ${type} webhook called successfully`);
-          } else {
-            console.warn(`[DEV] [stories] ${type} webhook returned error:`, response.status, response.statusText);
-          }
-        } else {
-          console.error('[DEV] [stories] Webhook promise rejected:', result.reason);
-        }
-      });
-
-    } catch (webhookError) {
-      console.error('[DEV] [stories] Error calling N8N webhooks:', webhookError);
-      // Continue execution - webhook failure shouldn't block the API response
-    }
-
-    res.json({ 
-      success: true, 
-      data: updatedStory,
-      message: scheduledAt ? 'Story scheduled for publication' : 'Story published successfully'
-    });
-  } catch (error) {
-    console.error('Error publishing story:', error);
-    res.status(500).json({ error: 'Failed to publish story' });
-  }
-});
-
-// Export router with specific story routes only
 export default router;

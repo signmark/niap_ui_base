@@ -1,0 +1,37 @@
+Injected CSS loaded successfully
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+2SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:37 📤 Ответ от сервера: Object
+simple.tsx:173 📸 SimpleImageUploader onChange вызван с URL: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:37 📤 Ответ от сервера: Object
+simple.tsx:173 📸 SimpleImageUploader onChange вызван с URL: https://i.ibb.co/0jK8qbDk/1754575119338-814165719-passport-1.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:37 📤 Ответ от сервера: Object
+simple.tsx:173 📸 SimpleImageUploader onChange вызван с URL: https://i.ibb.co/qL4Xt6jR/1754567166585-441824873.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+SimpleImageUploader.tsx:64 🎯 SimpleImageUploader рендерится с value: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
+simple.tsx:116 💾 Состояние сохранено в localStorage: Object
+simple.tsx:221 ✅ Превью изображения загружено: https://i.ibb.co/67MznnkR/1754567298358-672451295.jpg
