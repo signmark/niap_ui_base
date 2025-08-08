@@ -8343,23 +8343,22 @@ ${commentsText.substring(0, 4000)}
 Комментарии для анализа:
 ${commentTexts}`;
 
-        // Используем глобальный Gemini ключ из базы данных
+        // Используем gemini-proxy с Vertex AI (модель 2.5 автоматически направляется на Vertex AI)
         let result;
         try {
-          // Получаем глобальный Gemini ключ
-          let geminiKey;
+          // Получаем глобальный Gemini ключ (для API ключа)
+          let geminiKey = 'dummy'; // Для Vertex AI API ключ не нужен, используется Service Account
           try {
             const globalKeys = await globalApiKeysService.getGlobalApiKeys();
-            geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY;
+            geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY || 'vertex-ai-service-account';
           } catch (keyError) {
-            console.error(`[POST /api/trend-sentiment] Ошибка получения Gemini ключа:`, keyError);
-            throw new Error('Gemini ключ недоступен');
+            console.log(`[POST /api/trend-sentiment] Используем Service Account для Vertex AI`);
           }
 
           const geminiProxyServiceInstance = new GeminiProxyService({ apiKey: geminiKey });
           result = await geminiProxyServiceInstance.generateText({
             prompt: analysisPrompt,
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash', // Эта модель автоматически направляется на Vertex AI
             temperature: 0.2,
             maxOutputTokens: 800
           });

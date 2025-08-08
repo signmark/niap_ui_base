@@ -1,5 +1,6 @@
 import { GoogleAuth } from 'google-auth-library';
 import axios from 'axios';
+import fetch from 'node-fetch';
 import * as crypto from 'crypto';
 import * as logger from '../utils/logger';
 
@@ -105,14 +106,44 @@ export class VertexAIService {
 
       const data = await response.json();
       
-      // Извлекаем текст из ответа
-      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-        const generatedText = data.candidates[0].content.parts[0].text;
-        logger.log(`[vertex-ai] Успешно сгенерирован текст длиной: ${generatedText.length} символов`);
-        return generatedText;
+      // Универсальная обработка ответов от Vertex AI
+      if (data.candidates && data.candidates.length > 0) {
+        const candidate = data.candidates[0];
+        
+        // Проверяем причину завершения
+        if (candidate.finishReason === 'MAX_TOKENS') {
+          logger.warn('[vertex-ai] Достигнут лимит токенов, текст может быть обрезан');
+          if (data.usageMetadata) {
+            logger.log(`[vertex-ai] Использование токенов:`, data.usageMetadata);
+          }
+        }
+        
+        // Извлекаем текст из разных возможных структур
+        let generatedText = '';
+        
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+          // Стандартная структура с content.parts
+          generatedText = candidate.content.parts[0].text;
+        } else if (candidate.parts && candidate.parts.length > 0) {
+          // Альтернативная структура с прямыми parts
+          generatedText = candidate.parts[0].text;
+        } else if (candidate.text) {
+          // Прямое текстовое поле
+          generatedText = candidate.text;
+        } else {
+          logger.error('[vertex-ai] Не найден текст в ответе candidate:', JSON.stringify(candidate, null, 2));
+          throw new Error('Не удалось извлечь текст из ответа Vertex AI');
+        }
+        
+        if (generatedText) {
+          logger.log(`[vertex-ai] Успешно сгенерирован текст длиной: ${generatedText.length} символов`);
+          return generatedText;
+        } else {
+          throw new Error('Пустой текст в ответе от Vertex AI');
+        }
       } else {
-        logger.error('[vertex-ai] Неожиданная структура ответа:', data);
-        throw new Error('Неожиданная структура ответа от Vertex AI');
+        logger.error('[vertex-ai] Нет candidates в ответе:', JSON.stringify(data, null, 2));
+        throw new Error('Отсутствуют candidates в ответе от Vertex AI');
       }
       
     } catch (error) {
