@@ -144,8 +144,6 @@ export class PublishScheduler {
       const currentTimeISO = currentTime.toISOString();
       
       // Получаем контент со статусами 'scheduled' и 'partial' для обработки
-      log(`Планировщик: Отправляем запрос к ${directusUrl}/items/campaign_content с токеном ${authToken.substring(0, 10)}...`, 'scheduler');
-      
       let allContent: any[] = [];
       
       try {
@@ -161,41 +159,13 @@ export class PublishScheduler {
           }
         });
 
-        log(`Планировщик: Получен ответ от Directus. Статус: ${response.status}`, 'scheduler');
-
         allContent = response?.data?.data || [];
-        
-        log(`Планировщик: Найдено ${allContent.length} контентов для обработки (scheduled/partial)`, 'scheduler');
         
         // Проверяем наши тестовые YouTube контенты
         const testContentIds = ['bea24ff7-9c75-4404-812b-06d355bd98ac', 'fd9b54a9-24ad-41ab-b1fa-4da777154b3d', '9d2c6b9a-0aa9-44c0-b37d-538b6c6193c3', '654701b6-a865-44f4-8453-0ea433cd5f90', 'ea5a4482-8885-408e-9495-bca8293b7f85', 'e2469bd4-416e-4258-8c34-5822c3759c77', '6eff52ab-7623-414c-8a0c-5744f4c0be55'];
-        
-        // НЕ ОЧИЩАЕМ кэш принудительно - защита от дублирования важнее
-        // Кэш очищается автоматически через cleanupCache() каждые 60 минут
-        log(`🛡️ Кэш защиты от дублирования содержит ${this.processedContentCache.size} записей (сохраняется для защиты)`, 'scheduler');
-        
-        // Выводим статистику Publication Tracker
-        const trackerStats = publicationTracker.getStats();
-        log(`📊 Publication Tracker: ${trackerStats.activePublications} активных публикаций`, 'scheduler');
-        if (trackerStats.publicationsInProgress.length > 0) {
-          log(`📊 В процессе: ${trackerStats.publicationsInProgress.join(', ')}`, 'scheduler');
-        }
         const foundTestContent = allContent.filter((item: any) => testContentIds.includes(item.id));
         
-        if (foundTestContent.length > 0) {
-            log(`🎯 НАЙДЕНО ${foundTestContent.length} тестовых YouTube контентов:`, 'scheduler');
-            foundTestContent.forEach((content: any) => {
-                log(`🎯 Контент ${content.id} - статус: ${content.status}, запланирован на: ${content.scheduled_at}`, 'scheduler');
-                log(`🎯 YouTube платформы: ${JSON.stringify(content.social_platforms?.youtube)}`, 'scheduler');
-            });
-        } else {
-            log(`❌ ТЕСТОВЫЕ YouTube КОНТЕНТЫ НЕ НАЙДЕНЫ в списке ${allContent.length} элементов`, 'scheduler');
-            log(`📋 Все ID контентов: ${allContent.map((item: any) => item.id).slice(0, 10).join(', ')}...`, 'scheduler');
-        }
-        
-        if (allContent.length > 0) {
-          log(`Планировщик: Статусы найденного контента: ${allContent.map((c: any) => c.status).join(', ')}`, 'scheduler');
-        }
+        // Убираем избыточное логирование
         
         if (allContent.length === 0) {
           return;
@@ -223,7 +193,6 @@ export class PublishScheduler {
           // Получаем данные платформ
           const platformsData = content.social_platforms || content.socialPlatforms;
           if (!platformsData) {
-            log(`Планировщик: Пропускаем контент ${content.id} - нет данных платформ`, 'scheduler');
             continue;
           }
 
@@ -232,7 +201,6 @@ export class PublishScheduler {
             try {
               platforms = JSON.parse(platforms);
             } catch (e) {
-              log(`Планировщик: Ошибка парсинга JSON для контента ${content.id}`, 'scheduler');
               continue;
             }
           }
@@ -393,14 +361,11 @@ export class PublishScheduler {
           }
 
           if (readyPlatforms.length > 0) {
-            log(`Планировщик: Контент ${content.id} готов к публикации в: ${readyPlatforms.join(', ')}`, 'scheduler');
-            
-            // Отправляем в готовые платформы через N8N
+            // Публикация через N8N (логи только при успехе)
             await this.publishContentToPlatforms(content, readyPlatforms, authToken);
             publishedCount++;
-          } else {
-            log(`Планировщик: Контент ${content.id} - нет платформ готовых к публикации в данный момент`, 'scheduler');
           }
+          // Тихо пропускаем контент без готовых платформ
         }
 
         // Отправляем итоговое уведомление
@@ -623,8 +588,7 @@ export class PublishScheduler {
       ? `${baseUrl}/${webhookName}`
       : `${baseUrl}/webhook/${webhookName}`;
 
-    log(`🔄 Планировщик: Отправляем запрос в N8N для публикации контента ${content.id} в ${platform}`, 'scheduler');
-    log(`🔗 Планировщик: URL webhook: ${webhookUrl}`, 'scheduler');
+    // Отправляем запрос в N8N для публикации
     
     await axios.post(webhookUrl, {
       contentId: content.id,
@@ -638,7 +602,7 @@ export class PublishScheduler {
       }
     });
 
-    log(`Контент ${content.id} успешно отправлен в N8N для ${platform}`, 'scheduler');
+    // Контент успешно отправлен в N8N
     
     // Отправляем уведомление в UI
     try {
@@ -677,10 +641,8 @@ export class PublishScheduler {
           fields: 'id,name,social_media_settings'
         }
       });
-      log(`Получены данные кампании ${campaignId}: ${JSON.stringify(response.data.data)}`, 'scheduler');
       return response.data.data;
     } catch (error: any) {
-      log(`Ошибка получения данных кампании ${campaignId}: ${error.message}`, 'scheduler');
       return null;
     }
   }

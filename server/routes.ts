@@ -7875,20 +7875,15 @@ ${allCommentsText.substring(0, 8000)}
       const period = req.query.period as string || '7days';
       const authHeader = req.headers['authorization'];
       
-      console.log(`[GET /api/campaign-trends] Запрос трендов для кампании ${campaignId}, period=${period}`);
-      
       if (!campaignId) {
-        console.log('[GET /api/campaign-trends] Ошибка: ID кампании не указан');
         return res.status(400).json({ error: "Campaign ID is required" });
       }
       
       if (!authHeader) {
-        console.log('[GET /api/campaign-trends] Ошибка: отсутствует заголовок авторизации');
         return res.status(401).json({ error: "Unauthorized" });
       }
       
       const token = authHeader.replace('Bearer ', '');
-      console.log(`[GET /api/campaign-trends] Получен токен авторизации: ${token.substring(0, 10)}...`);
       
       let fromDate: Date | undefined;
       
@@ -7911,11 +7906,8 @@ ${allCommentsText.substring(0, 8000)}
       }
       
       try {
-        console.log(`[GET /api/campaign-trends] Fetching trend topics for campaign: ${campaignId}, period: ${period}`);
-        
         // Форматируем дату для фильтра в формате ISO
         const fromDateISO = fromDate.toISOString();
-        console.log(`[GET /api/campaign-trends] Using date filter: ${fromDateISO}`);
         
         // Создаем фильтр с учетом периода
         const filter: any = {
@@ -7926,17 +7918,10 @@ ${allCommentsText.substring(0, 8000)}
         
         // Применяем фильтрацию по дате для всех периодов кроме "all"
         if (period !== 'all') {
-          console.log(`[GET /api/campaign-trends] Applying date filter for period: ${period}`);
           filter.created_at = {
             _gte: fromDateISO
           };
-        } else {
-          console.log(`[GET /api/campaign-trends] No date filter applied for period: ${period}`);
         }
-        
-        console.log(`[GET /api/campaign-trends] Directus API filter:`, JSON.stringify(filter));
-        
-        console.log(`[GET /api/campaign-trends] Making request to Directus API endpoint: /items/campaign_trend_topics`);
         
         // Получаем темы напрямую из Directus API
         // Для всех периодов загружаем ВСЕ записи без ограничений
@@ -7953,11 +7938,7 @@ ${allCommentsText.substring(0, 8000)}
           }
         });
         
-        console.log(`[GET /api/campaign-trends] Directus API response status: ${response.status}`);
-        console.log(`[GET /api/campaign-trends] Directus API response contains: ${response.data?.data?.length || 0} items`);
-        console.log(`[GET /api/campaign-trends] Period: ${period}, Filter applied: ${period !== 'all' ? `date >= ${fromDateISO}` : 'NO DATE FILTER'}, Loading ALL matching records`);
-        
-        console.log(`Found ${response.data?.data?.length || 0} trend topics for campaign ${campaignId}`);
+        // Обработка данных без избыточного логирования
         
         // Преобразуем данные из формата Directus в наш формат
         const trendTopics = response.data.data.map((item: any) => {
@@ -7992,27 +7973,14 @@ ${allCommentsText.substring(0, 8000)}
           };
         });
         
-        console.log(`Found ${trendTopics.length} trend topics for campaign ${campaignId}`);
-        
         res.json({ 
           success: true,
           data: trendTopics 
         });
       } catch (directusError) {
-        console.error("[GET /api/campaign-trends] Error fetching trend topics from Directus:", directusError);
-        
         if (axios.isAxiosError(directusError)) {
-          console.error("[GET /api/campaign-trends] Directus API error status:", directusError.response?.status);
-          console.error("[GET /api/campaign-trends] Directus API error details:", directusError.response?.data);
-          console.error("[GET /api/campaign-trends] Request config:", {
-            url: directusError.config?.url,
-            method: directusError.config?.method,
-            params: directusError.config?.params
-          });
-          
           // Проверяем, является ли это ошибкой коллекции (collection)
           if (directusError.response?.status === 403) {
-            console.error("[GET /api/campaign-trends] Ошибка доступа: возможно, у пользователя нет прав на коллекцию campaign_trend_topics");
             
             // Не возвращаем ошибку, а пустой массив
             return res.json({ 
@@ -8025,7 +7993,6 @@ ${allCommentsText.substring(0, 8000)}
           if (directusError.response?.status === 404 || 
             directusError.message?.includes('collection "campaign_trend_topics" not found') ||
             directusError.response?.data?.errors?.[0]?.extensions?.code === 'COLLECTION_NOT_FOUND') {
-            console.error("[GET /api/campaign-trends] Коллекция не найдена: отсутствует коллекция campaign_trend_topics в Directus");
             
             // Не возвращаем ошибку, а пустой массив
             return res.json({ 
