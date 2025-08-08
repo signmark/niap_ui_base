@@ -1636,7 +1636,7 @@ export default function Trends() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : sourceAnalysisData[source.id] ? (
                               <SentimentEmoji 
-                                sentiment={{sentiment: sourceAnalysisData[source.id].overall_sentiment || 'unknown'}} 
+                                sentiment={{sentiment: sourceAnalysisData[source.id].sentiment || 'unknown', score: sourceAnalysisData[source.id].score, confidence: sourceAnalysisData[source.id].confidence}} 
                                 className="text-lg" 
                               />
                             ) : (() => {
