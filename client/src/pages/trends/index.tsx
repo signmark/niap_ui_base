@@ -1274,8 +1274,9 @@ export default function Trends() {
           [sourceId]: data.data
         }));
 
-        // Обновляем кэш источников для отображения emoji
+        // Принудительно обновляем кэш источников для отображения emoji
         queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
+        queryClient.refetchQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
         
         toast({
           title: "Анализ источника завершен",
@@ -1324,8 +1325,9 @@ export default function Trends() {
         const data = await response.json();
         console.log('Результат анализа источника:', data);
         
-        // Обновляем локальные данные
-        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources"] });
+        // Принудительно обновляем локальные данные
+        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
+        queryClient.refetchQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
         
         toast({
           title: "Анализ источника завершен",

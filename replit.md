@@ -20,6 +20,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Architectural Decisions
 - **Monolithic Refactoring (January 2025)**: Active cleanup of monolithic architecture - removed duplicate endpoints, standardizing API responses, eliminating redundant code layers.
+- **Console Logging Cleanup (January 2025)**: Removed excessive console logging from trends functionality, scheduler, and image proxy services to provide clean console output. System now runs quietly with only essential system logs.
+- **Sentiment Analysis UI Fix (January 2025)**: Fixed UI refresh issue where sentiment analysis completed successfully but question mark (?) remained displayed instead of sentiment emoji. Added forced cache invalidation and data refetch after analysis completion.
 - **January 2025**: Successfully implemented Gemini 2.5 integration via Vertex AI for keyword analysis and business questionnaire features, providing real website content analysis and specific keyword extraction with high accuracy.
 - **YouTube OAuth Fix (January 2025)**: Implemented robust fallback system for YouTube OAuth configuration. System automatically uses database keys when available, seamlessly switches to environment variables when database is inaccessible. Added comprehensive error handling and logging for production troubleshooting.
 - **Scheduled Publication Platform Management (January 2025)**: Fixed platform selection logic in scheduled publications. Unchecked platforms are now completely removed from JSON data structure instead of being marked as cancelled, providing cleaner data management and preventing confusion in scheduling system.
