@@ -727,7 +727,7 @@ export class DirectusAuthManager {
     try {
       // Ищем админскую сессию в кэше
       const adminSessions = Object.values(this.sessionCache).filter(session => 
-        session.user?.email === 'admin@roboflow.space'
+        session.user?.email === 'admin@roboflow.tech'
       );
       
       if (adminSessions.length > 0) {
@@ -737,9 +737,9 @@ export class DirectusAuthManager {
         }
       }
       
-      // Если нет действующей админской сессии, создаем новую
-      const adminEmail = 'admin@roboflow.space';
-      const adminPassword = 'asdASD123!@#';
+      // Если нет действующей админской сессии, создаем новую  
+      const adminEmail = process.env.DIRECTUS_ADMIN_EMAIL || 'admin@roboflow.tech';
+      const adminPassword = process.env.DIRECTUS_ADMIN_PASSWORD || 'QtpZ3dh7';
       
       const loginResult = await this.login(adminEmail, adminPassword);
       return loginResult.token;
