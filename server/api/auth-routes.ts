@@ -82,17 +82,14 @@ export function registerAuthRoutes(app: Express): void {
         // Импортируем directusApiManager
         const { directusApiManager } = await import('../directus.js');
         
-        // Пробуем получить токен через прямую авторизацию администратора
-        const loginResponse = await directusApiManager.post('/auth/login', {
-          email: 'admin@roboflow.space',
-          password: 'QtpZ3dh7'
-        });
+        // Получаем токен администратора через directusAuthManager  
+        const token = await directusAuthManager.getAdminAuthToken();
         
-        if (!loginResponse.data?.data?.access_token) {
-          throw new Error('Получен неверный ответ при авторизации администратора');
+        if (!token) {
+          throw new Error('Не удалось получить токен администратора');
         }
         
-        adminToken = loginResponse.data.data.access_token;
+        adminToken = token;
         console.log('Successfully obtained admin token for user creation');
         
         // Создаем пользователя через directusApiManager с админским токеном
@@ -220,7 +217,7 @@ export function registerAuthRoutes(app: Express): void {
           isAdmin
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during login:', error);
       
       // Обрабатываем ошибку авторизации
@@ -424,9 +421,7 @@ export function registerAuthRoutes(app: Express): void {
           email: userData.email,
           first_name: userData.first_name,
           last_name: userData.last_name,
-          role: userData.role?.name || 'User',
-          is_smm_admin: userData.is_smm_admin,
-          expire_date: userData.expire_date,
+          role: userData.role,
           isAdmin
         }
       });
@@ -483,8 +478,9 @@ export function registerAuthRoutes(app: Express): void {
       }
       
       // Fallback: получаем токен через планировщик
-      const { publishScheduler } = await import('../services/publish-scheduler.js');
-      const systemToken = await publishScheduler.getSystemToken();
+      const { getPublishScheduler } = await import('../services/publish-scheduler.js');
+      const scheduler = getPublishScheduler();
+      const systemToken = await scheduler.getSystemToken();
       
       if (systemToken) {
         return res.status(200).json({
