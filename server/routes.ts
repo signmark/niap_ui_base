@@ -6733,20 +6733,22 @@ Return your response as a JSON array in this exact format:
 
           const commentsCount = parseInt(trend.comments) || 0;
           
+          // Добавляем существующие комментарии если они есть
           if (comments.length > 0) {
-            // Добавляем существующие комментарии
             const commentsTexts = comments
               .map(c => (c.text || c.content || '').trim())
               .filter(Boolean);
             
             allCommentsTexts.push(...commentsTexts);
             totalCommentsAnalyzed += comments.length;
-            console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} комментариев из тренда ${trend.id}`);
-          } else if (commentsCount > 0) {
-            // Нужно собрать комментарии для этого тренда
+            console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} существующих комментариев из тренда ${trend.id}`);
+          }
+          
+          // ВСЕГДА запрашиваем сбор для трендов с comments > 0 (независимо от наличия комментариев в базе)
+          if (commentsCount > 0) {
             const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
             if (trendUrl) {
-              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} требует сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
+              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} будет добавлен для сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
               trendsNeedingCollection.push({...trend, url: trendUrl});
             }
           }
