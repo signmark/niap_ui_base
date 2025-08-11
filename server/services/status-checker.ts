@@ -32,12 +32,10 @@ class PublicationStatusChecker {
     const minutesInterval = this.checkIntervalMs / (60 * 1000);
     log(`Запуск сервиса проверки статусов публикаций (интервал: ${minutesInterval} минут)`, 'status-checker');
     
-    // Запускаем немедленную первую проверку
+    // Запускаем немедленную первую проверку (тихо)
     this.checkPublicationStatuses();
     
-    // Убираем хардкод специальной проверки конкретного контента
-    
-    // Запускаем регулярные проверки по интервалу
+    // Запускаем регулярные проверки по интервалу (тихо)
     this.intervalId = setInterval(() => {
       this.checkPublicationStatuses();
     }, this.checkIntervalMs);
@@ -92,11 +90,8 @@ class PublicationStatusChecker {
     // Проверяем режим вывода логов
     const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
     
-    // Проверяем кэш (если не принудительное обновление)
+    // Проверяем кэш (если не принудительное обновление) - тихо
     if (!forceRefresh && this.adminTokenCache && (Date.now() - this.adminTokenTimestamp) < this.tokenExpirationMs) {
-      if (isVerboseMode) {
-        log('Использование кэшированного токена администратора', 'status-checker');
-      }
       return this.adminTokenCache;
     }
     
@@ -132,7 +127,7 @@ class PublicationStatusChecker {
     
     // Если нет активных сессий, запрашиваем сессию администратора
     try {
-      const adminSession = directusAuthManager.getAdminSession();
+      const adminSession = await directusAuthManager.getAdminSession();
       if (adminSession && adminSession.token) {
         this.adminTokenCache = adminSession.token;
         this.adminTokenTimestamp = Date.now();
@@ -213,17 +208,12 @@ class PublicationStatusChecker {
       // Проверяем режим вывода логов
       const isVerboseMode = DEBUG_LEVELS.STATUS_CHECKER || DEBUG_LEVELS.GLOBAL;
       
-      // Снижаем уровень детализации логов
-      if (isVerboseMode) {
-        log('Проверка статусов публикаций', 'status-checker');
-      }
+      // Убираем избыточные логи - проверка выполняется тихо
       
       // Получаем токен администратора для запросов
       const adminToken = await this.getAdminToken();
       if (!adminToken) {
-        if (isVerboseMode) {
-          log('Не удалось получить токен администратора для проверки статусов', 'status-checker');
-        }
+        // Тихо возвращаемся, если нет токена
         return;
       }
       

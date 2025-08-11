@@ -602,7 +602,6 @@ export class DirectusAuthManager {
     
     this.sessionRefreshIntervalId = setInterval(() => {
       this.refreshExpiringSessions();
-      this.enforceMemoryLimits();
     }, this.sessionRefreshIntervalMs);
     
     log(`Session refresh interval started (${this.sessionRefreshIntervalMs}ms)`, this.logPrefix);
