@@ -1,6 +1,6 @@
 import { useParams } from "wouter";
 import { useMemo } from "react";
-import StoryEditor from "@/components/stories/StoryEditor";
+import EnhancedStoryEditor from "@/components/stories/EnhancedStoryEditor";
 import { useCampaignStore } from "@/lib/campaignStore";
 
 export default function StoriesPage() {
@@ -26,7 +26,7 @@ export default function StoriesPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-full mx-auto">
-        <StoryEditor />
+        <EnhancedStoryEditor campaignId={activeCampaignId} storyId={cleanStoryId} />
       </div>
     </div>
   );
