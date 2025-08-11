@@ -6766,23 +6766,61 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Запускаем сбор комментариев для ${trendsNeedingCollection.length} трендов`);
         console.log(`[SOURCE-ANALYSIS] Список трендов для сбора:`, trendsNeedingCollection.map(t => `${t.id}: ${t.comments} комментариев`));
         
+        // Проверяем доступность N8N перед отправкой запросов
+        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+        console.log(`[SOURCE-ANALYSIS] 🔍 Проверяем доступность N8N: ${n8nUrl}`);
+        
+        try {
+          const healthCheck = await fetch(`${n8nUrl}/healthz`, { 
+            method: 'GET',
+            timeout: 10000
+          });
+          console.log(`[SOURCE-ANALYSIS] 💚 N8N health check: ${healthCheck.status} ${healthCheck.statusText}`);
+        } catch (healthError) {
+          console.error(`[SOURCE-ANALYSIS] ❌ N8N недоступен:`, {
+            message: healthError.message,
+            code: healthError.code
+          });
+        }
+
         // Отправляем webhook запросы для сбора комментариев
         const collectionPromises = [];
         for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
+            // Определяем N8N URL в зависимости от окружения
+            const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+            const webhookUrl = `${n8nUrl}/webhook/collect-comments`;
+            
             console.log(`[SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда ${trend.id}: ${trend.url}`);
-            const webhookPromise = fetch('https://n8n.roboflow.space/webhook/collect-comments', {
+            console.log(`[SOURCE-ANALYSIS] 📡 Webhook URL: ${webhookUrl}`);
+            console.log(`[SOURCE-ANALYSIS] 🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`[SOURCE-ANALYSIS] 📦 Payload:`, JSON.stringify({
+              trend_id: trend.id,
+              url: trend.url
+            }, null, 2));
+            
+            const webhookPromise = fetch(webhookUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'SMM-Manager/1.0'
+              },
               body: JSON.stringify({
                 trend_id: trend.id,
                 url: trend.url
-              })
-            }).then(response => {
+              }),
+              timeout: 30000 // 30 секунд таймаут
+            }).then(async response => {
+              const responseText = await response.text();
               console.log(`[SOURCE-ANALYSIS] ✅ Webhook ответ для тренда ${trend.id}: ${response.status} ${response.statusText}`);
+              console.log(`[SOURCE-ANALYSIS] 📄 Ответ N8N:`, responseText.substring(0, 200));
               return response;
             }).catch(error => {
-              console.error(`[SOURCE-ANALYSIS] ❌ Webhook ошибка для тренда ${trend.id}:`, error);
+              console.error(`[SOURCE-ANALYSIS] ❌ Webhook ошибка для тренда ${trend.id}:`, {
+                message: error.message,
+                code: error.code,
+                stack: error.stack?.substring(0, 300)
+              });
               throw error;
             });
             
