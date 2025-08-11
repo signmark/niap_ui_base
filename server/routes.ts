@@ -6718,9 +6718,9 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Проверяем комментарии для тренда ${trend.id}`);
         
         try {
-          // Получаем существующие комментарии для данного тренда
+          // Получаем существующие комментарии для данного тренда (используем пользовательский токен)
           const commentsResponse = await directusApi.get('/items/post_comment', {
-            headers: { 'Authorization': `Bearer ${adminToken}` },
+            headers: { 'Authorization': authHeader },
             params: {
               filter: JSON.stringify({ trent_post_id: { _eq: trend.id } }),
               sort: 'date',
@@ -6806,7 +6806,7 @@ Return your response as a JSON array in this exact format:
           for (const trend of trendsNeedingCollection) {
             try {
               const commentsResponse = await directusApi.get('/items/post_comment', {
-                headers: { 'Authorization': `Bearer ${adminToken}` },
+                headers: { 'Authorization': authHeader },
                 params: {
                   filter: JSON.stringify({ trent_post_id: { _eq: trend.id } }),
                   sort: 'date',
