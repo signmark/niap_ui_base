@@ -230,6 +230,48 @@ export default function Trends() {
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null); // Выбранный источник для фильтрации трендов
 
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
+  
+  // Refs для автоматического скролла к элементам
+  const sourcesRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+  const sourcesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Функция для автоматического выбора источника при выборе тренда
+  const syncTrendWithSource = (trendTopic: TrendTopic) => {
+    const sourceId = trendTopic.source_id || trendTopic.sourceId;
+    
+    if (sourceId && sourceId !== selectedSourceId) {
+      // Выбираем источник
+      setSelectedSourceId(sourceId);
+      
+      // Разворачиваем секцию источников если она свернута
+      if (!isDataSourcesExpanded) {
+        setIsDataSourcesExpanded(true);
+      }
+      
+      // Переключаемся на вкладку "Тренды" если находимся на вкладке "Комментарии"
+      if (activeTab !== 'trends') {
+        setActiveTab('trends');
+      }
+      
+      // Скроллим к выбранному источнику после небольшой задержки
+      setTimeout(() => {
+        const sourceElement = sourcesRefs.current[sourceId];
+        if (sourceElement && sourcesContainerRef.current) {
+          sourceElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+          
+          // Добавляем визуальный эффект выделения
+          sourceElement.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+          setTimeout(() => {
+            sourceElement.style.boxShadow = '';
+          }, 2000);
+        }
+      }, 300);
+    }
+  };
 
   // Загрузка состояния из localStorage при инициализации
   useEffect(() => {
@@ -1565,7 +1607,7 @@ export default function Trends() {
                     Нет добавленных источников
                   </p>
                 ) : (
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                  <div ref={sourcesContainerRef} className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                     {sources
                       // Фильтрация дубликатов по URL - показываем только первый источник с уникальным URL
                       .filter((source, index, array) => {
@@ -1584,9 +1626,17 @@ export default function Trends() {
                         return typeA.localeCompare(typeB);
                       })
                       .map((source) => (
-                      <div key={source.id} className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${
-                        selectedSourceId === source.id ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
-                      }`}>
+                      <div 
+                        key={source.id} 
+                        ref={(el) => {
+                          if (el) {
+                            sourcesRefs.current[source.id] = el;
+                          }
+                        }}
+                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${
+                          selectedSourceId === source.id ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
+                        }`}
+                      >
                         <div 
                           className="flex items-center gap-2 flex-1" 
                           onClick={() => {
@@ -2211,6 +2261,8 @@ export default function Trends() {
                                 onClick={() => {
                                   console.log('Выбран тренд для просмотра комментариев:', topic.id, topic.title);
                                   setSelectedTrendTopic(topic);
+                                  // Синхронизируем выбор тренда с соответствующим источником
+                                  syncTrendWithSource(topic);
                                   // Сразу загружаем комментарии для выбранного тренда
                                   loadTrendComments(topic.id);
                                   // НЕ открываем превью - только выбираем для комментариев
@@ -2281,6 +2333,8 @@ export default function Trends() {
                                         onClick={() => {
                                           console.log('Тренд выбран:', topic.title, 'sentiment_analysis:', topic.sentiment_analysis);
                                           setSelectedTrendTopic(topic);
+                                          // Синхронизируем выбор тренда с соответствующим источником
+                                          syncTrendWithSource(topic);
                                         }}
                                       >
                                         <SentimentEmoji sentiment={topic.sentiment_analysis} className="text-sm" />
