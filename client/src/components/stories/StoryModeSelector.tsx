@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ImageIcon, Layers3, Type, Sticker, MapPin, Clock } from 'lucide-react';
 
-export type StoryMode = 'simple' | 'advanced';
+export type StoryMode = 'simple' | 'video';
 
 interface StoryModeSelectorProps {
   onModeSelect: (mode: StoryMode) => void;
@@ -65,32 +65,32 @@ export default function StoryModeSelector({ onModeSelect }: StoryModeSelectorPro
             </CardContent>
           </Card>
 
-          {/* Расширенный режим */}
+          {/* Видео режим */}
           <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-2 hover:border-purple-500">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Layers3 className="h-6 w-6 text-purple-500" />
-                  <CardTitle>Расширенный режим</CardTitle>
+                  <CardTitle>Видео Stories</CardTitle>
                 </div>
-                <Badge variant="outline" className="bg-purple-50 text-purple-700">Полный функционал</Badge>
+                <Badge variant="outline" className="bg-purple-50 text-purple-700">Видео контент</Badge>
               </div>
               <CardDescription>
-                Многослайдовые Stories с интерактивными элементами
+                Создание видео Stories с текстом и эффектами
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Layers3 className="h-4 w-4" />
-                <span>Несколько слайдов</span>
+                <span>Загрузка видео</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Sticker className="h-4 w-4" />
-                <span>Интерактивные элементы (опросы, вопросы)</span>
+                <Type className="h-4 w-4" />
+                <span>Наложение текста на видео</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Clock className="h-4 w-4" />
-                <span>Таймеры и анимации</span>
+                <span>До 30 секунд</span>
               </div>
               
               <Button 
@@ -98,7 +98,7 @@ export default function StoryModeSelector({ onModeSelect }: StoryModeSelectorPro
                 className="w-full"
                 variant="outline"
               >
-                Выбрать расширенный режим
+                Выбрать видео режим
               </Button>
             </CardContent>
           </Card>

@@ -3,7 +3,7 @@ import { useCampaignStore } from '@/lib/campaignStore';
 import { useParams } from 'wouter';
 import StoryModeSelector, { StoryMode } from './StoryModeSelector';
 import SimpleStoryEditor from './SimpleStoryEditor';
-import StoryEditor from './StoryEditor';
+import VideoStoryEditor from './VideoStoryEditor';
 
 interface EnhancedStoryEditorProps {
   campaignId?: string;
@@ -44,11 +44,11 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
     );
   }
 
-  if (selectedMode === 'advanced') {
+  if (selectedMode === 'video') {
     return (
-      <StoryEditor 
+      <VideoStoryEditor 
         campaignId={activeCampaignId}
-        storyId={activeStoryId}
+        onBack={handleBack}
       />
     );
   }
