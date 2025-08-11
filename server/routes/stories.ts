@@ -7,27 +7,27 @@ const router = express.Router();
 // Create a new story
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, campaignId, slides } = req.body;
+    const { title, campaignId, content, type, status } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
+    console.log('[DEV] [stories] Creating story:', { title, campaignId, type });
 
     // Create story content in campaign_content collection
     const storyData = {
       campaign_id: campaignId,
       user_id: userId,
       title: title || 'Новая история',
-      content_type: 'story',
-      status: 'draft',
-      content: '', // Empty content for stories
+      content_type: type || 'story',
+      status: status || 'draft',
+      content: content || '', // Story content with positioning data
       metadata: JSON.stringify({ 
-        slides: slides || [],
         storyType: 'instagram',
-        format: '9:16'
+        format: '9:16',
+        createdWith: 'enhanced_editor'
       }),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -65,7 +65,7 @@ router.get('/', authMiddleware, async (req, res) => {
       params: {
         filter: JSON.stringify({
           user_id: { _eq: userId },
-          content_type: { _eq: 'story' }
+          content_type: { _in: ['story', 'video_story'] }
         }),
         sort: '-created_at'
       }
@@ -78,50 +78,6 @@ router.get('/', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error fetching stories:', error);
     res.status(500).json({ error: 'Failed to fetch stories' });
-  }
-});
-
-// Create a new story
-router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { title, campaignId, slides } = req.body;
-    const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    console.log('[DEV] [stories] Creating story:', { title, campaignId, slidesCount: slides?.length });
-
-    // Create story content in campaign_content collection
-    const storyData = {
-      campaign_id: campaignId,
-      user_id: userId,
-      title: title || 'Новая история',
-      content_type: 'story',
-      status: 'draft',
-      content: '', // Empty content for stories
-      metadata: JSON.stringify({ 
-        slides: slides || [],
-        storyType: 'instagram',
-        format: '9:16'
-      }),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
-      headers: {
-        'Authorization': req.headers.authorization
-      }
-    });
-    const story = createResponse.data.data;
-
-    console.log('[DEV] [stories] Story created with ID:', story.id);
-    res.json({ success: true, data: story });
-  } catch (error) {
-    console.error('Error creating story:', error);
-    res.status(500).json({ error: 'Failed to create story' });
   }
 });
 
