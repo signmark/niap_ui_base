@@ -6946,6 +6946,8 @@ Return your response as a JSON array in this exact format:
       let overallScore = 5;
       let overallConfidence = 0;
       let analysisSuccess = false;
+      let detailedSummary = '';
+      let aiSummary = '';
 
       if (allCommentsTexts.length > 0) {
         console.log(`[SOURCE-ANALYSIS] Анализируем ${allCommentsTexts.length} комментариев через AI для источника ${sourceId}`);
@@ -6986,8 +6988,6 @@ ${allCommentsText.substring(0, 8000)}
           console.log(`[SOURCE-ANALYSIS] Vertex AI ответ получен:`, analysisResult?.substring(0, 200));
 
           let analysisData;
-          let detailedSummary = '';
-          let aiSummary = '';
           try {
             // Пытаемся извлечь JSON из ответа
             const jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
