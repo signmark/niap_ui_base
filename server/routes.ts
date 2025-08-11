@@ -6722,7 +6722,7 @@ Return your response as a JSON array in this exact format:
           const commentsResponse = await directusApi.get('/items/post_comment', {
             headers: { 'Authorization': `Bearer ${adminToken}` },
             params: {
-              filter: { trent_post_id: { _eq: trend.id } },
+              filter: JSON.stringify({ trent_post_id: { _eq: trend.id } }),
               sort: 'date',
               limit: 1000
             }
