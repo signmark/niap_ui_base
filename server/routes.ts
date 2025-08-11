@@ -6784,9 +6784,9 @@ Return your response as a JSON array in this exact format:
           console.log(`[SOURCE-ANALYSIS] Ожидаем завершения сбора комментариев...`);
           await Promise.allSettled(collectionPromises);
           
-          // Даем время на обработку (30 секунд)
-          console.log(`[SOURCE-ANALYSIS] Ожидаем 30 секунд для завершения обработки...`);
-          await new Promise(resolve => setTimeout(resolve, 30000));
+          // Даем время на обработку (10 секунд)
+          console.log(`[SOURCE-ANALYSIS] Ожидаем 10 секунд для завершения обработки...`);
+          await new Promise(resolve => setTimeout(resolve, 10000));
           
           // Повторно собираем комментарии после завершения сбора
           console.log(`[SOURCE-ANALYSIS] Повторный сбор комментариев после webhook запросов...`);
