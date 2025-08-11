@@ -170,7 +170,7 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
     }
 
     // Рисуем фон текста если есть
-    if (backgroundColor && backgroundColor !== 'transparent') {
+    if (backgroundColor && backgroundColor !== 'transparent' && backgroundColor !== undefined) {
       ctx.fillStyle = backgroundColor;
       const bgX = textX - textWidth / 2 - padding;
       const bgY = scaledY - textHeight / 2 - padding;
@@ -222,7 +222,7 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
       });
       queryClient.invalidateQueries({ queryKey: ['/api/campaign-content'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: 'Ошибка',
         description: 'Не удалось сохранить Stories',
@@ -353,7 +353,7 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
                     <input
                       type="color"
                       id="backgroundColor"
-                      value={storyData.textOverlay.backgroundColor?.replace('rgba(0,0,0,0.5)', '#000000') || '#000000'}
+                      value={storyData.textOverlay.backgroundColor?.startsWith('rgba') ? '#000000' : storyData.textOverlay.backgroundColor || '#000000'}
                       onChange={(e) => {
                         const color = e.target.value;
                         const rgb = parseInt(color.slice(1), 16);
@@ -366,7 +366,7 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
                     />
                     <Button
                       variant="outline"
-                      onClick={() => updateTextOverlay({ backgroundColor: 'transparent' })}
+                      onClick={() => updateTextOverlay({ backgroundColor: undefined })}
                       size="sm"
                     >
                       Без фона
@@ -466,7 +466,7 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
                         fontFamily: storyData.textOverlay.fontFamily,
                         fontWeight: storyData.textOverlay.fontWeight,
                         textAlign: storyData.textOverlay.textAlign,
-                        backgroundColor: storyData.textOverlay.backgroundColor,
+                        backgroundColor: storyData.textOverlay.backgroundColor === 'transparent' ? undefined : storyData.textOverlay.backgroundColor,
                         padding: storyData.textOverlay.padding ? `${storyData.textOverlay.padding}px` : undefined,
                         borderRadius: storyData.textOverlay.borderRadius ? `${storyData.textOverlay.borderRadius}px` : undefined,
                         whiteSpace: 'pre-wrap',
