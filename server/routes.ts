@@ -6797,9 +6797,42 @@ Return your response as a JSON array in this exact format:
           console.log(`[SOURCE-ANALYSIS] Ожидаем завершения сбора комментариев...`);
           await Promise.allSettled(collectionPromises);
           
-          // Даем время на обработку (10 секунд)
-          console.log(`[SOURCE-ANALYSIS] Ожидаем 10 секунд для завершения обработки...`);
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          // Даем время на обработку с повторными проверками (максимум 60 секунд)
+          console.log(`[SOURCE-ANALYSIS] Ожидаем сбор комментариев с повторными проверками...`);
+          let waitTime = 0;
+          const maxWaitTime = 60000; // 60 секунд
+          const checkInterval = 15000; // проверяем каждые 15 секунд
+          
+          while (waitTime < maxWaitTime) {
+            await new Promise(resolve => setTimeout(resolve, checkInterval));
+            waitTime += checkInterval;
+            
+            console.log(`[SOURCE-ANALYSIS] Проверка через ${waitTime/1000} секунд...`);
+            
+            // Проверяем, появились ли комментарии
+            let foundComments = 0;
+            for (const trend of trendsNeedingCollection.slice(0, 3)) { // проверяем первые 3 тренда
+              try {
+                const testResponse = await directusApi.get('/items/post_comment', {
+                  headers: { 'Authorization': authHeader },
+                  params: {
+                    filter: JSON.stringify({ trent_post_id: { _eq: trend.id } }),
+                    limit: 1
+                  }
+                });
+                const testComments = testResponse.data?.data || [];
+                foundComments += testComments.length;
+              } catch (error) {
+                // игнорируем ошибки при проверке
+              }
+            }
+            
+            console.log(`[SOURCE-ANALYSIS] Найдено ${foundComments} комментариев при проверке`);
+            if (foundComments > 0) {
+              console.log(`[SOURCE-ANALYSIS] ✅ Комментарии найдены! Завершаем ожидание через ${waitTime/1000} секунд`);
+              break;
+            }
+          }
           
           // Повторно собираем комментарии после завершения сбора
           console.log(`[SOURCE-ANALYSIS] Повторный сбор комментариев после webhook запросов...`);

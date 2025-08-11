@@ -1,0 +1,261 @@
+smm-1  | [SOURCE-ANALYSIS] Анализируем источник ID: 159f319d-0453-47b0-8d61-5e969673bce5 для кампании 45daab2a-4c6f-4578-8665-3a049458c0c8  
+smm-1  | [SOURCE-ANALYSIS] Найдено 20 трендов напрямую по source_id: 159f319d-0453-47b0-8d61-5e969673bce5
+smm-1  | [SOURCE-ANALYSIS] Найдено 20 трендов для анализа источника 159f319d-0453-47b0-8d61-5e969673bce5
+smm-1  | [SOURCE-ANALYSIS] Собираем все комментарии для всех трендов источника 159f319d-0453-47b0-8d61-5e969673bce5
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [SOURCE-ANALYSIS] Тренд 2cf62492-3fe8-4bd9-abd6-e04550a307c0 будет добавлен для сбора комментариев (2 комментариев, URL: https://t.me/smmlancer/7373)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 91169149-4e39-4974-986d-e5c2d89f7792
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 91169149-4e39-4974-986d-e5c2d89f7792
+smm-1  | [SOURCE-ANALYSIS] Тренд 91169149-4e39-4974-986d-e5c2d89f7792 не имеет комментариев (0)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда a0f3d7cf-8d1b-40b3-b6ed-03b216c1d0f9
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда a0f3d7cf-8d1b-40b3-b6ed-03b216c1d0f9
+smm-1  | [SOURCE-ANALYSIS] Тренд a0f3d7cf-8d1b-40b3-b6ed-03b216c1d0f9 не имеет комментариев (0)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 778ff7cf-5b4a-4a94-88c0-aeac53deee0b
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 778ff7cf-5b4a-4a94-88c0-aeac53deee0b
+smm-1  | [SOURCE-ANALYSIS] Тренд 778ff7cf-5b4a-4a94-88c0-aeac53deee0b не имеет комментариев (0)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда e92a1799-9aaa-462c-ba41-e14fb966329a
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда e92a1799-9aaa-462c-ba41-e14fb966329a
+smm-1  | [SOURCE-ANALYSIS] Тренд e92a1799-9aaa-462c-ba41-e14fb966329a будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7368)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 4a60f934-178c-4ff4-bdd5-d56ff5f29d93
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 4a60f934-178c-4ff4-bdd5-d56ff5f29d93
+smm-1  | [SOURCE-ANALYSIS] Тренд 4a60f934-178c-4ff4-bdd5-d56ff5f29d93 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7367)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 67e5d258-76c1-407f-ad4b-a13b7ad90099
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 67e5d258-76c1-407f-ad4b-a13b7ad90099
+smm-1  | [SOURCE-ANALYSIS] Тренд 67e5d258-76c1-407f-ad4b-a13b7ad90099 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7366)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда e9b51fe1-21b1-4716-8d5d-b15ffd7d4788
+smm-1  | 12:52:05 PM [DEV] [express] GET /api/proxy-image 200 in 166ms
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда e9b51fe1-21b1-4716-8d5d-b15ffd7d4788
+smm-1  | [SOURCE-ANALYSIS] Тренд e9b51fe1-21b1-4716-8d5d-b15ffd7d4788 будет добавлен для сбора комментариев (2 комментариев, URL: https://t.me/smmlancer/7365)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 75a49732-2dfa-4d39-9332-4593482ea0a7
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 75a49732-2dfa-4d39-9332-4593482ea0a7
+smm-1  | [SOURCE-ANALYSIS] Тренд 75a49732-2dfa-4d39-9332-4593482ea0a7 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7364)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 9a5b6524-9388-47e2-9b57-02cdd56e6111
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 9a5b6524-9388-47e2-9b57-02cdd56e6111
+smm-1  | [SOURCE-ANALYSIS] Тренд 9a5b6524-9388-47e2-9b57-02cdd56e6111 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7363)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 35405e64-cd8d-4d01-b2bd-26896066ae49
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 35405e64-cd8d-4d01-b2bd-26896066ae49
+smm-1  | [SOURCE-ANALYSIS] Тренд 35405e64-cd8d-4d01-b2bd-26896066ae49 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7191)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 4c4617eb-39bb-415c-aec5-5eba36f0b8b6
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 4c4617eb-39bb-415c-aec5-5eba36f0b8b6
+smm-1  | [SOURCE-ANALYSIS] Тренд 4c4617eb-39bb-415c-aec5-5eba36f0b8b6 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7190)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 2999765c-00d4-4fc5-8a7e-fefeb9197825
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 2999765c-00d4-4fc5-8a7e-fefeb9197825
+smm-1  | [SOURCE-ANALYSIS] Тренд 2999765c-00d4-4fc5-8a7e-fefeb9197825 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7189)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 472e6a83-ef56-41c6-9698-fe5fc511fc17
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 472e6a83-ef56-41c6-9698-fe5fc511fc17
+smm-1  | [SOURCE-ANALYSIS] Тренд 472e6a83-ef56-41c6-9698-fe5fc511fc17 будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7188)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 45f6d458-eea4-42f4-8d62-d905699e790c
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 45f6d458-eea4-42f4-8d62-d905699e790c
+smm-1  | [SOURCE-ANALYSIS] Тренд 45f6d458-eea4-42f4-8d62-d905699e790c будет добавлен для сбора комментариев (2 комментариев, URL: https://t.me/smmlancer/7187)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 1a7efe61-2f43-4d17-8fd7-0a9a3e8b012e
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 1a7efe61-2f43-4d17-8fd7-0a9a3e8b012e
+smm-1  | [SOURCE-ANALYSIS] Тренд 1a7efe61-2f43-4d17-8fd7-0a9a3e8b012e будет добавлен для сбора комментариев (1 комментариев, URL: https://t.me/smmlancer/7186)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда bd42d4b2-f20e-4995-82f3-8edf815d4f19
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда bd42d4b2-f20e-4995-82f3-8edf815d4f19
+smm-1  | [SOURCE-ANALYSIS] Тренд bd42d4b2-f20e-4995-82f3-8edf815d4f19 будет добавлен для сбора комментариев (4 комментариев, URL: https://t.me/smmlancer/7185)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 7970f30c-1094-4ef1-bffc-66858408564b
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 7970f30c-1094-4ef1-bffc-66858408564b
+smm-1  | [SOURCE-ANALYSIS] Тренд 7970f30c-1094-4ef1-bffc-66858408564b будет добавлен для сбора комментариев (7 комментариев, URL: https://t.me/smmlancer/7184)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда c416e27f-3c08-479d-9b79-90c1963d370e
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда c416e27f-3c08-479d-9b79-90c1963d370e
+smm-1  | [SOURCE-ANALYSIS] Тренд c416e27f-3c08-479d-9b79-90c1963d370e будет добавлен для сбора комментариев (3 комментариев, URL: https://t.me/smmlancer/7183)
+smm-1  | [SOURCE-ANALYSIS] Проверяем комментарии для тренда 70ff3117-608a-4625-9888-b9276699d14f
+smm-1  | [SOURCE-ANALYSIS] Найдено 0 комментариев для тренда 70ff3117-608a-4625-9888-b9276699d14f
+smm-1  | [SOURCE-ANALYSIS] Тренд 70ff3117-608a-4625-9888-b9276699d14f не имеет комментариев (0)
+smm-1  | [SOURCE-ANALYSIS] Запускаем сбор комментариев для 16 трендов
+smm-1  | [SOURCE-ANALYSIS] Список трендов для сбора: [
+smm-1  |   '2cf62492-3fe8-4bd9-abd6-e04550a307c0: 2 комментариев',
+smm-1  |   'e92a1799-9aaa-462c-ba41-e14fb966329a: 1 комментариев',
+smm-1  |   '4a60f934-178c-4ff4-bdd5-d56ff5f29d93: 1 комментариев',
+smm-1  |   '67e5d258-76c1-407f-ad4b-a13b7ad90099: 1 комментариев',
+smm-1  |   'e9b51fe1-21b1-4716-8d5d-b15ffd7d4788: 2 комментариев',
+smm-1  |   '75a49732-2dfa-4d39-9332-4593482ea0a7: 1 комментариев',
+smm-1  |   '9a5b6524-9388-47e2-9b57-02cdd56e6111: 1 комментариев',
+smm-1  |   '35405e64-cd8d-4d01-b2bd-26896066ae49: 1 комментариев',
+smm-1  |   '4c4617eb-39bb-415c-aec5-5eba36f0b8b6: 1 комментариев',
+smm-1  |   '2999765c-00d4-4fc5-8a7e-fefeb9197825: 1 комментариев',
+smm-1  |   '472e6a83-ef56-41c6-9698-fe5fc511fc17: 1 комментариев',
+smm-1  |   '45f6d458-eea4-42f4-8d62-d905699e790c: 2 комментариев',
+smm-1  |   '1a7efe61-2f43-4d17-8fd7-0a9a3e8b012e: 1 комментариев',
+smm-1  |   'bd42d4b2-f20e-4995-82f3-8edf815d4f19: 4 комментариев',
+smm-1  |   '7970f30c-1094-4ef1-bffc-66858408564b: 7 комментариев',
+smm-1  |   'c416e27f-3c08-479d-9b79-90c1963d370e: 3 комментариев'
+smm-1  | ]
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0: https://t.me/smmlancer/7373
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда e92a1799-9aaa-462c-ba41-e14fb966329a: https://t.me/smmlancer/7368
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 4a60f934-178c-4ff4-bdd5-d56ff5f29d93: https://t.me/smmlancer/7367
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 67e5d258-76c1-407f-ad4b-a13b7ad90099: https://t.me/smmlancer/7366
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда e9b51fe1-21b1-4716-8d5d-b15ffd7d4788: https://t.me/smmlancer/7365
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 75a49732-2dfa-4d39-9332-4593482ea0a7: https://t.me/smmlancer/7364
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 9a5b6524-9388-47e2-9b57-02cdd56e6111: https://t.me/smmlancer/7363
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 35405e64-cd8d-4d01-b2bd-26896066ae49: https://t.me/smmlancer/7191
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 4c4617eb-39bb-415c-aec5-5eba36f0b8b6: https://t.me/smmlancer/7190
+smm-1  | [SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда 2999765c-00d4-4fc5-8a7e-fefeb9197825: https://t.me/smmlancer/7189
+smm-1  | [SOURCE-ANALYSIS] Ожидаем завершения сбора комментариев...
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда e92a1799-9aaa-462c-ba41-e14fb966329a: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 67e5d258-76c1-407f-ad4b-a13b7ad90099: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 4a60f934-178c-4ff4-bdd5-d56ff5f29d93: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 75a49732-2dfa-4d39-9332-4593482ea0a7: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 9a5b6524-9388-47e2-9b57-02cdd56e6111: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда e9b51fe1-21b1-4716-8d5d-b15ffd7d4788: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 35405e64-cd8d-4d01-b2bd-26896066ae49: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 2999765c-00d4-4fc5-8a7e-fefeb9197825: 200 OK
+smm-1  | [SOURCE-ANALYSIS] ✅ Webhook ответ для тренда 4c4617eb-39bb-415c-aec5-5eba36f0b8b6: 200 OK
+smm-1  | [SOURCE-ANALYSIS] Ожидаем 10 секунд для завершения обработки...
+smm-1  | [SOURCE-ANALYSIS] Повторный сбор комментариев после webhook запросов...
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда e92a1799-9aaa-462c-ba41-e14fb966329a
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 4a60f934-178c-4ff4-bdd5-d56ff5f29d93
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 67e5d258-76c1-407f-ad4b-a13b7ad90099
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда e9b51fe1-21b1-4716-8d5d-b15ffd7d4788
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 75a49732-2dfa-4d39-9332-4593482ea0a7
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 9a5b6524-9388-47e2-9b57-02cdd56e6111
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 35405e64-cd8d-4d01-b2bd-26896066ae49
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 4c4617eb-39bb-415c-aec5-5eba36f0b8b6
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 2999765c-00d4-4fc5-8a7e-fefeb9197825
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 472e6a83-ef56-41c6-9698-fe5fc511fc17
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 45f6d458-eea4-42f4-8d62-d905699e790c
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 1a7efe61-2f43-4d17-8fd7-0a9a3e8b012e
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда bd42d4b2-f20e-4995-82f3-8edf815d4f19
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда 7970f30c-1094-4ef1-bffc-66858408564b
+smm-1  | [SOURCE-ANALYSIS] После сбора найдено 0 комментариев для тренда c416e27f-3c08-479d-9b79-90c1963d370e
+smm-1  | [SOURCE-ANALYSIS] Ждем 8 секунд для завершения сбора комментариев...
+smm-1  | [SOURCE-ANALYSIS] Собрано всего 0 комментариев для анализа источника 159f319d-0453-47b0-8d61-5e969673bce5
+smm-1  | 12:52:25 PM [DEV] [express] POST /api/sources/159f319d-0453-47b0-8d61-5e969673bce5/analyze 200 in 19901ms :…
+smm-1  | 12:52:26 PM [DEV] [express] GET /api/proxy-image 200 in 120ms
+smm-1  | 12:52:29 PM [DEV] [express] GET /api/proxy-image 200 in 150ms
+smm-1  | 12:52:31 PM [DEV] [express] GET /api/proxy-image 200 in 151ms
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 0,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: undefined
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Комментарии не найдены для trent_post_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0, проверяем все доступные
+smm-1  | [GET /api/trend-comments] Найдено комментариев всего: 5
+smm-1  | [GET /api/trend-comments] Примеры trent_post_id в базе: [
+smm-1  |   '000b9413-facf-4c88-b688-ef13cfec9176',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e'
+smm-1  | ]
+smm-1  | [GET /api/trend-comments] Возвращаем 0 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:52:31 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 200 in 99ms :: {"s…
+smm-1  | 12:52:32 PM [DEV] [express] GET /api/proxy-image 200 in 173ms
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 0,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: undefined
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Комментарии не найдены для trent_post_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0, проверяем все доступные  
+smm-1  | [GET /api/trend-comments] Найдено комментариев всего: 5
+smm-1  | [GET /api/trend-comments] Примеры trent_post_id в базе: [
+smm-1  |   '000b9413-facf-4c88-b688-ef13cfec9176',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e'
+smm-1  | ]
+smm-1  | [GET /api/trend-comments] Возвращаем 0 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:52:32 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 304 in 133ms :: {"…
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 0,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: undefined
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Комментарии не найдены для trent_post_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0, проверяем все доступные  
+smm-1  | [GET /api/trend-comments] Найдено комментариев всего: 5
+smm-1  | [GET /api/trend-comments] Примеры trent_post_id в базе: [
+smm-1  |   '000b9413-facf-4c88-b688-ef13cfec9176',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e',
+smm-1  |   'ca4342eb-8c3f-4db1-943f-e28f95318e6e'
+smm-1  | ]
+smm-1  | [GET /api/trend-comments] Возвращаем 0 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:52:38 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 304 in 90ms :: {"s…
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 2,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: {
+smm-1  |     id: 5523,
+smm-1  |     trent_post_id: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |     text: '"💗"',
+smm-1  |     author: '7640680683',
+smm-1  |     date: '2025-08-08T08:14:42',
+smm-1  |     comment_id: '5345',
+smm-1  |     platform: 'telegram'
+smm-1  |   }
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Возвращаем 2 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:52:43 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 200 in 54ms :: {"s…
+smm-1  | [AUTH] Пользователь авторизован из JWT токена: 53921f16-f51d-4591-80b9-8caa4fde4d13 (unknown@email.com)
+smm-1  | 12:52:43 PM [DEV] [express] GET /api/campaign-trends 304 in 63ms :: {"success":true,"data":[{"id":"74d21b3c…
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 2,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: {
+smm-1  |     id: 5523,
+smm-1  |     trent_post_id: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |     text: '"💗"',
+smm-1  |     author: '7640680683',
+smm-1  |     date: '2025-08-08T08:14:42',
+smm-1  |     comment_id: '5345',
+smm-1  |     platform: 'telegram'
+smm-1  |   }
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Возвращаем 2 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:52:53 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 304 in 60ms :: {"s…
+smm-1  | [GET /api/trend-comments] Запрос комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Ищем комментарии с trend_id: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен: eyJhbGciOi...
+smm-1  | [GET /api/trend-comments] Токен действителен для пользователя: lbrspb@gmail.com
+smm-1  | [GET /api/trend-comments] Fetching comments for trend: 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | [GET /api/trend-comments] Используем пользовательский токен для доступа к post_comment
+smm-1  | [GET /api/trend-comments] Directus response: {
+smm-1  |   status: 200,
+smm-1  |   dataLength: 2,
+smm-1  |   trendId: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |   firstComment: {
+smm-1  |     id: 5523,
+smm-1  |     trent_post_id: '2cf62492-3fe8-4bd9-abd6-e04550a307c0',
+smm-1  |     text: '"💗"',
+smm-1  |     author: '7640680683',
+smm-1  |     date: '2025-08-08T08:14:42',
+smm-1  |     comment_id: '5345',
+smm-1  |     platform: 'telegram'
+smm-1  |   }
+smm-1  | }
+smm-1  | [GET /api/trend-comments] Возвращаем 2 комментариев для тренда 2cf62492-3fe8-4bd9-abd6-e04550a307c0
+smm-1  | 12:53:08 PM [DEV] [express] GET /api/trend-comments/2cf62492-3fe8-4bd9-abd6-e04550a307c0 304 in 53ms :: {"s…
