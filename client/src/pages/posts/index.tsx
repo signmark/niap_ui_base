@@ -71,8 +71,6 @@ export default function Posts() {
       if (!selectedCampaign?.id) return { data: [] };
 
       try {
-        console.log('Загрузка публикаций для кампании:', selectedCampaign.id);
-
         // Получаем актуальный токен в момент запроса
         const currentToken = getAuthToken();
         if (!currentToken) {
@@ -92,12 +90,6 @@ export default function Posts() {
         }
         
         const responseData = await response.json();
-        
-        console.log('POSTS PAGE: Получены данные контента:', {
-          totalItems: responseData?.data?.length || 0,
-          publishedItems: responseData?.data?.filter((item: any) => item.status === 'published' || item.status === 'partial')?.length || 0,
-          statuses: responseData?.data?.map((item: any) => item.status).slice(0, 10) || []
-        });
 
         return responseData;
       } catch (error) {
@@ -112,7 +104,6 @@ export default function Posts() {
     retry: (failureCount, error: any) => {
       // Если ошибка авторизации - не повторяем
       if (error?.message?.includes('401') || error?.message?.includes('Invalid token')) {
-        console.error('Ошибка авторизации при загрузке постов:', error);
         return false;
       }
       return failureCount < 3;
