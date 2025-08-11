@@ -94,11 +94,12 @@ app.get('/health', (req, res) => {
 
 // 🔥 УНИВЕРСАЛЬНОЕ ОТСЛЕЖИВАНИЕ ВСЕХ POST И GET ЗАПРОСОВ 🔥
 app.use((req, res, next) => {
-  if (req.method === 'POST') {
-    console.log('🔥🔥🔥 POST ЗАПРОС ПОЛУЧЕН 🔥🔥🔥');
-    console.log('🔥 URL:', req.url);
-    console.log('🔥 PATH:', req.path);
-    console.log('🔥 BODY:', JSON.stringify(req.body, null, 2));
+  if (req.method === 'POST' && req.path.includes('/stories')) {
+    console.log('Stories POST request received');
+    console.log('URL:', req.url);
+    console.log('PATH:', req.path);
+    console.log('HEADERS:', req.headers);
+    console.log('BODY:', JSON.stringify(req.body, null, 2));
   }
   
   if (req.method === 'GET' && req.path.includes('youtube/channel-info')) {

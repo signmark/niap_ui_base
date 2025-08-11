@@ -18,6 +18,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
     // Проверяем заголовок авторизации
     const authHeader = req.headers['authorization'];
+    console.log('[DEV] [auth-middleware] Authorization header:', authHeader);
     if (!authHeader) {
         return res.status(401).json({ 
             success: false, 

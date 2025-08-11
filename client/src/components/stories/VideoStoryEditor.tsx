@@ -194,15 +194,15 @@ export default function VideoStoryEditor({ campaignId, onBack }: VideoStoryEdito
       // TODO: Здесь нужно будет загрузить видео на сервер/облако
       // и получить URL для сохранения
 
-      return apiRequest('/api/stories', {
-        method: 'POST'
-      }, {
+      const requestData = {
         campaignId: storyData.campaignId,
         title: storyData.title,
         content: JSON.stringify(storyContent),
         type: 'video_story',
         status: 'draft'
-      });
+      };
+      
+      return apiRequest('/api/stories', { method: 'POST' }, requestData);
     },
     onSuccess: () => {
       toast({

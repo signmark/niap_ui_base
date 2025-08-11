@@ -204,15 +204,15 @@ export default function SimpleStoryEditor({ campaignId, onBack }: SimpleStoryEdi
         finalImage
       };
 
-      return apiRequest('/api/stories', {
-        method: 'POST'
-      }, {
+      const requestData = {
         campaignId: storyData.campaignId,
         title: storyData.title,
         content: JSON.stringify(storyContent),
         type: 'story',
         status: 'draft'
-      });
+      };
+      
+      return apiRequest('/api/stories', { method: 'POST' }, requestData);
     },
     onSuccess: () => {
       toast({
