@@ -6095,6 +6095,7 @@ Return your response as a JSON array in this exact format:
         
         const maxSourcesPerPlatform = trendAnalysisSettings?.maxSourcesPerPlatform || 5;
         const maxTrendsPerSource = trendAnalysisSettings?.maxTrendsPerSource || 10;
+        const collectionDays = trendAnalysisSettings?.collectionDays || 7;
         const selectedPlatforms = platforms || ["instagram", "telegram", "vk"];
         
         // Debug-логирование для проверки передачи параметров
@@ -6104,6 +6105,7 @@ Return your response as a JSON array in this exact format:
           collectSources: req.body.collectSources,
           collectCommentsCount: req.body.collectComments?.length,
           collectCommentsPlatforms: req.body.collectComments,
+          collectionDays: collectionDays
         });
         
         const n8nUrl = process.env.N8N_URL;
@@ -6112,7 +6114,7 @@ Return your response as a JSON array in this exact format:
           return res.status(500).json({ success: false, error: 'N8N_URL не настроен' });
         }
         
-        webhookResponse = await axios.post(`${n8nUrl}/webhook/cc1e9b63-bc80-4367-953d-bc888ec32439`, {
+        const payload = {
           minFollowers: followerRequirements,
           maxSourcesPerPlatform: maxSourcesPerPlatform,
           platforms: selectedPlatforms,
@@ -6120,6 +6122,7 @@ Return your response as a JSON array in this exact format:
           collectComments: collectComments, // Добавляем массив платформ для сбора комментариев
           keywords: keywordsList,
           maxTrendsPerSource: maxTrendsPerSource,
+          day_past: collectionDays, // Количество дней для сбора постов
           language: "ru",
           filters: {
             minReactions: 10,
@@ -6129,7 +6132,16 @@ Return your response as a JSON array in this exact format:
           campaignId: campaignId,
           userId: userId,
           requestId: requestId,
-        }, {
+        };
+        
+        console.log('N8N PAYLOAD INCLUDING day_past:', JSON.stringify(payload, null, 2));
+        
+        // Используем один webhook для всех операций, различие только в параметре collectSources
+        const webhookEndpoint = `${n8nUrl}/webhook/main-scraper`;
+        
+        console.log(`Using webhook endpoint: ${webhookEndpoint} (collectSources: ${collectSources ? 1 : 0})`);
+        
+        webhookResponse = await axios.post(webhookEndpoint, payload, {
           headers: {
             'Content-Type': 'application/json',
             // Используем только API ключ для авторизации в N8N

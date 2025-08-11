@@ -15,6 +15,7 @@ export interface TrendAnalysisSettings {
   };
   maxSourcesPerPlatform: number;
   maxTrendsPerSource: number;
+  collectionDays?: number; // Количество дней для сбора постов
 }
 
 export interface Campaign {

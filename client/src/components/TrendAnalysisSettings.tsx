@@ -31,7 +31,8 @@ export function TrendAnalysisSettings({
       youtube: 10000
     },
     maxSourcesPerPlatform: 10,
-    maxTrendsPerSource: 5
+    maxTrendsPerSource: 5,
+    collectionDays: 7 // По умолчанию 7 дней
   };
   
   const [settings, setSettings] = useState<TrendSettings>(
@@ -62,6 +63,14 @@ export function TrendAnalysisSettings({
     setSettings({
       ...settings,
       maxTrendsPerSource: numValue
+    });
+  };
+
+  const handleCollectionDaysChange = (value: string) => {
+    const numValue = parseInt(value) || 1;
+    setSettings({
+      ...settings,
+      collectionDays: numValue
     });
   };
   
@@ -227,7 +236,28 @@ export function TrendAnalysisSettings({
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
+              <Label htmlFor="collection-days" className="text-base font-medium">Период сбора данных</Label>
+              <div className="mt-2">
+                <div className="mb-4">
+                  <Label htmlFor="collection-days" className="text-sm">Количество дней для сбора постов</Label>
+                  <Input 
+                    id="collection-days"
+                    type="number" 
+                    value={settings.collectionDays || 7} 
+                    onChange={(e) => handleCollectionDaysChange(e.target.value)}
+                    min={1}
+                    max={30}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    За сколько дней назад собирать посты для анализа трендов
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
               <Label htmlFor="max-sources" className="text-base font-medium">Лимиты источников</Label>
               <div className="mt-2">

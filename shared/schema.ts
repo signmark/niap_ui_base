@@ -99,6 +99,20 @@ export type InsertUserCampaign = z.infer<typeof insertUserCampaignSchema>;
 export type BusinessQuestionnaire = typeof businessQuestionnaires.$inferSelect;
 export type InsertBusinessQuestionnaire = z.infer<typeof insertBusinessQuestionnaireSchema>;
 
+// Типы для настроек анализа трендов
+export interface TrendAnalysisSettings {
+  minFollowers: {
+    instagram: number;
+    telegram: number;
+    vk: number;
+    facebook: number;
+    youtube: number;
+  };
+  maxSourcesPerPlatform: number;
+  maxTrendsPerSource: number;
+  collectionDays?: number;
+}
+
 // Типы для настроек социальных сетей
 export interface SocialMediaSettings {
   telegram?: {
