@@ -576,7 +576,7 @@ export class DirectusAuthManager {
    * Проверяет и обновляет истекающие сессии
    */
   private async refreshExpiringSessions(): Promise<void> {
-    log('Checking for expiring sessions', this.logPrefix);
+    // log('Checking for expiring sessions', this.logPrefix); // Disabled verbose logging
     
     const now = Date.now();
     const expirationThreshold = now + (30 * 60 * 1000); // 30 минут до истечения
