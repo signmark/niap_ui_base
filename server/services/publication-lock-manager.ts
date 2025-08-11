@@ -9,6 +9,8 @@ export class PublicationLockManager {
   private locks = new Map<string, Set<string>>(); // contentId -> Set<platform>
   private lockTimeout = 5 * 60 * 1000; // 5 минут на публикацию
   private lockTimestamps = new Map<string, number>(); // lock key -> timestamp
+  private maxLocksSize = 500; // Максимальное количество блокировок
+  private cleanupIntervalId: NodeJS.Timeout | null = null;
 
   /**
    * Пытается получить блокировку для публикации
@@ -95,6 +97,39 @@ export class PublicationLockManager {
   }
 
   /**
+   * Инициализирует автоматическую очистку с контролем памяти
+   */
+  private initCleanupSchedule(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+    }
+    
+    this.cleanupIntervalId = setInterval(() => {
+      this.cleanupExpiredLocks();
+      this.enforceMemoryLimits();
+    }, 5 * 60 * 1000); // каждые 5 минут
+  }
+
+  /**
+   * Принудительно ограничивает размер кэша для предотвращения утечек памяти
+   */
+  private enforceMemoryLimits(): void {
+    if (this.locks.size > this.maxLocksSize) {
+      // Удаляем 25% самых старых блокировок
+      const entries = Array.from(this.lockTimestamps.entries())
+        .sort(([, a], [, b]) => a - b) // сортируем по времени
+        .slice(0, Math.floor(this.lockTimestamps.size / 4));
+
+      for (const [lockKey] of entries) {
+        const [contentId, platform] = lockKey.split(':');
+        this.releaseLock(contentId, platform);
+      }
+      
+      log(`🚨 MEMORY: Принудительно очищено ${entries.length} блокировок (лимит: ${this.maxLocksSize})`, 'publication-lock');
+    }
+  }
+
+  /**
    * Очищает истекшие блокировки
    */
   cleanupExpiredLocks(): void {
@@ -131,12 +166,28 @@ export class PublicationLockManager {
       contentCount: this.locks.size
     };
   }
+
+  /**
+   * Полная очистка всех блокировок и остановка фоновых процессов
+   */
+  shutdown(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    
+    this.locks.clear();
+    this.lockTimestamps.clear();
+    log('🔴 PublicationLockManager: Полная очистка памяти выполнена', 'publication-lock');
+  }
 }
 
 // Создаем единственный экземпляр менеджера блокировок
 export const publicationLockManager = new PublicationLockManager();
 
-// Запускаем очистку истекших блокировок каждые 5 минут
-setInterval(() => {
-  publicationLockManager.cleanupExpiredLocks();
-}, 5 * 60 * 1000);
+// Инициализируем автоматическую очистку с контролем памяти
+publicationLockManager['initCleanupSchedule']();
+
+// Graceful shutdown при завершении процесса
+process.on('SIGTERM', () => publicationLockManager.shutdown());
+process.on('SIGINT', () => publicationLockManager.shutdown());

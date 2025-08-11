@@ -576,14 +576,64 @@ app.use((req, res, next) => {
   }
 })();
 
+// CRITICAL: Global Memory Cleanup для предотвращения OOM на продакшене
+function performGlobalMemoryCleanup() {
+  try {
+    log('🚨 MEMORY: Запуск глобальной очистки памяти', 'memory-cleanup');
+    
+    // Принудительная сборка мусора если доступна
+    if (global.gc) {
+      global.gc();
+      log('🧹 Принудительная сборка мусора выполнена', 'memory-cleanup');
+    }
+    
+    const memUsage = process.memoryUsage();
+    const memMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+    log(`💾 Память: ${memMB}MB`, 'memory-cleanup');
+    
+    if (memMB > 1024) {
+      log(`⚠️ ВЫСОКОЕ потребление памяти: ${memMB}MB`, 'memory-cleanup');
+    }
+  } catch (error) {
+    log(`Ошибка глобальной очистки памяти: ${error}`, 'memory-cleanup');
+  }
+}
+
+// Запускаем очистку памяти каждые 30 минут
+setInterval(performGlobalMemoryCleanup, 30 * 60 * 1000);
+
+// Graceful shutdown для всех сервисов
+function gracefulShutdown(signal: string) {
+  log(`🔴 Получен сигнал ${signal}, выполняем graceful shutdown`, 'shutdown');
+  
+  try {
+    // Останавливаем все сервисы
+    const { getPublishScheduler } = require('./services/publish-scheduler');
+    const scheduler = getPublishScheduler();
+    if (scheduler?.shutdown) scheduler.shutdown();
+    
+    performGlobalMemoryCleanup();
+    process.exit(0);
+  } catch (error) {
+    log(`Ошибка при graceful shutdown: ${error}`, 'shutdown');
+    process.exit(1);
+  }
+}
+
+// Обработка сигналов завершения
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // Глобальный обработчик необработанных исключений
 process.on('uncaughtException', (error) => {
   log(`Uncaught Exception: ${error.message}`);
+  performGlobalMemoryCleanup(); // Очистка памяти при критических ошибках
   process.exit(1);
 });
 
 // Глобальный обработчик необработанных отклонений промисов
 process.on('unhandledRejection', (reason) => {
   log(`Unhandled Promise Rejection: ${reason instanceof Error ? reason.message : 'Unknown reason'}`);
+  performGlobalMemoryCleanup(); // Очистка памяти при отклонении промисов
   process.exit(1);
 });

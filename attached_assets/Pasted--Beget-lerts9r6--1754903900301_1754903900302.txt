@@ -1,0 +1,42 @@
+Панель управления Beget
+Вы
+lerts9r6
+Хорошо, поищем проблемы в коде. Если что, ещё раз обращусь.
+12:07
+Панель управления Beget
+Михаил Евгеньевич
+Служба технической поддержки
+Здравствуйте!
+
+У вас на сервере возникает проблема с нехваткой оперативной памяти. Включается OOM Killer и принудительно завершает процессы:
+
+root@oladaymbzh:~# grep -i oom /var/log/syslog | tail
+2025-08-10T23:20:52.826587+00:00 oladaymbzh kernel: Out of memory: Killed process 3954307 (gunicorn) total-vm:29696kB, anon-rss:17100kB, file-rss:256kB, shmem-rss:0kB, UID:5050 pgtables:104kB oom_score_adj:0
+2025-08-10T23:20:52.826589+00:00 oladaymbzh kernel: systemd invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0
+2025-08-10T23:20:52.826595+00:00 oladaymbzh kernel:  oom_kill_process+0x118/0x280
+2025-08-10T23:20:52.826596+00:00 oladaymbzh kernel:  ? oom_evaluate_task+0x143/0x1e0
+2025-08-10T23:20:52.826598+00:00 oladaymbzh kernel:  __alloc_pages_may_oom+0x10c/0x1d0
+2025-08-10T23:20:52.826716+00:00 oladaymbzh kernel: [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+2025-08-10T23:20:52.826817+00:00 oladaymbzh kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=init.scope,mems_allowed=0,global_oom,task_memcg=/system.slice/docker-7a586fd6349d7402dd60d0c15a9ff22fa35e4b01d14b763835dd49ef465dfbb8.scope,task=gunicorn,pid=1852,uid=5050
+2025-08-10T23:20:52.826817+00:00 oladaymbzh kernel: Out of memory: Killed process 1852 (gunicorn) total-vm:29636kB, anon-rss:16884kB, file-rss:256kB, shmem-rss:0kB, UID:5050 pgtables:108kB oom_score_adj:0
+2025-08-10T23:20:56.425219+00:00 oladaymbzh kernel: dbus-daemon invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=-900
+2025-08-10T23:20:56.466026+00:00 oladaymbzh kernel:  oom_kill_process+0x118/0x280
+root@oladaymbzh:~# grep -i oom /var/log/syslog -c
+407
+Вероятно, в какой-то момент OOM Killer не успел отработать, ОЗУ закончилась и сервер завис.
+
+Для решения проблемы необходимо провести анализ и выявить причину: возможно, приложение расходует неоправданно большой объем оперативной памяти и работает некорректно. Если все работает штатно, то вы можете увеличить объем оперативной памяти вашего VPS в настройках.
+
+11:56
+Панель управления Beget
+Сергей Вадимович
+Служба технической поддержки
+Здравствуйте!
+
+Передаю ваш тикет в отдел по работе с облачными решениями. Ожидайте, пожалуйста, ответа.
+
+11:43
+Панель управления Beget
+Вы
+lerts9r6
+Добрый день! Вот уже который раз подряд падает сервер 45.130.212.62.

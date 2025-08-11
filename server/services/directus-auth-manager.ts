@@ -29,11 +29,13 @@ if (!global.directusEventEmitter) {
 export class DirectusAuthManager {
   private logPrefix: string = 'directus-auth';
   private sessionCache: Record<string, SessionInfo> = {};
+  private maxCacheSize: number = 100; // Максимум 100 сессий в кэше
   private sessionRefreshIntervalMs: number = 5 * 60 * 1000; // 5 минут
   private sessionRefreshIntervalId?: NodeJS.Timeout;
   private refreshingTokens: Set<string> = new Set(); // Отслеживание активных обновлений токенов
   private maxRefreshAttempts: number = 3; // Максимальное количество попыток обновления
   private refreshAttempts: Record<string, number> = {}; // Счетчики попыток по пользователям
+  private lastCacheCleanup: number = Date.now();
   
   constructor() {
     log('DirectusAuthManager initialized', this.logPrefix);
@@ -591,17 +593,17 @@ export class DirectusAuthManager {
   }
 
   /**
-   * Запускает интервал обновления сессий
+   * Запускает интервал обновления сессий с контролем памяти
    */
   private startSessionRefreshInterval(): void {
     if (this.sessionRefreshIntervalId) {
       clearInterval(this.sessionRefreshIntervalId);
     }
     
-    this.sessionRefreshIntervalId = setInterval(
-      () => this.refreshExpiringSessions(),
-      this.sessionRefreshIntervalMs
-    );
+    this.sessionRefreshIntervalId = setInterval(() => {
+      this.refreshExpiringSessions();
+      this.enforceMemoryLimits();
+    }, this.sessionRefreshIntervalMs);
     
     log(`Session refresh interval started (${this.sessionRefreshIntervalMs}ms)`, this.logPrefix);
   }
@@ -629,6 +631,23 @@ export class DirectusAuthManager {
     
     log(`Found ${activeSessions.length} active sessions`, this.logPrefix);
     return activeSessions;
+  }
+
+  /**
+   * Полная очистка всех данных и остановка интервалов
+   */
+  shutdown(): void {
+    if (this.sessionRefreshIntervalId) {
+      clearInterval(this.sessionRefreshIntervalId);
+      this.sessionRefreshIntervalId = undefined;
+    }
+    
+    // Очищаем все кэши
+    this.sessionCache = {};
+    this.refreshingTokens.clear();
+    this.refreshAttempts = {};
+    
+    log('🔴 DirectusAuthManager: Полная очистка памяти выполнена', this.logPrefix);
   }
   
   /**
@@ -763,3 +782,7 @@ export class DirectusAuthManager {
 
 // Экспортируем экземпляр менеджера для использования в приложении
 export const directusAuthManager = new DirectusAuthManager();
+
+// Graceful shutdown при завершении процесса
+process.on('SIGTERM', () => directusAuthManager.shutdown());
+process.on('SIGINT', () => directusAuthManager.shutdown());

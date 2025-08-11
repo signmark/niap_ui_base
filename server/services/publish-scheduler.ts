@@ -20,21 +20,37 @@ export class PublishScheduler {
   private adminTokenTimestamp: number = 0;
   private tokenExpirationMs = 30 * 60 * 1000; // 30 минут
   
-  // Кэш для предотвращения повторной публикации
+  // Кэш для предотвращения повторной публикации (ЛИМИТИРОВАННЫЙ)
   private processedContentCache = new Map<string, Set<string>>(); // contentId -> Set<platform>
-  private cacheCleanupInterval = 60 * 60 * 1000; // очищаем кэш каждые 60 минут (увеличено с 10 минут)
+  private maxCacheSize = 1000; // Максимум 1000 элементов в кэше
+  private cacheCleanupInterval = 30 * 60 * 1000; // очищаем кэш каждые 30 минут
   private lastCacheCleanup = Date.now();
 
   /**
-   * Очищает кэш обработанного контента (НЕ АГРЕССИВНО)
-   * Теперь кэш сохраняется 60 минут для защиты от дублирования
+   * Очищает кэш обработанного контента с ЛИМИТОМ РАЗМЕРА
    */
   private cleanupCache() {
     const now = Date.now();
+    
+    // Принудительная очистка при превышении лимита размера
+    if (this.processedContentCache.size > this.maxCacheSize) {
+      // Удаляем 50% старых записей 
+      const entries = Array.from(this.processedContentCache.entries());
+      const toDelete = entries.slice(0, Math.floor(entries.length / 2));
+      
+      for (const [key] of toDelete) {
+        this.processedContentCache.delete(key);
+      }
+      
+      log(`🚨 MEMORY: Кэш урезан до ${this.processedContentCache.size} элементов (было ${entries.length})`, 'scheduler');
+    }
+    
+    // Периодическая очистка по времени
     if (now - this.lastCacheCleanup > this.cacheCleanupInterval) {
+      const oldSize = this.processedContentCache.size;
       this.processedContentCache.clear();
       this.lastCacheCleanup = now;
-      log(`🛡️ Кэш защиты от дублирования очищен после 60 минут (размер был: ${this.processedContentCache.size})`, 'scheduler');
+      log(`🛡️ Кэш очищен по расписанию (размер был: ${oldSize})`, 'scheduler');
     }
   }
 
@@ -103,6 +119,19 @@ export class PublishScheduler {
     this.intervalId = null;
     this.isRunning = false;
     this.isProcessing = false;
+  }
+
+  /**
+   * Полная очистка всех данных и остановка фоновых процессов
+   */
+  shutdown() {
+    this.stop();
+    
+    // Очищаем все кэши
+    this.processedContentCache.clear();
+    this.adminTokenCache = null;
+    
+    log('🔴 PublishScheduler: Полная очистка памяти выполнена', 'scheduler');
   }
 
 
