@@ -66,16 +66,24 @@ export default function Posts() {
   
   // Запрос контента кампании для календаря
   const { data: campaignContentResponse, isLoading: isLoadingContent, isFetching: isFetchingContent } = useQuery({
-    queryKey: ['/api/campaign-content', selectedCampaign?.id],
+    queryKey: ['/api/campaign-content', selectedCampaign?.id, 'published-posts'],
     queryFn: async () => {
       if (!selectedCampaign?.id) return { data: [] };
 
       try {
         console.log('Загрузка публикаций для кампании:', selectedCampaign.id);
 
-        const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaign.id}`, {
+        // Получаем актуальный токен в момент запроса
+        const currentToken = getAuthToken();
+        if (!currentToken) {
+          throw new Error('Токен отсутствует - требуется авторизация');
+        }
+        
+        const response = await fetch(`/api/campaign-content?campaignId=${selectedCampaign.id}&_t=${Date.now()}`, {
           headers: {
-            'Authorization': `Bearer ${getAuthToken()}`
+            'Authorization': `Bearer ${currentToken}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           }
         });
         
@@ -84,6 +92,12 @@ export default function Posts() {
         }
         
         const responseData = await response.json();
+        
+        console.log('POSTS PAGE: Получены данные контента:', {
+          totalItems: responseData?.data?.length || 0,
+          publishedItems: responseData?.data?.filter((item: any) => item.status === 'published' || item.status === 'partial')?.length || 0,
+          statuses: responseData?.data?.map((item: any) => item.status).slice(0, 10) || []
+        });
 
         return responseData;
       } catch (error) {
@@ -91,10 +105,18 @@ export default function Posts() {
         return { data: [] };
       }
     },
-    enabled: !!selectedCampaign?.id,
+    enabled: !!selectedCampaign?.id && !!getAuthToken(),
     refetchOnMount: true,
     refetchOnWindowFocus: true, // Обновляем при возвращении на страницу
-    staleTime: 0 // Всегда считаем данные устаревшими и перезагружаем при переходе
+    staleTime: 0, // Всегда считаем данные устаревшими и перезагружаем при переходе
+    retry: (failureCount, error: any) => {
+      // Если ошибка авторизации - не повторяем
+      if (error?.message?.includes('401') || error?.message?.includes('Invalid token')) {
+        console.error('Ошибка авторизации при загрузке постов:', error);
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   const campaignContent: CampaignContent[] = campaignContentResponse?.data || [];
