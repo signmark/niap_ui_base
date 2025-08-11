@@ -6731,6 +6731,8 @@ Return your response as a JSON array in this exact format:
           const comments = commentsResponse.data?.data || [];
           console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для тренда ${trend.id}`);
 
+          const commentsCount = parseInt(trend.comments) || 0;
+          
           if (comments.length > 0) {
             // Добавляем существующие комментарии
             const commentsTexts = comments
@@ -6740,11 +6742,10 @@ Return your response as a JSON array in this exact format:
             allCommentsTexts.push(...commentsTexts);
             totalCommentsAnalyzed += comments.length;
             console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} комментариев из тренда ${trend.id}`);
-          } else {
+          } else if (commentsCount > 0) {
             // Нужно собрать комментарии для этого тренда
-            const commentsCount = parseInt(trend.comments) || 0;
             const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
-            if (commentsCount > 0 && trendUrl) {
+            if (trendUrl) {
               console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} требует сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
               trendsNeedingCollection.push({...trend, url: trendUrl});
             }
@@ -6754,14 +6755,16 @@ Return your response as a JSON array in this exact format:
         }
       }
 
-      // 2. Запускаем сбор для трендов без комментариев
+      // 2. Запускаем сбор для трендов без комментариев и ждем завершения
       if (trendsNeedingCollection.length > 0) {
         console.log(`[SOURCE-ANALYSIS] Запускаем сбор комментариев для ${trendsNeedingCollection.length} трендов`);
         console.log(`[SOURCE-ANALYSIS] Список трендов для сбора:`, trendsNeedingCollection.map(t => `${t.id}: ${t.comments} комментариев`));
         
+        // Отправляем webhook запросы для сбора комментариев
+        const collectionPromises = [];
         for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
-            await fetch('https://n8n.roboflow.space/webhook/collect-comments', {
+            const webhookPromise = fetch('https://n8n.roboflow.space/webhook/collect-comments', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -6769,9 +6772,50 @@ Return your response as a JSON array in this exact format:
                 url: trend.url
               })
             });
+            collectionPromises.push(webhookPromise);
             console.log(`[SOURCE-ANALYSIS] Webhook отправлен для тренда ${trend.id} (${trend.comments} комментариев)`);
           } catch (error) {
             console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}:`, error);
+          }
+        }
+
+        // Ждем завершения всех запросов на сбор комментариев
+        if (collectionPromises.length > 0) {
+          console.log(`[SOURCE-ANALYSIS] Ожидаем завершения сбора комментариев...`);
+          await Promise.allSettled(collectionPromises);
+          
+          // Даем время на обработку (30 секунд)
+          console.log(`[SOURCE-ANALYSIS] Ожидаем 30 секунд для завершения обработки...`);
+          await new Promise(resolve => setTimeout(resolve, 30000));
+          
+          // Повторно собираем комментарии после завершения сбора
+          console.log(`[SOURCE-ANALYSIS] Повторный сбор комментариев после webhook запросов...`);
+          for (const trend of trendsNeedingCollection) {
+            try {
+              const commentsResponse = await directusApi.get('/items/post_comment', {
+                headers: { 'Authorization': `Bearer ${adminToken}` },
+                params: {
+                  filter: JSON.stringify({ trent_post_id: { _eq: trend.id } }),
+                  sort: 'date',
+                  limit: 1000
+                }
+              });
+
+              const comments = commentsResponse.data?.data || [];
+              console.log(`[SOURCE-ANALYSIS] После сбора найдено ${comments.length} комментариев для тренда ${trend.id}`);
+
+              if (comments.length > 0) {
+                const commentsTexts = comments
+                  .map(c => (c.text || c.content || '').trim())
+                  .filter(Boolean);
+                
+                allCommentsTexts.push(...commentsTexts);
+                totalCommentsAnalyzed += comments.length;
+                console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} комментариев из тренда ${trend.id} после сбора`);
+              }
+            } catch (error) {
+              console.error(`[SOURCE-ANALYSIS] Ошибка повторного получения комментариев для тренда ${trend.id}:`, error);
+            }
           }
         }
 
