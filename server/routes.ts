@@ -6750,7 +6750,11 @@ Return your response as a JSON array in this exact format:
             if (trendUrl) {
               console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} будет добавлен для сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
               trendsNeedingCollection.push({...trend, url: trendUrl});
+            } else {
+              console.log(`[SOURCE-ANALYSIS] ⚠️ Тренд ${trend.id} имеет ${commentsCount} комментариев, но нет URL для сбора`);
             }
+          } else {
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} не имеет комментариев (${commentsCount})`);
           }
         } catch (error) {
           console.error(`[SOURCE-ANALYSIS] Ошибка получения комментариев для тренда ${trend.id}:`, error);
@@ -6766,6 +6770,7 @@ Return your response as a JSON array in this exact format:
         const collectionPromises = [];
         for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
+            console.log(`[SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда ${trend.id}: ${trend.url}`);
             const webhookPromise = fetch('https://n8n.roboflow.space/webhook/collect-comments', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -6773,11 +6778,17 @@ Return your response as a JSON array in this exact format:
                 trend_id: trend.id,
                 url: trend.url
               })
+            }).then(response => {
+              console.log(`[SOURCE-ANALYSIS] ✅ Webhook ответ для тренда ${trend.id}: ${response.status} ${response.statusText}`);
+              return response;
+            }).catch(error => {
+              console.error(`[SOURCE-ANALYSIS] ❌ Webhook ошибка для тренда ${trend.id}:`, error);
+              throw error;
             });
+            
             collectionPromises.push(webhookPromise);
-            console.log(`[SOURCE-ANALYSIS] Webhook отправлен для тренда ${trend.id} (${trend.comments} комментариев)`);
           } catch (error) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка webhook для тренда ${trend.id}:`, error);
+            console.error(`[SOURCE-ANALYSIS] ❌ Ошибка создания webhook для тренда ${trend.id}:`, error);
           }
         }
 
