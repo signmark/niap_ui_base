@@ -6767,24 +6767,13 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Список трендов для сбора:`, trendsNeedingCollection.map(t => `${t.id}: ${t.comments} комментариев`));
         
         // Используем N8N URL из переменных окружения
-        const n8nUrl = process.env.N8N_URL || 'https://n8n.nplanner.ru';
-        console.log(`[SOURCE-ANALYSIS] 🔍 Используем N8N URL из .env: ${n8nUrl}`);
-        
-        // Проверяем доступность N8N
-        try {
-          console.log(`[SOURCE-ANALYSIS] 🔍 Проверяем доступность N8N: ${n8nUrl}`);
-          const healthCheck = await fetch(`${n8nUrl}/healthz`, { 
-            method: 'GET',
-            timeout: 10000
-          });
-          console.log(`[SOURCE-ANALYSIS] 💚 N8N health check: ${healthCheck.status} ${healthCheck.statusText}`);
-        } catch (healthError) {
-          console.error(`[SOURCE-ANALYSIS] ⚠️ N8N health check failed:`, {
-            message: healthError.message,
-            code: healthError.code
-          });
-          console.log(`[SOURCE-ANALYSIS] Продолжаем с webhook запросами...`);
+        const n8nUrl = process.env.N8N_URL;
+        if (!n8nUrl) {
+          console.error(`[SOURCE-ANALYSIS] ❌ N8N_URL не задан в переменных окружения!`);
+          return res.status(500).json({ error: 'N8N_URL not configured' });
         }
+        
+        console.log(`[SOURCE-ANALYSIS] 🔍 Используем N8N URL из .env: ${n8nUrl}`);
 
         // Отправляем webhook запросы для сбора комментариев
         const collectionPromises = [];
