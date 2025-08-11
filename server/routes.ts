@@ -6767,29 +6767,51 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Список трендов для сбора:`, trendsNeedingCollection.map(t => `${t.id}: ${t.comments} комментариев`));
         
         // Проверяем доступность N8N перед отправкой запросов
-        const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
-        console.log(`[SOURCE-ANALYSIS] 🔍 Проверяем доступность N8N: ${n8nUrl}`);
+        // Возможные варианты N8N серверов
+        const possibleN8nUrls = [
+          process.env.N8N_URL,
+          'https://n8n.roboflow.space',
+          'https://n8n.nplanner.ru',
+          'http://n8n:5678',
+          'http://localhost:5678'
+        ].filter(Boolean);
         
-        try {
-          const healthCheck = await fetch(`${n8nUrl}/healthz`, { 
-            method: 'GET',
-            timeout: 10000
-          });
-          console.log(`[SOURCE-ANALYSIS] 💚 N8N health check: ${healthCheck.status} ${healthCheck.statusText}`);
-        } catch (healthError) {
-          console.error(`[SOURCE-ANALYSIS] ❌ N8N недоступен:`, {
-            message: healthError.message,
-            code: healthError.code
-          });
+        console.log(`[SOURCE-ANALYSIS] 🔍 Возможные N8N серверы:`, possibleN8nUrls);
+        
+        let workingN8nUrl = null;
+        for (const n8nUrl of possibleN8nUrls) {
+          try {
+            console.log(`[SOURCE-ANALYSIS] 🔍 Проверяем доступность N8N: ${n8nUrl}`);
+            const healthCheck = await fetch(`${n8nUrl}/healthz`, { 
+              method: 'GET',
+              timeout: 5000
+            });
+            console.log(`[SOURCE-ANALYSIS] 💚 N8N health check: ${healthCheck.status} ${healthCheck.statusText}`);
+            if (healthCheck.ok) {
+              workingN8nUrl = n8nUrl;
+              break;
+            }
+          } catch (healthError) {
+            console.error(`[SOURCE-ANALYSIS] ❌ N8N недоступен на ${n8nUrl}:`, {
+              message: healthError.message,
+              code: healthError.code
+            });
+          }
         }
+        
+        if (!workingN8nUrl) {
+          console.error(`[SOURCE-ANALYSIS] ❌ Ни один N8N сервер не доступен! Пробуем с первым в списке...`);
+          workingN8nUrl = possibleN8nUrls[0];
+        }
+        
+        console.log(`[SOURCE-ANALYSIS] ✅ Используем N8N сервер: ${workingN8nUrl}`);
 
         // Отправляем webhook запросы для сбора комментариев
         const collectionPromises = [];
         for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
-            // Определяем N8N URL в зависимости от окружения
-            const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
-            const webhookUrl = `${n8nUrl}/webhook/collect-comments`;
+            // Используем рабочий N8N URL
+            const webhookUrl = `${workingN8nUrl}/webhook/collect-comments`;
             
             console.log(`[SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда ${trend.id}: ${trend.url}`);
             console.log(`[SOURCE-ANALYSIS] 📡 Webhook URL: ${webhookUrl}`);
