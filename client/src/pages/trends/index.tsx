@@ -43,7 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { directusApi } from "@/lib/directus";
 import { SourcePostsList } from "@/components/SourcePostsList";
 import { SourcePostsSearchForm } from "@/components/SourcePostsSearchForm";
-import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink, BarChart, Target, Building } from "lucide-react";
+import { Loader2, Search, Plus, RefreshCw, Bot, Trash2, CheckCircle, Clock, AlertCircle, FileText, ThumbsUp, MessageSquare, Eye, Bookmark, Flame, Download, ExternalLink, BarChart, Target, Building, TrendingUp } from "lucide-react";
 import { TrendDetailDialog } from "@/components/TrendDetailDialog";
 import { Dialog } from "@/components/ui/dialog";
 import { AddSourceDialog } from "@/components/AddSourceDialog";
@@ -223,6 +223,9 @@ export default function Trends() {
     }
   }>({});
   const [analyzingSourceId, setAnalyzingSourceId] = useState<string | null>(null);
+  
+  // Состояние для отображения детального анализа источника
+  const [selectedSourceForAnalysis, setSelectedSourceForAnalysis] = useState<string | null>(null);
   
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
@@ -1431,7 +1434,7 @@ export default function Trends() {
         .filter(score => score !== undefined && score !== null);
 
       const averageScore = scoresWithValues.length > 0 
-        ? scoresWithValues.reduce((sum, score) => sum + score, 0) / scoresWithValues.length
+        ? scoresWithValues.reduce((sum: number, score: number) => sum + score, 0) / scoresWithValues.length
         : 5; // Дефолтный средний score
 
       // Создаем объект анализа источника
@@ -1686,7 +1689,7 @@ export default function Trends() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : sourceAnalysisData[source.id] ? (
                               <SentimentEmoji 
-                                sentiment={{sentiment: sourceAnalysisData[source.id].sentiment || 'unknown', score: sourceAnalysisData[source.id].score, confidence: sourceAnalysisData[source.id].confidence}} 
+                                sentiment={{sentiment: sourceAnalysisData[source.id].sentiment || 'unknown', score: (sourceAnalysisData[source.id] as any).score || 5, confidence: sourceAnalysisData[source.id].confidence}} 
                                 className="text-lg" 
                               />
                             ) : (() => {
@@ -1697,17 +1700,21 @@ export default function Trends() {
                                   return (
                                     <span 
                                       className="text-lg select-none" 
-                                      title={`Общая тональность: ${source.sentiment_analysis.sentiment || 'не определена'}`}
+                                      title={`Общая тональность: ${source.sentiment_analysis.overall_sentiment || source.sentiment_analysis.sentiment || 'не определена'}`}
                                     >
                                       {source.sentiment_analysis.emoji}
                                     </span>
                                   );
                                 }
                                 // Используем sentiment для создания emoji  
-                                else if (source.sentiment_analysis.sentiment) {
+                                else if (source.sentiment_analysis.overall_sentiment || source.sentiment_analysis.sentiment) {
                                   return (
                                     <SentimentEmoji 
-                                      sentiment={{sentiment: source.sentiment_analysis.sentiment, score: source.sentiment_analysis.score, confidence: source.sentiment_analysis.confidence}} 
+                                      sentiment={{
+                                        sentiment: source.sentiment_analysis.overall_sentiment || source.sentiment_analysis.sentiment || 'neutral', 
+                                        score: source.sentiment_analysis.score || source.sentiment_analysis.average_score || 5, 
+                                        confidence: source.sentiment_analysis.confidence || 0.5
+                                      }} 
                                       className="text-lg" 
                                     />
                                   );
@@ -1765,7 +1772,7 @@ export default function Trends() {
                           : trends;
                         
                         // Собираем статистику по сентиментам - проверяем как анализ тренда, так и источника
-                        const sourcesSentimentStats = statsData.reduce((acc, trend) => {
+                        const sourcesSentimentStats = statsData.reduce((acc: any, trend: any) => {
                           let sentiment = null;
                           
                           // Сначала проверяем анализ на уровне тренда
@@ -2484,6 +2491,129 @@ export default function Trends() {
                         </div>
                       )}
                     </div>
+
+                    {/* Блок детального анализа источника */}
+                    {selectedTrendTopic && (() => {
+                      const sourceId = selectedTrendTopic.source_id || selectedTrendTopic.sourceId;
+                      const source = sources.find(s => s.id === sourceId);
+                      const sourceAnalysis = source?.sentiment_analysis;
+                      
+                      return sourceAnalysis && (
+                        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Building className="h-5 w-5 text-indigo-600" />
+                            <h5 className="font-medium text-gray-900">Анализ источника: {source?.name}</h5>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <div className="text-center p-2 bg-white rounded border">
+                              <div className="text-lg font-semibold text-blue-600">
+                                {(sourceAnalysis as any).score || (sourceAnalysis as any).average_score || 'N/A'}
+                              </div>
+                              <div className="text-xs text-gray-600">Рейтинг</div>
+                            </div>
+                            <div className="text-center p-2 bg-white rounded border">
+                              <div className="text-lg font-semibold text-purple-600">
+                                {Math.round(((sourceAnalysis as any).confidence || 0) * 100)}%
+                              </div>
+                              <div className="text-xs text-gray-600">Точность</div>
+                            </div>
+                            <div className="text-center p-2 bg-white rounded border">
+                              <div className="text-lg font-semibold text-orange-600">
+                                {(sourceAnalysis as any).totalComments || (sourceAnalysis as any).commentsAnalyzed || (sourceAnalysis as any).total_comments || 0}
+                              </div>
+                              <div className="text-xs text-gray-600">Комментариев</div>
+                            </div>
+                            <div className="text-center p-2 bg-white rounded border">
+                              <div className="text-lg font-semibold text-teal-600">
+                                {(sourceAnalysis as any).avgCommentsPerTrend || Math.round(((sourceAnalysis as any).totalComments || (sourceAnalysis as any).total_comments || 0) / Math.max((sourceAnalysis as any).trendsAnalyzed || (sourceAnalysis as any).analyzed_trends || 1, 1))}
+                              </div>
+                              <div className="text-xs text-gray-600">На пост</div>
+                            </div>
+                          </div>
+                          
+                          {/* Дополнительная статистика если есть детальные данные */}
+                          {(sourceAnalysis.positive_percentage || sourceAnalysis.negative_percentage || sourceAnalysis.neutral_percentage) && (
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                              <div className="text-center p-2 bg-green-50 rounded border border-green-200">
+                                <div className="text-sm font-semibold text-green-700">
+                                  {sourceAnalysis.positive_percentage || 0}%
+                                </div>
+                                <div className="text-xs text-green-600">Позитивные</div>
+                              </div>
+                              <div className="text-center p-2 bg-red-50 rounded border border-red-200">
+                                <div className="text-sm font-semibold text-red-700">
+                                  {sourceAnalysis.negative_percentage || 0}%
+                                </div>
+                                <div className="text-xs text-red-600">Негативные</div>
+                              </div>
+                              <div className="text-center p-2 bg-gray-50 rounded border border-gray-200">
+                                <div className="text-sm font-semibold text-gray-700">
+                                  {sourceAnalysis.neutral_percentage || 0}%
+                                </div>
+                                <div className="text-xs text-gray-600">Нейтральные</div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="text-sm text-gray-700 bg-white p-3 rounded border">
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-lg">{sourceAnalysis.emoji || '😐'}</span>
+                              <strong>Общее настроение:</strong>
+                              <span className={`font-medium ${
+                                (sourceAnalysis as any).overall_sentiment === 'positive' ? 'text-green-600' :
+                                (sourceAnalysis as any).overall_sentiment === 'negative' ? 'text-red-600' : 'text-gray-600'
+                              }`}>
+                                {(sourceAnalysis as any).overall_sentiment === 'positive' ? 'Позитивное' :
+                                 (sourceAnalysis as any).overall_sentiment === 'negative' ? 'Негативное' : 'Нейтральное'}
+                              </span>
+                            </div>
+                            
+                            {/* Основной summary - всегда показываем */}
+                            <div className="mb-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                              <strong className="text-blue-800">Анализ источника:</strong>
+                              <p className="mt-1 text-blue-700 text-sm">{(sourceAnalysis as any).summary}</p>
+                            </div>
+                            
+                            {/* Детальное описание аудитории от AI */}
+                            {(sourceAnalysis as any).detailed_summary && (
+                              <div className="mb-3 p-2 bg-purple-50 rounded border-l-4 border-purple-400">
+                                <strong className="text-purple-800">Характеристика аудитории:</strong>
+                                <p className="mt-1 text-purple-700 text-sm">{(sourceAnalysis as any).detailed_summary}</p>
+                              </div>
+                            )}
+                            
+                            {/* AI summary (короткое описание) */}
+                            {(sourceAnalysis as any).ai_summary && (sourceAnalysis as any).ai_summary !== (sourceAnalysis as any).detailed_summary && (
+                              <div className="mb-3 p-2 bg-green-50 rounded border-l-4 border-green-400">
+                                <strong className="text-green-800">AI анализ:</strong>
+                                <p className="mt-1 text-green-700 text-sm">{(sourceAnalysis as any).ai_summary}</p>
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-between items-center text-xs text-gray-500 pt-2 border-t">
+                              <div>
+                                Трендов: {(sourceAnalysis as any).trendsAnalyzed || (sourceAnalysis as any).analyzed_trends || 0}/{(sourceAnalysis as any).totalTrends || (sourceAnalysis as any).total_trends || 0}
+                                <span className="ml-2">
+                                  • Метод: {(sourceAnalysis as any).analysisMethod === 'AI' ? '🤖 AI' : 
+                                          (sourceAnalysis as any).analysisMethod === 'keywords' ? '🔤 Ключевые слова' : '📊 Базовый'}
+                                </span>
+                              </div>
+                              {((sourceAnalysis as any).analyzedAt || (sourceAnalysis as any).analyzed_at) && (
+                                <div>
+                                  {new Date((sourceAnalysis as any).analyzedAt || (sourceAnalysis as any).analyzed_at).toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {selectedTrendTopic && (
                       <div className="max-h-[400px] overflow-y-auto pr-2">

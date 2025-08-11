@@ -6964,7 +6964,8 @@ ${allCommentsText.substring(0, 8000)}
   "score": число от 1 до 10,
   "confidence": число от 0 до 1,
   "sentiment": "positive" | "negative" | "neutral",
-  "summary": "краткое описание общей тональности комментариев к источнику"
+  "summary": "краткое описание общей тональности комментариев к источнику",
+  "detailed_summary": "подробное описание аудитории источника, их поведения, интересов и настроения на основе анализа комментариев. Включи характеристики аудитории, популярные темы обсуждений, уровень вовлеченности и общие тенденции в поведении подписчиков."
 }`;
 
           console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${allCommentsTexts.length} комментариев`);
@@ -6985,16 +6986,21 @@ ${allCommentsText.substring(0, 8000)}
           console.log(`[SOURCE-ANALYSIS] Vertex AI ответ получен:`, analysisResult?.substring(0, 200));
 
           let analysisData;
+          let detailedSummary = '';
+          let aiSummary = '';
           try {
             // Пытаемся извлечь JSON из ответа
-            const jsonMatch = analysisResult.match(/\{[^}]*\}/);
+            const jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               analysisData = JSON.parse(jsonMatch[0]);
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
+              detailedSummary = analysisData.detailed_summary || '';
+              aiSummary = analysisData.summary || '';
               analysisSuccess = true;
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
+              console.log(`[SOURCE-ANALYSIS] Детальное описание получено: ${detailedSummary.substring(0, 100)}...`);
             } else {
               throw new Error('JSON не найден в ответе');
             }
@@ -7032,7 +7038,63 @@ ${allCommentsText.substring(0, 8000)}
         }
       }
 
-      // 4. Формируем итоговый результат анализа источника
+      // 4. Подсчитываем проценты настроений (примерная оценка на основе общего score)
+      const calculateSentimentPercentages = () => {
+        if (overallSentiment === 'positive') {
+          return {
+            positive_percentage: Math.round(50 + (overallScore - 5) * 8), // 50-90%
+            negative_percentage: Math.round(Math.max(5, (10 - overallScore) * 3)), // 5-15%
+            neutral_percentage: Math.round(100 - (50 + (overallScore - 5) * 8) - Math.max(5, (10 - overallScore) * 3))
+          };
+        } else if (overallSentiment === 'negative') {
+          return {
+            positive_percentage: Math.round(Math.max(5, (overallScore - 1) * 3)), // 5-15%
+            negative_percentage: Math.round(50 + (5 - overallScore) * 8), // 50-90%
+            neutral_percentage: Math.round(100 - Math.max(5, (overallScore - 1) * 3) - (50 + (5 - overallScore) * 8))
+          };
+        } else {
+          return {
+            positive_percentage: Math.round(20 + Math.max(0, overallScore - 4) * 5), // 20-35%
+            negative_percentage: Math.round(20 + Math.max(0, 6 - overallScore) * 5), // 20-35%
+            neutral_percentage: Math.round(60 - Math.abs(overallScore - 5) * 10) // 45-60%
+          };
+        }
+      };
+
+      // 5. Формируем расширенный и информативный summary
+      const createDetailedSummary = () => {
+        const sentimentText = overallSentiment === 'positive' ? 'положительная' : 
+                             overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная';
+        const scoreText = overallScore >= 8 ? 'очень высокий' :
+                         overallScore >= 6 ? 'хороший' :
+                         overallScore >= 4 ? 'средний' : 'низкий';
+        
+        let summary = `Проанализировано ${allCommentsTexts.length} комментариев из ${trends.length} трендов источника. `;
+        summary += `Общая тональность аудитории: ${sentimentText} (${scoreText} рейтинг ${Math.round(overallScore * 10) / 10}/10). `;
+        
+        if (overallConfidence > 0.7) {
+          summary += `Высокая достоверность анализа (${Math.round(overallConfidence * 100)}%). `;
+        } else if (overallConfidence > 0.4) {
+          summary += `Средняя достоверность анализа (${Math.round(overallConfidence * 100)}%). `;
+        }
+        
+        // Добавляем характеристику активности аудитории
+        const avgCommentsPerTrend = trends.length > 0 ? Math.round(totalCommentsAnalyzed / trends.length) : 0;
+        if (avgCommentsPerTrend > 50) {
+          summary += `Высокая активность аудитории (${avgCommentsPerTrend} комментариев в среднем на пост). `;
+        } else if (avgCommentsPerTrend > 10) {
+          summary += `Умеренная активность аудитории (${avgCommentsPerTrend} комментариев в среднем на пост). `;
+        } else if (avgCommentsPerTrend > 0) {
+          summary += `Низкая активность аудитории (${avgCommentsPerTrend} комментариев в среднем на пост). `;
+        }
+        
+        return summary;
+      };
+
+      // 6. Получаем проценты настроений
+      const sentimentPercentages = calculateSentimentPercentages();
+
+      // 7. Формируем итоговый результат анализа источника
       const result = {
         sentiment: overallSentiment,
         confidence: Math.round(overallConfidence * 100) / 100,
@@ -7041,9 +7103,10 @@ ${allCommentsText.substring(0, 8000)}
         commentsCount: totalCommentsAnalyzed,
         commentsAnalyzed: allCommentsTexts.length,
         analysisMethod: analysisSuccess ? (overallConfidence > 0.5 ? 'AI' : 'keywords') : 'basic',
-        summary: analysisSuccess 
-          ? `Анализ ${allCommentsTexts.length} комментариев к источнику: ${overallSentiment === 'positive' ? 'положительная' : overallSentiment === 'negative' ? 'отрицательная' : 'нейтральная'} тональность (балл: ${Math.round(overallScore * 10) / 10})`
-          : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`
+        summary: analysisSuccess ? createDetailedSummary() : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`,
+        detailed_summary: detailedSummary || (analysisSuccess ? aiSummary : ''),
+        ai_summary: aiSummary,
+        ...sentimentPercentages // Добавляем проценты настроений
       };
 
       console.log(`[SOURCE-ANALYSIS] Итоговый результат:`, result);
@@ -7073,7 +7136,15 @@ ${allCommentsText.substring(0, 8000)}
               trendsAnalyzed: trends.length,
               totalTrends: trends.length,
               totalComments: totalCommentsAnalyzed,
+              commentsAnalyzed: allCommentsTexts.length,
+              avgCommentsPerTrend: trends.length > 0 ? Math.round(totalCommentsAnalyzed / trends.length) : 0,
               summary: result.summary,
+              detailed_summary: result.detailed_summary || '',
+              ai_summary: result.ai_summary || '',
+              analysisMethod: result.analysisMethod,
+              positive_percentage: result.positive_percentage || 0,
+              negative_percentage: result.negative_percentage || 0,
+              neutral_percentage: result.neutral_percentage || 0,
               analyzedAt: new Date().toISOString()
             }
           }, {
@@ -7092,7 +7163,15 @@ ${allCommentsText.substring(0, 8000)}
               trendsAnalyzed: trends.length,
               totalTrends: trends.length,
               totalComments: totalCommentsAnalyzed,
+              commentsAnalyzed: allCommentsTexts.length,
+              avgCommentsPerTrend: trends.length > 0 ? Math.round(totalCommentsAnalyzed / trends.length) : 0,
               summary: result.summary,
+              detailed_summary: result.detailed_summary || '',
+              ai_summary: result.ai_summary || '',
+              analysisMethod: result.analysisMethod,
+              positive_percentage: result.positive_percentage || 0,
+              negative_percentage: result.negative_percentage || 0,
+              neutral_percentage: result.neutral_percentage || 0,
               analyzedAt: new Date().toISOString()
             }
           }, {
