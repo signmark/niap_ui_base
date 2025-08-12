@@ -262,8 +262,8 @@ export default function Trends() {
     });
     
     if (sourceId) {
-      // Устанавливаем выбранный источник
-      setSelectedSourceId(sourceId);
+      // НЕ МЕНЯЕМ выбранный источник - только ищем элемент для подсветки
+      // setSelectedSourceId(sourceId); // УБРАНО - не меняем фильтр при клике на тренд
       
       // Разворачиваем секцию источников если она свернута
       if (!isDataSourcesExpanded) {
@@ -322,56 +322,8 @@ export default function Trends() {
               console.log('🎯 Визуальный эффект выделения убран');
             }, 3000);
           } else {
-            console.log('❌ Элемент источника не найден ни в refs, ни в DOM для ID:', sourceId);
-            console.log('🔍 Все элементы с data-source-id:', 
-              Array.from(document.querySelectorAll('[data-source-id]')).map(el => el.getAttribute('data-source-id'))
-            );
-            console.log('⚠️ Элемент источника не виден в DOM, возможно отфильтрован');
-            console.log('🔄 Сбрасываю фильтр источников для показа всех источников');
-            
-            // Сбрасываем текущий фильтр источников
-            setSelectedSourceId(null);
-            
-            // Устанавливаем нужный источник через задержку
-            setTimeout(() => {
-              console.log('🔄 Устанавливаю источник после сброса фильтра:', sourceId);
-              setSelectedSourceId(sourceId);
-              
-              // Пытаемся найти элемент снова
-              setTimeout(() => {
-                const newSourceElement = sourcesRefs.current[sourceId] || 
-                                        document.querySelector(`[data-source-id="${sourceId}"]`);
-                
-                if (newSourceElement) {
-                  console.log('✅ После сброса фильтра элемент найден, скроллинг:', sourceId);
-                  newSourceElement.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center',
-                    inline: 'nearest'
-                  });
-                  
-                  // Применяем визуальный эффект
-                  const element = newSourceElement as HTMLElement;
-                  element.style.cssText += `
-                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
-                    border: 2px solid #3b82f6 !important;
-                    background-color: rgba(59, 130, 246, 0.1) !important;
-                    transform: scale(1.02) !important;
-                    transition: all 0.3s ease !important;
-                  `;
-                  
-                  setTimeout(() => {
-                    element.style.cssText = element.style.cssText.replace(/box-shadow[^;]*;?/g, '')
-                                                                 .replace(/border[^;]*;?/g, '')
-                                                                 .replace(/background-color[^;]*;?/g, '')
-                                                                 .replace(/transform[^;]*;?/g, '')
-                                                                 .replace(/transition[^;]*;?/g, '');
-                  }, 3000);
-                } else {
-                  console.log('❌ Элемент все еще не найден после сброса фильтра');
-                }
-              }, 500); // Увеличил задержку для перерендера
-            }, 200);
+            console.log('❌ Элемент источника не найден для подсветки ID:', sourceId);
+            console.log('🔍 Это нормально если источник отфильтрован или не отображается');
           }
         }, 300);
       } else {
