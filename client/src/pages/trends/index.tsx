@@ -227,6 +227,10 @@ export default function Trends() {
   // Состояние для отображения детального анализа источника
   const [selectedSourceForAnalysis, setSelectedSourceForAnalysis] = useState<string | null>(null);
   
+  // Состояние для выбора источников для массового сбора комментариев
+  const [selectedSourcesForComments, setSelectedSourcesForComments] = useState<Set<string>>(new Set());
+  const [isCollectingBulkComments, setIsCollectingBulkComments] = useState(false);
+  
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
   const [isTrendsExpanded, setIsTrendsExpanded] = useState(false); // По умолчанию свернута
@@ -767,6 +771,125 @@ export default function Trends() {
       });
     }
   });
+
+  // Функция для массового сбора комментариев для выбранных источников
+  const collectBulkComments = async () => {
+    if (selectedSourcesForComments.size === 0) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите хотя бы один источник"
+      });
+      return;
+    }
+
+    if (!selectedCampaignId) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите кампанию"
+      });
+      return;
+    }
+
+    setIsCollectingBulkComments(true);
+    const authToken = localStorage.getItem('auth_token');
+    
+    try {
+      // Получаем все тренды для выбранных источников
+      const selectedSourcesList = Array.from(selectedSourcesForComments);
+      const sourceTrends = trends.filter((trend: any) => 
+        selectedSourcesList.includes(trend.sourceId || trend.source_id)
+      );
+
+      if (sourceTrends.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Нет трендов",
+          description: "Для выбранных источников не найдено трендов"
+        });
+        return;
+      }
+
+      toast({
+        title: "Запуск сбора комментариев",
+        description: `Начинаем сбор комментариев для ${sourceTrends.length} трендов из ${selectedSourcesList.length} источников`
+      });
+
+      // Собираем комментарии для каждого тренда
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const trend of sourceTrends) {
+        try {
+          const response = await fetch('/api/trends/collect-comments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              trendId: trend.id,
+              campaignId: selectedCampaignId
+            })
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, error);
+          errorCount++;
+        }
+
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      toast({
+        title: "Сбор комментариев завершен",
+        description: `Успешно: ${successCount}, ошибок: ${errorCount}`
+      });
+
+      // Обновляем данные трендов
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      
+    } catch (error) {
+      console.error('Ошибка массового сбора комментариев:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось выполнить массовый сбор комментариев"
+      });
+    } finally {
+      setIsCollectingBulkComments(false);
+    }
+  };
+
+  // Функции для работы с выбором источников
+  const toggleSourceSelection = (sourceId: string) => {
+    setSelectedSourcesForComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sourceId)) {
+        newSet.delete(sourceId);
+      } else {
+        newSet.add(sourceId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllSources = () => {
+    if (selectedSourcesForComments.size === sources.length) {
+      // Если все выбраны, снимаем выбор
+      setSelectedSourcesForComments(new Set());
+    } else {
+      // Выбираем все источники
+      setSelectedSourcesForComments(new Set(sources.map(s => s.id)));
+    }
+  };
 
   const { data: keywords = [], isLoading: isLoadingKeywords } = useQuery({
     queryKey: ["campaign_keywords", selectedCampaignId],
@@ -1578,17 +1701,46 @@ export default function Trends() {
                     <div className="flex items-center gap-3">
                       <h2 className="text-lg font-semibold">Источники данных</h2>
                       {sources.length > 0 && (
-                        <Button
-                          variant={selectedSourceId === null ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedSourceId(null);
-                            setIsTrendsExpanded(true);
-                          }}
-                          className="h-7 px-2 text-xs"
-                        >
-                          Все источники
-                        </Button>
+                        <>
+                          <Button
+                            variant={selectedSourceId === null ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setSelectedSourceId(null);
+                              setIsTrendsExpanded(true);
+                            }}
+                            className="h-7 px-2 text-xs"
+                          >
+                            Все источники
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={selectAllSources}
+                            className="h-7 px-2 text-xs"
+                          >
+                            {selectedSourcesForComments.size === sources.length ? 'Снять выбор' : 'Выбрать все'}
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={collectBulkComments}
+                            disabled={selectedSourcesForComments.size === 0 || isCollectingBulkComments}
+                            className="h-7 px-2 text-xs"
+                          >
+                            {isCollectingBulkComments ? (
+                              <>
+                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                Сбор комментариев...
+                              </>
+                            ) : (
+                              <>
+                                <MessageSquare className="mr-1 h-3 w-3" />
+                                Собрать комментарии ({selectedSourcesForComments.size})
+                              </>
+                            )}
+                          </Button>
+                        </>
                       )}
                     </div>
                     <CollapsibleTrigger asChild>
@@ -1636,30 +1788,38 @@ export default function Trends() {
                             sourcesRefs.current[source.id] = el;
                           }
                         }}
-                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-colors ${
+                        className={`flex items-center justify-between p-2 rounded-lg border transition-colors ${
                           selectedSourceId === source.id ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'
                         }`}
                       >
-                        <div 
-                          className="flex items-center gap-2 flex-1" 
-                          onClick={() => {
-                            setSelectedSourceId(selectedSourceId === source.id ? null : source.id);
-                            setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов при выборе источника
-                          }}
-                        >
-                          <div>
-                            <h3 className="font-medium">{source.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              <a
-                                href={source.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {source.url}
-                              </a>
-                            </p>
+                        <div className="flex items-center gap-2 flex-1">
+                          <Checkbox
+                            checked={selectedSourcesForComments.has(source.id)}
+                            onCheckedChange={() => toggleSourceSelection(source.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-shrink-0"
+                          />
+                          <div 
+                            className="cursor-pointer flex-1" 
+                            onClick={() => {
+                              setSelectedSourceId(selectedSourceId === source.id ? null : source.id);
+                              setIsTrendsExpanded(true); // Автоматически разворачиваем секцию трендов при выборе источника
+                            }}
+                          >
+                            <div>
+                              <h3 className="font-medium">{source.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {source.url}
+                                </a>
+                              </p>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
