@@ -2559,12 +2559,12 @@ export default function Trends() {
                             
                             // Детальное логирование фильтрации источников (только для отладки)
                             if (selectedSourceId && topic.title.includes('Владивосток')) {
-                              console.log('🔍 Проверка фильтрации для тренда "Владивосток":', {
-                                trendTitle: topic.title,
-                                trendSourceId: topic.source_id || topic.sourceId,
-                                selectedSourceId: selectedSourceId,
-                                sourceMatches: sourceMatches
-                              });
+                              console.log('🔍 Проверка фильтрации для тренда "Владивосток":');
+                              console.log('  - Заголовок тренда:', topic.title);
+                              console.log('  - ID источника тренда:', topic.source_id || topic.sourceId);
+                              console.log('  - Выбранный ID источника:', selectedSourceId);
+                              console.log('  - Источник соответствует?:', sourceMatches);
+                              console.log('  - Полные данные тренда:', topic);
                             }
                             
                             // Фильтр по тональности

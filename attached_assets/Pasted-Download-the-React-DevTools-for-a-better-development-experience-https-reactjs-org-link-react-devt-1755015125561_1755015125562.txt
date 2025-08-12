@@ -1,0 +1,306 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:1324 Fetching source posts with params: Object
+index.tsx:1330 Using exact API URL format that works
+index.tsx:1258 Fetched trends data: Object
+index.tsx:1364 Source posts API response: Object
+index.tsx:1372 Returning posts array: Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ Fetching source posts with params: Object
+ Using exact API URL format that works
+ Source posts API response: Object
+ Returning posts array: Object
+ Fetched trends data: Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+ 🔍 Проверка фильтрации для тренда "Владивосток": Object
+api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015076730&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015084575&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_1851015…:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015097129&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015097660&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015097660&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015098203&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015098728&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015099249&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015099769&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015100306&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015100851&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015101388&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015101920&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+ Ошибка загрузки изображения: https://instagram.fcjs3-1.fna.fbcdn.net/v/t51.2885-15/497904535_18510153976063838_2025327717061471803_n.jpg?stp=dst-jpg_e15_fr_p1080x1080_tt6&_nc_ht=instagram.fcjs3-1.fna.fbcdn.net&_nc_cat=102&_nc_oc=Q6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU&_nc_ohc=hwtkUvy4wTcQ7kNvwGfooxw&_nc_gid=5zT42_TjAu7f-SIY5Fo5Cw&edm=APs17CUBAAAA&ccb=7-5&oh=00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A&oe=682BD10B&_nc_sid=10d13b
+ Тренд выбран: Владивосток, спасибо! Это было 🔥 sentiment_analysis: null
+ 🔗 Синхронизация тренда с источником: {trendTitle: 'Владивосток, спасибо! Это было 🔥', sourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', currentSelectedSourceId: null, sortField: 'comments', sortDirection: 'desc'}
+ ✅ Источник найден в списке: ГУФ (GUF)
+ 🔗 Синхронизация тренда с источником: {trendTitle: 'Владивосток, спасибо! Это было 🔥', sourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', currentSelectedSourceId: null, sortField: 'comments', sortDirection: 'desc'}
+ ✅ Источник найден в списке: ГУФ (GUF)
+ Загружаем комментарии для тренда 2eef427d-3f99-4907-9478-22514355e231, количество: 145
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, как же у вас было круто! \nСловами не …ать, лучше смотрите сами.\n\n📸 [id434666296|Кон...', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, спасибо! Это было 🔥', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, уже в субботу у вас!\n\nПоследние билеты: vk.cc/cN6Q2f', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, как же у вас было круто! \nСловами не …ать, лучше смотрите сами.\n\n📸 [id434666296|Кон...', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, спасибо! Это было 🔥', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, уже в субботу у вас!\n\nПоследние билеты: vk.cc/cN6Q2f', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Поиск элемента источника для ID: 0991d30f-5ea4-453d-8454-cac957f1a8a4
+ 📝 Доступные refs: (26) ['0ad356d1-dcd1-4d87-9df4-d9413ee6c2db', '0ad481ef-92d9-4512-b37a-50dce5534fe1', '109cfe5e-0e1e-41bc-8694-65b891f8bfd4', '13843974-04d1-4066-95c6-0ea802dcf97d', '1bd7ea5f-a138-4917-8a31-248e7a48b6e4', '2cde501e-7e11-4e6d-a62f-a39829221727', '2d582769-12a6-43ef-88fa-eed23afe996e', '34e58194-5e6d-41fa-a05e-625634a2f062', '3d0efaa1-4bd3-430c-abf8-419ad206ba75', '40f62583-768a-47ca-bacb-7c1feecf0eb1', '544ce9fe-c97e-4261-ad6d-2932e3b45cea', '5f3b90af-8582-4895-98ca-ebdf86cc0788', '9059e456-2484-439a-992e-9a84e3cf4291', 'a8ebb548-250a-405e-8892-6ee9a5a90630', 'd4e615a6-90cf-4d06-9a86-ca3526c52501', '00e0d159-512c-4e7e-864c-9b68ef36f61e', '040bf7da-2dd0-4594-bc05-188b2c3057e3', '140f64b1-adc9-4d9e-a5dc-2f8dd614b767', '42a3578b-de88-4c40-9a3d-372ba8a1d409', '97344b79-5558-4944-a6bc-34a79845d352', '9e9c45f7-9f40-4f9b-a54f-be00f55b80d3', 'ae58b5b0-3f91-4cda-9db3-94fae7e47dc5', 'bc05a833-6481-4667-a061-e3378d060d46', 'd5a066f3-f694-4323-bf5e-24cb2be6de4b', 'eea93853-dd86-4015-859b-633610e5d1fc', 'ef156e39-5949-495c-a90c-b033bf2a0dd1']
+ 🔍 Элемент найден в refs: false
+ 🔍 Элемент найден через querySelector: false
+ ❌ Элемент источника не найден ни в refs, ни в DOM для ID: 0991d30f-5ea4-453d-8454-cac957f1a8a4
+ 🔍 Все элементы с data-source-id: (26) ['0ad356d1-dcd1-4d87-9df4-d9413ee6c2db', '0ad481ef-92d9-4512-b37a-50dce5534fe1', '109cfe5e-0e1e-41bc-8694-65b891f8bfd4', '13843974-04d1-4066-95c6-0ea802dcf97d', '1bd7ea5f-a138-4917-8a31-248e7a48b6e4', '2cde501e-7e11-4e6d-a62f-a39829221727', '2d582769-12a6-43ef-88fa-eed23afe996e', '34e58194-5e6d-41fa-a05e-625634a2f062', '3d0efaa1-4bd3-430c-abf8-419ad206ba75', '40f62583-768a-47ca-bacb-7c1feecf0eb1', '544ce9fe-c97e-4261-ad6d-2932e3b45cea', '5f3b90af-8582-4895-98ca-ebdf86cc0788', '9059e456-2484-439a-992e-9a84e3cf4291', 'a8ebb548-250a-405e-8892-6ee9a5a90630', 'd4e615a6-90cf-4d06-9a86-ca3526c52501', '00e0d159-512c-4e7e-864c-9b68ef36f61e', '040bf7da-2dd0-4594-bc05-188b2c3057e3', '140f64b1-adc9-4d9e-a5dc-2f8dd614b767', '42a3578b-de88-4c40-9a3d-372ba8a1d409', '97344b79-5558-4944-a6bc-34a79845d352', '9e9c45f7-9f40-4f9b-a54f-be00f55b80d3', 'ae58b5b0-3f91-4cda-9db3-94fae7e47dc5', 'bc05a833-6481-4667-a061-e3378d060d46', 'd5a066f3-f694-4323-bf5e-24cb2be6de4b', 'eea93853-dd86-4015-859b-633610e5d1fc', 'ef156e39-5949-495c-a90c-b033bf2a0dd1']
+ ⚠️ Элемент источника не виден в DOM, возможно отфильтрован
+ 🔄 Сбрасываю фильтр источников для показа всех источников
+ 🔍 Поиск элемента источника для ID: 0991d30f-5ea4-453d-8454-cac957f1a8a4
+ 📝 Доступные refs: (26) ['0ad356d1-dcd1-4d87-9df4-d9413ee6c2db', '0ad481ef-92d9-4512-b37a-50dce5534fe1', '109cfe5e-0e1e-41bc-8694-65b891f8bfd4', '13843974-04d1-4066-95c6-0ea802dcf97d', '1bd7ea5f-a138-4917-8a31-248e7a48b6e4', '2cde501e-7e11-4e6d-a62f-a39829221727', '2d582769-12a6-43ef-88fa-eed23afe996e', '34e58194-5e6d-41fa-a05e-625634a2f062', '3d0efaa1-4bd3-430c-abf8-419ad206ba75', '40f62583-768a-47ca-bacb-7c1feecf0eb1', '544ce9fe-c97e-4261-ad6d-2932e3b45cea', '5f3b90af-8582-4895-98ca-ebdf86cc0788', '9059e456-2484-439a-992e-9a84e3cf4291', 'a8ebb548-250a-405e-8892-6ee9a5a90630', 'd4e615a6-90cf-4d06-9a86-ca3526c52501', '00e0d159-512c-4e7e-864c-9b68ef36f61e', '040bf7da-2dd0-4594-bc05-188b2c3057e3', '140f64b1-adc9-4d9e-a5dc-2f8dd614b767', '42a3578b-de88-4c40-9a3d-372ba8a1d409', '97344b79-5558-4944-a6bc-34a79845d352', '9e9c45f7-9f40-4f9b-a54f-be00f55b80d3', 'ae58b5b0-3f91-4cda-9db3-94fae7e47dc5', 'bc05a833-6481-4667-a061-e3378d060d46', 'd5a066f3-f694-4323-bf5e-24cb2be6de4b', 'eea93853-dd86-4015-859b-633610e5d1fc', 'ef156e39-5949-495c-a90c-b033bf2a0dd1']
+ 🔍 Элемент найден в refs: false
+ 🔍 Элемент найден через querySelector: false
+ ❌ Элемент источника не найден ни в refs, ни в DOM для ID: 0991d30f-5ea4-453d-8454-cac957f1a8a4
+ 🔍 Все элементы с data-source-id: (26) ['0ad356d1-dcd1-4d87-9df4-d9413ee6c2db', '0ad481ef-92d9-4512-b37a-50dce5534fe1', '109cfe5e-0e1e-41bc-8694-65b891f8bfd4', '13843974-04d1-4066-95c6-0ea802dcf97d', '1bd7ea5f-a138-4917-8a31-248e7a48b6e4', '2cde501e-7e11-4e6d-a62f-a39829221727', '2d582769-12a6-43ef-88fa-eed23afe996e', '34e58194-5e6d-41fa-a05e-625634a2f062', '3d0efaa1-4bd3-430c-abf8-419ad206ba75', '40f62583-768a-47ca-bacb-7c1feecf0eb1', '544ce9fe-c97e-4261-ad6d-2932e3b45cea', '5f3b90af-8582-4895-98ca-ebdf86cc0788', '9059e456-2484-439a-992e-9a84e3cf4291', 'a8ebb548-250a-405e-8892-6ee9a5a90630', 'd4e615a6-90cf-4d06-9a86-ca3526c52501', '00e0d159-512c-4e7e-864c-9b68ef36f61e', '040bf7da-2dd0-4594-bc05-188b2c3057e3', '140f64b1-adc9-4d9e-a5dc-2f8dd614b767', '42a3578b-de88-4c40-9a3d-372ba8a1d409', '97344b79-5558-4944-a6bc-34a79845d352', '9e9c45f7-9f40-4f9b-a54f-be00f55b80d3', 'ae58b5b0-3f91-4cda-9db3-94fae7e47dc5', 'bc05a833-6481-4667-a061-e3378d060d46', 'd5a066f3-f694-4323-bf5e-24cb2be6de4b', 'eea93853-dd86-4015-859b-633610e5d1fc', 'ef156e39-5949-495c-a90c-b033bf2a0dd1']
+ ⚠️ Элемент источника не виден в DOM, возможно отфильтрован
+ 🔄 Сбрасываю фильтр источников для показа всех источников
+proxy-image:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015102458&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c&_retry=true 404 (Not Found)
+Image
+onError @ src/pages/trends/ind…=1755015051455:3057
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+2 🔄 Устанавливаю источник после сброса фильтра: 0991d30f-5ea4-453d-8454-cac957f1a8a4
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, как же у вас было круто! \nСловами не …ать, лучше смотрите сами.\n\n📸 [id434666296|Кон...', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, спасибо! Это было 🔥', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, уже в субботу у вас!\n\nПоследние билеты: vk.cc/cN6Q2f', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, как же у вас было круто! \nСловами не …ать, лучше смотрите сами.\n\n📸 [id434666296|Кон...', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, спасибо! Это было 🔥', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+ 🔍 Проверка фильтрации для тренда "Владивосток": {trendTitle: 'Владивосток, уже в субботу у вас!\n\nПоследние билеты: vk.cc/cN6Q2f', trendSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', selectedSourceId: '0991d30f-5ea4-453d-8454-cac957f1a8a4', sourceMatches: true}
+2 ❌ Элемент все еще не найден после сброса фильтра
+api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015102865&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c:1  GET https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/proxy-image?url=https%3A%2F%2Finstagram.fcjs3-1.fna.fbcdn.net%2Fv%2Ft51.2885-15%2F497904535_18510153976063838_2025327717061471803_n.jpg%3Fstp%3Ddst-jpg_e15_fr_p1080x1080_tt6%26_nc_ht%3Dinstagram.fcjs3-1.fna.fbcdn.net%26_nc_cat%3D102%26_nc_oc%3DQ6cZ2QHSHmR8Ju4pWIpJSCeMFltjVhotBHA3-L-0DMZ2RJsJDzfypNxthKhEKKpZTrU05WU%26_nc_ohc%3DhwtkUvy4wTcQ7kNvwGfooxw%26_nc_gid%3D5zT42_TjAu7f-SIY5Fo5Cw%26edm%3DAPs17CUBAAAA%26ccb%3D7-5%26oh%3D00_AfKHA_Vzj9-CsNLd0KC6LcH3CB0XHsSQn3QX-CWLpcF--A%26oe%3D682BD10B%26_nc_sid%3D10d13b&_t=1755015102865&forceType=instagram&itemId=f1e26f6d-bcda-46c8-84d4-8f467cbcc42c 404 (Not Found)
+ Fetched trends data: {success: true, data: Array(307)}
