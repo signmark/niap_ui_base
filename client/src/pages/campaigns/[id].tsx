@@ -687,6 +687,8 @@ export default function CampaignDetails() {
 
   // Функция для проверки завершенности разделов
   const getSectionCompletionStatus = () => {
+    // Логирование для диагностики тренд-анализа
+    console.log('Campaign trend_analysis_settings:', campaign?.trend_analysis_settings);
     
     const sections = {
       site: {
@@ -712,11 +714,21 @@ export default function CampaignDetails() {
           Object.keys(campaign.trend_analysis_settings).length > 0 &&
           campaign.trend_analysis_settings.minFollowers &&
           typeof campaign.trend_analysis_settings.minFollowers === 'object' &&
-          campaign.trend_analysis_settings.maxSourcesPerPlatform &&
-          campaign.trend_analysis_settings.maxTrendsPerSource &&
-          campaign.trend_analysis_settings.collectionDays
+          campaign.trend_analysis_settings.maxSourcesPerPlatform > 0 &&
+          campaign.trend_analysis_settings.maxTrendsPerSource > 0 &&
+          campaign.trend_analysis_settings.collectionDays > 0
         ),
-        label: campaign?.trend_analysis_settings && Object.keys(campaign.trend_analysis_settings).length > 0 ? "Советы настроены" : "Советы не настроены"
+        label: (() => {
+          if (!campaign?.trend_analysis_settings || Object.keys(campaign.trend_analysis_settings).length === 0) {
+            return "Советы не настроены";
+          }
+          const settings = campaign.trend_analysis_settings;
+          if (!settings.minFollowers || typeof settings.minFollowers !== 'object' ||
+              !settings.maxSourcesPerPlatform || !settings.maxTrendsPerSource || !settings.collectionDays) {
+            return "Советы частично настроены";
+          }
+          return "Советы настроены";
+        })()
       },
       content: {
         completed: Boolean(allCampaignContent && Array.isArray(allCampaignContent) && allCampaignContent.length > 0),
