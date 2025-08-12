@@ -6125,6 +6125,7 @@ Return your response as a JSON array in this exact format:
           const payload = {
             sourcesList: req.body.sourcesList, // ID источников для поиска трендов
             userID: userId, // ID пользователя (не токен!)
+            campaignId: campaignId, // ID кампании для сохранения трендов
             maxTrendsPerSource: maxTrendsPerSource,
             minViews: trendAnalysisSettings?.minViews || 500,
             day_past: collectionDays
@@ -6181,7 +6182,8 @@ Return your response as a JSON array in this exact format:
         if (collectSources) {
           payload = {
             sourcesList: keywordsList, // Используем ключевые слова как список для поиска источников
-            userID: userId
+            userID: userId,
+            campaignId: campaignId // ID кампании для сохранения источников
           };
           console.log('📝 Using sources collection format for main-scraper (keywords):', payload);
         } else {
