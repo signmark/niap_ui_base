@@ -300,7 +300,11 @@ export default function ContentPage() {
   const { data: campaignsResponse, isLoading: isLoadingCampaigns } = useQuery({
     queryKey: ["/api/campaigns"],
     queryFn: async () => {
-      const response = await fetch('/api/campaigns');
+      const response = await fetch('/api/campaigns', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch campaigns');
       }
