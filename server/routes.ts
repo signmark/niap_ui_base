@@ -221,6 +221,8 @@ import {
 } from "@shared/schema";
 import * as crypto from 'crypto';
 
+// Удалена ненужная функция - используем прямые запросы к Directus API
+
 // Add type for follower requirements
 type PlatformRequirements = {
   [key: string]: number;
@@ -2140,18 +2142,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log(`INFO: Fallback - получение данных кампании ${campaignId} через API`);
       
-      // Используем наш собственный API endpoint для получения данных кампании
-      const campaignResponse = await axios.get(`http://localhost:5000/api/campaigns/${campaignId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 15000
+      // Получаем данные кампании напрямую из Directus
+      const campaignResponse = await directusApi.items('campaigns').readOne(campaignId, {
+        fields: ['*']
       });
       
-      console.log('INFO: Данные кампании получены через наш API');
+      console.log('INFO: Данные кампании получены из Directus');
       
-      const campaign = campaignResponse.data?.data;
+      const campaign = campaignResponse;
       if (!campaign) {
         console.log('WARN: Данные кампании не найдены');
         return null;
@@ -2177,15 +2175,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (campaign.questionnaire_id) {
         try {
           console.log(`INFO: Получение данных анкеты ${campaign.questionnaire_id} через наш API`);
-          const questionnaireResponse = await axios.get(`http://localhost:5000/api/campaigns/${campaignId}/questionnaire`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 15000
+          const questionnaireResponse = await directusApi.items('business_questionnaires').readOne(campaign.questionnaire_id, {
+            fields: ['*']
           });
           
-          const questionnaire = questionnaireResponse.data?.data;
+          const questionnaire = questionnaireResponse;
           if (questionnaire) {
             console.log('INFO: Данные анкеты получены успешно');
             
@@ -6098,6 +6092,11 @@ Return your response as a JSON array in this exact format:
         const collectionDays = trendAnalysisSettings?.collectionDays || 7;
         const selectedPlatforms = platforms || ["instagram", "telegram", "vk"];
         
+        console.log('🔍 PLATFORMS DEBUG:');
+        console.log('  - req.body.platforms:', req.body.platforms);
+        console.log('  - platforms variable:', platforms);
+        console.log('  - selectedPlatforms result:', selectedPlatforms);
+        
         // Проверяем N8N URL сразу в начале
         const n8nUrl = process.env.N8N_URL;
         if (!n8nUrl) {
@@ -6118,8 +6117,12 @@ Return your response as a JSON array in this exact format:
           collectionDays: collectionDays
         });
         
-        // ПРИОРИТЕТ: Если есть sourcesList от фронтенда - используем его (ID источников)
-        if (req.body.sourcesList && Array.isArray(req.body.sourcesList) && req.body.sourcesList.length > 0) {
+        console.log('🔍 LOGIC CHECK: collectSources value and type:', collectSources, typeof collectSources);
+        console.log('🔍 LOGIC CHECK: !collectSources =', !collectSources);
+        console.log('🔍 LOGIC CHECK: has sourcesList =', !!(req.body.sourcesList && Array.isArray(req.body.sourcesList) && req.body.sourcesList.length > 0));
+
+        // ПРИОРИТЕТ: Если есть sourcesList от фронтенда И это НЕ сбор источников - используем его (ID источников для сбора трендов)
+        if (!collectSources && req.body.sourcesList && Array.isArray(req.body.sourcesList) && req.body.sourcesList.length > 0) {
           console.log('🎯 PRIORITY: Using sourcesList from frontend (source IDs):', req.body.sourcesList);
           
           const payload = {
@@ -6178,14 +6181,41 @@ Return your response as a JSON array in this exact format:
         // FALLBACK: Если sourcesList не был обработан выше, используем старую логику
         console.log('🔄 Using fallback logic - no sourcesList from frontend');
         
-        // Если собираем источники - используем новый формат для main-scraper
+        // Если собираем источники - используем правильный формат с настройками кампании
         if (collectSources) {
+          console.log('🔍 DEBUG: Creating payload for collectSources with keywords:', keywordsList.slice(0, 3));
+          console.log('🔍 DEBUG: collectSources value:', collectSources);
+          console.log('🔍 DEBUG: followerRequirements:', followerRequirements);
+          console.log('🔍 DEBUG: selectedPlatforms:', selectedPlatforms);
+          
           payload = {
-            sourcesList: keywordsList, // Используем ключевые слова как список для поиска источников
-            userID: userId,
-            campaignId: campaignId // ID кампании для сохранения источников
+            minFollowers: followerRequirements,
+            maxSourcesPerPlatform: maxSourcesPerPlatform,
+            platforms: selectedPlatforms, // ИСПРАВЛЕНО: убедимся что platforms не пустой
+            collectSources: 1,
+            collectComments: collectComments || [],
+            keywords: keywordsList,
+            maxTrendsPerSource: maxTrendsPerSource,
+            day_past: collectionDays,
+            language: "ru",
+            filters: {
+              minReactions: 10,
+              minViews: 500,
+              contentTypes: ["text", "image", "video"]
+            },
+            campaignId: campaignId,
+            userId: userId,
+            requestId: requestId
           };
-          console.log('📝 Using sources collection format for main-scraper (keywords):', payload);
+          
+          // КРИТИЧЕСКАЯ ПРОВЕРКА: platforms не должен быть пустым
+          if (!payload.platforms || payload.platforms.length === 0) {
+            console.log('❌ КРИТИЧЕСКАЯ ОШИБКА: platforms пустой! Устанавливаем по умолчанию');
+            console.log('selectedPlatforms was:', selectedPlatforms);
+            console.log('req.body.platforms was:', req.body.platforms);
+            payload.platforms = ["instagram", "telegram", "vk"]; // По умолчанию
+          }
+          console.log('📝 CREATED CORRECT payload for sources collection with keywords field:', JSON.stringify(payload, null, 2));
         } else {
           // Для сбора трендов - используем старый формат
           payload = {
@@ -6216,6 +6246,7 @@ Return your response as a JSON array in this exact format:
         console.log(`Using webhook endpoint: ${webhookEndpoint} (collectSources: ${collectSources ? 1 : 0})`);
         
         try {
+          console.log('🚀 FINAL PAYLOAD BEFORE SENDING:', JSON.stringify(payload, null, 2));
           webhookResponse = await axios.post(webhookEndpoint, payload, {
             headers: {
               'Content-Type': 'application/json',
@@ -6595,26 +6626,34 @@ Return your response as a JSON array in this exact format:
       console.log(`[COLLECT-COMMENTS] 🎯 Получен запрос на сбор комментариев для ${trendIds.length} трендов кампании ${campaignId}`);
       console.log(`[COLLECT-COMMENTS] 📋 Список трендов:`, trendIds.slice(0, 5)); // Показываем первые 5
       
-      // Получаем все тренды кампании через существующий endpoint
-      console.log(`[COLLECT-COMMENTS] 🔄 Загружаем тренды через campaign-trends endpoint`);
+      // Получаем тренды напрямую из Directus по ID
+      console.log(`[COLLECT-COMMENTS] 🔄 Загружаем тренды напрямую из Directus`);
       
-      const campaignTrendsResponse = await axios.get(`http://localhost:5000/api/campaign-trends?campaignId=${campaignId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        timeout: 30000
-      });
-      
-      const allTrends = campaignTrendsResponse.data?.data || [];
-      console.log(`[COLLECT-COMMENTS] 📊 Получено ${allTrends.length} трендов из campaign-trends endpoint`);
-      
-      // Фильтруем только выбранные тренды
-      const trends = allTrends.filter(trend => trendIds.includes(trend.id));
-      console.log(`[COLLECT-COMMENTS] 🎯 Отфильтровано ${trends.length} выбранных трендов из ${allTrends.length}`);
-      
-      if (trends.length === 0) {
-        console.log('[COLLECT-COMMENTS] ❌ Не найдены тренды в базе данных');
-        return res.status(404).json({ message: "No trends found for the provided IDs" });
+      try {
+        const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
+          params: {
+            'filter[id][_in]': trendIds.join(','),
+            'filter[campaign_id][_eq]': campaignId,
+            fields: '*'
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const trends = trendsResponse.data?.data || [];
+        console.log(`[COLLECT-COMMENTS] 📊 Получено ${trends.length} трендов из Directus`);
+        
+        if (trends.length === 0) {
+          console.log('[COLLECT-COMMENTS] ❌ Не найдены тренды в базе данных');
+          return res.status(404).json({ message: "No trends found for the provided IDs" });
+        }
+      } catch (dbError) {
+        console.error('[COLLECT-COMMENTS] ❌ Ошибка загрузки трендов из базы данных:', dbError);
+        return res.status(500).json({ 
+          error: "Failed to load trends from database", 
+          message: dbError instanceof Error ? dbError.message : "Database error"
+        });
       }
 
       // Получаем N8N URL из переменных окружения
@@ -6742,6 +6781,102 @@ Return your response as a JSON array in this exact format:
       res.status(500).json({ 
         error: "Failed to collect comments", 
         message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // TEST: Прямой вызов trends/collect с реальными данными кампании
+  app.post("/api/test-trends-collect", async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    
+    try {
+      const campaignId = "45daab2a-4c6f-4578-8665-3a049458c0c8";
+      
+      console.log('🔍 TEST: Testing trends/collect with campaign:', campaignId);
+      
+      // Получаем данные кампании напрямую с админским токеном
+      const directusAdminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      
+      const campaignResponse = await axios.get(`https://directus.roboflow.space/items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${directusAdminToken}`
+        }
+      });
+      
+      const campaign = campaignResponse.data?.data;
+      console.log('🔍 TEST: Campaign data loaded:', {
+        id: campaign.id,
+        name: campaign.name,
+        hasKeywords: !!campaign.keywords,
+        hasFollowerReq: !!campaign.follower_requirements
+      });
+      
+      // Тест payload creation с настоящими данными
+      const keywordsList = campaign.keywords || [
+        'создание контента AI для соцсетей',
+        'социальные сети', 
+        'сервис для SMM с ИИ'
+      ];
+
+      const followerRequirements = campaign.follower_requirements || {
+        instagram: 5000,
+        telegram: 2000,
+        vk: 3000,
+        facebook: 5000,
+        youtube: 10000
+      };
+
+      const payload = {
+        minFollowers: followerRequirements,
+        maxSourcesPerPlatform: 10,
+        platforms: ["instagram", "telegram", "vk"],
+        collectSources: 1,
+        collectComments: [],
+        keywords: keywordsList,
+        maxTrendsPerSource: 10,
+        day_past: 30,
+        language: "ru",
+        filters: {
+          minReactions: 10,
+          minViews: 500,
+          contentTypes: ["text", "image", "video"]
+        },
+        campaignId: campaignId,
+        userId: 'test-user',
+        requestId: `test-${Date.now()}`
+      };
+      
+      console.log('📝 TEST: Created payload with real campaign data:', JSON.stringify(payload, null, 2));
+      
+      // Отправляем на N8N webhook (тестово)
+      const n8nUrl = process.env.N8N_URL;
+      if (n8nUrl) {
+        const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/smm-collect-trends`;
+        console.log('🚀 TEST: Would send to webhook:', webhookUrl);
+        console.log('📦 TEST: Payload content check:');
+        console.log('   - Has keywords field:', !!payload.keywords);
+        console.log('   - Has sourcesList field:', !!(payload as any).sourcesList);
+        console.log('   - Keywords count:', payload.keywords?.length || 0);
+        console.log('   - collectSources value:', payload.collectSources);
+      }
+
+      return res.json({
+        success: true,
+        message: "Test completed with real campaign data",
+        payload: payload,
+        campaign: {
+          id: campaign.id,
+          name: campaign.name,
+          keywordsCount: keywordsList.length,
+          platforms: ["instagram", "telegram", "vk"]
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ TEST ERROR:', error);
+      return res.status(500).json({ 
+        error: error.message,
+        details: error instanceof Error ? error.stack : String(error)
       });
     }
   });
