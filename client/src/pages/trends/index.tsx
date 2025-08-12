@@ -281,32 +281,21 @@ export default function Trends() {
       if (sourceExists) {
         console.log('✅ Источник найден в списке:', sourceExists.name);
         
-        // Скроллим к источнику после рендера
+        // Проверяем виден ли элемент в DOM
         setTimeout(() => {
-          console.log('🔍 Поиск элемента источника для ID:', sourceId);
-          console.log('📝 Доступные refs:', Object.keys(sourcesRefs.current));
+          const sourceElement = sourcesRefs.current[sourceId] || 
+                                document.querySelector(`[data-source-id="${sourceId}"]`);
           
-          const sourceElement = sourcesRefs.current[sourceId];
-          let fallbackElement = null;
-          
-          if (!sourceElement) {
-            console.log('❌ Элемент не найден в refs, ищем через querySelector');
-            fallbackElement = document.querySelector(`[data-source-id="${sourceId}"]`);
-            console.log('🔍 Найден через querySelector:', !!fallbackElement);
-          }
-          
-          const targetElement = sourceElement || fallbackElement;
-          
-          if (targetElement) {
-            console.log('✅ Элемент найден, выполняю скроллинг к источнику:', sourceId);
-            targetElement.scrollIntoView({ 
+          if (sourceElement) {
+            console.log('✅ Элемент виден, выполняю скроллинг к источнику:', sourceId);
+            sourceElement.scrollIntoView({ 
               behavior: 'smooth', 
               block: 'center',
               inline: 'nearest'
             });
             
-            // Добавляем сильный визуальный эффект выделения
-            const element = targetElement as HTMLElement;
+            // Добавляем визуальный эффект выделения
+            const element = sourceElement as HTMLElement;
             element.style.cssText += `
               box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
               border: 2px solid #3b82f6 !important;
@@ -326,18 +315,56 @@ export default function Trends() {
               console.log('🎯 Визуальный эффект выделения убран');
             }, 3000);
           } else {
-            console.log('❌ Элемент источника не найден ни в refs, ни в DOM для ID:', sourceId);
-            console.log('🔍 Все элементы с data-source-id:', 
-              Array.from(document.querySelectorAll('[data-source-id]')).map(el => el.getAttribute('data-source-id'))
-            );
+            console.log('⚠️ Элемент источника не виден в DOM, возможно отфильтрован');
+            console.log('🔄 Сбрасываю фильтр источников для показа всех источников');
+            
+            // Сбрасываем текущий фильтр источников, чтобы показать все источники
+            setSelectedSourceId(null);
+            
+            // Через небольшую задержку устанавливаем нужный источник
+            setTimeout(() => {
+              setSelectedSourceId(sourceId);
+              
+              // Еще через задержку пытаемся найти и скроллить к элементу
+              setTimeout(() => {
+                const newSourceElement = sourcesRefs.current[sourceId] || 
+                                        document.querySelector(`[data-source-id="${sourceId}"]`);
+                
+                if (newSourceElement) {
+                  console.log('✅ После сброса фильтра элемент найден, скроллинг:', sourceId);
+                  newSourceElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                  });
+                  
+                  // Применяем визуальный эффект
+                  const element = newSourceElement as HTMLElement;
+                  element.style.cssText += `
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
+                    border: 2px solid #3b82f6 !important;
+                    background-color: rgba(59, 130, 246, 0.1) !important;
+                    transform: scale(1.02) !important;
+                    transition: all 0.3s ease !important;
+                  `;
+                  
+                  setTimeout(() => {
+                    element.style.cssText = element.style.cssText.replace(/box-shadow[^;]*;?/g, '')
+                                                                 .replace(/border[^;]*;?/g, '')
+                                                                 .replace(/background-color[^;]*;?/g, '')
+                                                                 .replace(/transform[^;]*;?/g, '')
+                                                                 .replace(/transition[^;]*;?/g, '');
+                  }, 3000);
+                } else {
+                  console.log('❌ Элемент все еще не найден после сброса фильтра');
+                }
+              }, 300);
+            }, 100);
           }
-        }, 500); // Увеличил задержку
+        }, 300);
       } else {
         console.log('⚠️ Источник не найден в списке источников:', sourceId);
         console.log('🔍 Доступные источники:', sources.map(s => s.id));
-        
-        // Источник будет выбран программно, но скроллинг невозможен
-        // Пользователь увидит фильтрацию по этому источнику
       }
     } else {
       console.log('❌ ID источника не найден в данных тренда');
