@@ -231,6 +231,10 @@ export default function Trends() {
   const [selectedSourcesForComments, setSelectedSourcesForComments] = useState<Set<string>>(new Set());
   const [isCollectingBulkComments, setIsCollectingBulkComments] = useState(false);
   
+  // Состояние для выбора трендов для массового сбора комментариев
+  const [selectedTrendsForComments, setSelectedTrendsForComments] = useState<Set<string>>(new Set());
+  const [isCollectingTrendComments, setIsCollectingTrendComments] = useState(false);
+  
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
   const [isTrendsExpanded, setIsTrendsExpanded] = useState(false); // По умолчанию свернута
@@ -865,6 +869,87 @@ export default function Trends() {
       });
     } finally {
       setIsCollectingBulkComments(false);
+    }
+  }
+
+  // Функция для массового сбора комментариев для выбранных трендов
+  const collectSelectedTrendsComments = async () => {
+    if (selectedTopics.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите хотя бы один тренд"
+      });
+      return;
+    }
+
+    if (!selectedCampaignId) {
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Выберите кампанию"
+      });
+      return;
+    }
+
+    setIsCollectingTrendComments(true);
+    const authToken = localStorage.getItem('auth_token');
+    
+    try {
+      toast({
+        title: "Запуск сбора комментариев",
+        description: `Начинаем сбор комментариев для ${selectedTopics.length} выбранных трендов`
+      });
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const trend of selectedTopics) {
+        try {
+          const response = await fetch('/api/trends/collect-comments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+              trendId: trend.id,
+              campaignId: selectedCampaignId
+            })
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+            console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, response.status);
+          }
+        } catch (error) {
+          console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, error);
+          errorCount++;
+        }
+
+        // Небольшая пауза между запросами
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      toast({
+        title: "Сбор комментариев завершен",
+        description: `Успешно: ${successCount}, ошибок: ${errorCount}`
+      });
+
+      // Обновляем данные трендов
+      queryClient.invalidateQueries({ queryKey: ["trends"] });
+      
+    } catch (error) {
+      console.error('Ошибка массового сбора комментариев для трендов:', error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось выполнить массовый сбор комментариев"
+      });
+    } finally {
+      setIsCollectingTrendComments(false);
     }
   };
 
@@ -2246,9 +2331,30 @@ export default function Trends() {
                               Выбрать все
                             </span>
                             {selectedTopics.length > 0 && (
-                              <span className="text-xs text-blue-600 ml-2">
-                                ({selectedTopics.length} выбрано)
-                              </span>
+                              <>
+                                <span className="text-xs text-blue-600 ml-2">
+                                  ({selectedTopics.length} выбрано)
+                                </span>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={collectSelectedTrendsComments}
+                                  disabled={isCollectingTrendComments}
+                                  className="h-7 px-2 text-xs ml-2"
+                                >
+                                  {isCollectingTrendComments ? (
+                                    <>
+                                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                      Сбор комментариев...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <MessageSquare className="mr-1 h-3 w-3" />
+                                      Собрать комментарии
+                                    </>
+                                  )}
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
