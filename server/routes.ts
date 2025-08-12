@@ -6629,6 +6629,7 @@ Return your response as a JSON array in this exact format:
       // Получаем тренды напрямую из Directus по ID
       console.log(`[COLLECT-COMMENTS] 🔄 Загружаем тренды напрямую из Directus`);
       
+      let trends = [];
       try {
         const trendsResponse = await directusApi.get('/items/campaign_trend_topics', {
           params: {
@@ -6641,7 +6642,7 @@ Return your response as a JSON array in this exact format:
           }
         });
         
-        const trends = trendsResponse.data?.data || [];
+        trends = trendsResponse.data?.data || [];
         console.log(`[COLLECT-COMMENTS] 📊 Получено ${trends.length} трендов из Directus`);
         
         if (trends.length === 0) {

@@ -253,8 +253,16 @@ export default function Trends() {
   const syncTrendWithSource = (trendTopic: TrendTopic) => {
     const sourceId = trendTopic.source_id || trendTopic.sourceId;
     
-    if (sourceId && sourceId !== selectedSourceId) {
-      // Выбираем источник
+    console.log('🔗 Синхронизация тренда с источником:', {
+      trendTitle: trendTopic.title,
+      sourceId: sourceId,
+      currentSelectedSourceId: selectedSourceId,
+      sortField: sortField,
+      sortDirection: sortDirection
+    });
+    
+    if (sourceId) {
+      // Устанавливаем выбранный источник
       setSelectedSourceId(sourceId);
       
       // Разворачиваем секцию источников если она свернута
@@ -267,23 +275,57 @@ export default function Trends() {
         setActiveTab('trends');
       }
       
-      // Скроллим к выбранному источнику после небольшой задержки
-      setTimeout(() => {
-        const sourceElement = sourcesRefs.current[sourceId];
-        if (sourceElement && sourcesContainerRef.current) {
-          sourceElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
+      // Проверяем, есть ли источник в списке загруженных источников
+      const sourceExists = sources.find(s => s.id === sourceId);
+      
+      if (sourceExists) {
+        console.log('✅ Источник найден в списке:', sourceExists.name);
+        
+        // Скроллим к источнику после рендера
+        setTimeout(() => {
+          console.log('🔍 Поиск элемента источника для ID:', sourceId);
+          console.log('📝 Доступные refs:', Object.keys(sourcesRefs.current));
           
-          // Добавляем визуальный эффект выделения
-          sourceElement.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
-          setTimeout(() => {
-            sourceElement.style.boxShadow = '';
-          }, 2000);
-        }
-      }, 300);
+          const sourceElement = sourcesRefs.current[sourceId];
+          let fallbackElement = null;
+          
+          if (!sourceElement) {
+            console.log('❌ Элемент не найден в refs, ищем через querySelector');
+            fallbackElement = document.querySelector(`[data-source-id="${sourceId}"]`);
+            console.log('🔍 Найден через querySelector:', !!fallbackElement);
+          }
+          
+          const targetElement = sourceElement || fallbackElement;
+          
+          if (targetElement) {
+            console.log('✅ Элемент найден, выполняю скроллинг к источнику:', sourceId);
+            targetElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+            
+            // Добавляем визуальный эффект выделения
+            (targetElement as HTMLElement).style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+            setTimeout(() => {
+              (targetElement as HTMLElement).style.boxShadow = '';
+            }, 2000);
+          } else {
+            console.log('❌ Элемент источника не найден ни в refs, ни в DOM для ID:', sourceId);
+            console.log('🔍 Все элементы с data-source-id:', 
+              Array.from(document.querySelectorAll('[data-source-id]')).map(el => el.getAttribute('data-source-id'))
+            );
+          }
+        }, 500); // Увеличил задержку
+      } else {
+        console.log('⚠️ Источник не найден в списке источников:', sourceId);
+        console.log('🔍 Доступные источники:', sources.map(s => s.id));
+        
+        // Источник будет выбран программно, но скроллинг невозможен
+        // Пользователь увидит фильтрацию по этому источнику
+      }
+    } else {
+      console.log('❌ ID источника не найден в данных тренда');
     }
   };
 
@@ -316,6 +358,16 @@ export default function Trends() {
   useEffect(() => {
     localStorage.setItem('trends_selected_source_id', selectedSourceId || 'null');
   }, [selectedSourceId]);
+
+  // Восстанавливаем selectedSourceId из выбранного тренда только при первой загрузке
+  useEffect(() => {
+    if (selectedTrendTopic && !selectedSourceId && !localStorage.getItem('trends_selected_source_id')) {
+      const sourceId = selectedTrendTopic.source_id || selectedTrendTopic.sourceId;
+      if (sourceId) {
+        setSelectedSourceId(sourceId);
+      }
+    }
+  }, [selectedTrendTopic]);
 
   // Функция для сбора комментариев к тренду
   const collectTrendComments = async (trendId: string, trendUrl: string) => {
@@ -1874,6 +1926,7 @@ export default function Trends() {
                       .map((source) => (
                       <div 
                         key={source.id} 
+                        data-source-id={source.id}
                         ref={(el) => {
                           if (el) {
                             sourcesRefs.current[source.id] = el;
@@ -2309,9 +2362,42 @@ export default function Trends() {
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         <div className="flex items-center justify-between mb-3 border-b pb-2">
-                          <div className="text-xs text-gray-500">
-                            Всего трендов: {trends.length} | Период: {selectedPeriod} | Платформа: {selectedPlatform} | Тональность: {selectedSentiment === 'all' ? 'все' : selectedSentiment === 'positive' ? 'позитивные' : selectedSentiment === 'negative' ? 'негативные' : selectedSentiment === 'neutral' ? 'нейтральные' : 'неопределенные'}
+                          <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+                            <span>Всего трендов: {trends.length}</span>
+                            {selectedSourceId && (
+                              <>
+                                <span>|</span>
+                                <span className="text-blue-600 font-medium">
+                                  Фильтр по источнику: {sources.find(s => s.id === selectedSourceId)?.name || 'Неизвестный'}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedSourceId(null)}
+                                  className="h-5 px-2 text-xs"
+                                >
+                                  Показать все источники
+                                </Button>
+                              </>
+                            )}
+                            <span>|</span>
+                            <span>Период: {selectedPeriod}</span>
+                            <span>| Платформа: {selectedPlatform}</span>
+                            <span>| Тональность: {selectedSentiment === 'all' ? 'все' : selectedSentiment === 'positive' ? 'позитивные' : selectedSentiment === 'negative' ? 'негативные' : selectedSentiment === 'neutral' ? 'нейтральные' : 'неопределенные'}</span>
                             {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
+                            {sortField !== 'none' && (
+                              <>
+                                <span>|</span>
+                                <span className="text-purple-600">
+                                  Сортировка: {sortField === 'comments' ? 'по комментариям' : 
+                                              sortField === 'reactions' ? 'по реакциям' : 
+                                              sortField === 'views' ? 'по просмотрам' : 
+                                              sortField === 'date' ? 'по дате' : 
+                                              sortField === 'platform' ? 'по соцсетям' : sortField} 
+                                  ({sortDirection === 'asc' ? '↑' : '↓'})
+                                </span>
+                              </>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <Checkbox
@@ -2538,7 +2624,6 @@ export default function Trends() {
                                   selectedTrendTopic?.id === topic.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                                 }`}
                                 onClick={() => {
-                                  console.log('Выбран тренд для просмотра комментариев:', topic.id, topic.title);
                                   setSelectedTrendTopic(topic);
                                   // Синхронизируем выбор тренда с соответствующим источником
                                   syncTrendWithSource(topic);
