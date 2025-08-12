@@ -281,21 +281,28 @@ export default function Trends() {
       if (sourceExists) {
         console.log('✅ Источник найден в списке:', sourceExists.name);
         
-        // Проверяем виден ли элемент в DOM
+        // Пытаемся найти элемент источника
         setTimeout(() => {
-          const sourceElement = sourcesRefs.current[sourceId] || 
-                                document.querySelector(`[data-source-id="${sourceId}"]`);
+          console.log('🔍 Поиск элемента источника для ID:', sourceId);
+          console.log('📝 Доступные refs:', Object.keys(sourcesRefs.current));
           
-          if (sourceElement) {
-            console.log('✅ Элемент виден, выполняю скроллинг к источнику:', sourceId);
-            sourceElement.scrollIntoView({ 
+          const sourceElement = sourcesRefs.current[sourceId];
+          const fallbackElement = document.querySelector(`[data-source-id="${sourceId}"]`);
+          const targetElement = sourceElement || fallbackElement;
+          
+          console.log('🔍 Элемент найден в refs:', !!sourceElement);
+          console.log('🔍 Элемент найден через querySelector:', !!fallbackElement);
+          
+          if (targetElement) {
+            console.log('✅ Элемент найден, выполняю скроллинг к источнику:', sourceId);
+            targetElement.scrollIntoView({ 
               behavior: 'smooth', 
               block: 'center',
               inline: 'nearest'
             });
             
-            // Добавляем визуальный эффект выделения
-            const element = sourceElement as HTMLElement;
+            // Применяем визуальный эффект
+            const element = targetElement as HTMLElement;
             element.style.cssText += `
               box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
               border: 2px solid #3b82f6 !important;
@@ -315,17 +322,22 @@ export default function Trends() {
               console.log('🎯 Визуальный эффект выделения убран');
             }, 3000);
           } else {
+            console.log('❌ Элемент источника не найден ни в refs, ни в DOM для ID:', sourceId);
+            console.log('🔍 Все элементы с data-source-id:', 
+              Array.from(document.querySelectorAll('[data-source-id]')).map(el => el.getAttribute('data-source-id'))
+            );
             console.log('⚠️ Элемент источника не виден в DOM, возможно отфильтрован');
             console.log('🔄 Сбрасываю фильтр источников для показа всех источников');
             
-            // Сбрасываем текущий фильтр источников, чтобы показать все источники
+            // Сбрасываем текущий фильтр источников
             setSelectedSourceId(null);
             
-            // Через небольшую задержку устанавливаем нужный источник
+            // Устанавливаем нужный источник через задержку
             setTimeout(() => {
+              console.log('🔄 Устанавливаю источник после сброса фильтра:', sourceId);
               setSelectedSourceId(sourceId);
               
-              // Еще через задержку пытаемся найти и скроллить к элементу
+              // Пытаемся найти элемент снова
               setTimeout(() => {
                 const newSourceElement = sourcesRefs.current[sourceId] || 
                                         document.querySelector(`[data-source-id="${sourceId}"]`);
@@ -358,8 +370,8 @@ export default function Trends() {
                 } else {
                   console.log('❌ Элемент все еще не найден после сброса фильтра');
                 }
-              }, 300);
-            }, 100);
+              }, 500); // Увеличил задержку для перерендера
+            }, 200);
           }
         }, 300);
       } else {
