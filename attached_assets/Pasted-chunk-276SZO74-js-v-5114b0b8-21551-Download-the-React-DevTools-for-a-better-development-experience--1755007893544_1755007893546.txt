@@ -1,0 +1,195 @@
+chunk-276SZO74.js?v=5114b0b8:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:1214 Fetching source posts with params: Object
+index.tsx:1220 Using exact API URL format that works
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1254 Source posts API response: Object
+index.tsx:1262 Returning posts array: Object
+TrendsCollection.tsx:37 🎯 TrendsCollection: Sending source IDs for trend collection: Array(23)
+TrendsCollection.tsx:38 🎯 TrendsCollection: Full request data: Object
+TrendsCollection.tsx:51 🚀 TrendsCollection: About to send request to /api/trends/collect
+TrendsCollection.tsx:52 🚀 TrendsCollection: Request payload: {
+  "campaignId": "cb3757df-c684-4809-9b13-49862c108db8",
+  "sourcesList": [
+    "02b378ce-e484-44e9-8666-670a07e7f3e1",
+    "1f2a326d-6208-4b18-82b3-59c277a581cc",
+    "38f397c4-81df-4167-9124-03f7151fc13f",
+    "3b2c98a6-a1ed-4ce0-8a3b-93ba67f571f6",
+    "44fb9f8e-c178-440f-b8c1-e531fbf33241",
+    "48140d53-7ea3-4a1e-af1e-cf113d05b7bb",
+    "56813b4b-8fd3-4360-a832-bddb84f468ab",
+    "5727cf26-966a-4d2c-b626-69a2ffa08e93",
+    "5ad3a20e-0d2c-4a6f-b830-39e0589a7d24",
+    "6cff2df8-cf11-4f3e-8dca-07ac370b76fb",
+    "7126e8bb-d0b2-4989-a084-0791e0db63d8",
+    "7d059536-1dcb-4eec-b1d8-112e4b666cd5",
+    "7f825f8f-1e0f-447a-a8bb-e70977fc8020",
+    "8f9615f4-bdc8-4cc5-abc1-4a9b7d1a85f4",
+    "9490d9ef-8189-43c5-9df5-557ed18e880a",
+    "a150d323-2632-4670-b3e6-088df6f9f3b0",
+    "be001569-049d-4181-a6e6-89ebbd7557c9",
+    "c37a1b45-d44d-4d61-808b-4fed93598e68",
+    "c54c1bea-919d-400e-85ec-1a879cfd7f77",
+    "d0d1f8a3-9c5d-4333-a225-34961ce2e67c",
+    "d4bb5b02-2dcc-43e6-aa67-004c73637a3b",
+    "df191d94-40b2-4272-8eee-e56079db9231",
+    "f59cd8f2-6365-4221-9c33-6722f43a909b"
+  ],
+  "platforms": [
+    "vk",
+    "telegram",
+    "instagram"
+  ],
+  "collectSources": false,
+  "collectComments": [
+    "vk",
+    "telegram"
+  ]
+}
+TrendsCollection.tsx:63 ✅ TrendsCollection: Response status: 200
+TrendsCollection.tsx:64 ✅ TrendsCollection: Response ok: true
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1214 Fetching source posts with params: Object
+index.tsx:1220 Using exact API URL format that works
+index.tsx:1254 Source posts API response: Object
+index.tsx:1262 Returning posts array: Object
+index.tsx:1148 Fetched trends data: Object
+TrendsCollection.tsx:37 🎯 TrendsCollection: Sending source IDs for trend collection: Array(35)
+TrendsCollection.tsx:38 🎯 TrendsCollection: Full request data: Object
+TrendsCollection.tsx:51 🚀 TrendsCollection: About to send request to /api/trends/collect
+TrendsCollection.tsx:52 🚀 TrendsCollection: Request payload: {
+  "campaignId": "45daab2a-4c6f-4578-8665-3a049458c0c8",
+  "sourcesList": [
+    "00e0d159-512c-4e7e-864c-9b68ef36f61e",
+    "040bf7da-2dd0-4594-bc05-188b2c3057e3",
+    "0991d30f-5ea4-453d-8454-cac957f1a8a4",
+    "0ad356d1-dcd1-4d87-9df4-d9413ee6c2db",
+    "0ad481ef-92d9-4512-b37a-50dce5534fe1",
+    "109cfe5e-0e1e-41bc-8694-65b891f8bfd4",
+    "13843974-04d1-4066-95c6-0ea802dcf97d",
+    "140f64b1-adc9-4d9e-a5dc-2f8dd614b767",
+    "1bd7ea5f-a138-4917-8a31-248e7a48b6e4",
+    "2cde501e-7e11-4e6d-a62f-a39829221727",
+    "2d582769-12a6-43ef-88fa-eed23afe996e",
+    "34e58194-5e6d-41fa-a05e-625634a2f062",
+    "3d0efaa1-4bd3-430c-abf8-419ad206ba75",
+    "405f47b0-9416-4be7-9c7c-e77c939bc102",
+    "42a3578b-de88-4c40-9a3d-372ba8a1d409",
+    "544ce9fe-c97e-4261-ad6d-2932e3b45cea",
+    "55794b34-e3ed-421b-894b-ac1e49df75f2",
+    "5f3b90af-8582-4895-98ca-ebdf86cc0788",
+    "9059e456-2484-439a-992e-9a84e3cf4291",
+    "936f0c6a-070d-4dbd-ac86-f035ff68d101",
+    "97344b79-5558-4944-a6bc-34a79845d352",
+    "9e9c45f7-9f40-4f9b-a54f-be00f55b80d3",
+    "a7b85112-2f85-4062-bf6f-86a65177cd5a",
+    "a8ebb548-250a-405e-8892-6ee9a5a90630",
+    "ae58b5b0-3f91-4cda-9db3-94fae7e47dc5",
+    "b10a8826-5a77-44d6-a2e3-54f2018ab738",
+    "b70dea78-0d57-4d54-9389-c6bf39d5d671",
+    "bc05a833-6481-4667-a061-e3378d060d46",
+    "bd41b179-6dc7-4624-8f3f-b33dc87d3bc6",
+    "ca9d888c-0b41-49db-a12e-7f76b541401a",
+    "d5a066f3-f694-4323-bf5e-24cb2be6de4b",
+    "dd12a18d-9be6-498c-8d5e-6a7428f17482",
+    "eea93853-dd86-4015-859b-633610e5d1fc",
+    "ef156e39-5949-495c-a90c-b033bf2a0dd1",
+    "fa573f32-12f0-4c31-952f-d0de0c6924f2"
+  ],
+  "platforms": [
+    "vk",
+    "telegram",
+    "instagram"
+  ],
+  "collectSources": false,
+  "collectComments": [
+    "vk",
+    "telegram"
+  ]
+}
+TrendsCollection.tsx:63 ✅ TrendsCollection: Response status: 200
+TrendsCollection.tsx:64 ✅ TrendsCollection: Response ok: true
+index.tsx:1148 Fetched trends data: Object
+TrendsCollection.tsx:37 🎯 TrendsCollection: Sending source IDs for trend collection: Array(35)
+TrendsCollection.tsx:38 🎯 TrendsCollection: Full request data: Object
+TrendsCollection.tsx:51 🚀 TrendsCollection: About to send request to /api/trends/collect
+TrendsCollection.tsx:52 🚀 TrendsCollection: Request payload: {
+  "campaignId": "45daab2a-4c6f-4578-8665-3a049458c0c8",
+  "sourcesList": [
+    "00e0d159-512c-4e7e-864c-9b68ef36f61e",
+    "040bf7da-2dd0-4594-bc05-188b2c3057e3",
+    "0991d30f-5ea4-453d-8454-cac957f1a8a4",
+    "0ad356d1-dcd1-4d87-9df4-d9413ee6c2db",
+    "0ad481ef-92d9-4512-b37a-50dce5534fe1",
+    "109cfe5e-0e1e-41bc-8694-65b891f8bfd4",
+    "13843974-04d1-4066-95c6-0ea802dcf97d",
+    "140f64b1-adc9-4d9e-a5dc-2f8dd614b767",
+    "1bd7ea5f-a138-4917-8a31-248e7a48b6e4",
+    "2cde501e-7e11-4e6d-a62f-a39829221727",
+    "2d582769-12a6-43ef-88fa-eed23afe996e",
+    "34e58194-5e6d-41fa-a05e-625634a2f062",
+    "3d0efaa1-4bd3-430c-abf8-419ad206ba75",
+    "405f47b0-9416-4be7-9c7c-e77c939bc102",
+    "42a3578b-de88-4c40-9a3d-372ba8a1d409",
+    "544ce9fe-c97e-4261-ad6d-2932e3b45cea",
+    "55794b34-e3ed-421b-894b-ac1e49df75f2",
+    "5f3b90af-8582-4895-98ca-ebdf86cc0788",
+    "9059e456-2484-439a-992e-9a84e3cf4291",
+    "936f0c6a-070d-4dbd-ac86-f035ff68d101",
+    "97344b79-5558-4944-a6bc-34a79845d352",
+    "9e9c45f7-9f40-4f9b-a54f-be00f55b80d3",
+    "a7b85112-2f85-4062-bf6f-86a65177cd5a",
+    "a8ebb548-250a-405e-8892-6ee9a5a90630",
+    "ae58b5b0-3f91-4cda-9db3-94fae7e47dc5",
+    "b10a8826-5a77-44d6-a2e3-54f2018ab738",
+    "b70dea78-0d57-4d54-9389-c6bf39d5d671",
+    "bc05a833-6481-4667-a061-e3378d060d46",
+    "bd41b179-6dc7-4624-8f3f-b33dc87d3bc6",
+    "ca9d888c-0b41-49db-a12e-7f76b541401a",
+    "d5a066f3-f694-4323-bf5e-24cb2be6de4b",
+    "dd12a18d-9be6-498c-8d5e-6a7428f17482",
+    "eea93853-dd86-4015-859b-633610e5d1fc",
+    "ef156e39-5949-495c-a90c-b033bf2a0dd1",
+    "fa573f32-12f0-4c31-952f-d0de0c6924f2"
+  ],
+  "platforms": [
+    "vk",
+    "telegram",
+    "instagram"
+  ],
+  "collectSources": false,
+  "collectComments": [
+    "vk",
+    "telegram"
+  ]
+}
+TrendsCollection.tsx:63 ✅ TrendsCollection: Response status: 200
+TrendsCollection.tsx:64 ✅ TrendsCollection: Response ok: true
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1148 Fetched trends data: Object
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+index.tsx:1148 Fetched trends data: Object
+index.tsx:1148 Fetched trends data: Object
+index.tsx:825 [BULK-COMMENTS] Отправляем массовый запрос для 135 трендов: Array(5)
+api/trends/collect-comments:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+index.tsx:847 [BULK-COMMENTS] Ошибка API: Object
+collectBulkComments @ index.tsx:847
+index.tsx:851 [BULK-COMMENTS] Ошибка запроса: Error: Request failed with status code 403
+    at collectBulkComments (index.tsx:848:17)
+collectBulkComments @ index.tsx:851
+index.tsx:864 Ошибка массового сбора комментариев: Error: Request failed with status code 403
+    at collectBulkComments (index.tsx:848:17)
+collectBulkComments @ index.tsx:864
+index.tsx:906 [SELECTED-COMMENTS] Отправляем запрос для 135 выбранных трендов: Array(5)
+api/trends/collect-comments:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+index.tsx:928 [SELECTED-COMMENTS] Ошибка API: Object
+collectSelectedTrendsComments @ index.tsx:928
+index.tsx:932 [SELECTED-COMMENTS] Ошибка запроса: Error: Request failed with status code 403
+    at collectSelectedTrendsComments (index.tsx:929:17)
+collectSelectedTrendsComments @ index.tsx:932
+index.tsx:945 Ошибка массового сбора комментариев для трендов: Error: Request failed with status code 403
+    at collectSelectedTrendsComments (index.tsx:929:17)
+collectSelectedTrendsComments @ index.tsx:945

@@ -6,9 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface TrendsCollectionProps {
   campaignId: string;
+  selectedSourcesForComments: Set<string>;
 }
 
-export function TrendsCollection({ campaignId }: TrendsCollectionProps) {
+export function TrendsCollection({ campaignId, selectedSourcesForComments }: TrendsCollectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showTips, setShowTips] = useState(false);
@@ -20,13 +21,43 @@ export function TrendsCollection({ campaignId }: TrendsCollectionProps) {
         throw new Error("Требуется авторизация");
       }
 
-      const response = await fetch(`/api/campaign-trend-topics/${campaignId}/collect`, {
+      // Приоритет для выбранных источников
+      const selectedSourcesList = Array.from(selectedSourcesForComments);
+      
+      let requestData;
+      if (selectedSourcesList.length > 0) {
+        // Если есть выбранные источники - отправляем их ID для поиска трендов
+        requestData = {
+          campaignId,
+          sourcesList: selectedSourcesList,
+          platforms: ['vk', 'telegram', 'instagram'],
+          collectSources: false,
+          collectComments: ['vk', 'telegram']
+        };
+
+      } else {
+        // Если нет выбранных источников - ищем новые источники
+        requestData = {
+          campaignId,
+          platforms: ['vk', 'telegram', 'instagram'],
+          collectSources: true,
+          collectComments: ['vk', 'telegram']
+        };
+
+      }
+
+
+      
+      const response = await fetch(`/api/trends/collect`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
-        }
+        },
+        body: JSON.stringify(requestData)
       });
+      
+
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -74,53 +105,7 @@ export function TrendsCollection({ campaignId }: TrendsCollectionProps) {
     }
   });
 
-  const collectCommentsMutation = useMutation({
-    mutationFn: async () => {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        throw new Error("Требуется авторизация");
-      }
 
-      const response = await fetch(`/api/trends/collect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          campaignId,
-          collectComments: ['vk', 'telegram'],  // Собираем комментарии для VK и Telegram
-          platforms: []  // Не собираем новые тренды, только комментарии
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Ошибка сбора комментариев');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Сбор комментариев начат",
-        description: "Комментарии к существующим трендам собираются. Обновление произойдет автоматически.",
-      });
-
-      // Автоматически обновляем данные через 30 секунд
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["campaign-trend-topics", campaignId] });
-        queryClient.invalidateQueries({ queryKey: ["trends"] });
-      }, 30000);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Ошибка сбора комментариев",
-        description: error.message || "Не удалось запустить сбор комментариев",
-        variant: "destructive",
-      });
-    }
-  });
 
   // Обновляем данные каждые 2 минуты если идет сбор
   useEffect(() => {
@@ -152,23 +137,7 @@ export function TrendsCollection({ campaignId }: TrendsCollectionProps) {
         )}
       </Button>
 
-      <Button
-        onClick={() => collectCommentsMutation.mutate()}
-        disabled={collectCommentsMutation.isPending}
-        variant="outline"
-      >
-        {collectCommentsMutation.isPending ? (
-          <>
-            <MessageCircle className="w-4 h-4 mr-2 animate-spin" />
-            Собираются...
-          </>
-        ) : (
-          <>
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Собрать комментарии
-          </>
-        )}
-      </Button>
+
     </div>
   );
 }

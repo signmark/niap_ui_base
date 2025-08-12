@@ -230,10 +230,11 @@ export default function Trends() {
   // Состояние для выбора источников для массового сбора комментариев
   const [selectedSourcesForComments, setSelectedSourcesForComments] = useState<Set<string>>(new Set());
   const [isCollectingBulkComments, setIsCollectingBulkComments] = useState(false);
+  const [isCollectingTrendComments, setIsCollectingTrendComments] = useState(false);
   
   // Состояние для выбора трендов для массового сбора комментариев
   const [selectedTrendsForComments, setSelectedTrendsForComments] = useState<Set<string>>(new Set());
-  const [isCollectingTrendComments, setIsCollectingTrendComments] = useState(false);
+
   
   // Состояния для сворачивания/разворачивания секций
   const [isDataSourcesExpanded, setIsDataSourcesExpanded] = useState(true); // По умолчанию развернута
@@ -319,14 +320,20 @@ export default function Trends() {
     try {
       setCollectingCommentsForTrend(trendId);
       
-      const response = await fetch(`${import.meta.env.VITE_N8N_URL}/webhook/collect-comments`, {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        throw new Error("Требуется авторизация");
+      }
+
+      const response = await fetch('/api/trends/collect-comments-single', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
-          trend_id: trendId,
-          url: trendUrl
+          trendId: trendId,
+          campaignId: selectedCampaignId
         })
       });
 
@@ -820,41 +827,41 @@ export default function Trends() {
         description: `Начинаем сбор комментариев для ${sourceTrends.length} трендов из ${selectedSourcesList.length} источников`
       });
 
-      // Собираем комментарии для каждого тренда
-      let successCount = 0;
-      let errorCount = 0;
+      // Собираем все ID трендов и отправляем одним запросом
+      const trendIds = sourceTrends.map(trend => trend.id);
 
-      for (const trend of sourceTrends) {
-        try {
-          const response = await fetch('/api/trends/collect-comments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({
-              trendId: trend.id,
-              campaignId: selectedCampaignId
-            })
-          });
+      
+      try {
+        const response = await fetch('/api/trends/collect-comments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            trendIds,
+            campaignId: selectedCampaignId
+          })
+        });
 
-          if (response.ok) {
-            successCount++;
-          } else {
-            errorCount++;
-          }
-        } catch (error) {
-          console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, error);
-          errorCount++;
+        const responseData = await response.json();
+        
+        if (response.ok) {
+          const successCount = responseData.data?.successCount || 0;
+          const errorCount = responseData.data?.errorCount || 0;
+
+        } else {
+
+          throw new Error(responseData.message || 'API error');
         }
+      } catch (error) {
 
-        // Небольшая пауза между запросами
-        await new Promise(resolve => setTimeout(resolve, 500));
+        throw error;
       }
 
       toast({
         title: "Сбор комментариев завершен",
-        description: `Успешно: ${successCount}, ошибок: ${errorCount}`
+        description: `Запущен сбор комментариев для ${trendIds.length} трендов из выбранных источников`
       });
 
       // Обновляем данные трендов
@@ -901,48 +908,43 @@ export default function Trends() {
         description: `Начинаем сбор комментариев для ${selectedTopics.length} выбранных трендов`
       });
 
-      let successCount = 0;
-      let errorCount = 0;
+      // Собираем все ID выбранных трендов и отправляем запрос с campaignId
+      const trendIds = selectedTopics.map(trend => trend.id);
 
-      for (const trend of selectedTopics) {
-        try {
-          const response = await fetch('/api/trends/collect-comments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({
-              trendId: trend.id,
-              campaignId: selectedCampaignId
-            })
-          });
-
-          if (response.ok) {
-            successCount++;
-          } else {
-            errorCount++;
-            console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, response.status);
-          }
-        } catch (error) {
-          console.error(`Ошибка сбора комментариев для тренда ${trend.id}:`, error);
-          errorCount++;
-        }
-
-        // Небольшая пауза между запросами
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      toast({
-        title: "Сбор комментариев завершен",
-        description: `Успешно: ${successCount}, ошибок: ${errorCount}`
+      
+      const response = await fetch('/api/trends/collect-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          trendIds,
+          campaignId: selectedCampaignId
+        })
       });
+
+      const responseData = await response.json();
+      
+      if (response.ok) {
+        const successCount = responseData.data?.successCount || 0;
+        const errorCount = responseData.data?.errorCount || 0;
+
+        
+        toast({
+          title: "Сбор комментариев завершен", 
+          description: `Запущен сбор комментариев для ${trendIds.length} выбранных трендов`
+        });
+      } else {
+
+        throw new Error(responseData.message || 'API error');
+      }
 
       // Обновляем данные трендов
       queryClient.invalidateQueries({ queryKey: ["trends"] });
       
     } catch (error) {
-      console.error('Ошибка массового сбора комментариев для трендов:', error);
+
       toast({
         variant: "destructive",
         title: "Ошибка",
@@ -951,7 +953,7 @@ export default function Trends() {
     } finally {
       setIsCollectingTrendComments(false);
     }
-  };
+  }
 
   // Функции для работы с выбором источников
   const toggleSourceSelection = (sourceId: string) => {
@@ -1288,6 +1290,14 @@ export default function Trends() {
         throw new Error("Выберите кампанию");
       }
 
+      // Для сбора трендов проверяем наличие источников
+      console.log('🔍 FRONTEND DEBUG: selectedSourcesForComments.size:', selectedSourcesForComments.size);
+      console.log('🔍 FRONTEND DEBUG: selectedSourcesForComments content:', Array.from(selectedSourcesForComments));
+      
+      if (!collectSources && selectedSourcesForComments.size === 0) {
+        throw new Error("Выберите источники для сбора трендов");
+      }
+
       if (!keywords?.length) {
         throw new Error("Добавьте ключевые слова в кампанию");
       }
@@ -1305,9 +1315,54 @@ export default function Trends() {
           : `Сбор трендов запущен. Результаты появятся по мере обновления.`
       });
       
-      // Gather all keywords from the campaign for the webhook
-      const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
-      console.log('Sending keywords to webhook with platforms:', keywordsList, platforms);
+      // Логика отправки данных:
+      // 1. Если выбраны источники - ищем тренды в этих источниках (отправляем ID источников)
+      // 2. Если источники не выбраны - ищем новые источники по ключевым словам
+      let dataToSend;
+      const selectedSourcesList = Array.from(selectedSourcesForComments);
+      
+      console.log('🔍 FRONTEND CRITICAL DEBUG:');
+      console.log('- selectedSourcesForComments (Set):', selectedSourcesForComments);
+      console.log('- selectedSourcesList (Array):', selectedSourcesList);
+      console.log('- selectedSourcesList length:', selectedSourcesList.length);
+      console.log('- collectSources flag:', collectSources);
+      
+      if (selectedSourcesList.length > 0) {
+        // Есть выбранные источники - ищем тренды в них
+        dataToSend = {
+          campaignId: selectedCampaignId,
+          sourcesList: selectedSourcesList, // Отправляем ID источников для поиска трендов
+          userID: authToken, // Используем токен как userID
+          platforms: platforms,
+          collectSources: false, // НЕ собираем новые источники
+          collectComments: collectComments
+        };
+        console.log('🎯 FRONTEND: Selected sources count:', selectedSourcesList.length);
+        console.log('🎯 FRONTEND: Selected sources IDs:', selectedSourcesList);
+        console.log('🎯 FRONTEND: Sending source IDs for trend collection in existing sources:', selectedSourcesList, platforms);
+      } else if (collectSources) {
+        // Нет выбранных источников и включен флаг collectSources - ищем новые источники
+        const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
+        dataToSend = {
+          campaignId: selectedCampaignId,
+          keywords: keywordsList,
+          platforms: platforms,
+          collectSources: true, // Собираем новые источники
+          collectComments: collectComments
+        };
+        console.log('Sending keywords for new source collection:', keywordsList, platforms);
+      } else {
+        // Fallback - используем старую логику
+        const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
+        dataToSend = {
+          campaignId: selectedCampaignId,
+          keywords: keywordsList,
+          platforms: platforms,
+          collectSources: false,
+          collectComments: collectComments
+        };
+        console.log('Fallback: sending keywords for trend collection:', keywordsList, platforms);
+      }
       
       // Send request to our API endpoint which will forward to n8n webhook
       const webhookResponse = await fetch('/api/trends/collect', {
@@ -1316,13 +1371,7 @@ export default function Trends() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ 
-          campaignId: selectedCampaignId,
-          keywords: keywordsList,
-          platforms: platforms,
-          collectSources: collectSources, // Добавляем флаг сбора источников
-          collectComments: collectComments // Добавляем массив платформ для сбора комментариев
-        })
+        body: JSON.stringify(dataToSend)
       });
       
       if (!webhookResponse.ok) {
@@ -1716,7 +1765,10 @@ export default function Trends() {
         </div>
         <div className="flex gap-2">
           {isValidCampaignSelected && (
-            <TrendsCollection campaignId={selectedCampaignId} />
+            <TrendsCollection 
+              campaignId={selectedCampaignId} 
+              selectedSourcesForComments={selectedSourcesForComments}
+            />
           )}
           <Button
             variant="outline"
@@ -1806,25 +1858,7 @@ export default function Trends() {
                           >
                             {selectedSourcesForComments.size === sources.length ? 'Снять выбор' : 'Выбрать все'}
                           </Button>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={collectBulkComments}
-                            disabled={selectedSourcesForComments.size === 0 || isCollectingBulkComments}
-                            className="h-7 px-2 text-xs"
-                          >
-                            {isCollectingBulkComments ? (
-                              <>
-                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                                Сбор комментариев...
-                              </>
-                            ) : (
-                              <>
-                                <MessageSquare className="mr-1 h-3 w-3" />
-                                Собрать комментарии ({selectedSourcesForComments.size})
-                              </>
-                            )}
-                          </Button>
+
                         </>
                       )}
                     </div>

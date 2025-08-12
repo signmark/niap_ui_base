@@ -1,0 +1,52 @@
+TrendsCollection.tsx:23  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/campaign-trend-topics/cb3757df-c684-4809-9b13-49862c108db8/collect 500 (Internal Server Error)
+mutationFn @ TrendsCollection.tsx:23
+fn @ @tanstack_react-query.js?v=5114b0b8:1189
+run @ @tanstack_react-query.js?v=5114b0b8:494
+start @ @tanstack_react-query.js?v=5114b0b8:536
+execute @ @tanstack_react-query.js?v=5114b0b8:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=5114b0b8:2630
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3295
+onClick @ TrendsCollection.tsx:139
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=5114b0b8:5449
+logger.ts:118 Системная ошибка: Неизвестная ошибка. Свяжитесь с поддержкой. Error: Failed to start trend collection
+    at Object.mutationFn (TrendsCollection.tsx:33:15)
+systemError @ logger.ts:118
+systemError @ logger.ts:151
+handleError @ error-handler.ts:125
+globalErrorHandler @ queryClient.ts:144
+execute @ @tanstack_react-query.js?v=5114b0b8:1247
+await in execute
+mutate @ @tanstack_react-query.js?v=5114b0b8:2630
+(anonymous) @ @tanstack_react-query.js?v=5114b0b8:3295
+onClick @ TrendsCollection.tsx:139
+callCallback2 @ chunk-276SZO74.js?v=5114b0b8:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=5114b0b8:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=5114b0b8:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=5114b0b8:3736
+executeDispatch @ chunk-276SZO74.js?v=5114b0b8:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=5114b0b8:7034
+processDispatchQueue @ chunk-276SZO74.js?v=5114b0b8:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=5114b0b8:7051
+(anonymous) @ chunk-276SZO74.js?v=5114b0b8:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=5114b0b8:18913
+batchedUpdates @ chunk-276SZO74.js?v=5114b0b8:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=5114b0b8:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=5114b0b8:5478
+dispatchEvent @ chunk-276SZO74.js?v=5114b0b8:5472
+dispatchDiscreteEvent @ chunk-276SZO74.js?v=5114b0b8:5449
+queryClient.ts:148 Ошибка: Произошла неожиданная ошибка. Обратитесь к технической поддержке

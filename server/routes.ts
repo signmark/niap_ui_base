@@ -6098,6 +6098,13 @@ Return your response as a JSON array in this exact format:
         const collectionDays = trendAnalysisSettings?.collectionDays || 7;
         const selectedPlatforms = platforms || ["instagram", "telegram", "vk"];
         
+        // Проверяем N8N URL сразу в начале
+        const n8nUrl = process.env.N8N_URL;
+        if (!n8nUrl) {
+          console.log('N8N_URL не настроен в переменных окружения');
+          return res.status(500).json({ success: false, error: 'N8N_URL не настроен' });
+        }
+        
         // Debug-логирование для проверки передачи параметров
         console.log('Request body from client:', {
           campaignId: req.body.campaignId,
@@ -6105,50 +6112,138 @@ Return your response as a JSON array in this exact format:
           collectSources: req.body.collectSources,
           collectCommentsCount: req.body.collectComments?.length,
           collectCommentsPlatforms: req.body.collectComments,
+          sourcesListCount: req.body.sourcesList?.length,
+          sourcesList: req.body.sourcesList,
+          userID: req.body.userID,
           collectionDays: collectionDays
         });
         
-        const n8nUrl = process.env.N8N_URL;
-        if (!n8nUrl) {
-          console.log('N8N_URL не настроен в переменных окружения');
-          return res.status(500).json({ success: false, error: 'N8N_URL не настроен' });
+        // ПРИОРИТЕТ: Если есть sourcesList от фронтенда - используем его (ID источников)
+        if (req.body.sourcesList && Array.isArray(req.body.sourcesList) && req.body.sourcesList.length > 0) {
+          console.log('🎯 PRIORITY: Using sourcesList from frontend (source IDs):', req.body.sourcesList);
+          
+          const payload = {
+            sourcesList: req.body.sourcesList, // ID источников для поиска трендов
+            userID: userId, // ID пользователя (не токен!)
+            maxTrendsPerSource: maxTrendsPerSource,
+            minViews: trendAnalysisSettings?.minViews || 500,
+            day_past: collectionDays
+          };
+          console.log('✅ Using trend collection from sources format for main-scraper (source IDs):', payload);
+          
+          // Отправляем запрос и выходим из функции
+          const webhookEndpoint = `${n8nUrl}/webhook/main-scraper`;
+          console.log(`🚀 Sending to webhook: ${webhookEndpoint}`);
+          
+          try {
+            webhookResponse = await axios.post(webhookEndpoint, payload, {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-N8N-Authorization': process.env.N8N_API_KEY || '',
+              },
+              timeout: 30000
+            });
+            
+            console.log('✅ Webhook response status:', webhookResponse.status);
+            console.log('✅ Webhook response preview:', JSON.stringify(webhookResponse.data).substring(0, 200));
+            
+            return res.json({
+              success: true,
+              message: "Trend collection from selected sources started successfully",
+              webhookStatus: webhookResponse.status,
+              requestId: requestId,
+              sourcesCount: req.body.sourcesList.length
+            });
+            
+          } catch (webhookError: any) {
+            console.error('❌ N8N Webhook error details:', {
+              status: webhookError.response?.status,
+              statusText: webhookError.response?.statusText,
+              data: webhookError.response?.data?.substring ? webhookError.response.data.substring(0, 500) : webhookError.response?.data,
+              url: webhookEndpoint,
+              payload: payload
+            });
+            
+            return res.status(500).json({ 
+              success: false, 
+              error: `N8N webhook error: ${webhookError.message}`,
+              details: webhookError.response?.statusText
+            });
+          }
         }
         
-        const payload = {
-          minFollowers: followerRequirements,
-          maxSourcesPerPlatform: maxSourcesPerPlatform,
-          platforms: selectedPlatforms,
-          collectSources: collectSources ? 1 : 0, // Отправляем как числовое значение для совместимости
-          collectComments: collectComments, // Добавляем массив платформ для сбора комментариев
-          keywords: keywordsList,
-          maxTrendsPerSource: maxTrendsPerSource,
-          day_past: collectionDays, // Количество дней для сбора постов
-          language: "ru",
-          filters: {
-            minReactions: 10,
-            minViews: 500,
-            contentTypes: ["text", "image", "video"]
-          },
-          campaignId: campaignId,
-          userId: userId,
-          requestId: requestId,
-        };
+        let payload;
         
-        console.log('N8N PAYLOAD INCLUDING day_past:', JSON.stringify(payload, null, 2));
+        // FALLBACK: Если sourcesList не был обработан выше, используем старую логику
+        console.log('🔄 Using fallback logic - no sourcesList from frontend');
+        
+        // Если собираем источники - используем новый формат для main-scraper
+        if (collectSources) {
+          payload = {
+            sourcesList: keywordsList, // Используем ключевые слова как список для поиска источников
+            userID: userId
+          };
+          console.log('📝 Using sources collection format for main-scraper (keywords):', payload);
+        } else {
+          // Для сбора трендов - используем старый формат
+          payload = {
+            minFollowers: followerRequirements,
+            maxSourcesPerPlatform: maxSourcesPerPlatform,
+            platforms: selectedPlatforms,
+            collectSources: 0,
+            collectComments: collectComments,
+            keywords: keywordsList,
+            maxTrendsPerSource: maxTrendsPerSource,
+            day_past: collectionDays,
+            language: "ru",
+            filters: {
+              minReactions: 10,
+              minViews: 500,
+              contentTypes: ["text", "image", "video"]
+            },
+            campaignId: campaignId,
+            userId: userId,
+            requestId: requestId,
+          };
+          console.log('Using trends collection format for main-scraper:', JSON.stringify(payload, null, 2));
+        }
         
         // Используем один webhook для всех операций, различие только в параметре collectSources
         const webhookEndpoint = `${n8nUrl}/webhook/main-scraper`;
         
         console.log(`Using webhook endpoint: ${webhookEndpoint} (collectSources: ${collectSources ? 1 : 0})`);
         
-        webhookResponse = await axios.post(webhookEndpoint, payload, {
-          headers: {
-            'Content-Type': 'application/json',
-            // Используем только API ключ для авторизации в N8N
-            'X-N8N-Authorization': process.env.N8N_API_KEY || '',
-          },
-          timeout: 30000 // 30 секунд таймаут
-        });
+        try {
+          webhookResponse = await axios.post(webhookEndpoint, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              // Используем только API ключ для авторизации в N8N
+              'X-N8N-Authorization': process.env.N8N_API_KEY || '',
+            },
+            timeout: 30000 // 30 секунд таймаут
+          });
+        } catch (webhookError: any) {
+          console.error('N8N Webhook error details:', {
+            status: webhookError.response?.status,
+            statusText: webhookError.response?.statusText,
+            data: webhookError.response?.data?.substring ? webhookError.response.data.substring(0, 500) : webhookError.response?.data,
+            url: webhookEndpoint,
+            payload: payload
+          });
+          
+          if (webhookError.response?.status === 404) {
+            return res.status(500).json({ 
+              success: false, 
+              error: `N8N webhook не найден: ${webhookEndpoint}. Проверьте настройки N8N.`
+            });
+          }
+          
+          return res.status(500).json({ 
+            success: false, 
+            error: `Ошибка N8N webhook: ${webhookError.message}`,
+            details: webhookError.response?.statusText
+          });
+        }
         
         console.log('Webhook response status:', webhookResponse.status);
         if (webhookResponse.data) {
@@ -6314,6 +6409,336 @@ Return your response as a JSON array in this exact format:
       console.error("Error collecting trends:", error);
       res.status(500).json({ 
         error: "Failed to collect trends", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Endpoint for collecting comments for a single trend
+  app.post("/api/trends/collect-comments-single", async (req, res) => {
+    try {
+      console.log('[COLLECT-COMMENTS-SINGLE] Получен запрос на сбор комментариев для одного тренда');
+      
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Unauthorized: Missing or invalid authorization header" });
+      }
+      const token = authHeader.replace('Bearer ', '');
+
+      let userId: string;
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+          throw new Error('Invalid token format');
+        }
+        
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        userId = payload.id;
+        if (!userId) {
+          return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
+        }
+        console.log(`[COLLECT-COMMENTS-SINGLE] ✅ Пользователь авторизован: ${userId}`);
+      } catch (userError) {
+        console.error("[COLLECT-COMMENTS-SINGLE] ❌ Ошибка получения пользователя из токена:", userError);
+        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+      }
+
+      const { trendId, campaignId } = req.body;
+      
+      if (!trendId) {
+        return res.status(400).json({ message: "trendId is required" });
+      }
+
+      if (!campaignId) {
+        return res.status(400).json({ message: "campaignId is required" });
+      }
+      
+      console.log(`[COLLECT-COMMENTS-SINGLE] 🎯 Сбор комментариев для тренда ${trendId} в кампании ${campaignId}`);
+      
+      // Получаем информацию о тренде
+      const trendResponse = await directusApi.get(`/items/campaign_trend_topics/${trendId}`, {
+        params: {
+          fields: ['id', 'title', 'url', 'urlPost', 'accountUrl', 'comments', 'sourceId']
+        },
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const trend = trendResponse.data?.data;
+      if (!trend) {
+        return res.status(404).json({ message: "Trend not found" });
+      }
+
+      const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+      const commentsCount = trend.comments || 0;
+      
+      console.log(`[COLLECT-COMMENTS-SINGLE] 📝 Тренд: ${trend.title?.substring(0, 50)}...`);
+      console.log(`[COLLECT-COMMENTS-SINGLE] 📊 Комментариев: ${commentsCount}, URL: ${trendUrl}`);
+      
+      if (!trendUrl || commentsCount === 0) {
+        return res.status(400).json({ 
+          message: "Trend has no URL or comments to collect",
+          data: { trendId, hasUrl: !!trendUrl, commentsCount }
+        });
+      }
+
+      // Получаем N8N URL
+      const n8nUrl = process.env.N8N_URL;
+      if (!n8nUrl) {
+        console.error(`[COLLECT-COMMENTS-SINGLE] ❌ N8N_URL не задан в переменных окружения!`);
+        return res.status(500).json({ error: 'N8N_URL not configured' });
+      }
+      
+      console.log(`[COLLECT-COMMENTS-SINGLE] 🔍 Используем N8N URL: ${n8nUrl}`);
+
+      // Отправляем запрос на N8N webhook для сбора комментариев
+      const webhookPayload = {
+        trendId: trend.id,
+        trendUrl: trendUrl,
+        trendTitle: trend.title,
+        userID: userId,
+        campaignId: campaignId,
+        sourceId: trend.sourceId,
+        expectedComments: commentsCount
+      };
+
+      console.log(`[COLLECT-COMMENTS-SINGLE] 🚀 Отправляем запрос на webhook для тренда ${trendId}`);
+      
+      try {
+        const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/collect-comments-single`;
+        const webhookResponse = await axios.post(webhookUrl, webhookPayload, {
+          timeout: 10000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log(`[COLLECT-COMMENTS-SINGLE] ✅ Webhook ответил со статусом: ${webhookResponse.status}`);
+        
+        res.json({
+          success: true,
+          message: "Comment collection started for trend",
+          data: {
+            trendId,
+            campaignId,
+            trendTitle: trend.title,
+            webhookStatus: webhookResponse.status === 200 ? 'success' : 'error'
+          }
+        });
+        
+      } catch (webhookError) {
+        console.error('[COLLECT-COMMENTS-SINGLE] Ошибка webhook:', webhookError instanceof Error ? webhookError.message : String(webhookError));
+        
+        res.status(500).json({
+          success: false,
+          error: "Failed to start comment collection",
+          message: webhookError instanceof Error ? webhookError.message : "Unknown webhook error"
+        });
+      }
+      
+    } catch (error) {
+      console.error("[COLLECT-COMMENTS-SINGLE] Общая ошибка:", error);
+      res.status(500).json({ 
+        error: "Failed to collect comments for trend", 
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Endpoint for collecting comments for multiple trends (sequential processing)
+  app.post("/api/trends/collect-comments", async (req, res) => {
+    try {
+      console.log('[COLLECT-COMMENTS] Получен запрос на сбор комментариев для трендов');
+      
+      // Получаем токен аутентификации из заголовков
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('[COLLECT-COMMENTS] ❌ Отсутствует токен авторизации');
+        return res.status(401).json({ message: "Unauthorized: Missing or invalid authorization header" });
+      }
+      const token = authHeader.replace('Bearer ', '');
+
+      // Получаем user_id из токена
+      let userId: string;
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+          throw new Error('Invalid token format');
+        }
+        
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        userId = payload.id;
+        if (!userId) {
+          return res.status(401).json({ message: "Unauthorized: Cannot identify user" });
+        }
+        console.log(`[COLLECT-COMMENTS] ✅ Пользователь авторизован: ${userId} (${payload.email || 'unknown@email.com'})`);
+      } catch (userError) {
+        console.error("[COLLECT-COMMENTS] ❌ Ошибка получения пользователя из токена:", userError);
+        return res.status(401).json({ message: "Unauthorized: Invalid token" });
+      }
+
+      const { trendIds, campaignId } = req.body;
+      
+      if (!trendIds || !Array.isArray(trendIds) || trendIds.length === 0) {
+        console.log('[COLLECT-COMMENTS] ❌ Не переданы trendIds');
+        return res.status(400).json({ message: "trendIds array is required" });
+      }
+
+      if (!campaignId) {
+        console.log('[COLLECT-COMMENTS] ❌ Не передан campaignId');
+        return res.status(400).json({ message: "campaignId is required" });
+      }
+      
+      console.log(`[COLLECT-COMMENTS] 🎯 Получен запрос на сбор комментариев для ${trendIds.length} трендов кампании ${campaignId}`);
+      console.log(`[COLLECT-COMMENTS] 📋 Список трендов:`, trendIds.slice(0, 5)); // Показываем первые 5
+      
+      // Получаем все тренды кампании через существующий endpoint
+      console.log(`[COLLECT-COMMENTS] 🔄 Загружаем тренды через campaign-trends endpoint`);
+      
+      const campaignTrendsResponse = await axios.get(`http://localhost:5000/api/campaign-trends?campaignId=${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        timeout: 30000
+      });
+      
+      const allTrends = campaignTrendsResponse.data?.data || [];
+      console.log(`[COLLECT-COMMENTS] 📊 Получено ${allTrends.length} трендов из campaign-trends endpoint`);
+      
+      // Фильтруем только выбранные тренды
+      const trends = allTrends.filter(trend => trendIds.includes(trend.id));
+      console.log(`[COLLECT-COMMENTS] 🎯 Отфильтровано ${trends.length} выбранных трендов из ${allTrends.length}`);
+      
+      if (trends.length === 0) {
+        console.log('[COLLECT-COMMENTS] ❌ Не найдены тренды в базе данных');
+        return res.status(404).json({ message: "No trends found for the provided IDs" });
+      }
+
+      // Получаем N8N URL из переменных окружения
+      const n8nUrl = process.env.N8N_URL;
+      if (!n8nUrl) {
+        console.error(`[COLLECT-COMMENTS] ❌ N8N_URL не задан в переменных окружения!`);
+        return res.status(500).json({ error: 'N8N_URL not configured' });
+      }
+      
+      console.log(`[COLLECT-COMMENTS] 🔍 Используем N8N URL: ${n8nUrl}`);
+
+      // Подготавливаем тренды для сбора комментариев
+      const trendsForCollection = [];
+      let processedCount = 0;
+
+      for (const trend of trends) {
+        const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+        const commentsCount = trend.comments || 0;
+        
+        console.log(`[COLLECT-COMMENTS] 📝 Обрабатываем тренд ${trend.id}: ${trend.title?.substring(0, 50)}...`);
+        console.log(`[COLLECT-COMMENTS] 📊 Комментариев в базе: ${commentsCount}, URL: ${trendUrl}`);
+        
+        if (trendUrl && commentsCount > 0) {
+          trendsForCollection.push({
+            id: trend.id,
+            url: trendUrl,
+            title: trend.title,
+            comments: commentsCount
+          });
+          processedCount++;
+          console.log(`[COLLECT-COMMENTS] ✅ Тренд ${trend.id} добавлен для сбора комментариев`);
+        } else {
+          console.log(`[COLLECT-COMMENTS] ⚠️ Тренд ${trend.id} пропущен: ${!trendUrl ? 'нет URL' : 'нет комментариев'}`);
+        }
+      }
+
+      console.log(`[COLLECT-COMMENTS] 📋 Итого: ${processedCount} трендов готовы для сбора комментариев`);
+
+      if (trendsForCollection.length === 0) {
+        console.log('[COLLECT-COMMENTS] ❌ Нет трендов подходящих для сбора комментариев');
+        return res.status(400).json({ 
+          message: "No trends suitable for comment collection (missing URLs or no comments)" 
+        });
+      }
+
+      // Асинхронная последовательная обработка каждого тренда
+      let successCount = 0;
+      let errorCount = 0;
+      const results = [];
+      
+      console.log(`[COLLECT-COMMENTS] 🚀 Начинаем асинхронную обработку ${trendsForCollection.length} трендов`);
+      
+      // Возвращаем немедленный ответ клиенту
+      res.json({
+        success: true,
+        message: `Comment collection started for ${trendsForCollection.length} trends`,
+        data: {
+          campaignId,
+          trendsProcessed: trendsForCollection.length,
+          status: 'processing'
+        }
+      });
+      
+      // Асинхронная обработка трендов в фоне - отправляем каждый ID по отдельности
+      (async () => {
+        for (const trend of trendsForCollection) {
+          try {
+            const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/collect-comments`;
+            
+            // Отправляем объект с trend_id и url как указал пользователь
+            const webhookPayload = {
+              trend_id: trend.id,
+              url: trend.url
+            };
+            
+            console.log(`[COLLECT-COMMENTS] 🔄 Отправляем ID тренда: ${trend.id}`);
+            console.log(`[COLLECT-COMMENTS] 📊 Тренд: ${trend.title?.substring(0, 50)}... (${trend.comments} комментариев)`);
+            console.log(`[COLLECT-COMMENTS] 🔗 URL: ${webhookUrl}`);
+            
+            console.log(`[COLLECT-COMMENTS] 📤 HTTP POST ${webhookUrl} с payload:`, webhookPayload);
+            
+            const webhookResponse = await axios.post(webhookUrl, webhookPayload, {
+              timeout: 60000, // Увеличили timeout для сбора комментариев
+              headers: { 
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log(`[COLLECT-COMMENTS] 📥 HTTP Response: ${webhookResponse.status} ${webhookResponse.statusText}`);
+            console.log(`[COLLECT-COMMENTS] ✅ Тренд ${trend.id} отправлен успешно (статус: ${webhookResponse.status})`);
+            successCount++;
+            results.push({ 
+              trendId: trend.id, 
+              status: webhookResponse.status, 
+              success: true, 
+              title: trend.title?.substring(0, 50),
+              comments: trend.comments 
+            });
+            
+            // Пауза между запросами для предотвращения перегрузки N8N
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+          } catch (error) {
+            console.error(`[COLLECT-COMMENTS] ❌ Ошибка отправки тренда ${trend.id}:`, error instanceof Error ? error.message : String(error));
+            errorCount++;
+            results.push({ 
+              trendId: trend.id, 
+              status: 0, 
+              success: false, 
+              error: error instanceof Error ? error.message : String(error),
+              title: trend.title?.substring(0, 50)
+            });
+          }
+        }
+        
+        console.log(`[COLLECT-COMMENTS] 🏁 Асинхронная обработка завершена: ${successCount} успешно, ${errorCount} ошибок`);
+        console.log(`[COLLECT-COMMENTS] 📊 Детальные результаты:`, results);
+      })().catch(error => {
+        console.error('[COLLECT-COMMENTS] ❌ Критическая ошибка асинхронной обработки:', error);
+      });
+
+
+    } catch (error) {
+      console.error("[COLLECT-COMMENTS] ❌ Ошибка сбора комментариев:", error);
+      res.status(500).json({ 
+        error: "Failed to collect comments", 
         message: error instanceof Error ? error.message : "Unknown error"
       });
     }
