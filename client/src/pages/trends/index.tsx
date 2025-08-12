@@ -2557,6 +2557,16 @@ export default function Trends() {
                               topic.source_id === selectedSourceId || 
                               topic.sourceId === selectedSourceId;
                             
+                            // Детальное логирование фильтрации источников (только для отладки)
+                            if (selectedSourceId && topic.title.includes('Владивосток')) {
+                              console.log('🔍 Проверка фильтрации для тренда "Владивосток":', {
+                                trendTitle: topic.title,
+                                trendSourceId: topic.source_id || topic.sourceId,
+                                selectedSourceId: selectedSourceId,
+                                sourceMatches: sourceMatches
+                              });
+                            }
+                            
                             // Фильтр по тональности
                             let sentimentMatches = false;
                             if (selectedSentiment === 'all') {
