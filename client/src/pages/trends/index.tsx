@@ -2509,15 +2509,7 @@ export default function Trends() {
                               topic.source_id === selectedSourceId || 
                               topic.sourceId === selectedSourceId;
                             
-                            // Детальное логирование фильтрации источников (только для отладки)
-                            if (selectedSourceId && topic.title.includes('Владивосток')) {
-                              console.log('🔍 Проверка фильтрации для тренда "Владивосток":');
-                              console.log('  - Заголовок тренда:', topic.title);
-                              console.log('  - ID источника тренда:', topic.source_id || topic.sourceId);
-                              console.log('  - Выбранный ID источника:', selectedSourceId);
-                              console.log('  - Источник соответствует?:', sourceMatches);
-                              console.log('  - Полные данные тренда:', topic);
-                            }
+                            // Логирование убрано - проблема найдена
                             
                             // Фильтр по тональности
                             let sentimentMatches = false;
