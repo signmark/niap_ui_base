@@ -305,11 +305,26 @@ export default function Trends() {
               inline: 'nearest'
             });
             
-            // Добавляем визуальный эффект выделения
-            (targetElement as HTMLElement).style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+            // Добавляем сильный визуальный эффект выделения
+            const element = targetElement as HTMLElement;
+            element.style.cssText += `
+              box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
+              border: 2px solid #3b82f6 !important;
+              background-color: rgba(59, 130, 246, 0.1) !important;
+              transform: scale(1.02) !important;
+              transition: all 0.3s ease !important;
+            `;
+            
+            console.log('🎯 Применен визуальный эффект выделения к источнику');
+            
             setTimeout(() => {
-              (targetElement as HTMLElement).style.boxShadow = '';
-            }, 2000);
+              element.style.cssText = element.style.cssText.replace(/box-shadow[^;]*;?/g, '')
+                                                           .replace(/border[^;]*;?/g, '')
+                                                           .replace(/background-color[^;]*;?/g, '')
+                                                           .replace(/transform[^;]*;?/g, '')
+                                                           .replace(/transition[^;]*;?/g, '');
+              console.log('🎯 Визуальный эффект выделения убран');
+            }, 3000);
           } else {
             console.log('❌ Элемент источника не найден ни в refs, ни в DOM для ID:', sourceId);
             console.log('🔍 Все элементы с data-source-id:', 
