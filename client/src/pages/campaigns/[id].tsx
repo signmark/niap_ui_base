@@ -212,6 +212,9 @@ export default function CampaignDetails() {
 
         
         const response = await directusApi.get(`/items/user_campaigns/${id}`, {
+          params: {
+            fields: '*,trend_analysis_settings,social_media_settings'
+          },
           headers: {
             'Authorization': `Bearer ${token}` 
           }
@@ -704,15 +707,16 @@ export default function CampaignDetails() {
       },
       trendAnalysis: {
         completed: Boolean(
-          campaign?.social_media_settings && 
-          typeof campaign.social_media_settings === 'object' &&
-          Object.keys(campaign.social_media_settings).length > 0 &&
-          Object.values(campaign.social_media_settings).some((setting: any) => 
-            setting && typeof setting === 'object' && 
-            (setting.enabled === true || setting.configured === true || setting.access_token || setting.token)
-          )
+          campaign?.trend_analysis_settings && 
+          typeof campaign.trend_analysis_settings === 'object' &&
+          Object.keys(campaign.trend_analysis_settings).length > 0 &&
+          campaign.trend_analysis_settings.minFollowers &&
+          typeof campaign.trend_analysis_settings.minFollowers === 'object' &&
+          campaign.trend_analysis_settings.maxSourcesPerPlatform &&
+          campaign.trend_analysis_settings.maxTrendsPerSource &&
+          campaign.trend_analysis_settings.collectionDays
         ),
-        label: campaign?.social_media_settings && Object.keys(campaign.social_media_settings).length > 0 ? "Соцсети настроены" : "Соцсети не настроены"
+        label: campaign?.trend_analysis_settings && Object.keys(campaign.trend_analysis_settings).length > 0 ? "Советы настроены" : "Советы не настроены"
       },
       content: {
         completed: Boolean(allCampaignContent && Array.isArray(allCampaignContent) && allCampaignContent.length > 0),
@@ -941,14 +945,14 @@ export default function CampaignDetails() {
         <AccordionItem value="trend-analysis" campaignId={id} className="accordion-item px-6">
           <AccordionTrigger value="trend-analysis" campaignId={id} className="py-4 hover:no-underline hover:bg-accent hover:text-accent-foreground">
             <div className="flex items-center gap-3">
-              {campaign?.social_media_settings ? (
+              {getSectionCompletionStatus().trendAnalysis.completed ? (
                 <CheckCircle className="h-5 w-5 text-green-500" />
               ) : (
                 <Circle className="h-5 w-5 text-gray-400" />
               )}
               <span>Настройки анализа трендов</span>
               <span className="text-sm text-muted-foreground ml-auto">
-                {campaign?.social_media_settings ? "Соцсети настроены" : "Соцсети не настроены"}
+                {getSectionCompletionStatus().trendAnalysis.label}
               </span>
             </div>
           </AccordionTrigger>
