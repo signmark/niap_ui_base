@@ -9405,7 +9405,7 @@ ${commentTexts}`;
         const response = await directusApi.get('/items/post_comment', {
           params: {
             'filter[trent_post_id][_eq]': trendId,
-            'limit': 100,
+            'limit': 1000,
             'fields': ['id', 'text', 'platform', 'author', 'date']
           },
           headers: {
