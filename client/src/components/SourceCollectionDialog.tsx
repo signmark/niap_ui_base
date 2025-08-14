@@ -96,20 +96,10 @@ export function SourceCollectionDialog({ isOpen, onClose, campaignId }: SourceCo
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Выберите социальные сети для сбора трендов</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Выберите социальные сети для сбора трендов</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
