@@ -268,6 +268,14 @@ export default function Trends() {
     console.log('  - Используемый sourceId:', sourceId);
     console.log('  - Все доступные источники:', sources.map(s => ({id: s.id, name: s.name})));
     
+    // Проверяем есть ли ГУФ в refs до поиска элемента
+    if (sourceId) {
+      const gufInRefs = Object.keys(sourcesRefs.current).includes(sourceId);
+      console.log('🔍 ГУФ ID найден в sourcesRefs:', gufInRefs);
+      console.log('🔍 Количество refs:', Object.keys(sourcesRefs.current).length);
+      console.log('🔍 Первые 10 refs:', Object.keys(sourcesRefs.current).slice(0, 10));
+    }
+    
     if (sourceId) {
       // Устанавливаем выбранный источник для синхронизации
       setSelectedSourceId(sourceId);
@@ -1929,7 +1937,19 @@ export default function Trends() {
                     {sources
                       // Фильтрация дубликатов по URL - показываем только первый источник с уникальным URL
                       .filter((source, index, array) => {
-                        return array.findIndex(s => s.url === source.url) === index;
+                        const isUnique = array.findIndex(s => s.url === source.url) === index;
+                        // Логируем ГУФ специально
+                        if (source.name === 'ГУФ (GUF)' || source.id === '0991d30f-5ea4-453d-8454-cac957f1a8a4') {
+                          console.log('🔍 ГУФ в фильтрации:', {
+                            id: source.id,
+                            name: source.name,
+                            url: source.url,
+                            index: index,
+                            isUnique: isUnique,
+                            duplicateIndex: array.findIndex(s => s.url === source.url)
+                          });
+                        }
+                        return isUnique;
                       })
                       .sort((a, b) => {
                         // Сортировка по типу источника в алфавитном порядке
