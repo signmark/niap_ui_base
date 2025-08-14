@@ -255,27 +255,9 @@ export default function Trends() {
   const syncTrendWithSource = (trendTopic: TrendTopic) => {
     const sourceId = trendTopic.source_id || trendTopic.sourceId;
     
-    console.log('🔗 Синхронизация тренда с источником:', {
-      trendTitle: trendTopic.title,
-      sourceId: sourceId,
-      currentSelectedSourceId: selectedSourceId,
-      sortField: sortField,
-      sortDirection: sortDirection
-    });
-    
-    // Дополнительное логирование для отладки ID источников
-    console.log('🔍 Поиск источника в списке sources:');
-    console.log('  - ID тренда source_id:', trendTopic.source_id);
-    console.log('  - ID тренда sourceId:', trendTopic.sourceId); 
-    console.log('  - Используемый sourceId:', sourceId);
-    console.log('  - Все доступные источники:', sources.map(s => ({id: s.id, name: s.name})));
-    
-    // Проверяем есть ли ГУФ в refs до поиска элемента
-    if (sourceId) {
-      const gufInRefs = Object.keys(sourcesRefs.current).includes(sourceId);
-      console.log('🔍 ГУФ ID найден в sourcesRefs:', gufInRefs);
-      console.log('🔍 Количество refs:', Object.keys(sourcesRefs.current).length);
-      console.log('🔍 Первые 10 refs:', Object.keys(sourcesRefs.current).slice(0, 10));
+    // Минимальное логирование
+    if (sourceId && !sources.find(s => s.id === sourceId)) {
+      console.log('⚠️ Источник не найден:', sourceId);
     }
     
     if (sourceId) {
@@ -292,14 +274,7 @@ export default function Trends() {
         const uniqueSource = uniqueSources.find(s => s.url === trendSource.url);
         
         if (uniqueSource) {
-          console.log('🔄 Синхронизация с уникальным источником:', {
-            trendSourceId: sourceId,
-            trendSourceName: trendSource.name,
-            uniqueSourceId: uniqueSource.id,
-            uniqueSourceName: uniqueSource.name,
-            url: trendSource.url,
-            isOriginalUnique: sourceId === uniqueSource.id
-          });
+
           
           // Используем ID уникального источника
           setSelectedSourceId(uniqueSource.id);
@@ -311,7 +286,6 @@ export default function Trends() {
             return newSet;
           });
         } else {
-          console.log('⚠️ Уникальный источник не найден для:', trendSource);
           // Fallback к оригинальной логике
           setSelectedSourceId(sourceId);
           setSelectedSourcesForComments(prev => {
@@ -320,8 +294,6 @@ export default function Trends() {
             return newSet;
           });
         }
-      } else {
-        console.log('⚠️ Источник тренда не найден:', sourceId);
       }
       
       // Разворачиваем секцию источников если она свернута
@@ -338,22 +310,13 @@ export default function Trends() {
       const sourceExists = sources.find(s => s.id === sourceId);
       
       if (sourceExists) {
-        console.log('✅ Источник найден в списке:', sourceExists.name);
-        
         // Пытаемся найти элемент источника
         setTimeout(() => {
-          console.log('🔍 Поиск элемента источника для ID:', sourceId);
-          console.log('📝 Доступные refs:', Object.keys(sourcesRefs.current));
-          
           const sourceElement = sourcesRefs.current[sourceId];
           const fallbackElement = document.querySelector(`[data-source-id="${sourceId}"]`);
           const targetElement = sourceElement || fallbackElement;
           
-          console.log('🔍 Элемент найден в refs:', !!sourceElement);
-          console.log('🔍 Элемент найден через querySelector:', !!fallbackElement);
-          
           if (targetElement) {
-            console.log('✅ Элемент найден, выполняю скроллинг к источнику:', sourceId);
             targetElement.scrollIntoView({ 
               behavior: 'smooth', 
               block: 'center',
@@ -369,27 +332,16 @@ export default function Trends() {
               transition: all 0.3s ease !important;
             `;
             
-            console.log('🎯 Применен визуальный эффект выделения к источнику');
-            
             setTimeout(() => {
               element.style.cssText = element.style.cssText.replace(/box-shadow[^;]*;?/g, '')
                                                            .replace(/border[^;]*;?/g, '')
                                                            .replace(/background-color[^;]*;?/g, '')
                                                            .replace(/transform[^;]*;?/g, '')
                                                            .replace(/transition[^;]*;?/g, '');
-              console.log('🎯 Визуальный эффект выделения убран');
             }, 3000);
-          } else {
-            console.log('❌ Элемент источника не найден для подсветки ID:', sourceId);
-            console.log('🔍 Это нормально если источник отфильтрован или не отображается');
           }
         }, 300);
-      } else {
-        console.log('⚠️ Источник не найден в списке источников:', sourceId);
-        console.log('🔍 Доступные источники:', sources.map(s => s.id));
       }
-    } else {
-      console.log('❌ ID источника не найден в данных тренда');
     }
   };
 
@@ -510,12 +462,9 @@ export default function Trends() {
       // Сначала проверяем, есть ли комментарии у этого тренда в поле comments
       const trendTopic = trends?.find(t => t.id === trendId);
       if (!trendTopic || !trendTopic.comments || trendTopic.comments === 0) {
-        console.log(`Тренд ${trendId} не имеет комментариев (comments: ${trendTopic?.comments || 0})`);
         setTrendComments([]);
         return;
       }
-
-      console.log(`Загружаем комментарии для тренда ${trendId}, количество: ${trendTopic.comments}`);
 
       const response = await fetch(`/api/trend-comments/${trendId}`, {
         headers: {
@@ -1331,13 +1280,7 @@ export default function Trends() {
         throw new Error("Требуется авторизация");
       }
 
-      console.log("Fetching source posts with params:", {
-        campaignId: selectedCampaignId,
-        period: selectedPeriod
-      });
-
       try {
-        console.log("Using exact API URL format that works");
 
         const dateParams: Record<string, any> = {};
         if (isValidPeriod(selectedPeriod)) {
@@ -1371,20 +1314,7 @@ export default function Trends() {
           }
         });
 
-        console.log("Source posts API response:", {
-          status: response.status,
-          dataLength: response.data?.data?.length,
-          firstPost: response.data?.data?.[0],
-          fullResponse: response.data
-        });
-
         const posts = response.data?.data || [];
-        console.log("Returning posts array:", {
-          length: posts.length,
-          isEmpty: posts.length === 0,
-          campaignId: selectedCampaignId,
-          period: selectedPeriod
-        });
         
         return posts;
       } catch (error) {
@@ -1409,8 +1339,6 @@ export default function Trends() {
       }
 
       // Для сбора трендов проверяем наличие источников
-      console.log('🔍 FRONTEND DEBUG: selectedSourcesForComments.size:', selectedSourcesForComments.size);
-      console.log('🔍 FRONTEND DEBUG: selectedSourcesForComments content:', Array.from(selectedSourcesForComments));
       
       if (!collectSources && selectedSourcesForComments.size === 0) {
         throw new Error("Выберите источники для сбора трендов");
@@ -1439,11 +1367,7 @@ export default function Trends() {
       let dataToSend;
       const selectedSourcesList = Array.from(selectedSourcesForComments);
       
-      console.log('🔍 FRONTEND CRITICAL DEBUG:');
-      console.log('- selectedSourcesForComments (Set):', selectedSourcesForComments);
-      console.log('- selectedSourcesList (Array):', selectedSourcesList);
-      console.log('- selectedSourcesList length:', selectedSourcesList.length);
-      console.log('- collectSources flag:', collectSources);
+      // Определяем данные для отправки
       
       if (selectedSourcesList.length > 0) {
         // Есть выбранные источники - ищем тренды в них
@@ -1455,9 +1379,7 @@ export default function Trends() {
           collectSources: false, // НЕ собираем новые источники
           collectComments: collectComments
         };
-        console.log('🎯 FRONTEND: Selected sources count:', selectedSourcesList.length);
-        console.log('🎯 FRONTEND: Selected sources IDs:', selectedSourcesList);
-        console.log('🎯 FRONTEND: Sending source IDs for trend collection in existing sources:', selectedSourcesList, platforms);
+
       } else if (collectSources) {
         // Нет выбранных источников и включен флаг collectSources - ищем новые источники
         const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
@@ -1468,7 +1390,7 @@ export default function Trends() {
           collectSources: true, // Собираем новые источники
           collectComments: collectComments
         };
-        console.log('Sending keywords for new source collection:', keywordsList, platforms);
+
       } else {
         // Fallback - используем старую логику
         const keywordsList = keywords.map((k: { keyword: string }) => k.keyword);
@@ -1479,7 +1401,7 @@ export default function Trends() {
           collectSources: false,
           collectComments: collectComments
         };
-        console.log('Fallback: sending keywords for trend collection:', keywordsList, platforms);
+
       }
       
       // Send request to our API endpoint which will forward to n8n webhook
