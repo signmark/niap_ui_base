@@ -277,15 +277,45 @@ export default function Trends() {
     }
     
     if (sourceId) {
-      // Устанавливаем выбранный источник для синхронизации
-      setSelectedSourceId(sourceId);
+      // Находим источник по ID
+      const trendSource = sources.find(s => s.id === sourceId);
       
-      // КРИТИЧНО: Также добавляем источник в selectedSourcesForComments для синхронизации checkbox'а
-      setSelectedSourcesForComments(prev => {
-        const newSet = new Set(prev);
-        newSet.add(sourceId);
-        return newSet;
-      });
+      if (trendSource) {
+        // Если источник найден, но может быть скрыт как дубликат, находим первый отображаемый источник с тем же URL
+        const displayedSource = sources
+          .filter((source, index, array) => {
+            return array.findIndex(s => s.url === source.url) === index;
+          })
+          .find(s => s.url === trendSource.url);
+        
+        if (displayedSource) {
+          console.log('🔄 Синхронизация с отображаемым источником:', {
+            originalId: sourceId,
+            originalName: trendSource.name,
+            displayedId: displayedSource.id,
+            displayedName: displayedSource.name,
+            url: trendSource.url
+          });
+          
+          // Используем ID отображаемого источника
+          setSelectedSourceId(displayedSource.id);
+          
+          // Добавляем отображаемый источник в selectedSourcesForComments
+          setSelectedSourcesForComments(prev => {
+            const newSet = new Set(prev);
+            newSet.add(displayedSource.id);
+            return newSet;
+          });
+        } else {
+          // Fallback к оригинальной логике
+          setSelectedSourceId(sourceId);
+          setSelectedSourcesForComments(prev => {
+            const newSet = new Set(prev);
+            newSet.add(sourceId);
+            return newSet;
+          });
+        }
+      }
       
       // Разворачиваем секцию источников если она свернута
       if (!isDataSourcesExpanded) {
