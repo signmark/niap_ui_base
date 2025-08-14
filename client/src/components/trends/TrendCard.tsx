@@ -44,11 +44,21 @@ export function TrendCard({ trend, onClick }: TrendCardProps) {
     }
   };
 
-  const formatNumber = (num?: number): string => {
-    if (!num) return "0";
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+  const formatNumber = (num?: number | string): string => {
+    if (!num || num === 0) return "0";
+    
+    // Преобразуем в число если это строка
+    const numValue = typeof num === 'string' ? parseInt(num.toString().replace(/\s/g, '')) : num;
+    
+    if (isNaN(numValue)) return "0";
+    
+    if (numValue >= 1000000) {
+      return `${(numValue / 1000000).toFixed(1)}M`;
+    }
+    if (numValue >= 1000) {
+      return `${(numValue / 1000).toFixed(1)}K`;
+    }
+    return numValue.toString();
   };
 
   return (
