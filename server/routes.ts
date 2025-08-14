@@ -8868,11 +8868,11 @@ ${allCommentsText.substring(0, 8000)}
           };
         });
         
-        // Логирование количества комментариев для каждого тренда для отладки
-        console.log(`📊 [TRENDS] Найдено ${trendTopics.length} трендов для кампании ${campaignId}:`);
-        trendTopics.forEach((trend: any, index: number) => {
-          console.log(`📊 [TREND ${index + 1}] ID: ${trend.id}, Заголовок: "${trend.title?.substring(0, 50)}...", Комментарии: ${trend.comments || 0}, Реакции: ${trend.reactions || 0}`);
-        });
+        // Краткое логирование для отладки
+        const trendsWithComments = trendTopics.filter((t: any) => t.comments > 0);
+        if (trendsWithComments.length > 0) {
+          console.log(`📊 Найдено ${trendsWithComments.length} трендов с комментариями из ${trendTopics.length} общих`);
+        }
         
         res.json({ 
           success: true,
