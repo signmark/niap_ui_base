@@ -7416,6 +7416,7 @@ Return your response as a JSON array in this exact format:
       const trendAnalyses = [];
       let totalCommentsAnalyzed = 0;
       const allCommentsTexts = [];
+      const processedCommentIds = new Set(); // Отслеживаем уже обработанные комментарии с самого начала
 
       console.log(`[SOURCE-ANALYSIS] Собираем все комментарии для всех трендов источника ${sourceId}`);
 
@@ -7437,7 +7438,7 @@ Return your response as a JSON array in this exact format:
           });
 
           const comments = commentsResponse.data?.data || [];
-          console.log(`[SOURCE-ANALYSIS] Найдено ${comments.length} комментариев для тренда ${trend.id}`);
+          console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} (${trend.title?.substring(0, 30)}...): найдено ${comments.length} комментариев в БД, поле comments=${trend.comments}`);
 
           const commentsCount = parseInt(trend.comments) || 0;
           
@@ -7449,6 +7450,10 @@ Return your response as a JSON array in this exact format:
             
             allCommentsTexts.push(...commentsTexts);
             totalCommentsAnalyzed += comments.length;
+            
+            // Запоминаем ID существующих комментариев чтобы избежать дублирования
+            comments.forEach(c => processedCommentIds.add(c.id));
+            
             console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} существующих комментариев из тренда ${trend.id}`);
           }
           
@@ -7571,8 +7576,9 @@ Return your response as a JSON array in this exact format:
             }
           }
           
-          // Повторно собираем комментарии после завершения сбора
-          console.log(`[SOURCE-ANALYSIS] Повторный сбор комментариев после webhook запросов...`);
+          // Повторно собираем ТОЛЬКО НОВЫЕ комментарии после завершения сбора (избегаем дублирования)
+          console.log(`[SOURCE-ANALYSIS] Проверяем новые комментарии после webhook запросов...`)
+          
           for (const trend of trendsNeedingCollection) {
             try {
               const commentsResponse = await directusApi.get('/items/post_comment', {
@@ -7588,13 +7594,24 @@ Return your response as a JSON array in this exact format:
               console.log(`[SOURCE-ANALYSIS] После сбора найдено ${comments.length} комментариев для тренда ${trend.id}`);
 
               if (comments.length > 0) {
-                const commentsTexts = comments
+                // Фильтруем только новые комментарии (избегаем дублирования)
+                const newComments = comments.filter(c => !processedCommentIds.has(c.id));
+                
+                const commentsTexts = newComments
                   .map(c => (c.text || c.content || '').trim())
                   .filter(Boolean);
                 
-                allCommentsTexts.push(...commentsTexts);
-                totalCommentsAnalyzed += comments.length;
-                console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} комментариев из тренда ${trend.id} после сбора`);
+                if (commentsTexts.length > 0) {
+                  allCommentsTexts.push(...commentsTexts);
+                  totalCommentsAnalyzed += newComments.length;
+                  
+                  // Запоминаем обработанные комментарии
+                  newComments.forEach(c => processedCommentIds.add(c.id));
+                  
+                  console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} НОВЫХ комментариев из тренда ${trend.id} после сбора`);
+                } else {
+                  console.log(`[SOURCE-ANALYSIS] Все комментарии для тренда ${trend.id} уже были обработаны ранее`);
+                }
               }
             } catch (error) {
               console.error(`[SOURCE-ANALYSIS] Ошибка повторного получения комментариев для тренда ${trend.id}:`, error);
@@ -7602,39 +7619,16 @@ Return your response as a JSON array in this exact format:
           }
         }
 
-        // Ждем завершения сбора
-        console.log(`[SOURCE-ANALYSIS] Ждем 8 секунд для завершения сбора комментариев...`);
-        await new Promise(resolve => setTimeout(resolve, 8000));
-        
-        // Собираем новые комментарии после сбора
-        for (const trend of trendsNeedingCollection.slice(0, 10)) {
-          try {
-            const commentsAfter = await directusApi.get('/items/post_comment', {
-              headers: { 'Authorization': `Bearer ${adminToken}` },
-              params: {
-                filter: { trent_post_id: { _eq: trend.id } },
-                sort: 'date',
-                limit: 1000
-              }
-            });
-            
-            const newComments = commentsAfter.data?.data || [];
-            if (newComments.length > 0) {
-              const commentsTexts = newComments
-                .map(c => (c.text || c.content || '').trim())
-                .filter(Boolean);
-              
-              allCommentsTexts.push(...commentsTexts);
-              totalCommentsAnalyzed += newComments.length;
-              console.log(`[SOURCE-ANALYSIS] Собрано ${newComments.length} новых комментариев для тренда ${trend.id}`);
-            }
-          } catch (error) {
-            console.error(`[SOURCE-ANALYSIS] Ошибка сбора новых комментариев для тренда ${trend.id}:`, error);
-          }
-        }
+        // Финальный сбор уже выполнен выше в логике после webhook запросов
       }
       
-      console.log(`[SOURCE-ANALYSIS] Собрано всего ${totalCommentsAnalyzed} комментариев для анализа источника ${sourceId}`);
+      // Исправляем подсчет: используем реальное количество собранных комментариев (без дублирования)
+      const actualCommentsCount = allCommentsTexts.length;
+      console.log(`[SOURCE-ANALYSIS] ИТОГОВАЯ СВОДКА для источника ${sourceId}:`);
+      console.log(`[SOURCE-ANALYSIS] - Всего трендов: ${trends.length}`);
+      console.log(`[SOURCE-ANALYSIS] - Собрано комментариев: ${actualCommentsCount} уникальных`);
+      console.log(`[SOURCE-ANALYSIS] - Первичный подсчет: ${totalCommentsAnalyzed}`);
+      console.log(`[SOURCE-ANALYSIS] - Тренды для анализа: ${trends.map(t => `${t.title?.substring(0, 20)}(${t.comments})`).join(', ')}`);
 
       if (allCommentsTexts.length === 0) {
         return res.json({
@@ -7777,7 +7771,7 @@ ${allCommentsText.substring(0, 8000)}
                          overallScore >= 6 ? 'хороший' :
                          overallScore >= 4 ? 'средний' : 'низкий';
         
-        let summary = `Проанализировано ${allCommentsTexts.length} комментариев из ${trends.length} трендов источника. `;
+        let summary = `Проанализировано ${actualCommentsCount} комментариев из ${trends.length} трендов источника. `;
         summary += `Общая тональность аудитории: ${sentimentText} (${scoreText} рейтинг ${Math.round(overallScore * 10) / 10}/10). `;
         
         if (overallConfidence > 0.7) {
@@ -7787,7 +7781,7 @@ ${allCommentsText.substring(0, 8000)}
         }
         
         // Добавляем характеристику активности аудитории
-        const avgCommentsPerTrend = trends.length > 0 ? Math.round(totalCommentsAnalyzed / trends.length) : 0;
+        const avgCommentsPerTrend = trends.length > 0 ? Math.round(actualCommentsCount / trends.length) : 0;
         if (avgCommentsPerTrend > 50) {
           summary += `Высокая активность аудитории (${avgCommentsPerTrend} комментариев в среднем на пост). `;
         } else if (avgCommentsPerTrend > 10) {
@@ -7808,8 +7802,8 @@ ${allCommentsText.substring(0, 8000)}
         confidence: Math.round(overallConfidence * 100) / 100,
         score: Math.round(overallScore * 10) / 10,
         trendsCount: trends.length,
-        commentsCount: totalCommentsAnalyzed,
-        commentsAnalyzed: allCommentsTexts.length,
+        commentsCount: actualCommentsCount,
+        commentsAnalyzed: actualCommentsCount,
         analysisMethod: analysisSuccess ? (overallConfidence > 0.5 ? 'AI' : 'keywords') : 'basic',
         summary: analysisSuccess ? createDetailedSummary() : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`,
         detailed_summary: detailedSummary || (analysisSuccess ? aiSummary : ''),
