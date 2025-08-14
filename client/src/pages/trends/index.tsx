@@ -277,36 +277,39 @@ export default function Trends() {
     }
     
     if (sourceId) {
-      // Находим источник по ID
+      // Находим источник по ID (может быть дубликат)
       const trendSource = sources.find(s => s.id === sourceId);
       
       if (trendSource) {
-        // Если источник найден, но может быть скрыт как дубликат, находим первый отображаемый источник с тем же URL
-        const displayedSource = sources
-          .filter((source, index, array) => {
-            return array.findIndex(s => s.url === source.url) === index;
-          })
-          .find(s => s.url === trendSource.url);
+        // Получаем список уникальных источников (такой же как в UI)
+        const uniqueSources = sources.filter((source, index, array) => {
+          return array.findIndex(s => s.url === source.url) === index;
+        });
         
-        if (displayedSource) {
-          console.log('🔄 Синхронизация с отображаемым источником:', {
-            originalId: sourceId,
-            originalName: trendSource.name,
-            displayedId: displayedSource.id,
-            displayedName: displayedSource.name,
-            url: trendSource.url
+        // Находим соответствующий уникальный источник по URL
+        const uniqueSource = uniqueSources.find(s => s.url === trendSource.url);
+        
+        if (uniqueSource) {
+          console.log('🔄 Синхронизация с уникальным источником:', {
+            trendSourceId: sourceId,
+            trendSourceName: trendSource.name,
+            uniqueSourceId: uniqueSource.id,
+            uniqueSourceName: uniqueSource.name,
+            url: trendSource.url,
+            isOriginalUnique: sourceId === uniqueSource.id
           });
           
-          // Используем ID отображаемого источника
-          setSelectedSourceId(displayedSource.id);
+          // Используем ID уникального источника
+          setSelectedSourceId(uniqueSource.id);
           
-          // Добавляем отображаемый источник в selectedSourcesForComments
+          // Добавляем уникальный источник в selectedSourcesForComments
           setSelectedSourcesForComments(prev => {
             const newSet = new Set(prev);
-            newSet.add(displayedSource.id);
+            newSet.add(uniqueSource.id);
             return newSet;
           });
         } else {
+          console.log('⚠️ Уникальный источник не найден для:', trendSource);
           // Fallback к оригинальной логике
           setSelectedSourceId(sourceId);
           setSelectedSourcesForComments(prev => {
@@ -315,6 +318,8 @@ export default function Trends() {
             return newSet;
           });
         }
+      } else {
+        console.log('⚠️ Источник тренда не найден:', sourceId);
       }
       
       // Разворачиваем секцию источников если она свернута
@@ -1964,23 +1969,25 @@ export default function Trends() {
                   </p>
                 ) : (
                   <div ref={sourcesContainerRef} className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                    {sources
-                      // Фильтрация дубликатов по URL - показываем только первый источник с уникальным URL
-                      .filter((source, index, array) => {
-                        const isUnique = array.findIndex(s => s.url === source.url) === index;
-                        // Логируем ГУФ специально
-                        if (source.name === 'ГУФ (GUF)' || source.id === '0991d30f-5ea4-453d-8454-cac957f1a8a4') {
-                          console.log('🔍 ГУФ в фильтрации:', {
-                            id: source.id,
-                            name: source.name,
-                            url: source.url,
-                            index: index,
-                            isUnique: isUnique,
-                            duplicateIndex: array.findIndex(s => s.url === source.url)
-                          });
+                    {(() => {
+                        // Логируем все дубликаты для анализа
+                        const duplicates = sources.filter((source, index, array) => {
+                          return array.findIndex(s => s.url === source.url) !== index;
+                        });
+                        
+                        if (duplicates.length > 0) {
+                          console.log('⚠️ Найдены дубликаты источников:', duplicates.map(d => ({
+                            id: d.id,
+                            name: d.name,
+                            url: d.url
+                          })));
                         }
-                        return isUnique;
-                      })
+                        
+                        // Возвращаем только уникальные источники по URL
+                        return sources.filter((source, index, array) => {
+                          return array.findIndex(s => s.url === source.url) === index;
+                        });
+                      })()
                       .sort((a, b) => {
                         // Сортировка по типу источника в алфавитном порядке
                         const typeA = a.type === 'website' ? 'Веб-сайт' :
