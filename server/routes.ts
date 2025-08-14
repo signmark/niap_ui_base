@@ -5121,6 +5121,131 @@ ${siteContent.substring(0, 2000)}
       return res.status(500).json({ error: "Ошибка сервера" });
     }
   });
+
+  // Админский endpoint для удаления дубликатов источников
+  app.delete("/api/admin/sources/remove-duplicates", authenticateUser, async (req: any, res) => {
+    try {
+      // Проверяем права админа
+      const isAdmin = await isUserAdmin(req.headers.authorization);
+      if (!isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: "Доступ запрещен. Требуются права администратора."
+        });
+      }
+
+      console.log('🔧 Начинаем удаление дубликатов источников...');
+
+      // Получаем токен администратора из переменных окружения
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      if (!adminToken) {
+        return res.status(500).json({
+          success: false,
+          error: "Токен администратора Directus не найден"
+        });
+      }
+
+      // Получаем все источники
+      const sourcesResponse = await axios.get(
+        `${process.env.DIRECTUS_URL}/items/campaign_content_sources`,
+        {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const allSources = sourcesResponse.data.data;
+      console.log(`📊 Найдено всего источников: ${allSources.length}`);
+
+      // Группируем источники по URL для поиска дубликатов
+      const sourcesByUrl = new Map();
+      for (const source of allSources) {
+        if (!sourcesByUrl.has(source.url)) {
+          sourcesByUrl.set(source.url, []);
+        }
+        sourcesByUrl.get(source.url).push(source);
+      }
+
+      // Находим дубликаты
+      const duplicates = [];
+      const uniqueSources = [];
+      
+      for (const [url, sources] of sourcesByUrl) {
+        if (sources.length > 1) {
+          // Оставляем первый источник (самый старый по ID), остальные - дубликаты
+          const [first, ...duplicateList] = sources.sort((a, b) => new Date(a.date_created) - new Date(b.date_created));
+          uniqueSources.push(first);
+          duplicates.push(...duplicateList);
+          
+          console.log(`🔍 URL ${url}:`, {
+            total: sources.length,
+            keeping: first.name,
+            removing: duplicateList.map(d => d.name)
+          });
+        } else {
+          uniqueSources.push(sources[0]);
+        }
+      }
+
+      console.log(`📈 Статистика: уникальных ${uniqueSources.length}, дубликатов ${duplicates.length}`);
+
+      if (duplicates.length === 0) {
+        return res.json({
+          success: true,
+          message: "Дубликаты источников не найдены",
+          removed: 0,
+          remaining: uniqueSources.length
+        });
+      }
+
+      // Удаляем дубликаты
+      const removePromises = duplicates.map(duplicate =>
+        axios.delete(
+          `${process.env.DIRECTUS_URL}/items/campaign_content_sources/${duplicate.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        ).catch(err => {
+          console.error(`❌ Ошибка удаления источника ${duplicate.id}:`, err.response?.data || err.message);
+          return { error: duplicate.id };
+        })
+      );
+
+      const removeResults = await Promise.all(removePromises);
+      const failedRemovals = removeResults.filter(r => r.error);
+
+      console.log(`✅ Удалено дубликатов: ${duplicates.length - failedRemovals.length}`);
+      if (failedRemovals.length > 0) {
+        console.log(`❌ Не удалось удалить: ${failedRemovals.length} источников`);
+      }
+
+      return res.json({
+        success: true,
+        message: "Дубликаты источников успешно удалены",
+        removed: duplicates.length - failedRemovals.length,
+        failed: failedRemovals.length,
+        remaining: uniqueSources.length,
+        duplicatesFound: duplicates.map(d => ({
+          id: d.id,
+          name: d.name,
+          url: d.url
+        }))
+      });
+
+    } catch (error) {
+      console.error('❌ Ошибка удаления дубликатов источников:', error);
+      return res.status(500).json({
+        success: false,
+        error: "Ошибка удаления дубликатов источников",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // УЛУЧШЕННАЯ ФУНКЦИЯ С ФОКУСОМ НА КОНТАКТЫ В FOOTER
   async function extractFullSiteContent(url: string): Promise<string> {
@@ -5531,15 +5656,14 @@ Return your response as a JSON array in this exact format:
         return res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
       }
 
-      // Проверяем на дублирование URL в рамках кампании
+      // УСИЛЕННАЯ ПРОВЕРКА: Проверяем на дублирование URL глобально
       try {
-        console.log(`Checking for duplicate source URL: ${url} in campaign: ${campaignId}`);
+        console.log(`🔍 Проверяем дублирование URL: ${url} (глобально)`);
         
         const existingSourcesResponse = await directusApi.get('/items/campaign_content_sources', {
           params: {
             filter: {
-              campaign_id: { _eq: campaignId },
-              url: { _eq: url }
+              url: { _eq: url }  // Убрали ограничение по кампании - проверяем глобально
             }
           },
           headers: {
@@ -5548,20 +5672,29 @@ Return your response as a JSON array in this exact format:
         });
 
         if (existingSourcesResponse.data?.data && existingSourcesResponse.data.data.length > 0) {
-          console.log(`Duplicate source found: ${url} already exists in campaign ${campaignId}`);
-          return res.status(409).json({
-            success: false,
-            error: "Дублирование источника",
-            message: `Источник с URL "${url}" уже добавлен в эту кампанию`,
-            code: "DUPLICATE_SOURCE_URL"
-          });
+          const existingSources = existingSourcesResponse.data.data;
+          const existingInSameCampaign = existingSources.filter(s => s.campaign_id === campaignId);
+          
+          if (existingInSameCampaign.length > 0) {
+            console.log(`❌ Дубликат в той же кампании: ${url} уже существует в кампании ${campaignId}`);
+            return res.status(409).json({
+              success: false,
+              error: "Дублирование источника",
+              message: `Источник с URL "${url}" уже добавлен в эту кампанию`,
+              code: "DUPLICATE_SOURCE_URL_SAME_CAMPAIGN"
+            });
+          } else {
+            console.log(`⚠️ URL уже существует в других кампаниях: ${existingSources.length} раз(а)`);
+            // Разрешаем добавление, но логируем для отслеживания
+            console.log(`Добавляем источник ${url} в кампанию ${campaignId}, хотя он уже есть в других кампаниях`);
+          }
+        } else {
+          console.log(`✅ URL уникален, создаем источник: ${url}`);
         }
-        
-        console.log(`No duplicate found, proceeding to create source: ${url}`);
       } catch (duplicateCheckError) {
-        console.error("Error checking for duplicate sources:", duplicateCheckError);
-        // Продолжаем создание, если проверка на дублирование не удалась
-        console.log("Continuing with source creation despite duplicate check error");
+        console.error("❌ Ошибка проверки дубликатов:", duplicateCheckError);
+        // Продолжаем создание, если проверка не удалась
+        console.log("Продолжаем создание несмотря на ошибку проверки дубликатов");
       }
 
       // Создаем новый источник в Directus
