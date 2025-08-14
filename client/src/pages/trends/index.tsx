@@ -261,6 +261,13 @@ export default function Trends() {
       sortDirection: sortDirection
     });
     
+    // Дополнительное логирование для отладки ID источников
+    console.log('🔍 Поиск источника в списке sources:');
+    console.log('  - ID тренда source_id:', trendTopic.source_id);
+    console.log('  - ID тренда sourceId:', trendTopic.sourceId); 
+    console.log('  - Используемый sourceId:', sourceId);
+    console.log('  - Все доступные источники:', sources.map(s => ({id: s.id, name: s.name})));
+    
     if (sourceId) {
       // Устанавливаем выбранный источник для синхронизации
       setSelectedSourceId(sourceId);
