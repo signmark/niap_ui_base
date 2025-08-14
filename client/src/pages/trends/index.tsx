@@ -272,6 +272,13 @@ export default function Trends() {
       // Устанавливаем выбранный источник для синхронизации
       setSelectedSourceId(sourceId);
       
+      // КРИТИЧНО: Также добавляем источник в selectedSourcesForComments для синхронизации checkbox'а
+      setSelectedSourcesForComments(prev => {
+        const newSet = new Set(prev);
+        newSet.add(sourceId);
+        return newSet;
+      });
+      
       // Разворачиваем секцию источников если она свернута
       if (!isDataSourcesExpanded) {
         setIsDataSourcesExpanded(true);
