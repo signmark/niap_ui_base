@@ -363,8 +363,8 @@ export default function Trends() {
             // Применяем визуальный эффект
             const element = targetElement as HTMLElement;
             element.style.cssText += `
-              box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.8) !important;
-              border: 2px solid #3b82f6 !important;
+              box-shadow: 0 0 0 0.8px rgba(59, 130, 246, 0.8) !important;
+              border: 0.4px solid #3b82f6 !important;
               background-color: rgba(59, 130, 246, 0.1) !important;
               transform: scale(1.02) !important;
               transition: all 0.3s ease !important;
