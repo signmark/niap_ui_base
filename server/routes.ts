@@ -6621,13 +6621,19 @@ Return your response as a JSON array in this exact format:
       
       console.log(`[COLLECT-COMMENTS-SINGLE] 🎯 Сбор комментариев для тренда ${trendId} в кампании ${campaignId}`);
       
-      // Получаем информацию о тренде
+      // Получаем информацию о тренде с админским токеном
+      const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
+      if (!adminToken) {
+        console.error('[COLLECT-COMMENTS-SINGLE] ❌ DIRECTUS_ADMIN_TOKEN не найден');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+      
       const trendResponse = await directusApi.get(`/items/campaign_trend_topics/${trendId}`, {
         params: {
           fields: ['id', 'title', 'url', 'urlPost', 'accountUrl', 'comments', 'sourceId']
         },
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
 
