@@ -237,8 +237,7 @@ export default function Trends() {
   // Состояние для выбора трендов для массового сбора комментариев
   const [selectedTrendsForComments, setSelectedTrendsForComments] = useState<Set<string>>(new Set());
   
-  // Состояние для удаления дубликатов
-  const [isRemovingDuplicates, setIsRemovingDuplicates] = useState(false);
+
 
   
   // Состояния для сворачивания/разворачивания секций
@@ -1862,48 +1861,7 @@ export default function Trends() {
     }
   };
 
-  // Функция для удаления дубликатов источников
-  const removeDuplicateSources = async () => {
-    setIsRemovingDuplicates(true);
-    
-    try {
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('Токен авторизации не найден');
-      }
 
-      const response = await fetch('/api/admin/sources/remove-duplicates', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast({
-          title: "Дубликаты удалены",
-          description: `Удалено: ${result.removed}, Осталось: ${result.remaining}`
-        });
-        
-        // Обновляем список источников
-        queryClient.invalidateQueries({ queryKey: ["campaign_content_sources", selectedCampaignId] });
-      } else {
-        throw new Error(result.error || 'Ошибка удаления дубликатов');
-      }
-    } catch (error) {
-      console.error('Ошибка удаления дубликатов:', error);
-      toast({
-        title: "Ошибка",
-        description: `Не удалось удалить дубликаты: ${(error as Error).message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsRemovingDuplicates(false);
-    }
-  };
 
   const isValidCampaignSelected = selectedCampaignId &&
     selectedCampaignId !== "loading" &&
@@ -1991,20 +1949,7 @@ export default function Trends() {
                           >
                             {selectedSourcesForComments.size === sources.length ? 'Снять выбор' : 'Выбрать все'}
                           </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={removeDuplicateSources}
-                            disabled={isRemovingDuplicates}
-                            className="h-7 px-2 text-xs"
-                          >
-                            {isRemovingDuplicates ? (
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            ) : (
-                              <Trash2 className="h-3 w-3 mr-1" />
-                            )}
-                            Удалить дубликаты
-                          </Button>
+
 
                         </>
                       )}
