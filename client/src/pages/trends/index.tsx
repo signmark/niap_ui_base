@@ -185,8 +185,6 @@ export default function Trends() {
   
   // Состояние для фильтра по соцсетям
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  // Состояние для фильтра по тональности
-  const [selectedSentiment, setSelectedSentiment] = useState<string>('all');
   // Используем глобальный стор кампаний
   const { selectedCampaign } = useCampaignStore();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(selectedCampaign?.id || "");
@@ -2213,24 +2211,7 @@ export default function Trends() {
                         </Select>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm text-muted-foreground mr-1">Тональность:</div>
-                        <Select
-                          value={selectedSentiment}
-                          onValueChange={(value: string) => setSelectedSentiment(value)}
-                        >
-                          <SelectTrigger className="w-[170px]">
-                            <SelectValue placeholder="Все тональности" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Все тональности</SelectItem>
-                            <SelectItem value="positive">😊 Позитивные</SelectItem>
-                            <SelectItem value="neutral">😐 Нейтральные</SelectItem>
-                            <SelectItem value="negative">😞 Негативные</SelectItem>
-                            <SelectItem value="unknown">❓ Неопределенные</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+
 
                       <div className="flex items-center gap-2">
                         <div className="text-sm text-muted-foreground mr-1">Сортировка:</div>
@@ -2386,7 +2367,6 @@ export default function Trends() {
                             <span>|</span>
                             <span>Период: {selectedPeriod}</span>
                             <span>| Платформа: {selectedPlatform}</span>
-                            <span>| Тональность: {selectedSentiment === 'all' ? 'все' : selectedSentiment === 'positive' ? 'позитивные' : selectedSentiment === 'negative' ? 'негативные' : selectedSentiment === 'neutral' ? 'нейтральные' : 'неопределенные'}</span>
                             {selectedPeriod === 'all' && <span className="text-green-600"> (загружены ВСЕ записи)</span>}
                             {sortField !== 'none' && (
                               <>
@@ -2508,16 +2488,7 @@ export default function Trends() {
                             
                             // Логирование убрано - проблема найдена
                             
-                            // Фильтр по тональности
-                            let sentimentMatches = false;
-                            if (selectedSentiment === 'all') {
-                              sentimentMatches = true;
-                            } else {
-                              const sentimentCategory = getSentimentCategory(topic.sentiment_analysis);
-                              sentimentMatches = sentimentCategory === selectedSentiment;
-                            }
-                            
-                            const finalResult = withinPeriod && matchesSearch && platformMatches && sourceMatches && sentimentMatches;
+                            const finalResult = withinPeriod && matchesSearch && platformMatches && sourceMatches;
                             
 
                             
