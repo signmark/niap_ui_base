@@ -73,6 +73,39 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCampaignStore } from "@/lib/campaignStore";
 
+// Функция для рендеринга простого Markdown форматирования
+function renderMarkdownText(text: string) {
+  if (!text) return null;
+  
+  // Разбиваем на части по переносам строк
+  const lines = text.split('\n');
+  
+  return (
+    <div className="space-y-2">
+      {lines.map((line, index) => {
+        if (!line.trim()) {
+          return <br key={index} />;
+        }
+        
+        // Заменяем **текст** на жирный текст
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        
+        return (
+          <div key={index}>
+            {parts.map((part, partIndex) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                const boldText = part.slice(2, -2);
+                return <strong key={partIndex} className="font-semibold text-purple-800">{boldText}</strong>;
+              }
+              return <span key={partIndex}>{part}</span>;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface Campaign {
   id: string;
   name: string;
@@ -2909,9 +2942,10 @@ export default function Trends() {
                             
                             {/* Детальное описание аудитории от AI */}
                             {(sourceAnalysis as any).detailed_summary && (
-                              <div className="mb-3 p-2 bg-purple-50 rounded border-l-4 border-purple-400">
-                                <strong className="text-purple-800">Характеристика аудитории:</strong>
-                                <p className="mt-1 text-purple-700 text-sm">{(sourceAnalysis as any).detailed_summary}</p>
+                              <div className="mb-3 p-3 bg-purple-50 rounded border-l-4 border-purple-400">
+                                <div className="text-purple-700 text-sm">
+                                  {renderMarkdownText((sourceAnalysis as any).detailed_summary)}
+                                </div>
                               </div>
                             )}
                             
