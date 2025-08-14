@@ -2656,7 +2656,6 @@ export default function Trends() {
                                           alt="Миниатюра"
                                           className="h-16 w-16 object-cover rounded-md"
                                           onError={(e) => {
-                                            console.log('Ошибка загрузки изображения:', firstImage);
                                             e.currentTarget.onerror = null;
                                             // Пробуем повторную загрузку с прямой ссылкой если это не Instagram
                                             if (firstImage.includes('instagram') || 
