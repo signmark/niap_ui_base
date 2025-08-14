@@ -6621,16 +6621,19 @@ Return your response as a JSON array in this exact format:
       
       console.log(`[COLLECT-COMMENTS-SINGLE] 🎯 Сбор комментариев для тренда ${trendId} в кампании ${campaignId}`);
       
-      // Получаем информацию о тренде с админским токеном
+      // Получаем информацию о тренде с административным токеном (как для анализа источников)
+      console.log(`[COLLECT-COMMENTS-SINGLE] 🔍 Запрашиваем тренд ${trendId} с административным токеном`);
+      console.log(`[COLLECT-COMMENTS-SINGLE] 🔍 Ожидаемая кампания: ${campaignId}`);
+      
       const adminToken = process.env.DIRECTUS_ADMIN_TOKEN;
       if (!adminToken) {
-        console.error('[COLLECT-COMMENTS-SINGLE] ❌ DIRECTUS_ADMIN_TOKEN не найден');
-        return res.status(500).json({ error: 'Server configuration error' });
+        console.error('[COLLECT-COMMENTS-SINGLE] ❌ DIRECTUS_ADMIN_TOKEN не найден в env');
+        return res.status(500).json({ error: 'Server configuration error: Missing admin token' });
       }
       
       const trendResponse = await directusApi.get(`/items/campaign_trend_topics/${trendId}`, {
         params: {
-          fields: ['id', 'title', 'url', 'urlPost', 'accountUrl', 'comments', 'sourceId']
+          fields: ['id', 'title', 'urlPost', 'accountUrl', 'comments', 'source_id', 'campaign_id']
         },
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -6639,10 +6642,33 @@ Return your response as a JSON array in this exact format:
 
       const trend = trendResponse.data?.data;
       if (!trend) {
-        return res.status(404).json({ message: "Trend not found" });
+        console.error(`[COLLECT-COMMENTS-SINGLE] ❌ Тренд ${trendId} не найден`);
+        console.error(`[COLLECT-COMMENTS-SINGLE] ❌ Ответ API:`, {
+          status: trendResponse.status,
+          data: trendResponse.data,
+          error: trendResponse.data?.errors || trendResponse.data?.error
+        });
+        return res.status(404).json({ 
+          message: "Trend not found", 
+          details: "No access to trend or trend does not exist",
+          trendId: trendId
+        });
       }
 
-      const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+      // Проверяем, что тренд принадлежит указанной кампании
+      if (trend.campaign_id !== campaignId) {
+        console.error(`[COLLECT-COMMENTS-SINGLE] ❌ Тренд ${trendId} не принадлежит кампании ${campaignId}, фактическая кампания: ${trend.campaign_id}`);
+        return res.status(403).json({ 
+          message: "Access denied: Trend does not belong to specified campaign",
+          trendId: trendId,
+          expectedCampaign: campaignId,
+          actualCampaign: trend.campaign_id
+        });
+      }
+
+      console.log(`[COLLECT-COMMENTS-SINGLE] ✅ Тренд найден и принадлежит кампании ${campaignId}`);
+
+      const trendUrl = trend.urlPost || trend.accountUrl;
       const commentsCount = trend.comments || 0;
       
       console.log(`[COLLECT-COMMENTS-SINGLE] 📝 Тренд: ${trend.title?.substring(0, 50)}...`);
@@ -6666,19 +6692,16 @@ Return your response as a JSON array in this exact format:
 
       // Отправляем запрос на N8N webhook для сбора комментариев
       const webhookPayload = {
-        trendId: trend.id,
-        trendUrl: trendUrl,
-        trendTitle: trend.title,
-        userID: userId,
-        campaignId: campaignId,
-        sourceId: trend.sourceId,
-        expectedComments: commentsCount
+        trend_id: trend.id,
+        url: trendUrl
       };
 
       console.log(`[COLLECT-COMMENTS-SINGLE] 🚀 Отправляем запрос на webhook для тренда ${trendId}`);
+      console.log(`[COLLECT-COMMENTS-SINGLE] 📤 Payload:`, webhookPayload);
       
       try {
-        const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/collect-comments-single`;
+        const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/collect-comments`;
+        console.log(`[COLLECT-COMMENTS-SINGLE] 🔗 Полный URL webhook: ${webhookUrl}`);
         const webhookResponse = await axios.post(webhookUrl, webhookPayload, {
           timeout: 10000,
           headers: {
@@ -6710,10 +6733,30 @@ Return your response as a JSON array in this exact format:
       }
       
     } catch (error) {
-      console.error("[COLLECT-COMMENTS-SINGLE] Общая ошибка:", error);
+      console.error("[COLLECT-COMMENTS-SINGLE] ❌ Общая ошибка:", error);
+      console.error("[COLLECT-COMMENTS-SINGLE] ❌ Детали ошибки:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        trendId,
+        campaignId,
+        userId
+      });
+      
+      if (error?.response) {
+        console.error("[COLLECT-COMMENTS-SINGLE] ❌ HTTP ошибка:", {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          url: error.config?.url,
+          headers: error.config?.headers
+        });
+      }
+      
       res.status(500).json({ 
         error: "Failed to collect comments for trend", 
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
+        trendId,
+        campaignId
       });
     }
   });
@@ -6774,7 +6817,7 @@ Return your response as a JSON array in this exact format:
           params: {
             'filter[id][_in]': trendIds.join(','),
             'filter[campaign_id][_eq]': campaignId,
-            fields: '*'
+            fields: ['id', 'title', 'urlPost', 'accountUrl', 'comments', 'source_id', 'campaign_id'].join(',')
           },
           headers: {
             'Authorization': `Bearer ${token}`
@@ -6810,7 +6853,7 @@ Return your response as a JSON array in this exact format:
       let processedCount = 0;
 
       for (const trend of trends) {
-        const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+        const trendUrl = trend.urlPost || trend.accountUrl;
         const commentsCount = trend.comments || 0;
         
         console.log(`[COLLECT-COMMENTS] 📝 Обрабатываем тренд ${trend.id}: ${trend.title?.substring(0, 50)}...`);
@@ -7465,7 +7508,7 @@ Return your response as a JSON array in this exact format:
           
           // ВСЕГДА запрашиваем сбор для трендов с comments > 0 (независимо от наличия комментариев в базе)
           if (commentsCount > 0) {
-            const trendUrl = trend.urlPost || trend.accountUrl || trend.url;
+            const trendUrl = trend.urlPost || trend.accountUrl;
             if (trendUrl) {
               console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} будет добавлен для сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
               trendsNeedingCollection.push({...trend, url: trendUrl});
@@ -7499,7 +7542,7 @@ Return your response as a JSON array in this exact format:
         for (const trend of trendsNeedingCollection.slice(0, 10)) {
           try {
             // Используем N8N URL из .env
-            const webhookUrl = `${n8nUrl}/webhook/collect-comments`;
+            const webhookUrl = `${n8nUrl.replace(/\/+$/, '')}/webhook/collect-comments`;
             
             console.log(`[SOURCE-ANALYSIS] 🔄 Отправляем webhook для тренда ${trend.id}: ${trend.url}`);
             console.log(`[SOURCE-ANALYSIS] 📡 Webhook URL: ${webhookUrl}`);
