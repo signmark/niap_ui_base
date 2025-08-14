@@ -262,8 +262,8 @@ export default function Trends() {
     });
     
     if (sourceId) {
-      // НЕ МЕНЯЕМ выбранный источник - только ищем элемент для подсветки
-      // setSelectedSourceId(sourceId); // УБРАНО - не меняем фильтр при клике на тренд
+      // Устанавливаем выбранный источник для синхронизации
+      setSelectedSourceId(sourceId);
       
       // Разворачиваем секцию источников если она свернута
       if (!isDataSourcesExpanded) {
