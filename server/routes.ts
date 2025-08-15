@@ -8029,7 +8029,7 @@ ${allCommentsText}
         commentsAnalyzed: actualCommentsCount,
         analysisMethod: analysisSuccess ? (overallConfidence > 0.5 ? 'AI' : 'keywords') : 'basic',
         summary: analysisSuccess ? createDetailedSummary() : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`,
-        detailed_summary: detailedSummary || (analysisSuccess ? aiSummary : createFallbackDetailedSummary()),
+        detailed_summary: detailedSummary || (analysisSuccess ? (aiSummary || createFallbackDetailedSummary()) : createFallbackDetailedSummary()),
         ai_summary: aiSummary,
         ...sentimentPercentages // Добавляем проценты настроений
       };
