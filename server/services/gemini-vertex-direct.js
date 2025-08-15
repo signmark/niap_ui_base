@@ -184,14 +184,25 @@ ${text}
         throw new Error('Нет ответа от Vertex AI API');
       }
 
+      console.log('[gemini-vertex-direct] Полная структура ответа:', JSON.stringify(data, null, 2).substring(0, 1000));
+      
       const prediction = data.predictions[0];
       let generatedText = '';
 
       if (prediction.content) {
         generatedText = prediction.content;
-      } else if (prediction.candidates && prediction.candidates[0] && prediction.candidates[0].content) {
-        generatedText = prediction.candidates[0].content;
+      } else if (prediction.candidates && prediction.candidates[0]) {
+        const candidate = prediction.candidates[0];
+        if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+          generatedText = candidate.content.parts[0].text;
+        } else if (candidate.content) {
+          generatedText = candidate.content;
+        } else {
+          console.log('[gemini-vertex-direct] Проблема с кандидатом:', JSON.stringify(candidate, null, 2));
+          throw new Error('Неполная структура ответа от Vertex AI API - нет текста в кандидате');
+        }
       } else {
+        console.log('[gemini-vertex-direct] Неожиданная структура prediction:', JSON.stringify(prediction, null, 2));
         throw new Error('Неожиданная структура ответа от Vertex AI API');
       }
 

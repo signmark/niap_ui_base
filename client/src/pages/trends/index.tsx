@@ -305,10 +305,11 @@ export default function Trends() {
         const uniqueSource = uniqueSources.find(s => s.url === trendSource.url);
         
         if (uniqueSource) {
-
-          
-          // Используем ID уникального источника
-          setSelectedSourceId(uniqueSource.id);
+          // НЕ ИЗМЕНЯЕМ selectedSourceId если источник уже выбран
+          // Только устанавливаем если ничего не выбрано
+          if (!selectedSourceId) {
+            setSelectedSourceId(uniqueSource.id);
+          }
           
           // Добавляем уникальный источник в selectedSourcesForComments
           setSelectedSourcesForComments(prev => {
@@ -318,7 +319,9 @@ export default function Trends() {
           });
         } else {
           // Fallback к оригинальной логике
-          setSelectedSourceId(sourceId);
+          if (!selectedSourceId) {
+            setSelectedSourceId(sourceId);
+          }
           setSelectedSourcesForComments(prev => {
             const newSet = new Set(prev);
             newSet.add(sourceId);
