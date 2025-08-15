@@ -294,6 +294,7 @@ export default function Trends() {
     if (sourceId) {
       // Находим источник по ID (может быть дубликат)
       const trendSource = sources.find(s => s.id === sourceId);
+      let targetSourceId = sourceId; // По умолчанию используем исходный ID
       
       if (trendSource) {
         // Получаем список уникальных источников (такой же как в UI)
@@ -305,6 +306,8 @@ export default function Trends() {
         const uniqueSource = uniqueSources.find(s => s.url === trendSource.url);
         
         if (uniqueSource) {
+          targetSourceId = uniqueSource.id; // Используем ID уникального источника
+          
           // НЕ ИЗМЕНЯЕМ selectedSourceId если источник уже выбран
           // Только устанавливаем если ничего не выбрано
           if (!selectedSourceId) {
@@ -341,8 +344,7 @@ export default function Trends() {
       }
       
       // НЕ ВЫПОЛНЯЕМ скролл и выделение, если источник уже выбран
-      const currentSelectedSource = uniqueSource?.id || sourceId;
-      const needsScrollAndHighlight = !selectedSourceId || selectedSourceId !== currentSelectedSource;
+      const needsScrollAndHighlight = !selectedSourceId || selectedSourceId !== targetSourceId;
       
       // Проверяем, есть ли источник в списке загруженных источников
       const sourceExists = sources.find(s => s.id === sourceId);
