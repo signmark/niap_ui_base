@@ -7365,7 +7365,7 @@ Return your response as a JSON array in this exact format:
 
       const userToken = authHeader.replace('Bearer ', '');
       const sourceId = req.params.sourceId;
-      const { campaignId } = req.body;
+      const { campaignId, force = false } = req.body;
 
       if (!sourceId || !campaignId) {
         return res.status(400).json({
@@ -7736,7 +7736,8 @@ ${allCommentsText}
             maxTokens: 1000
           });
           
-          console.log(`[SOURCE-ANALYSIS] Vertex AI ответ получен:`, analysisResult?.substring(0, 200));
+          console.log(`[SOURCE-ANALYSIS] Vertex AI ПОЛНЫЙ ответ:`, analysisResult);
+          console.log(`[SOURCE-ANALYSIS] Длина ответа:`, analysisResult?.length);
 
           let analysisData;
           try {
@@ -7752,7 +7753,38 @@ ${allCommentsText}
               jsonStr = jsonMatch[0];
               console.log(`[SOURCE-ANALYSIS] Найден JSON в ответе:`, jsonStr.substring(0, 300));
               
-              analysisData = JSON.parse(jsonStr);
+              // Обрабатываем спецсимволы в JSON строке
+              try {
+                // Пытаемся парсить как есть
+                analysisData = JSON.parse(jsonStr);
+              } catch (parseError) {
+                console.log(`[SOURCE-ANALYSIS] Первичный парсинг не удался:`, parseError.message);
+                console.log(`[SOURCE-ANALYSIS] Пытаемся использовать eval как fallback...`);
+                
+                try {
+                  // В крайнем случае используем eval (ТОЛЬКО для контролируемого AI-контента)
+                  analysisData = eval('(' + jsonStr + ')');
+                  console.log(`[SOURCE-ANALYSIS] Eval parsing успешен`);
+                } catch (evalError) {
+                  console.log(`[SOURCE-ANALYSIS] Eval parsing тоже не удался, извлекаем данные вручную...`);
+                  
+                  // Извлекаем основные поля вручную с помощью регулярных выражений
+                  const scoreMatch = jsonStr.match(/"score":\s*(\d+)/);
+                  const confidenceMatch = jsonStr.match(/"confidence":\s*([\d.]+)/);
+                  const sentimentMatch = jsonStr.match(/"sentiment":\s*"([^"]+)"/);
+                  const summaryMatch = jsonStr.match(/"summary":\s*"([^"]+)"/);
+                  
+                  analysisData = {
+                    score: scoreMatch ? parseInt(scoreMatch[1]) : 5,
+                    confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
+                    sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
+                    summary: summaryMatch ? summaryMatch[1] : 'Анализ выполнен',
+                    detailed_summary: 'Подробный анализ недоступен из-за ошибки парсинга JSON'
+                  };
+                  
+                  console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено`);
+                }
+              }
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;

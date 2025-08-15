@@ -1,0 +1,42 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:1257 Fetched trends data: Object
+client:536 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/?token=bu25FeT9BJGf' failed: 
+setupWebSocket @ client:536
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=bu25FeT9BJGf' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+ WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ src/hooks/use-websocket.ts:9
+index.tsx:1257 Fetched trends data: Object
+index.tsx:3025 Результат анализа настроения (JSON): {
+  "success": true,
+  "data": {
+    "sentiment": "positive",
+    "confidence": 90,
+    "details": {
+      "positive": 71.4,
+      "negative": 0,
+      "neutral": 28.6
+    },
+    "summary": "Общее настроение комментариев преимущественно позитивное и юмористическое. Многие комментарии содержат шутки или ироничные высказывания на тему похудения без усилий, а также общие позитивные утверждения. Несколько комментариев являются нейтральными, задавая вопросы или делая ироничные замечания. Отрицательных комментариев нет."
+  },
+  "commentsAnalyzed": 7
+}
+index.tsx:3032 ✅ Анализ настроения завершен, данные обновлены локально
+index.tsx:1257 Fetched trends data: Object
+index.tsx:1257 Fetched trends data: Object
+index.tsx:1708 Результат анализа источника: Object
+index.tsx:1257 Fetched trends data: Object
+index.tsx:1257 Fetched trends data: Object
+api/sources/0dae9029-e9a8-4509-a173-0bd4f6284960/analyze:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+index.tsx:1720 Backend анализ не сработал, выполняем клиентский пересчет...
+api/sources/0dae9029-e9a8-4509-a173-0bd4f6284960:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+index.tsx:1814 Ошибка анализа источника: Error: Не удалось сохранить анализ источника
+    at recalculateSourceSentiment (index.tsx:1811:15)
+recalculateSourceSentiment @ index.tsx:1814
+index.tsx:1257 Fetched trends data: Object
+index.tsx:1708 Результат анализа источника: Object
+index.tsx:1257 Fetched trends data: Object
+index.tsx:1257 Fetched trends data: {success: true, data: Array(36)}
