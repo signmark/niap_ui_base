@@ -340,11 +340,15 @@ export default function Trends() {
         setActiveTab('trends');
       }
       
+      // НЕ ВЫПОЛНЯЕМ скролл и выделение, если источник уже выбран
+      const currentSelectedSource = uniqueSource?.id || sourceId;
+      const needsScrollAndHighlight = !selectedSourceId || selectedSourceId !== currentSelectedSource;
+      
       // Проверяем, есть ли источник в списке загруженных источников
       const sourceExists = sources.find(s => s.id === sourceId);
       
-      if (sourceExists) {
-        // Пытаемся найти элемент источника
+      if (sourceExists && needsScrollAndHighlight) {
+        // Пытаемся найти элемент источника только если нужен скролл
         setTimeout(() => {
           const sourceElement = sourcesRefs.current[sourceId];
           const fallbackElement = document.querySelector(`[data-source-id="${sourceId}"]`);
