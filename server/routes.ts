@@ -7704,13 +7704,13 @@ Return your response as a JSON array in this exact format:
         console.log(`[SOURCE-ANALYSIS] Анализируем ${allCommentsTexts.length} комментариев через AI для источника ${sourceId}`);
         
         // Объединяем все комментарии для общего анализа
-        const allCommentsText = allCommentsTexts.slice(0, 500).join('\n'); // Берем первые 500 комментариев
+        const allCommentsText = allCommentsTexts.join('\n'); // Берем ВСЕ комментарии
         
         try {
           const analysisPrompt = `Проанализируй общую тональность всех комментариев к источнику контента и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
 
 Все комментарии к источнику:
-${allCommentsText.substring(0, 8000)}
+${allCommentsText}
 
 Ответь в JSON формате:
 {
@@ -9213,7 +9213,7 @@ ${allCommentsText.substring(0, 8000)}
         const response = await directusApi.get('/items/post_comment', {
           params: {
             'filter[trent_post_id][_eq]': trendId,
-            'limit': 50, // Анализируем первые 50 комментариев
+            'limit': -1, // Анализируем ВСЕ комментарии
             'fields': ['text', 'platform']
           },
           headers: {
@@ -14542,7 +14542,7 @@ ${siteContent}
                   trend_post_id: { _eq: trend.trend_post_id }
                 },
                 fields: ['comment_text', 'sentiment_score'],
-                limit: 50 // Ограничиваем количество комментариев для анализа
+                limit: -1 // Получаем все комментарии для анализа
               },
               headers: {
                 Authorization: `Bearer ${systemToken}`
