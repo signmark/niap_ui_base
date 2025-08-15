@@ -7726,8 +7726,8 @@ Return your response as a JSON array in this exact format:
         // Объединяем комментарии для анализа с дополнительным ограничением по длине
         let allCommentsText = commentsForAnalysis.join('\n');
         
-        // Дополнительное ограничение по длине текста (примерно 15000 символов = ~3000 токенов)
-        const MAX_TEXT_LENGTH = 15000;
+        // Дополнительное ограничение по длине текста (примерно 8000 символов = ~2000 токенов)
+        const MAX_TEXT_LENGTH = 8000;
         if (allCommentsText.length > MAX_TEXT_LENGTH) {
           allCommentsText = allCommentsText.substring(0, MAX_TEXT_LENGTH) + '...';
           console.log(`[SOURCE-ANALYSIS] Текст комментариев обрезан до ${MAX_TEXT_LENGTH} символов для предотвращения превышения лимита токенов`);
@@ -7763,7 +7763,7 @@ ${allCommentsText}
             prompt: analysisPrompt,
             model: 'gemini-2.5-flash',
             temperature: 0.2,
-            maxTokens: 1000
+            maxTokens: 2000
           });
           
           console.log(`[SOURCE-ANALYSIS] Vertex AI ПОЛНЫЙ ответ:`, analysisResult);
@@ -7999,6 +7999,23 @@ ${allCommentsText}
         return summary;
       };
 
+      // Создаем fallback детальный анализ когда AI недоступен
+      const createFallbackDetailedSummary = () => {
+        const sentimentText = overallSentiment === 'positive' ? 'положительное' : 
+                             overallSentiment === 'negative' ? 'негативное' : 'нейтральное';
+        
+        const avgCommentsPerTrend = trends.length > 0 ? Math.round(actualCommentsCount / trends.length) : 0;
+        const activityLevel = avgCommentsPerTrend > 50 ? 'высокая' :
+                             avgCommentsPerTrend > 10 ? 'средняя' : 'низкая';
+        
+        return `**Характеристики аудитории:** Проанализированы комментарии к ${trends.length} трендам источника. ` +
+               `Общее количество комментариев: ${actualCommentsCount}. ` +
+               `**Поведение и вовлеченность:** ${activityLevel} активность комментирования (${avgCommentsPerTrend} комментариев в среднем на пост). ` +
+               `**Настроение:** Преобладающее настроение аудитории ${sentimentText} (оценка ${overallScore}/10). ` +
+               `**Общие тенденции:** Анализ выполнен автоматически на основе ключевых слов и паттернов. ` +
+               `Для получения детального AI-анализа рекомендуется повторить операцию при меньшем объеме комментариев.`;
+      };
+
       // 6. Получаем проценты настроений
       const sentimentPercentages = calculateSentimentPercentages();
 
@@ -8012,7 +8029,7 @@ ${allCommentsText}
         commentsAnalyzed: actualCommentsCount,
         analysisMethod: analysisSuccess ? (overallConfidence > 0.5 ? 'AI' : 'keywords') : 'basic',
         summary: analysisSuccess ? createDetailedSummary() : `Источник содержит ${trends.length} трендов, но анализ комментариев не удался`,
-        detailed_summary: detailedSummary || (analysisSuccess ? aiSummary : ''),
+        detailed_summary: detailedSummary || (analysisSuccess ? aiSummary : createFallbackDetailedSummary()),
         ai_summary: aiSummary,
         ...sentimentPercentages // Добавляем проценты настроений
       };
