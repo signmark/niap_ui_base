@@ -78,11 +78,24 @@ function renderMarkdownText(text: string | any) {
   if (!text) return null;
   
   // Обрабатываем разные типы данных
-  let stringText: string;
+  let stringText: string = '';
+  let analysisObject: any = null;
+  
   if (typeof text === 'string') {
-    stringText = text;
+    // Пытаемся парсить JSON строку
+    try {
+      analysisObject = JSON.parse(text);
+    } catch (e) {
+      stringText = text;
+    }
   } else if (typeof text === 'object' && text !== null) {
-    // Если это объект анализа, собираем структурированное описание
+    analysisObject = text;
+  } else {
+    stringText = String(text);
+  }
+  
+  // Если у нас есть объект анализа, обрабатываем его
+  if (analysisObject) {
     const analysisFields = {
       'характеристики_аудитории': 'Характеристики аудитории',
       'поведение_и_вовлеченность': 'Поведение и вовлеченность', 
@@ -94,22 +107,20 @@ function renderMarkdownText(text: string | any) {
     
     const parts = [];
     for (const [key, title] of Object.entries(analysisFields)) {
-      if (text[key]) {
-        parts.push(`**${title}:**\n${text[key]}`);
+      if (analysisObject[key]) {
+        parts.push(`**${title}:**\n${analysisObject[key]}`);
       }
     }
     
     if (parts.length > 0) {
       stringText = parts.join('\n\n');
-    } else if (text.detailed_summary) {
-      stringText = text.detailed_summary;
-    } else if (text.summary) {
-      stringText = text.summary;
+    } else if (analysisObject.detailed_summary) {
+      stringText = analysisObject.detailed_summary;
+    } else if (analysisObject.summary) {
+      stringText = analysisObject.summary;
     } else {
       stringText = 'Данные анализа недоступны в читаемом формате';
     }
-  } else {
-    stringText = String(text);
   }
   
   // Если получился [object Object], возвращаем простое сообщение

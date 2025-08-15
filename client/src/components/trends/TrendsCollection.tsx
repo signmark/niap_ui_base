@@ -118,6 +118,11 @@ export function TrendsCollection({ campaignId, selectedSourcesForComments }: Tre
     }
   }, [collectTrendsMutation.isPending, showTips, campaignId, queryClient]);
 
+  // Скрываем кнопку если ни один источник не выбран
+  if (selectedSourcesForComments.size === 0) {
+    return null;
+  }
+
   return (
     <div className="flex gap-2 mb-4">
       <Button
