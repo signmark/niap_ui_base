@@ -7729,7 +7729,7 @@ ${allCommentsText}
   "confidence": число от 0 до 1,
   "sentiment": "positive" | "negative" | "neutral",
   "summary": "краткое описание общей тональности комментариев к источнику",
-  "detailed_summary": "подробное описание аудитории источника в красиво отформатированном тексте. ОБЯЗАТЕЛЬНО используй следующий формат:\n\n**Характеристика аудитории:**\nОписание аудитории с переносами строк для читабельности.\n\n**Популярные темы обсуждений:**\n1. **Первая тема**: описание\n2. **Вторая тема**: описание\n\n**Уровень вовлеченности:**\nОписание активности аудитории.\n\n**AI анализ:**\nОбщая тональность и выводы.\n\nИспользуй жирный текст (**текст**) для выделения ключевых моментов и разделов. Добавляй переносы строк для лучшей читабельности."
+  "detailed_summary": "подробное описание аудитории источника. ВАЖНО: НЕ используй реальные переносы строк \\n в JSON! Используй специальные маркеры [BR] вместо переносов строк для форматирования. Формат: **Характеристика аудитории:**[BR]Описание аудитории.[BR][BR]**Популярные темы обсуждений:**[BR]1. **Первая тема**: описание[BR]2. **Вторая тема**: описание[BR][BR]**Уровень вовлеченности:**[BR]Описание активности.[BR][BR]**AI анализ:**[BR]Общая тональность и выводы. Используй [BR] вместо настоящих переносов строк!"
 }`;
 
           console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${commentsForAnalysis.length} комментариев (текст: ${allCommentsText.length} символов)`);
@@ -7819,7 +7819,8 @@ ${allCommentsText}
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
-              detailedSummary = analysisData.detailed_summary || '';
+              // Заменяем маркеры [BR] на реальные переносы строк
+              detailedSummary = (analysisData.detailed_summary || '').replace(/\[BR\]/g, '\n');
               aiSummary = analysisData.summary || '';
               analysisSuccess = true;
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
