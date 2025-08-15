@@ -7818,24 +7818,35 @@ ${allCommentsText}
                   });
                 } catch (parseError) {
                 console.log(`[SOURCE-ANALYSIS] Первичный парсинг не удался:`, parseError.message);
-                console.log(`[SOURCE-ANALYSIS] Пытаемся использовать eval как fallback...`);
+                console.log(`[SOURCE-ANALYSIS] Пытаемся исправить JSON и повторно парсить...`);
                 
                 try {
-                  // Попробуем исправить JSON более аккуратно
-                  let fixedJsonStr = jsonStr
-                    // Экранируем неэкранированные переносы строк в строковых значениях
-                    .replace(/("detailed_summary":\s*"[^"]*?)(\n)([^"]*?")/g, '$1\\n$3')
-                    .replace(/("summary":\s*"[^"]*?)(\n)([^"]*?")/g, '$1\\n$3')
-                    // Экранируем неэкранированные кавычки в строковых значениях
-                    .replace(/(?<!\\)"/g, '\\"')
-                    // Восстанавливаем структурные кавычки JSON
-                    .replace(/\\"(score|confidence|sentiment|summary|detailed_summary)\\":/g, '"$1":')
-                    .replace(/:\s*\\"([^"]+)\\",/g, ': "$1",')
-                    .replace(/:\s*\\"([^"]+)\\"}/g, ': "$1"}');
+                  // Улучшенная очистка JSON для nested объектов с экранированием спецсимволов
+                  let fixedJsonStr = jsonStr;
+                  
+                  // Находим все строковые значения и правильно их экранируем
+                  fixedJsonStr = fixedJsonStr.replace(/"([^"]*(?:\\.[^"]*)*)"/g, (match, content) => {
+                    // Пропускаем ключи JSON (score, confidence, etc.)
+                    if (['score', 'confidence', 'sentiment', 'summary', 'detailed_summary', 
+                         'характеристики_аудитории', 'поведение_и_вовлеченность', 'популярные_темы', 
+                         'настроение', 'экспертность', 'общие_тенденции', 'описание', 'примеры'].includes(content)) {
+                      return match;
+                    }
+                    
+                    // Экранируем спецсимволы в значениях
+                    const escapedContent = content
+                      .replace(/\\/g, '\\\\')    // Экранируем обратные слеши
+                      .replace(/"/g, '\\"')      // Экранируем кавычки
+                      .replace(/\n/g, '\\n')     // Экранируем переносы строк
+                      .replace(/\r/g, '\\r')     // Экранируем возвраты каретки
+                      .replace(/\t/g, '\\t');    // Экранируем табуляции
+                    
+                    return `"${escapedContent}"`;
+                  });
                     
                   console.log(`[SOURCE-ANALYSIS] Попытка исправленного парсинга JSON...`);
                   analysisData = JSON.parse(fixedJsonStr);
-                  console.log(`[SOURCE-ANALYSIS] Исправленный JSON parsing успешен`);
+                  console.log(`[SOURCE-ANALYSIS] Исправленный JSON parsing успешен! Extracted keys:`, Object.keys(analysisData));
                 } catch (fixedParseError) {
                   console.log(`[SOURCE-ANALYSIS] Исправленный парсинг не удался, используем eval...`);
                   try {
