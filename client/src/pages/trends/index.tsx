@@ -82,19 +82,31 @@ function renderMarkdownText(text: string | any) {
   if (typeof text === 'string') {
     stringText = text;
   } else if (typeof text === 'object' && text !== null) {
-    // Если это объект, проверяем есть ли в нем полезные поля
-    if (text.detailed_summary) {
+    // Если это объект анализа, собираем структурированное описание
+    const analysisFields = {
+      'характеристики_аудитории': 'Характеристики аудитории',
+      'поведение_и_вовлеченность': 'Поведение и вовлеченность', 
+      'популярные_темы': 'Популярные темы',
+      'настроение': 'Настроение',
+      'экспертность': 'Экспертность',
+      'общие_тенденции': 'Общие тенденции'
+    };
+    
+    const parts = [];
+    for (const [key, title] of Object.entries(analysisFields)) {
+      if (text[key]) {
+        parts.push(`**${title}:**\n${text[key]}`);
+      }
+    }
+    
+    if (parts.length > 0) {
+      stringText = parts.join('\n\n');
+    } else if (text.detailed_summary) {
       stringText = text.detailed_summary;
     } else if (text.summary) {
       stringText = text.summary;
     } else {
-      // Показываем структуру объекта в читаемом виде
-      const keys = Object.keys(text);
-      if (keys.length > 0) {
-        stringText = `Доступные данные: ${keys.join(', ')}`;
-      } else {
-        stringText = 'Объект без данных';
-      }
+      stringText = 'Данные анализа недоступны в читаемом формате';
     }
   } else {
     stringText = String(text);
@@ -2981,7 +2993,6 @@ export default function Trends() {
                             {(sourceAnalysis as any).detailed_summary && (
                               <div className="mb-3 p-3 bg-purple-50 rounded border-l-4 border-purple-400">
                                 <div className="text-purple-700 text-sm">
-                                  {console.log('DEBUG detailed_summary:', typeof (sourceAnalysis as any).detailed_summary, (sourceAnalysis as any).detailed_summary)}
                                   {renderMarkdownText((sourceAnalysis as any).detailed_summary)}
                                 </div>
                               </div>
