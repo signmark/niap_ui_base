@@ -7723,13 +7723,13 @@ Return your response as a JSON array in this exact format:
 Все комментарии к источнику:
 ${allCommentsText}
 
-Ответь в JSON формате:
+Ответь строго в JSON формате без лишнего текста:
 {
-  "score": число от 1 до 10,
-  "confidence": число от 0 до 1,
-  "sentiment": "positive" | "negative" | "neutral",
-  "summary": "краткое описание общей тональности комментариев к источнику",
-  "detailed_summary": "подробное описание аудитории источника. ВАЖНО: НЕ используй реальные переносы строк \\n в JSON! Используй специальные маркеры [BR] вместо переносов строк для форматирования. Формат: **Характеристика аудитории:**[BR]Описание аудитории.[BR][BR]**Популярные темы обсуждений:**[BR]1. **Первая тема**: описание[BR]2. **Вторая тема**: описание[BR][BR]**Уровень вовлеченности:**[BR]Описание активности.[BR][BR]**AI анализ:**[BR]Общая тональность и выводы. Используй [BR] вместо настоящих переносов строк!"
+  "score": число_от_1_до_10,
+  "confidence": число_от_0_до_1,
+  "sentiment": "positive_или_negative_или_neutral",
+  "summary": "краткое_описание_тональности",
+  "detailed_summary": "подробное_описание_аудитории_в_одну_строку_без_переносов"
 }`;
 
           console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${commentsForAnalysis.length} комментариев (текст: ${allCommentsText.length} символов)`);
@@ -7749,6 +7749,11 @@ ${allCommentsText}
           
           console.log(`[SOURCE-ANALYSIS] Vertex AI ПОЛНЫЙ ответ:`, analysisResult);
           console.log(`[SOURCE-ANALYSIS] Длина ответа:`, analysisResult?.length);
+          
+          // Проверяем, что ответ не пустой
+          if (!analysisResult || analysisResult.trim().length === 0) {
+            throw new Error('Пустой ответ от Vertex AI');
+          }
 
           let analysisData;
           try {
@@ -7819,8 +7824,7 @@ ${allCommentsText}
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
-              // Заменяем маркеры [BR] на реальные переносы строк
-              detailedSummary = (analysisData.detailed_summary || '').replace(/\[BR\]/g, '\n');
+              detailedSummary = analysisData.detailed_summary || '';
               aiSummary = analysisData.summary || '';
               analysisSuccess = true;
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
