@@ -9102,7 +9102,7 @@ ${allCommentsText.substring(0, 8000)}
           params: {
             'filter[trent_post_id][_eq]': trendId,
             'sort[]': ['-date'],
-            'limit': 100,
+            'limit': -1,
             'fields': ['id', 'trent_post_id', 'text', 'author', 'date', 'comment_id', 'platform']
           },
           headers: {
@@ -9405,7 +9405,7 @@ ${commentTexts}`;
         const response = await directusApi.get('/items/post_comment', {
           params: {
             'filter[trent_post_id][_eq]': trendId,
-            'limit': 1000,
+            'limit': -1,
             'fields': ['id', 'text', 'platform', 'author', 'date']
           },
           headers: {
