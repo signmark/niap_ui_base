@@ -7774,38 +7774,49 @@ ${allCommentsText}
             throw new Error('Пустой ответ от Vertex AI');
           }
           
-          // Дополнительная очистка ответа для продакшена
-          let cleanedResult = analysisResult
-            .replace(/^[^{]*/, '') // Убираем все до первой {
-            .replace(/[^}]*$/, '') // Убираем все после последней }
-            .trim();
-          
-          console.log(`[SOURCE-ANALYSIS] Очищенный ответ для парсинга:`, cleanedResult.substring(0, 200));
+          console.log(`[SOURCE-ANALYSIS] Исходный ответ для парсинга:`, analysisResult.substring(0, 500));
 
           let analysisData;
           try {
-            // Пытаемся извлечь JSON из ответа - поддерживаем разные форматы
+            // Улучшенная логика извлечения JSON для nested объектов
             let jsonStr = '';
             
-            // Удаляем markdown разметку если есть  
-            let cleanResult = cleanedResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Удаляем markdown разметку  
+            let cleanResult = analysisResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            console.log(`[SOURCE-ANALYSIS] После удаления markdown:`, cleanResult.substring(0, 200));
             
-            // Если очищенный результат пустой, пробуем исходный
-            if (!cleanResult || cleanResult.length === 0) {
-              cleanResult = analysisResult.replace(/```json/g, '').replace(/```/g, '').trim();
-            }
-            
-            // Ищем JSON объект
-            const jsonMatch = cleanResult.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              jsonStr = jsonMatch[0];
-              console.log(`[SOURCE-ANALYSIS] Найден JSON в ответе:`, jsonStr.substring(0, 300));
+            // Ищем JSON объект с правильным балансом скобок
+            const startIndex = cleanResult.indexOf('{');
+            if (startIndex !== -1) {
+              let braceCount = 0;
+              let endIndex = startIndex;
               
-              // Обрабатываем спецсимволы в JSON строке
-              try {
-                // Пытаемся парсить как есть
-                analysisData = JSON.parse(jsonStr);
-              } catch (parseError) {
+              for (let i = startIndex; i < cleanResult.length; i++) {
+                if (cleanResult[i] === '{') braceCount++;
+                if (cleanResult[i] === '}') braceCount--;
+                
+                if (braceCount === 0) {
+                  endIndex = i;
+                  break;
+                }
+              }
+              
+              if (braceCount === 0) {
+                jsonStr = cleanResult.substring(startIndex, endIndex + 1);
+                console.log(`[SOURCE-ANALYSIS] Найден сбалансированный JSON (${jsonStr.length} символов):`, jsonStr.substring(0, 300));
+                
+                // Пытаемся парсить JSON с обработкой nested объектов
+                try {
+                  analysisData = JSON.parse(jsonStr);
+                  console.log(`[SOURCE-ANALYSIS] JSON успешно распарсен:`, {
+                    score: analysisData.score,
+                    sentiment: analysisData.sentiment,
+                    confidence: analysisData.confidence,
+                    hasSummary: !!analysisData.summary,
+                    hasDetailedSummary: !!analysisData.detailed_summary,
+                    detailedSummaryType: typeof analysisData.detailed_summary
+                  });
+                } catch (parseError) {
                 console.log(`[SOURCE-ANALYSIS] Первичный парсинг не удался:`, parseError.message);
                 console.log(`[SOURCE-ANALYSIS] Пытаемся использовать eval как fallback...`);
                 
@@ -7869,7 +7880,12 @@ ${allCommentsText}
                   }
                 }
               }
-              overallScore = analysisData.score || 5;
+            } else {
+              throw new Error('JSON не найден в ответе');
+            }
+            
+            // Обработка результата анализа
+            overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
               // Правильно сериализуем detailed_summary - если это объект, превращаем в JSON строку
