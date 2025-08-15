@@ -7726,29 +7726,26 @@ Return your response as a JSON array in this exact format:
         // Объединяем комментарии для анализа с дополнительным ограничением по длине
         let allCommentsText = commentsForAnalysis.join('\n');
         
-        // Дополнительное ограничение по длине текста (примерно 8000 символов = ~2000 токенов)
-        const MAX_TEXT_LENGTH = 8000;
+        // Дополнительное ограничение по длине текста (примерно 5000 символов = ~1250 токенов)
+        const MAX_TEXT_LENGTH = 5000;
         if (allCommentsText.length > MAX_TEXT_LENGTH) {
           allCommentsText = allCommentsText.substring(0, MAX_TEXT_LENGTH) + '...';
           console.log(`[SOURCE-ANALYSIS] Текст комментариев обрезан до ${MAX_TEXT_LENGTH} символов для предотвращения превышения лимита токенов`);
         }
         
         try {
-          const analysisPrompt = `Проанализируй общую тональность всех комментариев к источнику контента и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
+          const analysisPrompt = `Анализ тональности комментариев:
 
-Все комментарии к источнику:
 ${allCommentsText}
 
-Проведи детальный анализ аудитории по 6 аспектам: характеристики аудитории, поведение и вовлеченность, популярные темы, настроение, экспертность, общие тенденции. Включи конкретные примеры.
-
-ВАЖНО: Отвечай только JSON без дополнительного текста!
+Оцени от 1-10 и дай JSON:
 
 {
-  "score": число_от_1_до_10,
-  "confidence": число_от_0_до_1,
-  "sentiment": "positive",
-  "summary": "краткое описание тональности",
-  "detailed_summary": "подробный анализ аудитории включающий все 6 аспектов с примерами"
+  "score": число,
+  "confidence": 0.8,
+  "sentiment": "positive/negative/neutral",
+  "summary": "краткое описание",
+  "detailed_summary": "анализ аудитории: характеристики, поведение, темы, настроение"
 }`;
 
           console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${commentsForAnalysis.length} комментариев (текст: ${allCommentsText.length} символов)`);
@@ -7763,7 +7760,7 @@ ${allCommentsText}
             prompt: analysisPrompt,
             model: 'gemini-2.5-flash',
             temperature: 0.2,
-            maxTokens: 2000
+            maxTokens: 3000
           });
           
           console.log(`[SOURCE-ANALYSIS] Vertex AI ПОЛНЫЙ ответ:`, analysisResult);
