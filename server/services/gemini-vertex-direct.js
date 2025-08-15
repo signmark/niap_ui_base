@@ -69,34 +69,25 @@ ${text}
 
 Верни только улучшенный текст без дополнительных комментариев.`;
 
-      const requestBody = {
-        instances: [
-          {
-            messages: [
-              {
-                role: "user",
-                content: enhancementPrompt
-              }
-            ]
-          }
-        ],
-        parameters: {
-          temperature: 0.7,
-          maxOutputTokens: 8192,
-          topK: 40,
-          topP: 0.95
-        }
-      };
-
+      // Используем новый generateContent endpoint
       const response = await fetch(
-        `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:predict`,
+        `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            contents: [{
+              role: "user",
+              parts: [{text: enhancementPrompt}]
+            }],
+            generationConfig: {
+              maxOutputTokens: 8192,
+              temperature: 0.7
+            }
+          })
         }
       );
 
@@ -107,17 +98,19 @@ ${text}
 
       const data = await response.json();
       
-      if (!data.predictions || data.predictions.length === 0) {
+      if (!data.candidates || data.candidates.length === 0) {
         throw new Error('Нет ответа от Vertex AI API');
       }
 
-      const prediction = data.predictions[0];
+      const candidate = data.candidates[0];
       let improvedText = '';
 
-      if (prediction.content) {
-        improvedText = prediction.content;
-      } else if (prediction.candidates && prediction.candidates[0] && prediction.candidates[0].content) {
-        improvedText = prediction.candidates[0].content;
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+        improvedText = candidate.content.parts[0].text;
+      } else if (candidate.content && candidate.content.text) {
+        improvedText = candidate.content.text;
+      } else if (candidate.text) {
+        improvedText = candidate.text;
       } else {
         throw new Error('Неожиданная структура ответа от Vertex AI API');
       }
@@ -161,15 +154,25 @@ ${text}
         }
       };
 
+      // Используем новый generateContent endpoint
       const response = await fetch(
-        `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:predict`,
+        `https://${this.location}-aiplatform.googleapis.com/v1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({
+            contents: [{
+              role: "user",
+              parts: [{text: prompt}]
+            }],
+            generationConfig: {
+              maxOutputTokens: 8192,
+              temperature: 0.1
+            }
+          })
         }
       );
 
@@ -180,30 +183,24 @@ ${text}
 
       const data = await response.json();
       
-      if (!data.predictions || data.predictions.length === 0) {
+      if (!data.candidates || data.candidates.length === 0) {
         throw new Error('Нет ответа от Vertex AI API');
       }
 
       console.log('[gemini-vertex-direct] Полная структура ответа:', JSON.stringify(data, null, 2).substring(0, 1000));
       
-      const prediction = data.predictions[0];
+      const candidate = data.candidates[0];
       let generatedText = '';
 
-      if (prediction.content) {
-        generatedText = prediction.content;
-      } else if (prediction.candidates && prediction.candidates[0]) {
-        const candidate = prediction.candidates[0];
-        if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
-          generatedText = candidate.content.parts[0].text;
-        } else if (candidate.content) {
-          generatedText = candidate.content;
-        } else {
-          console.log('[gemini-vertex-direct] Проблема с кандидатом:', JSON.stringify(candidate, null, 2));
-          throw new Error('Неполная структура ответа от Vertex AI API - нет текста в кандидате');
-        }
+      if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
+        generatedText = candidate.content.parts[0].text;
+      } else if (candidate.content && candidate.content.text) {
+        generatedText = candidate.content.text;
+      } else if (candidate.text) {
+        generatedText = candidate.text;
       } else {
-        console.log('[gemini-vertex-direct] Неожиданная структура prediction:', JSON.stringify(prediction, null, 2));
-        throw new Error('Неожиданная структура ответа от Vertex AI API');
+        console.log('[gemini-vertex-direct] Проблема с кандидатом:', JSON.stringify(candidate, null, 2));
+        throw new Error('Неполная структура ответа от Vertex AI API - нет текста в кандидате');
       }
 
       console.log('[gemini-vertex-direct] Текст успешно сгенерирован');
