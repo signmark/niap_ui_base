@@ -9262,24 +9262,17 @@ ${allCommentsText}
 Комментарии для анализа:
 ${commentTexts}`;
 
-        // Используем gemini-proxy с Vertex AI (модель 2.5 автоматически направляется на Vertex AI)
+        // ПРЯМОЙ ВЫЗОВ VERTEX AI для анализа настроения (как в анализе источника)
         let result;
         try {
-          // Получаем глобальный Gemini ключ (для API ключа)
-          let geminiKey = 'dummy'; // Для Vertex AI API ключ не нужен, используется Service Account
-          try {
-            const globalKeys = await globalApiKeysService.getGlobalApiKeys();
-            geminiKey = globalKeys.gemini || globalKeys.GEMINI_API_KEY || 'vertex-ai-service-account';
-          } catch (keyError) {
-            console.log(`[POST /api/trend-sentiment] Используем Service Account для Vertex AI`);
-          }
-
-          const geminiProxyServiceInstance = new GeminiProxyService({ apiKey: geminiKey });
-          result = await geminiProxyServiceInstance.generateText({
+          console.log(`[POST /api/trend-sentiment] Используем прямой Vertex AI для анализа настроений`);
+          
+          const { geminiVertexDirect } = await import('./services/gemini-vertex-direct.js');
+          result = await geminiVertexDirect.generateContent({
             prompt: analysisPrompt,
-            model: 'gemini-2.5-flash', // Эта модель автоматически направляется на Vertex AI
+            model: 'gemini-2.5-flash',
             temperature: 0.2,
-            maxOutputTokens: 800
+            maxTokens: 800
           });
         } catch (geminiError) {
           console.error(`[POST /api/trend-sentiment] ❌ Ошибка Gemini API:`, geminiError.message);

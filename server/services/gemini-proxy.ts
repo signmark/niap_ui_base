@@ -376,7 +376,9 @@ export class GeminiProxyService {
         return resultText;
       }
       
-      throw new Error('Неожиданный формат ответа от Gemini API');
+      // Добавим детальное логирование структуры ответа для отладки
+      logger.log(`[gemini-proxy] Неожиданная структура ответа от API:`, JSON.stringify(response, null, 2), 'gemini');
+      throw new Error(`Неожиданный формат ответа от Gemini API ${model}`);
     } catch (error) {
       logger.error(`[gemini-proxy] Ошибка при генерации текста: ${(error as Error).message}`, 'gemini');
       throw error;
