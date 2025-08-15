@@ -7839,17 +7839,33 @@ ${allCommentsText}
                     const confidenceMatch = jsonStr.match(/"confidence":\s*([\d.]+)/);
                     const sentimentMatch = jsonStr.match(/"sentiment":\s*"([^"]+)"/);
                     const summaryMatch = jsonStr.match(/"summary":\s*"([^"]*?)"/);
-                    const detailedSummaryMatch = jsonStr.match(/"detailed_summary":\s*"([\s\S]*?)"\s*}/);
+                    
+                    // Улучшенный regex для detailed_summary - ищем до последней кавычки перед концом
+                    let detailedSummaryText = 'Подробный анализ частично недоступен';
+                    const detailedSummaryStartMatch = jsonStr.match(/"detailed_summary":\s*"/);
+                    if (detailedSummaryStartMatch) {
+                      const startIndex = detailedSummaryStartMatch.index + detailedSummaryStartMatch[0].length;
+                      // Ищем последнюю кавычку перед закрывающей скобкой JSON
+                      const remaining = jsonStr.substring(startIndex);
+                      const endMatch = remaining.match(/^([\s\S]*?)"\s*}?\s*$/);
+                      if (endMatch) {
+                        detailedSummaryText = endMatch[1]
+                          .replace(/\\n/g, '\n')
+                          .replace(/\\"/g, '"')
+                          .replace(/\\\\/g, '\\');
+                      }
+                    }
                     
                     analysisData = {
                       score: scoreMatch ? parseInt(scoreMatch[1]) : 5,
                       confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
                       sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
                       summary: summaryMatch ? String(summaryMatch[1]) : 'Анализ выполнен',
-                      detailed_summary: detailedSummaryMatch ? detailedSummaryMatch[1].replace(/\\n/g, '\n') : 'Подробный анализ частично недоступен'
+                      detailed_summary: detailedSummaryText
                     };
                     
-                    console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено, detailed_summary получен: ${analysisData.detailed_summary ? 'ДА' : 'НЕТ'}`);
+                    console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено, detailed_summary получен: ${detailedSummaryText !== 'Подробный анализ частично недоступен' ? 'ДА' : 'НЕТ'}`);
+                    console.log(`[SOURCE-ANALYSIS] Detailed summary длина: ${detailedSummaryText.length} символов`);
                   }
                 }
               }
