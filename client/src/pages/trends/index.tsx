@@ -74,11 +74,39 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useCampaignStore } from "@/lib/campaignStore";
 
 // Функция для рендеринга простого Markdown форматирования
-function renderMarkdownText(text: string) {
+function renderMarkdownText(text: string | any) {
   if (!text) return null;
   
+  // Обрабатываем разные типы данных
+  let stringText: string;
+  if (typeof text === 'string') {
+    stringText = text;
+  } else if (typeof text === 'object' && text !== null) {
+    // Если это объект, проверяем есть ли в нем полезные поля
+    if (text.detailed_summary) {
+      stringText = text.detailed_summary;
+    } else if (text.summary) {
+      stringText = text.summary;
+    } else {
+      // Показываем структуру объекта в читаемом виде
+      const keys = Object.keys(text);
+      if (keys.length > 0) {
+        stringText = `Доступные данные: ${keys.join(', ')}`;
+      } else {
+        stringText = 'Объект без данных';
+      }
+    }
+  } else {
+    stringText = String(text);
+  }
+  
+  // Если получился [object Object], возвращаем простое сообщение
+  if (stringText === '[object Object]') {
+    return <div className="text-gray-500 italic">Данные анализа недоступны</div>;
+  }
+  
   // Разбиваем на части по переносам строк
-  const lines = text.split('\n');
+  const lines = stringText.split('\n');
   
   return (
     <div className="space-y-2">
@@ -2953,6 +2981,7 @@ export default function Trends() {
                             {(sourceAnalysis as any).detailed_summary && (
                               <div className="mb-3 p-3 bg-purple-50 rounded border-l-4 border-purple-400">
                                 <div className="text-purple-700 text-sm">
+                                  {console.log('DEBUG detailed_summary:', typeof (sourceAnalysis as any).detailed_summary, (sourceAnalysis as any).detailed_summary)}
                                   {renderMarkdownText((sourceAnalysis as any).detailed_summary)}
                                 </div>
                               </div>

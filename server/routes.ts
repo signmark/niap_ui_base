@@ -7723,23 +7723,16 @@ Return your response as a JSON array in this exact format:
 Все комментарии к источнику:
 ${allCommentsText}
 
-Проведи максимально подробный многоаспектный анализ аудитории. Изучи:
-1. Характеристики аудитории (возраст, пол, интересы, профессия, образование)
-2. Поведение и вовлеченность (активность, типы реакций, стиль общения)
-3. Популярные темы обсуждений (основные категории тем, что больше всего обсуждается)
-4. Настроение и эмоциональный фон (общая атмосфера, преобладающие эмоции)
-5. Уровень экспертности (насколько компетентны участники в обсуждаемых темах)
-6. Общие тенденции (паттерны поведения, предпочтения, мотивация участия)
+Проведи детальный анализ аудитории по 6 аспектам: характеристики аудитории, поведение и вовлеченность, популярные темы, настроение, экспертность, общие тенденции. Включи конкретные примеры.
 
-Создай развернутый структурированный анализ с конкретными примерами и наблюдениями.
+ВАЖНО: Отвечай только JSON без дополнительного текста!
 
-Ответь строго в JSON формате:
 {
   "score": число_от_1_до_10,
   "confidence": число_от_0_до_1,
-  "sentiment": "positive_или_negative_или_neutral",
-  "summary": "краткое_описание_общей_тональности_и_ключевых_особенностей_аудитории",
-  "detailed_summary": "максимально_подробный_многоаспектный_анализ_включающий_характеристики_аудитории_их_демографию_интересы_профессиональный_уровень_стиль_общения_популярные_темы_обсуждений_уровень_вовлеченности_типичные_реакции_эмоциональный_фон_паттерны_поведения_мотивацию_участия_и_общие_тенденции_с_конкретными_примерами_и_наблюдениями_из_комментариев"
+  "sentiment": "positive",
+  "summary": "краткое описание тональности",
+  "detailed_summary": "подробный анализ аудитории включающий все 6 аспектов с примерами"
 }`;
 
           console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${commentsForAnalysis.length} комментариев (текст: ${allCommentsText.length} символов)`);
@@ -7764,14 +7757,27 @@ ${allCommentsText}
           if (!analysisResult || analysisResult.trim().length === 0) {
             throw new Error('Пустой ответ от Vertex AI');
           }
+          
+          // Дополнительная очистка ответа для продакшена
+          let cleanedResult = analysisResult
+            .replace(/^[^{]*/, '') // Убираем все до первой {
+            .replace(/[^}]*$/, '') // Убираем все после последней }
+            .trim();
+          
+          console.log(`[SOURCE-ANALYSIS] Очищенный ответ для парсинга:`, cleanedResult.substring(0, 200));
 
           let analysisData;
           try {
             // Пытаемся извлечь JSON из ответа - поддерживаем разные форматы
             let jsonStr = '';
             
-            // Удаляем markdown разметку если есть
-            let cleanResult = analysisResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Удаляем markdown разметку если есть  
+            let cleanResult = cleanedResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            // Если очищенный результат пустой, пробуем исходный
+            if (!cleanResult || cleanResult.length === 0) {
+              cleanResult = analysisResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            }
             
             // Ищем JSON объект
             const jsonMatch = cleanResult.match(/\{[\s\S]*\}/);
@@ -7823,8 +7829,8 @@ ${allCommentsText}
                       score: scoreMatch ? parseInt(scoreMatch[1]) : 5,
                       confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
                       sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
-                      summary: summaryMatch ? summaryMatch[1] : 'Анализ выполнен',
-                      detailed_summary: detailedSummaryMatch ? detailedSummaryMatch[1].replace(/\\n/g, '\n') : 'Подробный анализ частично недоступен'
+                      summary: summaryMatch ? String(summaryMatch[1]) : 'Анализ выполнен',
+                      detailed_summary: detailedSummaryMatch ? String(detailedSummaryMatch[1].replace(/\\n/g, '\n')) : 'Подробный анализ частично недоступен'
                     };
                     
                     console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено, detailed_summary получен: ${analysisData.detailed_summary ? 'ДА' : 'НЕТ'}`);
@@ -7834,8 +7840,8 @@ ${allCommentsText}
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
-              detailedSummary = analysisData.detailed_summary || '';
-              aiSummary = analysisData.summary || '';
+              detailedSummary = String(analysisData.detailed_summary || '');
+              aiSummary = String(analysisData.summary || '');
               analysisSuccess = true;
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
               console.log(`[SOURCE-ANALYSIS] Детальное описание получено: ${detailedSummary.substring(0, 100)}...`);
