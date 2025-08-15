@@ -7733,17 +7733,26 @@ ${allCommentsText}
             prompt: analysisPrompt,
             model: 'gemini-2.5-flash',
             temperature: 0.2,
-            maxTokens: 500
+            maxTokens: 1000
           });
           
           console.log(`[SOURCE-ANALYSIS] Vertex AI ответ получен:`, analysisResult?.substring(0, 200));
 
           let analysisData;
           try {
-            // Пытаемся извлечь JSON из ответа
-            const jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
+            // Пытаемся извлечь JSON из ответа - поддерживаем разные форматы
+            let jsonStr = '';
+            
+            // Удаляем markdown разметку если есть
+            let cleanResult = analysisResult.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            // Ищем JSON объект
+            const jsonMatch = cleanResult.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-              analysisData = JSON.parse(jsonMatch[0]);
+              jsonStr = jsonMatch[0];
+              console.log(`[SOURCE-ANALYSIS] Найден JSON в ответе:`, jsonStr.substring(0, 300));
+              
+              analysisData = JSON.parse(jsonStr);
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
@@ -7753,7 +7762,7 @@ ${allCommentsText}
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
               console.log(`[SOURCE-ANALYSIS] Детальное описание получено: ${detailedSummary.substring(0, 100)}...`);
             } else {
-              throw new Error('JSON не найден в ответе');
+              throw new Error('JSON не найден в ответе после очистки markdown');
             }
           } catch (parseError) {
             console.error(`[SOURCE-ANALYSIS] Ошибка парсинга JSON:`, parseError);
