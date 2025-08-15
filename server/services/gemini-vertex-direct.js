@@ -169,7 +169,7 @@ ${text}
               parts: [{text: prompt}]
             }],
             generationConfig: {
-              maxOutputTokens: 8192,
+              maxOutputTokens: 4096,
               temperature: 0.1
             }
           })
@@ -191,6 +191,12 @@ ${text}
       
       const candidate = data.candidates[0];
       let generatedText = '';
+
+      // Проверяем причину завершения
+      if (candidate.finishReason === 'MAX_TOKENS') {
+        console.log('[gemini-vertex-direct] ⚠️ Ответ обрезан из-за лимита токенов');
+        throw new Error('Превышен лимит токенов - попробуйте сократить промпт или увеличить maxOutputTokens');
+      }
 
       if (candidate.content && candidate.content.parts && candidate.content.parts[0] && candidate.content.parts[0].text) {
         generatedText = candidate.content.parts[0].text;

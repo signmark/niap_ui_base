@@ -9240,8 +9240,19 @@ ${allCommentsText}
           });
         }
         
-        // Подготавливаем текст для анализа
-        const commentTexts = comments.map((c: any) => c.text).join('\n---\n');
+        // Подготавливаем текст для анализа - ограничиваем до 100 комментариев и укорачиваем длинные
+        const limitedComments = comments
+          .slice(0, 100) // Берем только первые 100 комментариев
+          .map((c: any) => {
+            let text = c.text;
+            // Укорачиваем комментарии длиннее 100 символов
+            if (text.length > 100) {
+              text = text.substring(0, 97) + '...';
+            }
+            return text;
+          });
+        
+        const commentTexts = limitedComments.join('\n---\n');
         
         console.log(`[POST /api/trend-sentiment] Отправляем ${commentTexts.length} символов на анализ в Gemini`);
         
