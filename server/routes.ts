@@ -7701,10 +7701,21 @@ Return your response as a JSON array in this exact format:
       let aiSummary = '';
 
       if (allCommentsTexts.length > 0) {
-        console.log(`[SOURCE-ANALYSIS] Анализируем ${allCommentsTexts.length} комментариев через AI для источника ${sourceId}`);
+        // Ограничиваем количество комментариев для анализа, чтобы избежать превышения лимита токенов
+        const MAX_COMMENTS_FOR_ANALYSIS = 200;
+        const commentsForAnalysis = allCommentsTexts.slice(0, MAX_COMMENTS_FOR_ANALYSIS);
         
-        // Объединяем все комментарии для общего анализа
-        const allCommentsText = allCommentsTexts.join('\n'); // Берем ВСЕ комментарии
+        console.log(`[SOURCE-ANALYSIS] Анализируем ${commentsForAnalysis.length} комментариев (из ${allCommentsTexts.length} доступных) через AI для источника ${sourceId}`);
+        
+        // Объединяем комментарии для анализа с дополнительным ограничением по длине
+        let allCommentsText = commentsForAnalysis.join('\n');
+        
+        // Дополнительное ограничение по длине текста (примерно 15000 символов = ~3000 токенов)
+        const MAX_TEXT_LENGTH = 15000;
+        if (allCommentsText.length > MAX_TEXT_LENGTH) {
+          allCommentsText = allCommentsText.substring(0, MAX_TEXT_LENGTH) + '...';
+          console.log(`[SOURCE-ANALYSIS] Текст комментариев обрезан до ${MAX_TEXT_LENGTH} символов для предотвращения превышения лимита токенов`);
+        }
         
         try {
           const analysisPrompt = `Проанализируй общую тональность всех комментариев к источнику контента и дай оценку от 1 до 10 (где 1 - очень негативно, 5 - нейтрально, 10 - очень позитивно).
@@ -7721,7 +7732,7 @@ ${allCommentsText}
   "detailed_summary": "подробное описание аудитории источника в красиво отформатированном тексте. ОБЯЗАТЕЛЬНО используй следующий формат:\n\n**Характеристика аудитории:**\nОписание аудитории с переносами строк для читабельности.\n\n**Популярные темы обсуждений:**\n1. **Первая тема**: описание\n2. **Вторая тема**: описание\n\n**Уровень вовлеченности:**\nОписание активности аудитории.\n\n**AI анализ:**\nОбщая тональность и выводы.\n\nИспользуй жирный текст (**текст**) для выделения ключевых моментов и разделов. Добавляй переносы строк для лучшей читабельности."
 }`;
 
-          console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${allCommentsTexts.length} комментариев`);
+          console.log(`[SOURCE-ANALYSIS] Начинаем AI анализ ${commentsForAnalysis.length} комментариев (текст: ${allCommentsText.length} символов)`);
           
           // Используем прямой Vertex AI для анализа источника (как в генерации контента)
           console.log(`[SOURCE-ANALYSIS] Используем прямой Vertex AI для анализа источника`);
