@@ -7846,7 +7846,7 @@ ${allCommentsText}
                       confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
                       sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
                       summary: summaryMatch ? String(summaryMatch[1]) : 'Анализ выполнен',
-                      detailed_summary: detailedSummaryMatch ? String(detailedSummaryMatch[1].replace(/\\n/g, '\n')) : 'Подробный анализ частично недоступен'
+                      detailed_summary: detailedSummaryMatch ? detailedSummaryMatch[1].replace(/\\n/g, '\n') : 'Подробный анализ частично недоступен'
                     };
                     
                     console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено, detailed_summary получен: ${analysisData.detailed_summary ? 'ДА' : 'НЕТ'}`);
@@ -7856,7 +7856,12 @@ ${allCommentsText}
               overallScore = analysisData.score || 5;
               overallSentiment = analysisData.sentiment || 'neutral';
               overallConfidence = analysisData.confidence || 0.5;
-              detailedSummary = String(analysisData.detailed_summary || '');
+              // Правильно сериализуем detailed_summary - если это объект, превращаем в JSON строку
+              if (typeof analysisData.detailed_summary === 'object' && analysisData.detailed_summary !== null) {
+                detailedSummary = JSON.stringify(analysisData.detailed_summary);
+              } else {
+                detailedSummary = String(analysisData.detailed_summary || '');
+              }
               aiSummary = String(analysisData.summary || '');
               analysisSuccess = true;
               console.log(`[SOURCE-ANALYSIS] AI анализ успешен: score=${overallScore}, sentiment=${overallSentiment}, confidence=${overallConfidence}`);
