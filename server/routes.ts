@@ -7506,17 +7506,19 @@ Return your response as a JSON array in this exact format:
             console.log(`[SOURCE-ANALYSIS] Добавлено ${commentsTexts.length} существующих комментариев из тренда ${trend.id}`);
           }
           
-          // ВСЕГДА запрашиваем сбор для трендов с comments > 0 (независимо от наличия комментариев в базе)
-          if (commentsCount > 0) {
+          // Запрашиваем сбор ТОЛЬКО если тренд содержит комментарии, но они не собраны в базе
+          if (commentsCount > 0 && comments.length === 0) {
             const trendUrl = trend.urlPost || trend.accountUrl;
             if (trendUrl) {
-              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} будет добавлен для сбора комментариев (${commentsCount} комментариев, URL: ${trendUrl})`);
+              console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} требует сбора комментариев (поле comments=${commentsCount}, в БД=0, URL: ${trendUrl})`);
               trendsNeedingCollection.push({...trend, url: trendUrl});
             } else {
               console.log(`[SOURCE-ANALYSIS] ⚠️ Тренд ${trend.id} имеет ${commentsCount} комментариев, но нет URL для сбора`);
             }
+          } else if (commentsCount > 0 && comments.length > 0) {
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} уже имеет собранные комментарии (поле comments=${commentsCount}, в БД=${comments.length})`);
           } else {
-            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} не имеет комментариев (${commentsCount})`);
+            console.log(`[SOURCE-ANALYSIS] Тренд ${trend.id} не имеет комментариев (поле comments=${commentsCount})`);
           }
         } catch (error) {
           console.error(`[SOURCE-ANALYSIS] Ошибка получения комментариев для тренда ${trend.id}:`, error);
