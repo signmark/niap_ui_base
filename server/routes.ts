@@ -2142,6 +2142,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function getCampaignContextFallback(userId: string, campaignId: string, token: string): Promise<string | null> {
     try {
       console.log(`INFO: Fallback - получение данных кампании ${campaignId} через API`);
+      return null; // Временно отключено
+    } catch (error: any) {
+      console.error('ERROR: Ошибка в fallback функции:', error);
+      return null;
+    }
+  }
+
+  // Временно отключенная функция
+  async function getCampaignContextFallbackOriginal(userId: string, campaignId: string, token: string): Promise<string | null> {
+    try {
+      console.log(`INFO: Fallback - получение данных кампании ${campaignId} через API`);
       
       // Получаем данные кампании напрямую из Directus
       const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
