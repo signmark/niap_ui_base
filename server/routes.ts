@@ -7773,27 +7773,47 @@ ${allCommentsText}
                 console.log(`[SOURCE-ANALYSIS] Пытаемся использовать eval как fallback...`);
                 
                 try {
-                  // В крайнем случае используем eval (ТОЛЬКО для контролируемого AI-контента)
-                  analysisData = eval('(' + jsonStr + ')');
-                  console.log(`[SOURCE-ANALYSIS] Eval parsing успешен`);
-                } catch (evalError) {
-                  console.log(`[SOURCE-ANALYSIS] Eval parsing тоже не удался, извлекаем данные вручную...`);
-                  
-                  // Извлекаем основные поля вручную с помощью регулярных выражений
-                  const scoreMatch = jsonStr.match(/"score":\s*(\d+)/);
-                  const confidenceMatch = jsonStr.match(/"confidence":\s*([\d.]+)/);
-                  const sentimentMatch = jsonStr.match(/"sentiment":\s*"([^"]+)"/);
-                  const summaryMatch = jsonStr.match(/"summary":\s*"([^"]+)"/);
-                  
-                  analysisData = {
-                    score: scoreMatch ? parseInt(scoreMatch[1]) : 5,
-                    confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
-                    sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
-                    summary: summaryMatch ? summaryMatch[1] : 'Анализ выполнен',
-                    detailed_summary: 'Подробный анализ недоступен из-за ошибки парсинга JSON'
-                  };
-                  
-                  console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено`);
+                  // Попробуем исправить JSON более аккуратно
+                  let fixedJsonStr = jsonStr
+                    // Экранируем неэкранированные переносы строк в строковых значениях
+                    .replace(/("detailed_summary":\s*"[^"]*?)(\n)([^"]*?")/g, '$1\\n$3')
+                    .replace(/("summary":\s*"[^"]*?)(\n)([^"]*?")/g, '$1\\n$3')
+                    // Экранируем неэкранированные кавычки в строковых значениях
+                    .replace(/(?<!\\)"/g, '\\"')
+                    // Восстанавливаем структурные кавычки JSON
+                    .replace(/\\"(score|confidence|sentiment|summary|detailed_summary)\\":/g, '"$1":')
+                    .replace(/:\s*\\"([^"]+)\\",/g, ': "$1",')
+                    .replace(/:\s*\\"([^"]+)\\"}/g, ': "$1"}');
+                    
+                  console.log(`[SOURCE-ANALYSIS] Попытка исправленного парсинга JSON...`);
+                  analysisData = JSON.parse(fixedJsonStr);
+                  console.log(`[SOURCE-ANALYSIS] Исправленный JSON parsing успешен`);
+                } catch (fixedParseError) {
+                  console.log(`[SOURCE-ANALYSIS] Исправленный парсинг не удался, используем eval...`);
+                  try {
+                    // В крайнем случае используем eval (ТОЛЬКО для контролируемого AI-контента)
+                    analysisData = eval('(' + jsonStr + ')');
+                    console.log(`[SOURCE-ANALYSIS] Eval parsing успешен`);
+                  } catch (evalError) {
+                    console.log(`[SOURCE-ANALYSIS] Eval parsing тоже не удался, извлекаем данные вручную...`);
+                    
+                    // Извлекаем поля включая detailed_summary с помощью более точных regex
+                    const scoreMatch = jsonStr.match(/"score":\s*(\d+)/);
+                    const confidenceMatch = jsonStr.match(/"confidence":\s*([\d.]+)/);
+                    const sentimentMatch = jsonStr.match(/"sentiment":\s*"([^"]+)"/);
+                    const summaryMatch = jsonStr.match(/"summary":\s*"([^"]*?)"/);
+                    const detailedSummaryMatch = jsonStr.match(/"detailed_summary":\s*"([\s\S]*?)"\s*}/);
+                    
+                    analysisData = {
+                      score: scoreMatch ? parseInt(scoreMatch[1]) : 5,
+                      confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
+                      sentiment: sentimentMatch ? sentimentMatch[1] : 'neutral',
+                      summary: summaryMatch ? summaryMatch[1] : 'Анализ выполнен',
+                      detailed_summary: detailedSummaryMatch ? detailedSummaryMatch[1].replace(/\\n/g, '\n') : 'Подробный анализ частично недоступен'
+                    };
+                    
+                    console.log(`[SOURCE-ANALYSIS] Ручное извлечение данных завершено, detailed_summary получен: ${analysisData.detailed_summary ? 'ДА' : 'НЕТ'}`);
+                  }
                 }
               }
               overallScore = analysisData.score || 5;
