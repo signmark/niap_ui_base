@@ -5,7 +5,7 @@ import { falAiService } from './services/falai';
 import { falAiClient } from './services/fal-ai-client';
 import { qwenService } from './services/qwen';
 import { GeminiService } from './services/gemini';
-import { GeminiProxyService } from '../services/gemini-proxy.js';
+// import { GeminiProxyService } from '../services/gemini-proxy.js';
 import { VertexAIService } from './services/vertex-ai';
 import { VertexAICredentialsService } from './services/vertex-ai-credentials';
 // import { geminiTestRouter } from './routes/gemini-test-route'; // ОТКЛЮЧЕНО: используем единый маршрут
@@ -33,7 +33,7 @@ import { crawler } from "./services/crawler";
 import { apifyService } from "./services/apify";
 import { log } from "./utils/logger";
 import { directusApiManager } from "./directus";
-import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
+// import { ContentSource, InsertCampaignTrendTopic, InsertSourcePost } from "../shared/schema";
 import { falAiSdk } from './services/fal-ai';
 import { 
   validateTelegramToken,
@@ -2018,7 +2018,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Получаем данные кампании через авторизованный токен
       const directusUrl = process.env.DIRECTUS_URL;
       if (!directusUrl) {
-        return res.status(500).json({ error: 'DIRECTUS_URL не настроен в переменных окружения' });
+        console.error('DIRECTUS_URL не настроен в переменных окружения');
+        return null;
       }
       
       const directusApi = axios.create({
@@ -2143,13 +2144,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`INFO: Fallback - получение данных кампании ${campaignId} через API`);
       
       // Получаем данные кампании напрямую из Directus
-      const campaignResponse = await directusApi.items('campaigns').readOne(campaignId, {
-        fields: ['*']
+      const campaignResponse = await directusApi.get(`/items/user_campaigns/${campaignId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       console.log('INFO: Данные кампании получены из Directus');
       
-      const campaign = campaignResponse;
+      const campaign = campaignResponse.data?.data;
       if (!campaign) {
         console.log('WARN: Данные кампании не найдены');
         return null;
