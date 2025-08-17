@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpecs from './config/swagger';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { registerRoutes } from "./routes";
@@ -384,6 +386,28 @@ app.use((req, res, next) => {
     log("Registering main routes after YouTube routes...");
     console.log("Starting route registration...");
     const server = await registerRoutes(app);
+
+    // Swagger API Documentation - добавляем после всех маршрутов
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'SMM Manager API Documentation',
+      customfavIcon: '/favicon.ico',
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayOperationId: false,
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+      }
+    }));
+    
+    // JSON endpoint для Swagger spec
+    app.get('/api-docs.json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpecs);
+    });
+    
+    log('Swagger API Documentation доступна по адресу /api-docs', 'swagger');
     
     // Регистрируем Instagram Campaign Settings маршруты ПОСЛЕ registerRoutes
     // чтобы они имели приоритет над конфликтующими маршрутами в routes.ts
