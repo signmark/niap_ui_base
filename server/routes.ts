@@ -4095,6 +4095,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Генерация контента на основе анкеты кампании
+  app.post('/api/generate-questionnaire-content/:campaignId', async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      const { numberOfPosts = 3 } = req.body;
+      
+      console.log(`[Questionnaire] Генерация контента для кампании ${campaignId} на основе анкеты`);
+      
+      const { questionnaireContentGenerator } = await import('./content-generator-from-questionnaire');
+      const result = await questionnaireContentGenerator.createQuestionnaireBasedContent(campaignId, numberOfPosts);
+      
+      res.json({
+        success: true,
+        message: `Создано ${result.length} публикаций на основе анкеты`,
+        data: result
+      });
+    } catch (error: any) {
+      console.error('[Questionnaire] Ошибка генерации:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
   
   app.use('/api/video', videoRouter);
   
