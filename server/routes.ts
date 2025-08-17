@@ -4051,6 +4051,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Регистрируем маршруты автономного бота
   app.use('/api/autonomous-bot', autonomousBotRoutes);
+  
+  // Регистрируем рабочие маршруты автономного бота
+  const { autonomousBotWorkingRoutes } = await import('./routes/autonomous-bot-working-routes');
+  app.use('/api/autonomous-bot-working', autonomousBotWorkingRoutes);
+  
+  // Тестовый endpoint для автономной генерации контента
+  app.post('/api/test-autonomous-generation/:campaignId', async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      console.log(`[Test] Тестирование автономной генерации для кампании: ${campaignId}`);
+      
+      // Импорт тестовой функции
+      const { testAutonomousContentGeneration } = await import('./test-autonomous-content');
+      
+      // Запуск теста
+      const result = await testAutonomousContentGeneration(campaignId);
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Test] Ошибка тестирования:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // Демо-endpoint для быстрой генерации контента
+  app.get('/api/demo-content-generation', async (req, res) => {
+    try {
+      console.log(`[Demo] Запуск демо генерации контента`);
+      
+      const { quickContentGenerationDemo } = await import('./test-autonomous-content');
+      const result = await quickContentGenerationDemo();
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('[Demo] Ошибка демо:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+  
   app.use('/api/video', videoRouter);
   
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
@@ -15046,6 +15091,8 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
 
 // Подключение маршрутов автономного бота
 import { autonomousBotRoutes } from './routes/autonomous-bot-routes';
+
+// Тестовый endpoint добавлен в функцию registerRoutes
 
 
 

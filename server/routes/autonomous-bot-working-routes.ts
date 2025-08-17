@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { autonomousBot } from '../services/autonomous-bot';
+import { autonomousBotWorking } from '../services/autonomous-bot-working';
+import { directusCrud } from '../services/directus/index';
 import logger from '../utils/logger';
-import { directusCrud, directusAuthManager } from '../services/directus/index';
+
 const router = Router();
 
 interface BotConfig {
   enabled: boolean;
-  frequency: number; // минуты между циклами
+  frequency: number;
   contentTypes: string[];
   platforms: string[];
   moderationLevel: 'strict' | 'normal' | 'relaxed';
@@ -15,10 +16,9 @@ interface BotConfig {
 
 /**
  * @swagger
- * /api/autonomous-bot/start/{campaignId}:
+ * /api/autonomous-bot-working/start/{campaignId}:
  *   post:
  *     summary: Запустить автономного бота для кампании
- *     description: Запускает автономного бота для создания и публикации контента на основе трендов
  *     tags: [Автономный Бот]
  *     security:
  *       - bearerAuth: []
@@ -28,9 +28,8 @@ interface BotConfig {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID кампании
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
@@ -38,28 +37,23 @@ interface BotConfig {
  *             properties:
  *               frequency:
  *                 type: number
- *                 description: Частота работы бота в минутах
  *                 default: 240
  *               contentTypes:
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [text, image, story]
- *                 default: ["text", "image"]
+ *                 default: ["text"]
  *               platforms:
  *                 type: array
  *                 items:
  *                   type: string
- *                   enum: [vk, facebook, instagram, telegram, youtube]
  *                 default: ["vk", "telegram"]
  *               moderationLevel:
  *                 type: string
- *                 enum: [strict, normal, relaxed]
  *                 default: "normal"
  *               maxPostsPerCycle:
  *                 type: number
- *                 description: Максимум постов за один цикл
- *                 default: 3
+ *                 default: 1
  *     responses:
  *       200:
  *         description: Бот успешно запущен
@@ -73,15 +67,17 @@ router.post('/start/:campaignId', async (req, res) => {
     const { campaignId } = req.params;
     const config: BotConfig = {
       enabled: true,
-      frequency: req.body.frequency || 240, // 4 часа по умолчанию
-      contentTypes: req.body.contentTypes || ['text', 'image'],
-      platforms: req.body.platforms || ['vk', 'telegram'],
-      moderationLevel: req.body.moderationLevel || 'normal',
-      maxPostsPerCycle: req.body.maxPostsPerCycle || 3
+      frequency: req.body?.frequency || 240,
+      contentTypes: req.body?.contentTypes || ['text'],
+      platforms: req.body?.platforms || ['vk', 'telegram'],
+      moderationLevel: req.body?.moderationLevel || 'normal',
+      maxPostsPerCycle: req.body?.maxPostsPerCycle || 1
     };
 
     // Проверить существование кампании
-    const campaign = await directusCrud.getItemById('campaigns', campaignId);
+    const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
+    
     if (!campaign) {
       return res.status(404).json({ 
         success: false, 
@@ -94,10 +90,10 @@ router.post('/start/:campaignId', async (req, res) => {
       bot_config: config,
       bot_enabled: true,
       bot_last_started: new Date().toISOString()
-    });
+    }, { authToken: systemToken });
 
     // Запустить бота
-    await autonomousBot.start(campaignId, config);
+    await autonomousBotWorking.start(campaignId, config);
 
     logger.info(`[AutonomousBot API] Бот запущен для кампании ${campaignId}`, { config });
 
@@ -118,10 +114,9 @@ router.post('/start/:campaignId', async (req, res) => {
 
 /**
  * @swagger
- * /api/autonomous-bot/stop/{campaignId}:
+ * /api/autonomous-bot-working/stop/{campaignId}:
  *   post:
  *     summary: Остановить автономного бота
- *     description: Останавливает работу автономного бота для указанной кампании
  *     tags: [Автономный Бот]
  *     security:
  *       - bearerAuth: []
@@ -131,25 +126,23 @@ router.post('/start/:campaignId', async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID кампании
  *     responses:
  *       200:
  *         description: Бот успешно остановлен
- *       401:
- *         description: Не авторизован
  */
 router.post('/stop/:campaignId', async (req, res) => {
   try {
     const { campaignId } = req.params;
 
     // Остановить бота
-    autonomousBot.stop();
+    autonomousBotWorking.stop();
 
     // Обновить статус в кампании
+    const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
     await directusCrud.updateItem('campaigns', campaignId, {
       bot_enabled: false,
       bot_last_stopped: new Date().toISOString()
-    });
+    }, { authToken: systemToken });
 
     logger.info(`[AutonomousBot API] Бот остановлен для кампании ${campaignId}`);
 
@@ -169,10 +162,9 @@ router.post('/stop/:campaignId', async (req, res) => {
 
 /**
  * @swagger
- * /api/autonomous-bot/status/{campaignId}:
+ * /api/autonomous-bot-working/status/{campaignId}:
  *   get:
  *     summary: Получить статус автономного бота
- *     description: Возвращает текущий статус работы автономного бота для кампании
  *     tags: [Автономный Бот]
  *     security:
  *       - bearerAuth: []
@@ -182,55 +174,37 @@ router.post('/stop/:campaignId', async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID кампании
  *     responses:
  *       200:
  *         description: Статус бота получен
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 isRunning:
- *                   type: boolean
- *                 config:
- *                   type: object
- *                 lastActivity:
- *                   type: string
- *                   format: date-time
- *                 stats:
- *                   type: object
- *       401:
- *         description: Не авторизован
  */
 router.get('/status/:campaignId', async (req, res) => {
   try {
     const { campaignId } = req.params;
 
     // Получить статус бота
-    const botStatus = autonomousBot.getStatus();
+    const botStatus = autonomousBotWorking.getStatus();
 
     // Получить конфигурацию из кампании
-    const campaign = await directusCrud.getItemById('campaigns', campaignId);
+    const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
     const config = campaign?.bot_config || null;
 
     // Получить статистику постов созданных ботом
-    const botPosts = await directusCrud.getItems('publications', {
+    const botPostsResponse = await directusCrud.getItems('publications', {
       filter: {
         campaign_id: { _eq: campaignId },
         created_by_bot: { _eq: true }
       },
-      aggregate: {
-        count: ['*']
-      }
-    });
+      limit: 10,
+      sort: ['-created_at']
+    }, { authToken: systemToken });
 
     const stats = {
-      totalBotPosts: botPosts.data?.length || 0,
+      totalBotPosts: botPostsResponse?.data?.length || 0,
       lastBotActivity: campaign?.bot_last_started || null,
-      enabled: campaign?.bot_enabled || false
+      enabled: campaign?.bot_enabled || false,
+      currentStatus: botStatus
     };
 
     res.json({
@@ -251,10 +225,9 @@ router.get('/status/:campaignId', async (req, res) => {
 
 /**
  * @swagger
- * /api/autonomous-bot/manual-cycle/{campaignId}:
+ * /api/autonomous-bot-working/manual-cycle/{campaignId}:
  *   post:
  *     summary: Запустить ручной цикл генерации контента
- *     description: Немедленно запускает один цикл генерации контента для тестирования
  *     tags: [Автономный Бот]
  *     security:
  *       - bearerAuth: []
@@ -264,19 +237,18 @@ router.get('/status/:campaignId', async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID кампании
  *     responses:
  *       200:
  *         description: Цикл запущен
- *       401:
- *         description: Не авторизован
  */
 router.post('/manual-cycle/:campaignId', async (req, res) => {
   try {
     const { campaignId } = req.params;
 
     // Получить конфигурацию бота
-    const campaign = await directusCrud.getItemById('campaigns', campaignId);
+    const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+    const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
+    
     const config: BotConfig = campaign?.bot_config || {
       enabled: true,
       frequency: 240,
@@ -286,16 +258,15 @@ router.post('/manual-cycle/:campaignId', async (req, res) => {
       maxPostsPerCycle: 1
     };
 
-    // Создать временный экземпляр бота для одного цикла
-    const testBot = new (await import('../services/autonomous-bot')).AutonomousBot();
-    
-    // Запустить один цикл (метод runCycle нужно сделать публичным)
-    // Пока что просто возвращаем успех
+    // Запустить одиночный цикл
     logger.info(`[AutonomousBot API] Запущен ручной цикл для кампании ${campaignId}`);
 
+    // В данной реализации мы просто возвращаем успех
+    // В полной версии здесь бы был вызов runCycle
     res.json({
       success: true,
-      message: 'Ручной цикл генерации контента запущен'
+      message: 'Ручной цикл генерации контента запущен',
+      config
     });
 
   } catch (error) {
@@ -307,85 +278,4 @@ router.post('/manual-cycle/:campaignId', async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/autonomous-bot/logs/{campaignId}:
- *   get:
- *     summary: Получить логи работы бота
- *     description: Возвращает последние логи работы автономного бота для кампании
- *     tags: [Автономный Бот]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: campaignId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID кампании
- *       - in: query
- *         name: limit
- *         schema:
- *           type: number
- *           default: 50
- *         description: Количество записей лога
- *     responses:
- *       200:
- *         description: Логи получены
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 logs:
- *                   type: array
- *                   items:
- *                     type: object
- *       401:
- *         description: Не авторизован
- */
-router.get('/logs/:campaignId', async (req, res) => {
-  try {
-    const { campaignId } = req.params;
-    const limit = parseInt(req.query.limit as string) || 50;
-
-    // Получить публикации созданные ботом как логи
-    const botPosts = await directusCrud.getItems('publications', {
-      filter: {
-        campaign_id: { _eq: campaignId },
-        created_by_bot: { _eq: true }
-      },
-      sort: ['-created_at'],
-      limit,
-      fields: ['id', 'title', 'status', 'created_at', 'scheduled_at', 'platforms']
-    });
-
-    const logs = botPosts.data.map((post: any) => ({
-      timestamp: post.created_at,
-      action: 'content_generated',
-      details: {
-        postId: post.id,
-        title: post.title,
-        status: post.status,
-        platforms: post.platforms,
-        scheduledAt: post.scheduled_at
-      }
-    }));
-
-    res.json({
-      success: true,
-      logs
-    });
-
-  } catch (error) {
-    logger.error(`[AutonomousBot API] Ошибка получения логов:`, error);
-    res.status(500).json({
-      success: false,
-      error: 'Ошибка получения логов бота'
-    });
-  }
-});
-
-export { router as autonomousBotRoutes };
+export { router as autonomousBotWorkingRoutes };

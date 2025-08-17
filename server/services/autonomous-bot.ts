@@ -36,9 +36,13 @@ export class AutonomousBot {
   private gemini: GeminiVertexService;
   private isRunning: boolean = false;
   private intervalId: NodeJS.Timeout | null = null;
+  private directus: any;
+  private falAI: any;
 
   constructor() {
     this.gemini = new GeminiVertexService();
+    this.directus = directusCrud;
+    this.falAI = falAiUniversalService;
   }
 
   /**
@@ -194,7 +198,7 @@ export class AutonomousBot {
       const prompt = this.createContentPrompt(trend, campaignContext, config);
       
       // Генерировать контент через Gemini
-      const response = await this.gemini.generateContent(prompt);
+      const response = await this.gemini.generateText(prompt);
       
       if (!response) {
         logger.warn(`[AutonomousBot] Не удалось сгенерировать контент для тренда ${trend.id}`);
@@ -219,7 +223,7 @@ export class AutonomousBot {
   private async getCampaignContext(campaignId: string): Promise<any> {
     try {
       const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
-      const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
+      const campaign = await directusCrud.getItemById('campaigns', campaignId);
       return {
         name: campaign.name || '',
         description: campaign.description || '',
