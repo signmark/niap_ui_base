@@ -10013,7 +10013,7 @@ ${commentTexts}`;
           throw new Error('User ID not found');
         }
         
-        // Вместо storage API, получаем контент напрямую из Directus API без лимита
+        // Принудительно получаем ВСЕ записи без лимитов
         const params: any = {
           filter: JSON.stringify({
             user_id: {
@@ -10022,8 +10022,11 @@ ${commentTexts}`;
             ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
           }),
           meta: 'total_count,filter_count',
-          limit: limit > 0 ? limit : -1  // -1 означает получить ВСЕ записи без ограничений
+          limit: -1,  // ПРИНУДИТЕЛЬНО -1 для получения ВСЕХ записей
+          sort: ['-created_at']  // Сортировка по дате создания
         };
+        
+        console.log(`DEBUG: Запрос с параметрами - userId: ${userId}, campaignId: ${campaignId}, limit: ${params.limit}`);
 
         // Добавляем оффсет только если лимит больше 0 и есть пагинация
         if (limit > 0) {
