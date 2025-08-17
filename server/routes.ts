@@ -10022,7 +10022,7 @@ ${commentTexts}`;
             ...(campaignId ? { campaign_id: { _eq: campaignId } } : {})
           }),
           meta: 'total_count,filter_count',
-          limit: limit > 0 ? limit : 10000  // Устанавливаем большой лимит вместо -1
+          limit: limit > 0 ? limit : -1  // -1 означает получить ВСЕ записи без ограничений
         };
 
         // Добавляем оффсет только если лимит больше 0 и есть пагинация
