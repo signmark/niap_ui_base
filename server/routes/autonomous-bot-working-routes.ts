@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { autonomousBotWorking } from '../services/autonomous-bot-working';
-import { directusCrud } from '../services/directus/index';
-import logger from '../utils/logger';
+import { directusCrud } from '../services/directus-crud';
+import { log } from '../utils/logger';
+import { directusApiManager } from '../directus';
+import { authMiddleware } from '../middleware/auth';
+import { isUserAdmin } from '../routes-global-api-keys';
 
 const router = Router();
 
@@ -62,8 +65,25 @@ interface BotConfig {
  *       401:
  *         description: Не авторизован
  */
-router.post('/start/:campaignId', async (req, res) => {
+router.post('/start/:campaignId', authMiddleware, async (req: any, res) => {
   try {
+    // Проверяем права администратора
+    const userToken = req.user?.token || req.headers.authorization?.replace('Bearer ', '');
+    if (!userToken) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Требуется авторизация' 
+      });
+    }
+
+    const isAdmin = await isUserAdmin(req, userToken);
+    if (!isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Недостаточно прав для запуска автономного бота' 
+      });
+    }
+
     const { campaignId } = req.params;
     const config: BotConfig = {
       enabled: true,
@@ -75,8 +95,8 @@ router.post('/start/:campaignId', async (req, res) => {
     };
 
     // Проверить существование кампании
-    const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
-    const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
+    const systemToken = process.env.DIRECTUS_TOKEN || '';
+    const campaign = await directusCrud.getItem('campaigns', campaignId, { authToken: systemToken });
     
     if (!campaign) {
       return res.status(404).json({ 
@@ -95,7 +115,7 @@ router.post('/start/:campaignId', async (req, res) => {
     // Запустить бота
     await autonomousBotWorking.start(campaignId, config);
 
-    logger.info(`[AutonomousBot API] Бот запущен для кампании ${campaignId}`, { config });
+    log(`[AutonomousBot API] Бот запущен для кампании ${campaignId}`, 'autonomous-bot');
 
     res.json({
       success: true,
@@ -104,7 +124,7 @@ router.post('/start/:campaignId', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error(`[AutonomousBot API] Ошибка запуска бота:`, error);
+    log(`[AutonomousBot API] Ошибка запуска бота: ${error}`, 'autonomous-bot');
     res.status(500).json({
       success: false,
       error: 'Ошибка запуска автономного бота'
@@ -152,7 +172,7 @@ router.post('/stop/:campaignId', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error(`[AutonomousBot API] Ошибка остановки бота:`, error);
+    log(`[AutonomousBot API] Ошибка остановки бота: ${error}`, 'autonomous-bot');
     res.status(500).json({
       success: false,
       error: 'Ошибка остановки автономного бота'

@@ -3,10 +3,10 @@
  * Использует данные из кампании и анкеты для создания персонализированного контента
  */
 
-import { directusCrud } from './services/directus/index.js';
+import { directusCrud } from './services/directus-crud.js';
 import { GeminiVertexService } from './services/gemini-vertex.js';
 import { falAiUniversalService } from './services/fal-ai-universal.js';
-import logger from './utils/logger.js';
+import { log } from './utils/logger.js';
 
 interface QuestionnaireBasedContent {
   title: string;
@@ -43,19 +43,19 @@ export class QuestionnaireContentGenerator {
    */
   async getCampaignQuestionnaire(campaignId: string): Promise<CampaignData | null> {
     try {
-      const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
-      const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
+      const systemToken = process.env.DIRECTUS_TOKEN || '';
+      const campaign = await directusCrud.getById('user_campaigns', campaignId, { authToken: systemToken });
       
       if (!campaign) {
-        logger.warn(`Campaign ${campaignId} not found`);
+        log(`Campaign ${campaignId} not found`, 'questionnaire-generator');
         return null;
       }
 
-      logger.info(`Loaded campaign: ${campaign.name || 'Unnamed'}`);
+      log(`Loaded campaign: ${campaign.name || 'Unnamed'}`, 'questionnaire-generator');
       return campaign as CampaignData;
       
     } catch (error) {
-      logger.error('Error loading campaign questionnaire:', error);
+      log(`Error loading campaign questionnaire: ${error}`, 'questionnaire-generator');
       return null;
     }
   }
@@ -93,11 +93,11 @@ export class QuestionnaireContentGenerator {
       if (!response) return [];
 
       const topics = response.split(';').map(topic => topic.trim()).filter(topic => topic.length > 0);
-      logger.info(`Generated ${topics.length} content topics based on questionnaire`);
+      log(`Generated ${topics.length} content topics based on questionnaire`, 'questionnaire-generator');
       return topics;
       
     } catch (error) {
-      logger.error('Error analyzing questionnaire:', error);
+      log(`Error analyzing questionnaire: ${error}`, 'questionnaire-generator');
       return [];
     }
   }
@@ -151,7 +151,7 @@ export class QuestionnaireContentGenerator {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        logger.info(`Generated content for topic: ${topic}`);
+        log(`Generated content for topic: ${topic}`, 'questionnaire-generator');
         return parsed as QuestionnaireBasedContent;
       }
 
@@ -166,7 +166,7 @@ export class QuestionnaireContentGenerator {
       };
 
     } catch (error) {
-      logger.error('Error generating content from questionnaire:', error);
+      log(`Error generating content from questionnaire: ${error}`, 'questionnaire-generator');
       return null;
     }
   }
@@ -176,7 +176,7 @@ export class QuestionnaireContentGenerator {
    */
   async createQuestionnaireBasedContent(campaignId: string, numberOfPosts: number = 3): Promise<any[]> {
     try {
-      logger.info(`Creating questionnaire-based content for campaign ${campaignId}`);
+      log(`Creating questionnaire-based content for campaign ${campaignId}`, 'questionnaire-generator');
       
       // 1. Получить данные кампании
       const campaignData = await this.getCampaignQuestionnaire(campaignId);
@@ -196,7 +196,7 @@ export class QuestionnaireContentGenerator {
       // 3. Создать контент для каждой темы
       for (let i = 0; i < selectedTopics.length; i++) {
         const topic = selectedTopics[i];
-        logger.info(`Creating content ${i + 1}/${selectedTopics.length}: ${topic}`);
+        log(`Creating content ${i + 1}/${selectedTopics.length}: ${topic}`, 'questionnaire-generator');
 
         // Генерировать контент
         const content = await this.generateContentFromQuestionnaire(campaignData, topic);
@@ -216,16 +216,16 @@ export class QuestionnaireContentGenerator {
 
           if (imageResult?.images?.[0]?.url) {
             imageUrl = imageResult.images[0].url;
-            logger.info('Image generated successfully');
+            log('Image generated successfully', 'questionnaire-generator');
           }
         } catch (imageError) {
-          logger.warn('Image generation failed, using placeholder');
+          log('Image generation failed, using placeholder', 'questionnaire-generator');
           imageUrl = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=600';
         }
 
         // Создать публикацию
         const scheduledTime = new Date(Date.now() + (i + 1) * 3 * 60 * 60 * 1000).toISOString();
-        const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+        const systemToken = process.env.DIRECTUS_TOKEN || '';
 
         const publicationData = {
           campaign_id: campaignId,
@@ -243,7 +243,7 @@ export class QuestionnaireContentGenerator {
           target_audience: content.targetAudience
         };
 
-        const createdPost = await directusCrud.createItem('publications', publicationData, { authToken: systemToken });
+        const createdPost = await directusCrud.create('publications', publicationData, { authToken: systemToken });
         if (createdPost) {
           createdPosts.push({
             id: createdPost.id,
@@ -252,15 +252,15 @@ export class QuestionnaireContentGenerator {
             scheduledTime,
             hasImage: !!imageUrl
           });
-          logger.info(`Post created successfully: ${createdPost.id}`);
+          log(`Post created successfully: ${createdPost.id}`, 'questionnaire-generator');
         }
       }
 
-      logger.info(`Created ${createdPosts.length} questionnaire-based posts`);
+      log(`Created ${createdPosts.length} questionnaire-based posts`, 'questionnaire-generator');
       return createdPosts;
 
     } catch (error) {
-      logger.error('Error creating questionnaire-based content:', error);
+      log(`Error creating questionnaire-based content: ${error}`, 'questionnaire-generator');
       throw error;
     }
   }

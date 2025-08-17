@@ -1,4 +1,5 @@
-import { directusCrud, directusAuthManager } from './directus/index';
+import { directusCrud } from './directus-crud';
+import { directusAuthManager } from './directus-auth-manager';
 import { GeminiVertexService } from './gemini-vertex';
 import { falAiUniversalService } from './fal-ai-universal';
 import logger from '../utils/logger';
@@ -151,7 +152,7 @@ export class AutonomousBotWorking {
    */
   private async getLatestTrends(campaignId: string): Promise<TrendData[]> {
     try {
-      const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+      const systemToken = process.env.DIRECTUS_TOKEN || '';
       
       const response = await directusCrud.getItems('campaign_trends', {
         filter: {
@@ -254,7 +255,7 @@ export class AutonomousBotWorking {
    */
   private async getCampaignContext(campaignId: string): Promise<any> {
     try {
-      const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+      const systemToken = process.env.DIRECTUS_TOKEN || '';
       const campaign = await directusCrud.getItemById('campaigns', campaignId, { authToken: systemToken });
       
       if (!campaign) {
@@ -361,7 +362,7 @@ export class AutonomousBotWorking {
     config: BotConfig
   ): Promise<void> {
     try {
-      const systemToken = process.env.DIRECTUS_ADMIN_TOKEN || '';
+      const systemToken = process.env.DIRECTUS_TOKEN || '';
       
       // Рассчитать оптимальное время публикации
       const scheduledTime = this.calculateOptimalPostTime(config.platforms);
