@@ -4048,6 +4048,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Stories and Video content routes
   app.use('/api/stories', storiesRouter);
+  
+  // Регистрируем маршруты автономного бота
+  app.use('/api/autonomous-bot', autonomousBotRoutes);
   app.use('/api/video', videoRouter);
   
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
@@ -15040,6 +15043,9 @@ function generateMockContentPlan(count: number = 5, contentType: string = 'mixed
   console.log(`Сгенерирован имитационный контент-план: ${contentPlan.length} элементов`);
   return contentPlan;
 }
+
+// Подключение маршрутов автономного бота
+import { autonomousBotRoutes } from './routes/autonomous-bot-routes';
 
 
 

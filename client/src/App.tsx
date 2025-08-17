@@ -67,6 +67,7 @@ import YouTubeCallback from "@/pages/youtube-callback";
 import InstagramCallback from "@/pages/instagram-callback";
 import VkCallback from "@/pages/vk-callback";
 import StoryEditor from "@/components/stories/StoryEditor";
+import BotSettings from "@/pages/bot/BotSettings";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -104,6 +105,7 @@ const LayoutUserManagement = React.memo(() => <WithLayout Component={UserManagem
 const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
 const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
 const LayoutInstagramSetup = React.memo(() => <WithLayout Component={InstagramSimplePage} />);
+const LayoutBotSettings = React.memo(() => <WithLayout Component={BotSettings} />);
 
 function Router() {
   return (
@@ -143,6 +145,7 @@ function Router() {
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
       <Route path="/settings/instagram-setup" component={LayoutInstagramSetup} />
+      <Route path="/campaigns/:campaignId/bot" component={LayoutBotSettings} />
       
       {/* Video and Stories routes */}
       <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />

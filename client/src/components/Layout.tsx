@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users, Video, Sparkles } from "lucide-react";
+import { LogOut, BarChart, FileText, Search, Menu, Calendar, TrendingUp, PenTool, Settings, Clock, Key, Users, Video, Sparkles, Bot } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { useCampaignStore } from "@/lib/campaignStore";
 import { DIRECTUS_URL } from "@/lib/directus";
@@ -314,6 +314,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
               )}
             </div>
             
+            {/* Кнопка автономного бота - только если выбрана кампания */}
+            {location !== '/campaigns' && (
+              <div className="flex items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    const currentPath = location;
+                    const campaignMatch = currentPath.match(/\/campaigns\/([^\/]+)/);
+                    if (campaignMatch) {
+                      const campaignId = campaignMatch[1];
+                      handleNavigation(`/campaigns/${campaignId}/bot`);
+                    } else {
+                      // Пытаемся получить campaignId из campaignStore
+                      const selectedCampaign = useCampaignStore.getState().selectedCampaign;
+                      if (selectedCampaign?.id) {
+                        handleNavigation(`/campaigns/${selectedCampaign.id}/bot`);
+                      }
+                    }
+                  }}
+                >
+                  <Bot size={16} />
+                  Автономный Бот
+                </Button>
+              </div>
+            )}
 
           </div>
           <main className="flex-1 p-4 lg:p-8">
