@@ -413,23 +413,27 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
       platforms: ['instagram'],
       scheduledAt: new Date().toISOString(),
       
-      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: правильные параметры для Instagram Stories
+      // КОНФИГУРАЦИЯ ДЛЯ СУЩЕСТВУЮЩЕГО WORKFLOW (который работал с другими видео)
       instagram_config: {
-        media_type: 'STORIES', // ОБЯЗАТЕЛЬНО: STORIES для историй
-        published: true, // Прямая публикация
-        direct_publish: true,
+        media_type: 'VIDEO',
+        published: false, // Двухэтапный процесс как в рабочем workflow
         api_version: 'v18.0',
         
-        // ВАЖНО: параметры должны быть в body, не в query
-        body_parameters: {
-          video_url: conversionResult.convertedUrl,
-          media_type: 'STORIES',
-          published: true
+        // ИСПРАВЛЕНИЕ: Instagram Stories может требовать image_url для видео
+        container_parameters: {
+          image_url: conversionResult.convertedUrl, // Instagram использует image_url даже для видео Stories
+          media_type: 'VIDEO',
+          published: false
         },
         
-        // НЕ ИСПОЛЬЗОВАТЬ media_publish для Stories!
-        skip_media_publish: true,
-        stories_direct_mode: true
+        // Параметры для публикации (Publish Story узел) 
+        publish_parameters: {
+          creation_id: '{{CONTAINER_ID}}' // Как в рабочем workflow
+        },
+        
+        // Указываем что используем существующий Stories workflow
+        use_existing_stories_workflow: true,
+        workflow_type: 'instagram_stories'
       },
       
       content: {
@@ -450,34 +454,31 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
       },
       campaignId: story.campaign_id,
       userId: story.user_id,
-      // Instagram API specific fields
+      // Instagram API specific fields (дублируем для совместимости)
       media_type: 'VIDEO',
       video_url: conversionResult.convertedUrl,
+      image_url: conversionResult.convertedUrl, // Instagram Stories может использовать image_url для видео
       publish_mode: 'instagram_stories'
     };
 
     console.log('[DEV] [stories] Publishing to Instagram Stories via N8N:', JSON.stringify(n8nPayload, null, 2));
 
-    // Multiple webhook attempts with different configurations
+    // Webhook attempts для работающего workflow (который работал с другими видео)
     const webhookAttempts = [
       {
-        name: 'Instagram Stories Specific',
+        name: 'Working Instagram Stories',
+        url: 'https://n8n.nplanner.ru/webhook/publish-instagram-stories', // ПРАВИЛЬНЫЙ endpoint
+        payload: n8nPayload
+      },
+      {
+        name: 'Fallback Stories',
+        url: 'https://n8n.nplanner.ru/webhook/publish-stories',
+        payload: n8nPayload
+      },
+      {
+        name: 'Legacy fallback',
         url: 'https://n8n.roboflow.space/webhook/publish-instagram-stories',
         payload: n8nPayload
-      },
-      {
-        name: 'General Stories',
-        url: 'https://n8n.roboflow.space/webhook/publish-stories',
-        payload: n8nPayload
-      },
-      {
-        name: 'General Content with Instagram flag',
-        url: 'https://n8n.roboflow.space/webhook/publish-stories',
-        payload: {
-          ...n8nPayload,
-          instagram_stories: true,
-          force_instagram: true
-        }
       }
     ];
 

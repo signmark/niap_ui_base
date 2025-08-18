@@ -180,16 +180,21 @@ export class RealVideoConverter {
       'ffmpeg',
       '-i', `"${inputPath}"`,
       '-t', '59', // Максимум 59 секунд
-      '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920', // 9:16 с обрезкой
+      // ИСПРАВЛЕНИЕ: правильное масштабирование для Instagram Stories
+      '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black',
       '-c:v', 'libx264', // H.264 видео кодек
       '-c:a', 'aac', // AAC аудио кодек
-      '-b:v', '2500k', // Битрейт видео
+      '-b:v', '3000k', // УВЕЛИЧЕННЫЙ битрейт для Instagram
       '-b:a', '128k', // Битрейт аудио
       '-r', '30', // 30 FPS
       '-preset', 'medium', // Качество vs скорость
-      '-crf', '23', // Качество (23 = хорошее качество)
+      '-crf', '21', // УЛУЧШЕННОЕ качество для Instagram
+      '-pix_fmt', 'yuv420p', // ОБЯЗАТЕЛЬНЫЙ формат пикселей для Instagram
+      '-profile:v', 'main', // Профиль H.264 для совместимости
+      '-level:v', '3.1', // Уровень H.264 для Instagram
       '-movflags', '+faststart', // Оптимизация для веб
       '-f', 'mp4', // Формат MP4
+      '-avoid_negative_ts', 'make_zero', // Исправление временных меток
       '-y', // Перезаписать если есть
       `"${outputPath}"`
     ].join(' ');

@@ -1,0 +1,1099 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish-stories",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "6cc673d8-54f0-4592-b333-51692c3f7423",
+      "name": "Instagram Stories Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -5712,
+        192
+      ],
+      "webhookId": "publish-instagram-stories"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Парсим входные данные из webhook\nconst inputData = $input.item.json.body || {};\nreturn {\n  contentId: inputData.contentId,\n  campaignId: inputData.campaignId,\n  userToken: inputData.token || null\n};"
+      },
+      "id": "85c1ed2d-f0bc-47ad-94a4-1ce8dbbbcaa0",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -5424,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "campaign_content",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.contentId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b166d886-2561-4bda-919c-eb02a9cb445e",
+      "name": "Get Content Details",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5088,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.id !== undefined }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "09ea5b33-6424-465f-bc5c-3cb963bca9b6",
+      "name": "Content Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -4832,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ошибка отсутствия контента\nreturn {\n  success: false,\n  error: {\n    message: \"Контент не найден\",\n    contentId: $node[\"Extract Parameters\"].json.contentId\n  }\n};"
+      },
+      "id": "7b9699d6-e652-478c-b08b-165b7d9096cc",
+      "name": "Content Not Found",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4576,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "53eaa292-033c-4b51-a295-2b45104d1959",
+      "name": "Respond With Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -4336,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "user_campaigns",
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $node[\"Get Content Details\"].json.campaign_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d7f2a2d4-8ccf-41f5-8e21-eeafa5ccf12f",
+      "name": "Get Campaign Settings",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4576,
+        64
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные контента и кампании\nconst content = $node[\"Get Content Details\"].json;\nconst campaign = $node[\"Get Campaign Settings\"].json;\n\n// Извлекаем настройки соц. сетей из кампании\nlet socialSettings = {};\nif (campaign && (campaign.social_media_settings || campaign.social_settings)) {\n  try {\n    const settingsJson = campaign.social_media_settings || campaign.social_settings;\n    if (typeof settingsJson === 'string') {\n      socialSettings = JSON.parse(settingsJson);\n    } else {\n      socialSettings = settingsJson;\n    }\n  } catch (e) {\n    console.log('Error parsing social settings:', e.message);\n  }\n}\n\n// Извлекаем настройки Instagram\nconst instagram = socialSettings.instagram || {};\n\n// Извлекаем URL изображения из контента\nlet imageUrl = content.image_url;\n\n// Проверяем наличие дополнительных изображений\nif (content.additional_images) {\n  try {\n    let additionalImages = [];\n    if (typeof content.additional_images === 'string') {\n      additionalImages = JSON.parse(content.additional_images);\n    } else if (Array.isArray(content.additional_images)) {\n      additionalImages = content.additional_images;\n    }\n    \n    // Если есть дополнительные изображения, используем первое из них\n    if (additionalImages.length > 0) {\n      if (typeof additionalImages[0] === 'object' && additionalImages[0].url) {\n        imageUrl = additionalImages[0].url;\n      } else if (typeof additionalImages[0] === 'string') {\n        imageUrl = additionalImages[0];\n      }\n    }\n  } catch (e) {\n    console.log('Error parsing additional images:', e.message);\n  }\n}\n\n// Проверка на медиа-данные в JSON\nif (content.media) {\n  try {\n    let mediaData = content.media;\n    if (typeof mediaData === 'string') {\n      mediaData = JSON.parse(mediaData);\n    }\n    \n    if (Array.isArray(mediaData) && mediaData.length > 0) {\n      const firstMedia = mediaData[0];\n      if (firstMedia && firstMedia.url) {\n        imageUrl = firstMedia.url;\n      }\n    }\n  } catch (e) {\n    console.log('Error parsing media:', e.message);\n  }\n}\n\n// Подготавливаем данные для публикации\nreturn {\n  content_id: content.id,\n  campaign_id: content.campaign_id,\n  title: content.title || '',\n  caption: content.content || '',\n  image_url: imageUrl,\n  instagram_token: instagram.token,\n  instagram_account_id: instagram.businessAccountId,\n  instagram_username: instagram.username || '',\n  content_type: content.content_type || 'post',\n  is_stories: content.content_type === 'stories'\n};"
+      },
+      "id": "e1281508-36be-45ce-88de-3fd6dd9f92b5",
+      "name": "Prepare Instagram Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4336,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.instagram_token !== undefined && $json.instagram_account_id !== undefined && $json.image_url !== undefined }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "6fcdd3ee-7635-4dfb-be63-4f7b6e6bc705",
+      "name": "Has Required Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -4048,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  success: false,\n  error: {\n    message: \"Отсутствуют необходимые данные для публикации\",\n    details: {\n      hasToken: !!$json.instagram_token,\n      hasAccountId: !!$json.instagram_account_id,\n      hasImage: !!$json.image_url\n    }\n  }\n};"
+      },
+      "id": "15e5c31e-40f0-4948-80f2-6b9acb41d5a7",
+      "name": "Missing Data Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3792,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "08bc3ac4-cc00-431e-9433-5e1f445df420",
+      "name": "Respond With Missing Data",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -3552,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $json.instagram_account_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $json.instagram_token }}"
+            },
+            {
+              "name": "fields",
+              "value": "username,name"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3b5ff95-6a07-4fc2-9b58-b7ba09b7d98b",
+      "name": "Get Instagram Username",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        -3824,
+        -112
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.id !== undefined }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "2cb5d62d-7109-4895-8a3c-67525246eb6c",
+      "name": "Container Created?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -2544,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  success: false,\n  error: {\n    message: \"Ошибка при создании контейнера для истории\",\n    details: $json.error ? $json.error : 'Неизвестная ошибка',\n    content_id: $node[\"Prepare Instagram Data\"].json.content_id\n  }\n};"
+      },
+      "id": "8a9ef872-328f-4bcb-ba01-cdda3abc90b2",
+      "name": "Container Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2144,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "3c556990-412a-424e-ab05-3767b3bb4e40",
+      "name": "Respond With Container Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1904,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $node[\"Prepare Instagram Data\"].json.instagram_account_id }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $node[\"Prepare Instagram Data\"].json.instagram_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "909fc9a1-2a27-4db9-9b18-d5448ca69203",
+      "name": "Publish Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        -2160,
+        -272
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.id !== undefined }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "b56d8c1e-489d-4b19-a237-04f9a5198bf6",
+      "name": "Story Published?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  success: false,\n  error: {\n    message: \"Ошибка при публикации истории\",\n    details: $json.error ? $json.error : 'Неизвестная ошибка',\n    content_id: $node[\"Prepare Instagram Data\"].json.content_id\n  }\n};"
+      },
+      "id": "d6889471-2461-413f-a1bd-2aa49954aecb",
+      "name": "Publishing Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "40e29b41-4d46-4758-9668-0062a62f905e",
+      "name": "Respond With Publishing Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем результаты публикации\nconst instagramData = $node[\"Prepare Instagram Data\"].json;\nconst publishResult = $json;\n\n// Важно: публикуем всегда в 'instagram', чтобы было совместимо с остальной системой\nconst platformName = 'instagram';\n\n// Получаем существующие social_platforms из контента или создаем новый объект\nlet existingSocialPlatforms = {};\nconst contentData = $node[\"Get Content Details\"].json;\n\nif (contentData.social_platforms) {\n  try {\n    if (typeof contentData.social_platforms === 'string') {\n      existingSocialPlatforms = JSON.parse(contentData.social_platforms);\n    } else {\n      existingSocialPlatforms = contentData.social_platforms;\n    }\n  } catch (e) {\n    console.log('Error parsing social platforms:', e.message);\n  }\n}\n\n// Получаем имя пользователя из запроса API\nlet igUsername = instagramData.instagram_username || '';\n\n// Проверяем, есть ли результат от запроса к API\nconst usernameResponse = $node[\"Get Instagram Username\"].json;\nif (usernameResponse && usernameResponse.username) {\n  igUsername = usernameResponse.username;\n  console.log(`Using Instagram username from API: ${igUsername}`);\n} else {\n  console.log(`API did not return username, using default: ${igUsername || 'instagram'}`);\n}\n\n// Если имя пользователя все еще не найдено, используем 'instagram'\nif (!igUsername) {\n  igUsername = 'instagram';\n  console.log('No username found, using default: instagram');\n}\n\n// Формируем URL истории с корректным именем пользователя\nconst storyUrl = `https://www.instagram.com/stories/${igUsername}/`;\n\n// Добавляем информацию о публикации в social_platforms\nexistingSocialPlatforms[platformName] = {\n  status: 'published',\n  postId: publishResult.id,\n  postUrl: storyUrl,\n  publishedAt: new Date().toISOString(),\n  platform: platformName,\n  isStory: true // Добавляем флаг, что это история\n};\n\n// Подготавливаем данные для обновления\nreturn {\n  contentId: instagramData.content_id,\n  social_platforms: JSON.stringify(existingSocialPlatforms),\n  publishedAt: new Date().toISOString(),\n  platformName: platformName,\n  publishResult: publishResult,\n  instagramUsername: igUsername\n};"
+      },
+      "id": "2ed5d7fe-9d3c-4791-b21d-d0b3081a0152",
+      "name": "Prepare Update Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "campaign_content",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "social_platforms": "={{ $json.social_platforms }}",
+            "published_at": "={{ $json.publishedAt }}",
+            "id": "={{ $json.contentId }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "campaign_id",
+              "displayName": "campaign_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "content_type",
+              "displayName": "content_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "prompt",
+              "displayName": "prompt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "keywords",
+              "displayName": "keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "scheduled_at",
+              "displayName": "scheduled_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "social_platforms",
+              "displayName": "social_platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "additional_images",
+              "displayName": "additional_images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "additional_media",
+              "displayName": "additional_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "0791a798-151c-4c03-8e65-818351666422",
+      "name": "Update Content Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -704,
+        -368
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lO4gl1E2I2lsrRce",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Формируем ответ\nconst updateData = $json;\nconst prepareData = $node[\"Prepare Update Data\"].json;\n\nreturn {\n  success: true,\n  result: {\n    contentId: updateData.id,\n    platform: prepareData.platformName,\n    postId: $node[\"Publish Story\"].json.id,\n    message: 'Instagram Stories успешно опубликованы',\n    publishedAt: updateData.published_at,\n    instagramUsername: prepareData.instagramUsername,\n    postUrl: `https://www.instagram.com/stories/${prepareData.instagramUsername}/`,\n    isStory: true\n  }\n};"
+      },
+      "id": "70c325a6-68d8-4e70-989f-2c6d95a9b866",
+      "name": "Prepare Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "ef840622-c557-4be1-9594-a8ae9d031458",
+      "name": "Respond With Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        -368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{$node[\"Prepare Instagram Data\"].json.instagram_account_id}}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{$node[\"Prepare Instagram Data\"].json.instagram_token}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ `https://images.weserv.nl/?url=${$('Get Content Details').item.json.image_url.replace(/^https?:\\/\\//, '')}&output=jpg&q=90&w=1080&h=1920` }}"
+            },
+            {
+              "name": "media_type",
+              "value": "STORIES"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e53054f9-338c-4100-ac72-8872eeed52dd",
+      "name": "Create Stories Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        -3104,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5078dd24-c9a3-44a3-a3c7-23194649ab25",
+              "leftValue": "={{ $('Get Content Details').item.json.image_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3616,
+        -112
+      ],
+      "id": "e2b0008b-e386-40ba-9e5f-e1eb32c4a62a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{$node[\"Prepare Instagram Data\"].json.instagram_account_id}}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $('Get Campaign Settings').item.json.social_media_settings.instagram.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $('Get Content Details').item.json.video_url }}"
+            },
+            {
+              "name": "media_type",
+              "value": "STORIES"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7a8b70aa-a5be-41c3-aab7-225a4d3c5243",
+      "name": "Create Stories Video Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        -3104,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "919f50db-1c12-406b-878a-4dbc52a899b5",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1680,
+        -272
+      ],
+      "id": "c44ae71c-3bbd-46e3-905c-e7bda337c60f",
+      "name": "Contaner Ready"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1920,
+        -272
+      ],
+      "id": "35ffd2e1-0442-480a-9f9a-8abd249dbd7d",
+      "name": "Wait For Container",
+      "webhookId": "263129a5-7430-4d60-8b88-e3e75b7df99c"
+    }
+  ],
+  "connections": {
+    "Instagram Stories Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get Content Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content Details": {
+      "main": [
+        [
+          {
+            "node": "Content Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Exists?": {
+      "main": [
+        [
+          {
+            "node": "Get Campaign Settings",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Content Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Not Found": {
+      "main": [
+        [
+          {
+            "node": "Respond With Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign Settings": {
+      "main": [
+        [
+          {
+            "node": "Prepare Instagram Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Instagram Data": {
+      "main": [
+        [
+          {
+            "node": "Has Required Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Required Data?": {
+      "main": [
+        [
+          {
+            "node": "Get Instagram Username",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Missing Data Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missing Data Error": {
+      "main": [
+        [
+          {
+            "node": "Respond With Missing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Instagram Username": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Created?": {
+      "main": [
+        [
+          {
+            "node": "Publish Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Container Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Container Error": {
+      "main": [
+        [
+          {
+            "node": "Respond With Container Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Story": {
+      "main": [
+        [
+          {
+            "node": "Wait For Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Story Published?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Update Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publishing Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishing Error": {
+      "main": [
+        [
+          {
+            "node": "Respond With Publishing Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update Data": {
+      "main": [
+        [
+          {
+            "node": "Update Content Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Content Status": {
+      "main": [
+        [
+          {
+            "node": "Prepare Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond With Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Stories Container": {
+      "main": [
+        [
+          {
+            "node": "Container Created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create Stories Container",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Stories Video Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Stories Video Container": {
+      "main": [
+        [
+          {
+            "node": "Container Created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contaner Ready": {
+      "main": [
+        [
+          {
+            "node": "Story Published?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publish Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait For Container": {
+      "main": [
+        [
+          {
+            "node": "Contaner Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Instagram Stories Webhook": [
+      {
+        "headers": {
+          "host": "n8n.roboflow.space",
+          "user-agent": "curl/8.14.1",
+          "content-length": "480",
+          "accept": "*/*",
+          "content-type": "application/json",
+          "x-forwarded-for": "34.74.218.44",
+          "x-forwarded-host": "n8n.roboflow.space",
+          "x-forwarded-port": "443",
+          "x-forwarded-proto": "https",
+          "x-forwarded-server": "2cefefd61de7",
+          "x-real-ip": "34.74.218.44",
+          "accept-encoding": "gzip"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "contentId": "6851f165-9063-47a4-939c-4cdfe1a7e765",
+          "contentType": "story",
+          "platforms": [
+            "instagram"
+          ],
+          "content": "<p>Сторя</p>",
+          "video_url": "https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/9b1ed8d5-8e55-46ad-9ea9-4f3a504703ab.webm?ig_stories=true&format=mp4&resolution=1080x1920&aspect_ratio=9%3A16&video_codec=h264&audio_codec=aac&fps=30&max_duration=59&bitrate=2000k&optimized_at=1755534657216",
+          "scheduledAt": null
+        },
+        "webhookUrl": "https://n8n.roboflow.space/webhook/publish-stories",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "48b343d4f21061cd3a73b34f5a2564ef792ed905f0d50c185e3671d2882f3122"
+  }
+}
