@@ -54,6 +54,7 @@ import { VideoUploader } from "@/components/VideoUploader";
 import { AdditionalVideosUploader } from "@/components/AdditionalVideosUploader";
 import { AdditionalMediaUploader } from "@/components/AdditionalMediaUploader";
 import CreationTimeDisplay from "@/components/CreationTimeDisplay";
+import VideoConverter from "@/components/VideoConverter";
 import { 
   Popover, 
   PopoverContent, 
@@ -1298,6 +1299,24 @@ export default function ContentPage() {
                                         В черновики
                                       </Button>
                                     )}
+                                    {/* Кнопка конвертации видео для Instagram Stories */}
+                                    {(content.contentType === "video" || content.contentType === "video-text") && content.videoUrl && (
+                                      <VideoConverter
+                                        videoUrl={content.videoUrl}
+                                        contentId={content.id}
+                                        onConversionComplete={(result) => {
+                                          if (result.success && result.convertedUrl) {
+                                            queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
+                                            toast({
+                                              description: "Видео конвертировано для Instagram Stories",
+                                              variant: "default"
+                                            });
+                                          }
+                                        }}
+                                        showDetails={false}
+                                      />
+                                    )}
+                                    
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
@@ -1631,6 +1650,21 @@ export default function ContentPage() {
                     placeholder="Введите URL видео или загрузите файл"
                     forcePreview={true}
                   />
+                  {newContent.videoUrl && (
+                    <VideoConverter
+                      videoUrl={newContent.videoUrl}
+                      onConversionComplete={(result) => {
+                        if (result.success && result.convertedUrl) {
+                          setNewContent({...newContent, videoUrl: result.convertedUrl});
+                          toast({
+                            description: "Видео конвертировано для Instagram Stories",
+                            variant: "default"
+                          });
+                        }
+                      }}
+                      showDetails={true}
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -2009,6 +2043,23 @@ export default function ContentPage() {
                       placeholder="Введите URL видео или загрузите файл"
                       forcePreview={true}
                     />
+                    {currentContent.videoUrl && (
+                      <VideoConverter
+                        videoUrl={currentContent.videoUrl}
+                        contentId={currentContent.id}
+                        onConversionComplete={(result) => {
+                          if (result.success && result.convertedUrl) {
+                            const updatedContent = {...currentContent, videoUrl: result.convertedUrl};
+                            setCurrentContentSafe(updatedContent);
+                            toast({
+                              description: "Видео конвертировано для Instagram Stories",
+                              variant: "default"
+                            });
+                          }
+                        }}
+                        showDetails={true}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
