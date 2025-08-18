@@ -176,26 +176,32 @@ export class RealVideoConverter {
     // - Аудио: AAC
     // - FPS: 30
     
+    // CLOUDCONVERT PARAMETERS: Точные параметры для Instagram совместимости
     const ffmpegCommand = [
       'ffmpeg',
       '-i', `"${inputPath}"`,
-      '-t', '59', // Максимум 59 секунд
-      // ИСПРАВЛЕНИЕ: правильное масштабирование для Instagram Stories
-      '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black',
-      '-c:v', 'libx264', // H.264 видео кодек
-      '-c:a', 'aac', // AAC аудио кодек
-      '-b:v', '3000k', // УВЕЛИЧЕННЫЙ битрейт для Instagram
-      '-b:a', '128k', // Битрейт аудио
+      '-t', '59', // Максимум 59 секунд для Stories
+      // CloudConvert scale параметр: fit=scale с точными размерами (исправлены кавычки)
+      '-vf', '"scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black"',
+      '-c:v', 'libx264', // x264 codec как в CloudConvert
+      '-b:v', '5000k', // ТОЧНЫЙ битрейт CloudConvert: 5000k 
+      '-crf', '23', // ТОЧНЫЙ CRF CloudConvert: 23
+      '-c:a', 'aac', // AAC аудио
+      '-b:a', '192k', // Увеличенный битрейт аудио как у CloudConvert
+      '-ar', '48000', // 48kHz sample rate
+      '-ac', '2', // Stereo
       '-r', '30', // 30 FPS
-      '-preset', 'medium', // Качество vs скорость
-      '-crf', '21', // УЛУЧШЕННОЕ качество для Instagram
-      '-pix_fmt', 'yuv420p', // ОБЯЗАТЕЛЬНЫЙ формат пикселей для Instagram
-      '-profile:v', 'main', // Профиль H.264 для совместимости
-      '-level:v', '3.1', // Уровень H.264 для Instagram
-      '-movflags', '+faststart', // Оптимизация для веб
-      '-f', 'mp4', // Формат MP4
-      '-avoid_negative_ts', 'make_zero', // Исправление временных меток
-      '-y', // Перезаписать если есть
+      '-preset', 'medium', // Баланс качества/скорости
+      '-pix_fmt', 'yuv420p', // ОБЯЗАТЕЛЬНЫЙ pixel format
+      '-profile:v', 'main', // Main profile для лучшей совместимости с Instagram
+      '-level:v', '4.1', // Level 4.1 для современных устройств
+      '-g', '60', // GOP size (2 секунды при 30fps)
+      '-keyint_min', '30', // Minimum keyframe interval
+      '-movflags', '+faststart+frag_keyframe+empty_moov', // Веб оптимизация + фрагментация
+      '-fflags', '+genpts', // Генерация PTS для совместимости
+      '-avoid_negative_ts', 'make_zero', // Исправление timestamp
+      '-f', 'mp4', // MP4 container
+      '-y', // Перезапись
       `"${outputPath}"`
     ].join(' ');
 

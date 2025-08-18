@@ -1,0 +1,142 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "definition": "={\n  \"tasks\": {\n    \"import-video\": {\n      \"operation\": \"import/url\",\n      \"url\": \"{{ $('Get Content Details').item.json.video_url }}\"\n    },\n    \"convert-video\": {\n      \"operation\": \"convert\",\n      \"input\": [\"import-video\"],\n      \"input_format\": \"webm\",\n      \"output_format\": \"mp4\",\n      \"video_codec\": \"x264\",\n      \"video_bitrate\": \"5000k\",\n      \"crf\": 23,\n      \"width\": 1080,\n      \"height\": 1920,\n      \"fit\": \"scale\"\n    },\n    \"export-video\": {\n      \"operation\": \"export/url\",\n      \"input\": [\"convert-video\"]\n    }\n  }\n}"
+      },
+      "type": "n8n-nodes-cloudconvert.cloudConvert",
+      "typeVersion": 1,
+      "position": [
+        -3248,
+        -1456
+      ],
+      "id": "683fcb11-5fa8-4ff9-9786-a059c1d8cb46",
+      "name": "Create job",
+      "credentials": {
+        "cloudConvertCredentialsApi": {
+          "id": "HMgwj68SgEN2fupo",
+          "name": "CloudConvert Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "jobId": "={{ $('Create job').item.json.id }}"
+      },
+      "type": "n8n-nodes-cloudconvert.cloudConvert",
+      "typeVersion": 1,
+      "position": [
+        -2832,
+        -1456
+      ],
+      "id": "fe86a7d6-08c6-4842-8aa5-f12d34aace48",
+      "name": "Get job",
+      "credentials": {
+        "cloudConvertCredentialsApi": {
+          "id": "HMgwj68SgEN2fupo",
+          "name": "CloudConvert Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ec4ddbc2-6f67-42aa-86ae-3ef848dda6c7",
+              "leftValue": "={{ $json.tasks[0].status }}",
+              "rightValue": "=finished",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2624,
+        -1456
+      ],
+      "id": "ed01cd0c-6b7a-430d-a9dc-92816379a256",
+      "name": "Video Ready"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3040,
+        -1456
+      ],
+      "id": "017d36ec-3732-4662-a1dd-db7e9548ae83",
+      "name": "Wait Job Finished",
+      "webhookId": "2f1c78f7-77dd-47be-b475-bd88230eae63"
+    }
+  ],
+  "connections": {
+    "Create job": {
+      "main": [
+        [
+          {
+            "node": "Wait Job Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get job": {
+      "main": [
+        [
+          {
+            "node": "Video Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Ready": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait Job Finished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Job Finished": {
+      "main": [
+        [
+          {
+            "node": "Get job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "48b343d4f21061cd3a73b34f5a2564ef792ed905f0d50c185e3671d2882f3122"
+  }
+}
