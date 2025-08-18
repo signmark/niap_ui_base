@@ -406,32 +406,118 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    // Publish to Instagram Stories via N8N webhook
+    // Publish to Instagram Stories via N8N webhook with creation_id fix
     const n8nPayload = {
       contentId: id,
-      contentType: 'story',
+      contentType: 'video_story',
       platforms: ['instagram'],
       scheduledAt: new Date().toISOString(),
-      videoUrl: conversionResult.convertedUrl,
-      originalVideoUrl: story.video_url,
-      converted: true,
-      conversionMetadata: conversionResult.metadata
+      
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: правильные параметры для Instagram Stories
+      instagram_config: {
+        media_type: 'STORIES', // ОБЯЗАТЕЛЬНО: STORIES для историй
+        published: true, // Прямая публикация
+        direct_publish: true,
+        api_version: 'v18.0',
+        
+        // ВАЖНО: параметры должны быть в body, не в query
+        body_parameters: {
+          video_url: conversionResult.convertedUrl,
+          media_type: 'STORIES',
+          published: true
+        },
+        
+        // НЕ ИСПОЛЬЗОВАТЬ media_publish для Stories!
+        skip_media_publish: true,
+        stories_direct_mode: true
+      },
+      
+      content: {
+        title: story.title || 'Video Story',
+        description: story.content || '',
+        videoUrl: conversionResult.convertedUrl,
+        originalVideoUrl: story.video_url,
+        mediaType: 'VIDEO',
+        storyType: 'instagram_stories'
+      },
+      metadata: {
+        converted: true,
+        conversionTime: conversionResult.duration,
+        videoFormat: 'mp4',
+        resolution: '1080x1920',
+        codec: 'H.264',
+        ...conversionResult.metadata
+      },
+      campaignId: story.campaign_id,
+      userId: story.user_id,
+      // Instagram API specific fields
+      media_type: 'VIDEO',
+      video_url: conversionResult.convertedUrl,
+      publish_mode: 'instagram_stories'
     };
 
-    console.log('[DEV] [stories] Publishing to Instagram Stories via N8N:', n8nPayload);
+    console.log('[DEV] [stories] Publishing to Instagram Stories via N8N:', JSON.stringify(n8nPayload, null, 2));
 
-    const webhookUrl = 'https://n8n.roboflow.space/webhook/publish-instagram-stories';
-    
-    try {
-      const axios = await import('axios');
-      const webhookResponse = await axios.default.post(webhookUrl, n8nPayload, {
-        timeout: 30000,
-        headers: {
-          'Content-Type': 'application/json'
+    // Multiple webhook attempts with different configurations
+    const webhookAttempts = [
+      {
+        name: 'Instagram Stories Specific',
+        url: 'https://n8n.roboflow.space/webhook/publish-instagram-stories',
+        payload: n8nPayload
+      },
+      {
+        name: 'General Stories',
+        url: 'https://n8n.roboflow.space/webhook/publish-stories',
+        payload: n8nPayload
+      },
+      {
+        name: 'General Content with Instagram flag',
+        url: 'https://n8n.roboflow.space/webhook/publish-stories',
+        payload: {
+          ...n8nPayload,
+          instagram_stories: true,
+          force_instagram: true
         }
-      });
+      }
+    ];
 
-      console.log('[DEV] [stories] N8N webhook response:', webhookResponse.status);
+    let successfulAttempt = null;
+    const axios = await import('axios');
+    
+    for (const attempt of webhookAttempts) {
+      try {
+        console.log(`[DEV] [stories] Trying ${attempt.name} webhook...`);
+        
+        const webhookResponse = await axios.default.post(attempt.url, attempt.payload, {
+          timeout: 30000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log(`[DEV] [stories] ${attempt.name} webhook success:`, webhookResponse.status);
+        successfulAttempt = {
+          name: attempt.name,
+          status: webhookResponse.status,
+          data: webhookResponse.data
+        };
+        break; // Exit loop on first success
+
+      } catch (webhookError: any) {
+        console.warn(`[DEV] [stories] ${attempt.name} webhook failed:`, webhookError.message);
+        
+        // Log detailed error for debugging
+        if (webhookError.response?.data) {
+          console.warn(`[DEV] [stories] ${attempt.name} error details:`, JSON.stringify(webhookError.response.data, null, 2));
+        }
+        
+        // Continue to next attempt
+        continue;
+      }
+    }
+
+    if (successfulAttempt) {
+      console.log('[DEV] [stories] Publication successful via:', successfulAttempt.name);
 
       return res.json({
         success: true,
@@ -442,17 +528,17 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
           convertedUrl: conversionResult.convertedUrl,
           conversionTime: conversionResult.duration,
           metadata: conversionResult.metadata,
-          webhookStatus: webhookResponse.status
+          webhookStatus: successfulAttempt.status
         }
       });
-
-    } catch (webhookError: any) {
-      console.error('[DEV] [stories] N8N webhook failed:', webhookError.message);
+    } else {
+      // All webhook attempts failed
+      console.error('[DEV] [stories] All N8N webhook attempts failed');
       
-      // Story was converted successfully, but webhook failed
+      // Story was converted successfully, but all webhooks failed
       return res.status(207).json({
         success: true,
-        warning: 'Video converted successfully but publication failed',
+        warning: 'Video converted successfully but all publication attempts failed',
         data: {
           storyId: id,
           originalUrl: story.video_url,
@@ -460,7 +546,7 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
           conversionTime: conversionResult.duration,
           metadata: conversionResult.metadata
         },
-        error: `Publication webhook failed: ${webhookError.message}`
+        error: 'All N8N webhook endpoints failed - check N8N workflows and Instagram API configuration'
       });
     }
 
