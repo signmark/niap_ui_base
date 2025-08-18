@@ -5,11 +5,11 @@ const router = Router();
 
 /**
  * POST /api/real-video-converter/convert
- * Конвертирует видео для Instagram Stories и обновляет контент
+ * Конвертирует видео для Instagram Stories
  */
 router.post('/convert', async (req, res) => {
   try {
-    const { videoUrl, contentId } = req.body;
+    const { videoUrl } = req.body;
 
     if (!videoUrl) {
       return res.status(400).json({
@@ -18,46 +18,31 @@ router.post('/convert', async (req, res) => {
       });
     }
 
-    console.log('[real-video-converter-api] Starting conversion:', { videoUrl, contentId });
+    console.log('[real-video-converter-api] Starting conversion:', videoUrl);
 
     // Проверяем, нужна ли конвертация
     if (!realVideoConverter.needsConversion(videoUrl)) {
-      console.log('[real-video-converter-api] Video already converted');
       return res.json({
         success: true,
         convertedUrl: videoUrl,
         originalUrl: videoUrl,
         method: 'no_conversion_needed',
-        message: 'Video already optimized for Instagram Stories'
+        message: 'Video already converted for Instagram Stories'
       });
     }
 
-    // Выполняем конвертацию
+    // Выполняем реальную конвертацию
     const result = await realVideoConverter.convertForInstagramStories(videoUrl);
 
-    if (result.success && result.convertedUrl) {
-      // Обновляем контент в базе данных если передан contentId
-      if (contentId) {
-        const updated = await realVideoConverter.updateContentVideoUrl(
-          contentId, 
-          result.convertedUrl, 
-          req.headers.authorization
-        );
-        
-        if (updated) {
-          console.log('[real-video-converter-api] Content updated successfully');
-        } else {
-          console.warn('[real-video-converter-api] Failed to update content');
-        }
-      }
-
+    if (result.success) {
+      console.log('[real-video-converter-api] Conversion successful:', result.convertedUrl);
+      
       return res.json({
         success: true,
         convertedUrl: result.convertedUrl,
         originalUrl: result.originalUrl,
         duration: result.duration,
         metadata: result.metadata,
-        contentUpdated: contentId ? true : false,
         method: 'ffmpeg_conversion',
         message: 'Video successfully converted for Instagram Stories'
       });
@@ -84,8 +69,32 @@ router.post('/convert', async (req, res) => {
 });
 
 /**
+ * GET /api/real-video-converter/status
+ * Проверка доступности FFmpeg
+ */
+router.get('/status', async (req, res) => {
+  try {
+    const ffmpegAvailable = await realVideoConverter.checkFFmpegAvailable();
+    
+    res.json({
+      success: true,
+      ffmpegAvailable,
+      message: ffmpegAvailable ? 'FFmpeg is available for video conversion' : 'FFmpeg not found on system',
+      version: ffmpegAvailable ? 'Available' : 'Not installed'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      ffmpegAvailable: false,
+      message: 'Error checking FFmpeg status'
+    });
+  }
+});
+
+/**
  * POST /api/real-video-converter/convert-content
- * Конвертирует видео для конкретного контента по ID
+ * Конвертирует видео для конкретного контента и обновляет базу данных
  */
 router.post('/convert-content', async (req, res) => {
   try {
@@ -119,15 +128,11 @@ router.post('/convert-content', async (req, res) => {
     if (!content?.video_url) {
       return res.status(404).json({
         success: false,
-        error: 'Content not found or has no video'
+        error: 'Content not found or has no video URL'
       });
     }
 
-    console.log('[real-video-converter-api] Converting content:', {
-      contentId,
-      title: content.title,
-      videoUrl: content.video_url
-    });
+    console.log('[real-video-converter-api] Converting video for content:', contentId);
     
     // Конвертируем видео
     const result = await realVideoConverter.convertForInstagramStories(content.video_url);
@@ -136,58 +141,46 @@ router.post('/convert-content', async (req, res) => {
       // Обновляем URL в базе данных
       const updated = await realVideoConverter.updateContentVideoUrl(
         contentId, 
-        result.convertedUrl, 
-        req.headers.authorization
+        result.convertedUrl,
+        req.headers.authorization as string
       );
 
-      return res.json({
-        success: true,
-        contentId,
-        originalUrl: content.video_url,
-        convertedUrl: result.convertedUrl,
-        duration: result.duration,
-        metadata: result.metadata,
-        contentUpdated: updated,
-        message: 'Video converted and content updated'
-      });
+      if (updated) {
+        console.log('[real-video-converter-api] Content video URL updated in database');
+
+        return res.json({
+          success: true,
+          contentId,
+          originalUrl: content.video_url,
+          convertedUrl: result.convertedUrl,
+          duration: result.duration,
+          metadata: result.metadata,
+          message: 'Video converted and database updated successfully'
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Video converted but failed to update database',
+          convertedUrl: result.convertedUrl,
+          originalUrl: content.video_url
+        });
+      }
     } else {
       return res.status(500).json({
         success: false,
-        error: result.error,
+        error: result.error || 'Video conversion failed',
         originalUrl: content.video_url,
         contentId
       });
     }
 
   } catch (error: any) {
-    console.error('[real-video-converter-api] Content conversion error:', error.message);
+    console.error('[real-video-converter-api] Convert content error:', error.message);
     
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/real-video-converter/status
- * Проверка доступности FFmpeg
- */
-router.get('/status', async (req, res) => {
-  try {
-    const ffmpegAvailable = await realVideoConverter.checkFFmpegAvailable();
-    
-    res.json({
-      success: true,
-      ffmpegAvailable,
-      message: ffmpegAvailable ? 'FFmpeg is available' : 'FFmpeg not found',
-      version: ffmpegAvailable ? 'Available' : 'Not available'
-    });
-  } catch (error: any) {
     res.status(500).json({
       success: false,
       error: error.message,
-      ffmpegAvailable: false
+      message: 'Internal server error during content video conversion'
     });
   }
 });

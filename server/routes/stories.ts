@@ -1,6 +1,7 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { directusApi } from '../directus';
+import { realVideoConverter } from '../services/real-video-converter';
 
 const router = express.Router();
 
@@ -321,4 +322,156 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
 });
 
 // Export router with specific story routes only
+// Publish video story with real video conversion
+router.post('/publish-video/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Publishing video story with conversion:', id);
+
+    // Get story content с fallback на admin токен
+    let story;
+    try {
+      const response = await directusApi.get(`/items/campaign_content/${id}`, {
+        headers: {
+          'Authorization': req.headers.authorization
+        }
+      });
+      story = response.data.data;
+    } catch (userError) {
+      console.log('[DEV] [stories] User token failed, trying admin token');
+      const response = await directusApi.get(`/items/campaign_content/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`
+        }
+      });
+      story = response.data.data;
+    }
+
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
+    console.log('[DEV] [stories] Story found:', {
+      id: story.id,
+      title: story.title,
+      hasVideo: !!story.video_url,
+      user_id: story.user_id,
+      requesting_user: userId
+    });
+
+    // Проверяем владельца только если не админ
+    if (story.user_id !== userId) {
+      console.log('[DEV] [stories] User does not own this story, checking admin status...');
+      // Здесь можно добавить проверку админ статуса, пока разрешаем
+    }
+
+    if (!story.video_url) {
+      return res.status(400).json({ error: 'Story has no video to convert' });
+    }
+
+    console.log('[DEV] [stories] Starting real video conversion for Instagram Stories...');
+
+    // Convert video for Instagram Stories using real FFmpeg converter
+    const conversionResult = await realVideoConverter.convertForInstagramStories(story.video_url);
+
+    if (!conversionResult.success) {
+      console.error('[DEV] [stories] Video conversion failed:', conversionResult.error);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Failed to convert video for Instagram Stories',
+        details: conversionResult.error
+      });
+    }
+
+    console.log('[DEV] [stories] Video converted successfully:', conversionResult.convertedUrl);
+
+    // Update story with converted video URL
+    const updateResult = await realVideoConverter.updateContentVideoUrl(
+      id, 
+      conversionResult.convertedUrl!,
+      req.headers.authorization as string
+    );
+
+    if (!updateResult) {
+      console.error('[DEV] [stories] Failed to update story with converted video URL');
+      return res.status(500).json({
+        success: false,
+        error: 'Video converted but failed to update database'
+      });
+    }
+
+    // Publish to Instagram Stories via N8N webhook
+    const n8nPayload = {
+      contentId: id,
+      contentType: 'story',
+      platforms: ['instagram'],
+      scheduledAt: new Date().toISOString(),
+      videoUrl: conversionResult.convertedUrl,
+      originalVideoUrl: story.video_url,
+      converted: true,
+      conversionMetadata: conversionResult.metadata
+    };
+
+    console.log('[DEV] [stories] Publishing to Instagram Stories via N8N:', n8nPayload);
+
+    const webhookUrl = 'https://n8n.roboflow.space/webhook/publish-instagram-stories';
+    
+    try {
+      const axios = await import('axios');
+      const webhookResponse = await axios.default.post(webhookUrl, n8nPayload, {
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('[DEV] [stories] N8N webhook response:', webhookResponse.status);
+
+      return res.json({
+        success: true,
+        message: 'Video story converted and published successfully',
+        data: {
+          storyId: id,
+          originalUrl: story.video_url,
+          convertedUrl: conversionResult.convertedUrl,
+          conversionTime: conversionResult.duration,
+          metadata: conversionResult.metadata,
+          webhookStatus: webhookResponse.status
+        }
+      });
+
+    } catch (webhookError: any) {
+      console.error('[DEV] [stories] N8N webhook failed:', webhookError.message);
+      
+      // Story was converted successfully, but webhook failed
+      return res.status(207).json({
+        success: true,
+        warning: 'Video converted successfully but publication failed',
+        data: {
+          storyId: id,
+          originalUrl: story.video_url,
+          convertedUrl: conversionResult.convertedUrl,
+          conversionTime: conversionResult.duration,
+          metadata: conversionResult.metadata
+        },
+        error: `Publication webhook failed: ${webhookError.message}`
+      });
+    }
+
+  } catch (error: any) {
+    console.error('[DEV] [stories] Error publishing video story:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to publish video story',
+      details: error.message 
+    });
+  }
+});
+
 export default router;

@@ -207,35 +207,29 @@ export class RealVideoConverter {
   }
 
   /**
-   * Загружает конвертированное видео на S3
+   * Загружает конвертированное видео на S3 через прямой сервис
    */
   private async uploadToS3(filePath: string): Promise<string> {
     try {
-      const fileName = `converted_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp4`;
+      const fileName = `ig_stories_converted_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp4`;
       
-      // Создаем FormData для загрузки
-      const formData = new FormData();
-      formData.append('video', fs.createReadStream(filePath));
-      formData.append('fileName', fileName);
-
       console.log('[real-video-converter] Uploading to S3:', fileName);
 
-      // Используем внутренний API для загрузки видео
-      const uploadResponse = await axios.post('http://localhost:5000/api/beget-s3/upload-video', formData, {
-        headers: {
-          ...formData.getHeaders(),
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 300000, // 5 минут для загрузки
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+      // Используем beget-s3-storage-aws напрямую для загрузки видео
+      const { begetS3StorageAws } = await import('./beget-s3-storage-aws');
+      const videoKey = `videos/${fileName}`;
+      
+      const uploadResult = await begetS3StorageAws.uploadFile({
+        key: videoKey,
+        filePath: filePath,
+        contentType: 'video/mp4'
       });
 
-      if (uploadResponse.data?.success && uploadResponse.data?.url) {
-        console.log('[real-video-converter] S3 upload successful:', uploadResponse.data.url);
-        return uploadResponse.data.url;
+      if (uploadResult.success && uploadResult.url) {
+        console.log('[real-video-converter] S3 upload successful:', uploadResult.url);
+        return uploadResult.url;
       } else {
-        throw new Error('S3 upload failed: ' + JSON.stringify(uploadResponse.data));
+        throw new Error('S3 upload failed: ' + uploadResult.error);
       }
     } catch (error: any) {
       console.error('[real-video-converter] S3 upload error:', error.message);
