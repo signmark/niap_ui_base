@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **Dynamic Environment Detection**: The system automatically detects development, staging, and production environments to configure API endpoints and credentials.
 - **Centralized API Key Management**: Global API keys for services like YouTube are stored in the database.
 - **Stories Architecture**: Features a dual-mode Stories editor (Simple and Video) with independent local state management and support for interactive elements. Content loads from Directus `metadata` field. Stories publication uses platform-specific N8N webhooks.
-- **Autonomous SMM Bot**: Integrated an autonomous bot system with Gemini AI text generation and FAL AI image creation. The bot analyzes trends, generates content, and schedules posts using intelligent timing algorithms, integrating with the N8N publishing infrastructure. It can also generate content based on business questionnaire data.
+- **Autonomous SMM Bot**: Integrated an autonomous bot system with Gemini AI text generation and FAL AI image creation. The bot analyzes trends, generates content, and schedules posts using intelligent timing algorithms, integrating with the N8N publishing infrastructure. It can also generate content based on business questionnaire data. Full implementation prompt created in AUTONOMOUS_SMM_BOT_IMPLEMENTATION_PROMPT.md with comprehensive analysis of all system components.
 - **UI/UX Decisions**: Maintains a clean, professional interface. Stories creation clears local storage and resets store state. A robot icon provides quick access to autonomous bot settings.
 
 ### Feature Specifications
