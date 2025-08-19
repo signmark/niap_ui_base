@@ -5,6 +5,13 @@ import { realVideoConverter } from '../services/real-video-converter';
 
 const router = express.Router();
 
+// Debug middleware to log all requests to stories routes
+router.use((req, res, next) => {
+  console.log(`[STORIES] ${req.method} ${req.originalUrl} - Path: ${req.path}`);
+  console.log(`[STORIES] Request received with auth: ${req.headers.authorization ? 'Present' : 'Missing'}`);
+  next();
+});
+
 // Create a new story
 router.post('/', authMiddleware, async (req, res) => {
   try {
@@ -321,8 +328,165 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
   }
 });
 
+// COMPLETE WORKFLOW: Convert video, save to Directus, publish to N8N
+router.post('/convert-and-publish', authMiddleware, async (req, res) => {
+  console.log('[DEV] [stories] convert-and-publish route hit!');
+  console.log('[DEV] [stories] Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { 
+      videoUrl, 
+      campaignId, 
+      title = 'Stories с конвертированным видео',
+      platforms = ['instagram'],
+      scheduledAt 
+    } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!videoUrl || !campaignId) {
+      return res.status(400).json({ 
+        error: 'videoUrl and campaignId are required' 
+      });
+    }
+
+    console.log('[DEV] [stories] Starting complete workflow:', { videoUrl, campaignId });
+
+    // STEP 1: Convert video using real video converter
+    console.log('[DEV] [stories] Step 1: Converting video...');
+    
+    const conversionResult = await realVideoConverter.convertForInstagramStories(videoUrl);
+    
+    if (!conversionResult.success || !conversionResult.convertedUrl) {
+      throw new Error(`Video conversion failed: ${conversionResult.error}`);
+    }
+
+    const convertedVideoUrl = conversionResult.convertedUrl;
+    console.log('[DEV] [stories] Video converted successfully:', convertedVideoUrl);
+
+    // STEP 2: Save story content to Directus with converted video URL
+    console.log('[DEV] [stories] Step 2: Saving to Directus...');
+    
+    const storyContent = {
+      title: title,
+      description: 'Автоматически конвертированное видео для Instagram Stories',
+      videoUrl: convertedVideoUrl, // Use converted video URL
+      mediaType: 'video',
+      elements: []
+    };
+
+    const storyData = {
+      campaign_id: campaignId,
+      user_id: userId,
+      title: title,
+      content_type: 'video_story',
+      status: scheduledAt ? 'scheduled' : 'published',
+      content: storyContent,
+      metadata: JSON.stringify({ 
+        originalVideoUrl: videoUrl,
+        convertedVideoUrl: convertedVideoUrl,
+        conversionMetadata: conversionResult.metadata,
+        storyType: 'instagram',
+        format: '9:16',
+        createdWith: 'real_video_converter'
+      }),
+      platforms: JSON.stringify(platforms),
+      scheduled_time: scheduledAt || new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Try user token first, fallback to admin token
+    let createResponse;
+    try {
+      createResponse = await directusApi.post('/items/campaign_content', storyData, {
+        headers: {
+          'Authorization': req.headers.authorization
+        }
+      });
+    } catch (userError) {
+      console.log('[DEV] [stories] User token failed, using admin token for content creation');
+      createResponse = await directusApi.post('/items/campaign_content', storyData, {
+        headers: {
+          'Authorization': `Bearer ${process.env.DIRECTUS_ADMIN_TOKEN}`
+        }
+      });
+    }
+    
+    const savedStory = createResponse.data.data;
+    console.log('[DEV] [stories] Story saved to Directus with ID:', savedStory.id);
+
+    // STEP 3: Send to N8N webhook for publication
+    console.log('[DEV] [stories] Step 3: Sending to N8N webhook...');
+    
+    const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+    const webhookUrl = `${n8nUrl}/webhook/publish-stories`;
+    
+    const webhookPayload = {
+      contentId: savedStory.id,
+      contentType: 'video_story',
+      platforms: platforms,
+      scheduledAt: scheduledAt || new Date().toISOString(),
+      content: {
+        title: title,
+        videoUrl: convertedVideoUrl, // Send converted video URL to N8N
+        mediaType: 'video'
+      },
+      media_type: 'VIDEO',
+      image_url: convertedVideoUrl
+    };
+
+    console.log('[DEV] [stories] Sending to webhook:', webhookUrl);
+    
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(webhookPayload)
+    });
+
+    const webhookSuccess = webhookResponse.ok;
+    console.log('[DEV] [stories] Webhook response:', webhookResponse.status, webhookSuccess ? 'SUCCESS' : 'FAILED');
+
+    // FINAL RESPONSE
+    const result = {
+      success: true,
+      data: {
+        storyId: savedStory.id,
+        originalVideoUrl: videoUrl,
+        convertedVideoUrl: convertedVideoUrl,
+        conversionMetadata: conversionResult.metadata,
+        webhookStatus: webhookResponse.status,
+        webhookSuccess: webhookSuccess
+      },
+      message: `Story converted, saved and ${webhookSuccess ? 'published' : 'saved (webhook failed)'} successfully`
+    };
+
+    console.log('[DEV] [stories] Complete workflow finished:', {
+      storyId: savedStory.id,
+      conversion: 'SUCCESS',
+      saving: 'SUCCESS', 
+      webhook: webhookSuccess ? 'SUCCESS' : 'FAILED'
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('[DEV] [stories] Complete workflow error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    res.status(500).json({ 
+      success: false,
+      error: `Complete workflow failed: ${errorMessage}`,
+      step: 'conversion_or_saving_or_publishing'
+    });
+  }
+});
+
 // Export router with specific story routes only
-// Publish video story with real video conversion
 router.post('/publish-video/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
