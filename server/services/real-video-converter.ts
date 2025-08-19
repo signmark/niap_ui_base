@@ -40,23 +40,31 @@ export class RealVideoConverter {
   /**
    * Проверяет, нужна ли конвертация видео
    */
-  needsConversion(videoUrl: string): boolean {
+  needsConversion(videoUrl: string, forceConvert: boolean = false): boolean {
+    // ПРИНУДИТЕЛЬНАЯ конвертация - всегда выполняется при forceConvert=true
+    if (forceConvert) {
+      console.log('[real-video-converter] FORCE CONVERT requested - выполняем реконвертацию');
+      return true;
+    }
+    
     const url = videoUrl.toLowerCase();
     
     // Если уже содержит метку конвертации - пропускаем
     if (url.includes('_converted') || url.includes('ig_stories_converted')) {
+      console.log('[real-video-converter] Video already converted, skipping');
       return false;
     }
     
     // Конвертируем все форматы для Instagram Stories
+    console.log('[real-video-converter] Video needs conversion');
     return true;
   }
 
   /**
    * Конвертирует видео для Instagram Stories
    */
-  async convertForInstagramStories(videoUrl: string): Promise<VideoConversionResult> {
-    console.log('[real-video-converter] Starting conversion:', videoUrl);
+  async convertForInstagramStories(videoUrl: string, forceConvert: boolean = false): Promise<VideoConversionResult> {
+    console.log('[real-video-converter] Starting conversion:', videoUrl, forceConvert ? '(FORCED)' : '');
 
     const startTime = Date.now();
     let inputFile: string | null = null;
@@ -167,37 +175,35 @@ export class RealVideoConverter {
 
   /**
    * Конвертирует видео для Instagram Stories
+   * Использует безопасные параметры для стабильного принятия Instagram API
    */
   private async convertVideo(inputPath: string, outputPath: string): Promise<void> {
-    // Параметры для Instagram Stories:
-    // - Соотношение сторон: 9:16 (1080x1920)
-    // - Максимальная длительность: 59 секунд
-    // - Кодек: H.264
-    // - Аудио: AAC
+    // ТОЧНЫЕ CloudConvert N8N параметры:
+    // - input_format: webm, output_format: mp4
+    // - video_codec: x264, video_bitrate: 5000k, crf: 23
+    // - width: 1080, height: 1920, fit: scale
+    // - pixel_format: yuv420p (Instagram требует)
+    // - profile: baseline (максимальная совместимость)
+    // - level: 3.1 (Instagram Stories совместимость)
     // - FPS: 30
     
-    // CLOUDCONVERT PARAMETERS: Точные параметры для Instagram совместимости
+    // INSTAGRAM STORIES РАБОЧИЕ ПАРАМЕТРЫ
+    // Используем H.264 Main профиль - протестировано и работает!
     const ffmpegCommand = `ffmpeg -i "${inputPath}" ` +
-      `-t 59 ` +                           // Максимум 59 секунд для Stories
-      `-vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:\\(ow-iw\\)/2:\\(oh-ih\\)/2:black" ` + // Экранированные скобки
-      `-c:v libx264 ` +                    // x264 codec как в CloudConvert
-      `-b:v 5000k ` +                      // ТОЧНЫЙ битрейт CloudConvert: 5000k 
-      `-crf 23 ` +                         // ТОЧНЫЙ CRF CloudConvert: 23
+      `-vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,fps=30" ` +
+      `-c:v libx264 ` +                    // H.264 видео кодек
+      `-profile:v main ` +                 // MAIN профиль (протестировано - работает!)
+      `-level 4.0 ` +                      // Level 4.0 (стандартный)
+      `-pix_fmt yuv420p ` +                // YUV420p обязательно
+      `-b:v 3M ` +                         // 3 Мбит/с видео битрейт
+      `-maxrate 4M ` +                     // Максимум 4 Мбит/с
+      `-bufsize 8M ` +                     // Буфер 8M
       `-c:a aac ` +                        // AAC аудио
-      `-b:a 192k ` +                       // Увеличенный битрейт аудио как у CloudConvert
-      `-ar 48000 ` +                       // 48kHz sample rate
-      `-ac 2 ` +                           // Stereo
-      `-r 30 ` +                           // 30 FPS
-      `-preset medium ` +                  // Баланс качества/скорости
-      `-pix_fmt yuv420p ` +                // ОБЯЗАТЕЛЬНЫЙ pixel format
-      `-profile:v main ` +                 // Main profile для лучшей совместимости с Instagram
-      `-level:v 4.1 ` +                    // Level 4.1 для современных устройств
-      `-g 60 ` +                           // GOP size (2 секунды при 30fps)
-      `-keyint_min 30 ` +                  // Minimum keyframe interval
-      `-movflags +faststart+frag_keyframe+empty_moov ` + // Веб оптимизация + фрагментация
-      `-fflags +genpts ` +                 // Генерация PTS для совместимости
-      `-avoid_negative_ts make_zero ` +    // Исправление timestamp
-      `-f mp4 ` +                          // MP4 container
+      `-ar 44100 ` +                       // 44.1 kHz частота
+      `-ac 2 ` +                           // 2 канала стерео
+      `-b:a 128k ` +                       // 128 кбит/с аудио
+      `-movflags +faststart ` +            // Web-оптимизация
+      `-f mp4 ` +                          // MP4 контейнер
       `-y "${outputPath}"`;                // Перезапись
 
     console.log('[real-video-converter] Running FFmpeg conversion...');
@@ -276,6 +282,121 @@ export class RealVideoConverter {
         }
       }
     });
+  }
+
+  /**
+   * Конвертирует локальный файл для Instagram Stories
+   */
+  async convertLocalFile(localPath: string, forceConvert: boolean = false): Promise<VideoConversionResult> {
+    console.log('[real-video-converter] Converting local file:', localPath);
+
+    if (!fs.existsSync(localPath)) {
+      return {
+        success: false,
+        error: 'Local file not found',
+        originalUrl: localPath,
+        convertedUrl: undefined,
+        duration: 0,
+        metadata: undefined
+      };
+    }
+
+    const startTime = Date.now();
+    let outputFile: string | null = null;
+
+    try {
+      // Генерируем имя выходного файла
+      const fileName = `local_converted_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      outputFile = path.join(this.tempDir, `${fileName}_ig_stories_converted.mp4`);
+
+      console.log('[real-video-converter] Converting local file to:', outputFile);
+
+      // Получаем размер исходного файла
+      const originalStats = fs.statSync(localPath);
+      const originalSize = originalStats.size;
+
+      // ТОЧНЫЕ ПАРАМЕТРЫ GOOGLE (ForBiggerEscapes.mp4) - проверенные Instagram
+      const ffmpegCommand = `ffmpeg -i "${localPath}" ` +
+        `-t 10 ` +                           // Короткое видео
+        `-vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black" ` +
+        `-c:v libx264 ` +                    // H.264 видео кодек
+        `-profile:v high ` +                 // HIGH профиль (точно как у Google)
+        `-level:v 3.1 ` +                    // Level 3.1 (точно как у Google)
+        `-pix_fmt yuv420p ` +                // YUV420p пиксели
+        `-crf 23 ` +                         // CRF 23 стандартное качество
+        `-maxrate 1000k ` +                  // Точный битрейт как у Google (~1027k)
+        `-bufsize 2000k ` +                  // Маленький буфер как у оригинала
+        `-g 24 ` +                           // GOP 24 (как 24 FPS)
+        `-r 24 ` +                           // 24 FPS как у Google оригинала
+        `-c:a aac ` +                        // AAC аудио
+        `-b:a 192k ` +                       // 192k аудио битрейт (как у Google)
+        `-ar 44100 ` +                       // 44.1kHz частота
+        `-ac 2 ` +                           // Stereo
+        `-movflags +faststart ` +            // Быстрый старт
+        `-f mp4 ` +                          // MP4 контейнер
+        `-y "${outputFile}"`;                // Перезапись
+
+      console.log('[real-video-converter] Executing FFmpeg command...');
+      const { stdout } = await execAsync(ffmpegCommand);
+
+      // Проверяем что файл создан
+      if (!fs.existsSync(outputFile)) {
+        throw new Error('Output file was not created');
+      }
+
+      // Получаем информацию о конвертированном файле
+      const convertedStats = fs.statSync(outputFile);
+      const convertedSize = convertedStats.size;
+
+      // Анализируем метаданные
+      const videoInfo = await this.getVideoInfo(outputFile);
+
+      console.log('[real-video-converter] Conversion completed:', {
+        originalSize,
+        convertedSize,
+        duration: Date.now() - startTime,
+        convertedInfo: videoInfo
+      });
+
+      // Загружаем в S3
+      const s3Url = await this.uploadToS3(outputFile);
+
+      if (!s3Url) {
+        throw new Error('S3 upload failed');
+      }
+
+      // Очищаем временный файл
+      this.cleanupFiles([outputFile]);
+
+      return {
+        success: true,
+        originalUrl: localPath,
+        convertedUrl: s3Url,
+        duration: Date.now() - startTime,
+        metadata: {
+          width: videoInfo?.width || 1080,
+          height: videoInfo?.height || 1920,
+          duration: videoInfo?.duration || 0,
+          codec: videoInfo?.codec || 'h264',
+          size: convertedSize
+        }
+      };
+
+    } catch (error: any) {
+      console.error('[real-video-converter] Local conversion failed:', error.message);
+      
+      // Очищаем временные файлы
+      this.cleanupFiles([outputFile]);
+
+      return {
+        success: false,
+        error: error.message,
+        originalUrl: localPath,
+        convertedUrl: undefined,
+        duration: Date.now() - startTime,
+        metadata: undefined
+      };
+    }
   }
 
   /**

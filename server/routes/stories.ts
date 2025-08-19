@@ -242,10 +242,7 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       if (instagramPlatforms.length > 0) {
         const instagramWebhookUrl = `${n8nUrl}/webhook/publish-instagram-stories`;
         const instagramPayload = {
-          contentId: updatedStory.id,
-          contentType: 'story',
-          platforms: instagramPlatforms,
-          scheduledAt: scheduledAt
+          contentId: updatedStory.id
         };
         
         console.log('[DEV] [stories] Sending to Instagram Stories webhook:', instagramWebhookUrl);
@@ -279,10 +276,7 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       if (otherPlatforms.length > 0) {
         const generalWebhookUrl = `${n8nUrl}/webhook/publish-stories`;
         const generalPayload = {
-          contentId: updatedStory.id,
-          contentType: 'story',
-          platforms: otherPlatforms,
-          scheduledAt: scheduledAt
+          contentId: updatedStory.id
         };
         
         console.log('[DEV] [stories] Sending to general Stories webhook:', generalWebhookUrl);
