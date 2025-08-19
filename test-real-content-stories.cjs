@@ -6,8 +6,8 @@ async function testRealContentStories() {
   try {
     console.log('🔍 Получаем данные контента...');
     
-    // Получаем токен из браузера (симулируем)
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsImVtYWlsIjoibGJyc3BiQGdtYWlsLmNvbSIsImlhdCI6MTczNzIyMjQ2OCwiZXhwIjoxNzM3MzA4ODY4fQ.v7dQvHW6C6w8kXWgSRa4WqbdG2nUZMb4wXsVoFJCqmI';
+    // Получаем токен из браузера (обновленный)
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUzOTIxZjE2LWY1MWQtNDU5MS04MGI5LThjYWE0ZmRlNGQxMyIsImVtYWlsIjoibGJyc3BiQGdtYWlsLmNvbSIsImlhdCI6MTczNzI2MzU5NywiZXhwIjoxNzM3MzQ5OTk3fQ.qHrUKcrRjnQK_KK5xXWBZLpYvmlXpzJGJAmwUYVqkB0';
     
     console.log('🚀 Запускаем публикацию Stories с исправленным видео конвертером...');
     
