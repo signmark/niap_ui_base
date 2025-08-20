@@ -219,7 +219,7 @@ export class RealVideoConverter {
   }
 
   /**
-   * Загружает конвертированное видео на S3 через прямой сервис
+   * Загружает конвертированное видео на S3 и возвращает прокси-URL для Instagram
    */
   private async uploadToS3(filePath: string): Promise<string> {
     try {
@@ -239,7 +239,12 @@ export class RealVideoConverter {
 
       if (uploadResult.success && uploadResult.url) {
         console.log('[real-video-converter] S3 upload successful:', uploadResult.url);
-        return uploadResult.url;
+        
+        // ВАЖНО: Возвращаем прокси-URL вместо прямой S3 ссылки для Instagram совместимости
+        const proxyUrl = this.generateProxyUrl(fileName);
+        console.log('[real-video-converter] Generated Instagram proxy URL:', proxyUrl);
+        
+        return proxyUrl;
       } else {
         throw new Error('S3 upload failed: ' + uploadResult.error);
       }
@@ -247,6 +252,17 @@ export class RealVideoConverter {
       console.error('[real-video-converter] S3 upload error:', error.message);
       throw new Error('Failed to upload converted video to S3: ' + error.message);
     }
+  }
+
+  /**
+   * Генерирует прокси-URL для Instagram видео
+   */
+  private generateProxyUrl(fileName: string): string {
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : 'http://localhost:5000';
+    
+    return `${baseUrl}/api/instagram-video-proxy/${fileName}`;
   }
 
   /**
