@@ -1,7 +1,40 @@
 import axios from 'axios';
 import { log } from '../../utils/logger';
-import { CampaignContent, SocialMediaSettings, SocialPlatform, SocialPublication } from '@shared/schema';
 import { BaseSocialService } from './base-service';
+
+// Define interfaces for types not available in shared schema
+interface CampaignContent {
+  id: string;
+  contentType: string;
+  videoUrl?: string;
+  imageUrl?: string;
+  title?: string;
+  content?: string;
+  hashtags?: string[];
+  metadata?: any;
+  additionalMedia?: any[];
+  userId?: string;
+}
+
+interface SocialPublication {
+  platform: string;
+  status: 'published' | 'failed' | 'pending';
+  publishedAt: Date | null;
+  postId?: string | null;
+  postUrl?: string | null;
+  error?: string | null;
+  userId?: string;
+}
+
+interface SocialMediaSettings {
+  instagram?: {
+    token: string | null;
+    accessToken: string | null;
+    businessAccountId: string | null;
+    appId?: string | null;
+    appSecret?: string | null;
+  };
+}
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -171,6 +204,19 @@ export class InstagramService extends BaseSocialService {
       
       // Определяем окончательно, есть ли у нас видео
       const isVideo = (content.contentType === 'video-text' || content.contentType === 'video') && videoUrl !== null;
+      
+      // Если есть видео URL, проверяем нужно ли использовать прокси для Instagram
+      if (videoUrl) {
+        const { getInstagramCompatibleVideoUrl } = await import('../../utils/instagram-video-proxy-helper');
+        const originalVideoUrl = videoUrl;
+        videoUrl = getInstagramCompatibleVideoUrl(videoUrl);
+        
+        if (originalVideoUrl !== videoUrl) {
+          log(`[Instagram] Используем прокси URL для совместимости с Instagram:`, 'instagram');
+          log(`  Оригинальный: ${originalVideoUrl}`, 'instagram');  
+          log(`  Прокси: ${videoUrl}`, 'instagram');
+        }
+      }
       
       // Расширенное логирование для диагностики
       log(`[Instagram DEBUG] Тип контента: ${content.contentType}, videoUrl: ${videoUrl ? 'найден' : 'не найден'}, isVideo: ${isVideo}`, 'instagram');

@@ -114,12 +114,18 @@ export class BegetS3StorageAws {
       
       log.info(`Uploading file to Beget S3: ${fileKey}`, this.logPrefix);
       
+      // Для видео файлов добавляем специальные заголовки, требуемые Instagram Graph API
+      const metadata: Record<string, string> = {};
+      const cacheControl = contentType.startsWith('video/') ? 'public, max-age=31536000' : 'public, max-age=3600';
+      
       const command = new PutObjectCommand({
         Bucket: this.bucket,
         Key: fileKey,
         Body: fileBody,
         ContentType: contentType,
-        ACL: 'public-read'
+        ACL: 'public-read',
+        CacheControl: cacheControl,
+        Metadata: metadata
       });
 
       await this.client.send(command);

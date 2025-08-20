@@ -325,6 +325,13 @@ app.use((req, res, next) => {
     app.use('/api/test', testRouter);
     // Регистрируем маршруты для диагностики и исправления проблем с URL Telegram
     app.use('/api/telegram-diagnostics', telegramDiagnosticsRouter);
+    // Тестовые маршруты для диагностики Instagram видео
+    const instagramVideoTestRoutes = (await import('./routes/instagram-video-test')).default;
+    app.use('/api/test', instagramVideoTestRoutes);
+    
+    // Прокси для Instagram видео (решение проблемы S3)
+    const instagramVideoProxyRoutes = (await import('./routes/instagram-video-proxy')).default;
+    app.use('/api', instagramVideoProxyRoutes);
     console.log("Test API routes registered");
     log("Test API routes registered successfully");
     
