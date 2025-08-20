@@ -22,20 +22,36 @@ router.get('/instagram-video-proxy/:videoId', async (req: Request, res: Response
     // Получаем оригинальный URL из S3
     const { begetS3StorageAws } = await import('../services/beget-s3-storage-aws');
     
-    // Предполагаем, что videoId соответствует ключу в S3
-    const s3Key = `videos/${videoId}`;
-    const originalUrl = begetS3StorageAws.getPublicUrl(s3Key);
+    // Пытаемся найти файл в разных папках
+    let s3Key = `videos/${videoId}`;
+    let originalUrl = begetS3StorageAws.getPublicUrl(s3Key);
+    let fileExists = await begetS3StorageAws.fileExists(s3Key);
+    
+    // Если не найден в videos/, пробуем test/
+    if (!fileExists) {
+      s3Key = `test/${videoId}`;
+      originalUrl = begetS3StorageAws.getPublicUrl(s3Key);
+      fileExists = await begetS3StorageAws.fileExists(s3Key);
+    }
+    
+    // Если всё еще не найден, пробуем корень
+    if (!fileExists) {
+      s3Key = videoId;
+      originalUrl = begetS3StorageAws.getPublicUrl(s3Key);
+      fileExists = await begetS3StorageAws.fileExists(s3Key);
+    }
     
     log(`[Instagram Video Proxy] Оригинальный S3 URL: ${originalUrl}`, 'instagram-proxy');
 
-    // Проверяем существование файла в S3
-    const fileExists = await begetS3StorageAws.fileExists(s3Key);
+    // Проверяем существование файла в S3 (уже проверено выше)
     if (!fileExists) {
-      log(`[Instagram Video Proxy] Файл не найден в S3: ${s3Key}`, 'instagram-proxy');
+      log(`[Instagram Video Proxy] Файл не найден в S3: попробованы videos/, test/, и корень`, 'instagram-proxy');
       return res.status(404).json({
         error: 'Video file not found'
       });
     }
+    
+    log(`[Instagram Video Proxy] Файл найден в S3: ${s3Key}`, 'instagram-proxy');
 
     // Делаем запрос к S3
     const s3Response = await fetch(originalUrl, {
