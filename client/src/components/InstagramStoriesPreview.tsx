@@ -181,17 +181,8 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
               ))}
             </div>
             
-            {/* User info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 p-0.5">
-                  <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
-                    <span className="text-xs">📱</span>
-                  </div>
-                </div>
-                <span className="text-white text-sm font-medium">SMM Manager</span>
-                <span className="text-white/60 text-xs">5м</span>
-              </div>
+            {/* Controls */}
+            <div className="flex justify-end">
               <div className="flex gap-3">
                 <button 
                   onClick={(e) => {
