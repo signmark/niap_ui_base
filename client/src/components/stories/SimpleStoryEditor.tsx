@@ -405,6 +405,29 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
   };
 
   // Обновление текстового наложения согласно ТЗ
+  const addTextOverlay = useCallback(() => {
+    const newOverlay: TextOverlay = {
+      id: `text-${Date.now()}`,
+      text: 'Новый текст',
+      x: 50,
+      y: 50,
+      fontSize: 24,
+      color: '#ffffff',
+      fontFamily: 'Arial',
+      fontWeight: '500',
+      textAlign: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      padding: 8,
+      borderRadius: 4
+    };
+
+    setStoryData(prev => ({
+      ...prev,
+      textOverlays: [...prev.textOverlays, newOverlay],
+      hasUnsavedChanges: true
+    }));
+  }, []);
+
   const updateTextOverlay = useCallback((index: number, updates: Partial<TextOverlay>) => {
     setStoryData(prev => ({
       ...prev,
