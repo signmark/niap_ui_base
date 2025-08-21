@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle } from 'lucide-react';
+import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle, Smartphone } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import Draggable from 'react-draggable';
@@ -215,7 +215,14 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       const story = existingStory.data;
       let metadata = {};
       try {
-        metadata = story.metadata ? JSON.parse(story.metadata) : {};
+        if (story.metadata) {
+          // Если metadata уже объект, используем как есть
+          if (typeof story.metadata === 'object') {
+            metadata = story.metadata;
+          } else if (typeof story.metadata === 'string') {
+            metadata = JSON.parse(story.metadata);
+          }
+        }
       } catch (e) {
         console.error('[ERROR] [Stories] Failed to parse metadata:', e);
         metadata = {};
@@ -513,92 +520,18 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         className="hidden"
       />
       
-      {/* Левая панель - Превью */}
-      <div className="lg:w-1/3">
+      {/* Левая панель - Настройки */}
+      <div className="lg:w-2/3 space-y-6">
+        {/* Основные настройки */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Type className="h-5 w-5" />
-                Превью Stories
-              </CardTitle>
+              <CardTitle>Основные настройки</CardTitle>
               <Button variant="outline" size="sm" onClick={onBack}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Назад
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div 
-              className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto"
-              style={{ width: '300px', height: '533px' }}
-            >
-              {/* Фоновое изображение */}
-              {storyData.backgroundImageUrl && (
-                <img
-                  src={storyData.backgroundImageUrl}
-                  alt="Background"
-                  className="w-full h-full object-cover"
-                />
-              )}
-              
-              {/* Текстовые наложения */}
-              {storyData.textOverlays.map((overlay, index) => (
-                <Draggable
-                  key={overlay.id}
-                  position={{ x: overlay.x, y: overlay.y }}
-                  onDrag={(e, data) => handleTextDrag(index, e, data)}
-                >
-                  <div
-                    style={{
-                      position: 'absolute',
-                      fontSize: overlay.fontSize,
-                      color: overlay.color,
-                      fontFamily: overlay.fontFamily,
-                      fontWeight: overlay.fontWeight,
-                      textAlign: overlay.textAlign,
-                      backgroundColor: overlay.backgroundColor,
-                      padding: overlay.padding,
-                      borderRadius: overlay.borderRadius,
-                      cursor: 'move',
-                      userSelect: 'none'
-                    }}
-                  >
-                    {overlay.text}
-                  </div>
-                </Draggable>
-              ))}
-              
-              {/* Заглушка если нет фонового изображения */}
-              {!storyData.backgroundImageUrl && (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <Upload className="h-12 w-12 mx-auto mb-2" />
-                    <p>Загрузите фоновое изображение</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Сообщение об ошибке */}
-            {storyData.error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  {storyData.error}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Правая панель - Настройки */}
-      <div className="lg:w-2/3 space-y-6">
-        {/* Основные настройки */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Основные настройки</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -639,11 +572,21 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
             </div>
           </CardContent>
         </Card>
-
+        
         {/* Настройки текста */}
         <Card>
           <CardHeader>
-            <CardTitle>Настройки текста</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Настройки текста</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addTextOverlay}
+              >
+                <Type className="h-4 w-4 mr-2" />
+                Добавить текст
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {storyData.textOverlays.map((overlay, index) => (
@@ -744,6 +687,70 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
             {storyData.state === 'saving' ? 'Сохранение...' : 'Сохранить'}
           </Button>
         </div>
+      </div>
+
+      {/* Правая панель - Превью */}
+      <div className="lg:w-1/3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Превью Stories
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div 
+              className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto"
+              style={{ width: '350px', height: '620px' }}
+            >
+              {/* Фоновое изображение */}
+              {storyData.backgroundImageUrl && (
+                <img
+                  src={storyData.backgroundImageUrl}
+                  alt="Background"
+                  className="w-full h-full object-cover"
+                />
+              )}
+              
+              {/* Текстовые наложения */}
+              {storyData.textOverlays.map((overlay, index) => (
+                <Draggable
+                  key={overlay.id}
+                  position={{ x: overlay.x, y: overlay.y }}
+                  onDrag={(e, data) => handleTextDrag(index, e, data)}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      fontSize: overlay.fontSize,
+                      color: overlay.color,
+                      fontFamily: overlay.fontFamily,
+                      fontWeight: overlay.fontWeight,
+                      textAlign: overlay.textAlign,
+                      backgroundColor: overlay.backgroundColor,
+                      padding: overlay.padding,
+                      borderRadius: overlay.borderRadius,
+                      cursor: 'move',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {overlay.text}
+                  </div>
+                </Draggable>
+              ))}
+              
+              {/* Заглушка если нет фонового изображения */}
+              {!storyData.backgroundImageUrl && (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <Upload className="h-12 w-12 mx-auto mb-2" />
+                    <p>Загрузите фоновое изображение</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

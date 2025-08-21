@@ -1,0 +1,54 @@
+Injected CSS loaded successfully
+me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+chunk-276SZO74.js?v=9f8ce6c1:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=9f8ce6c1:1360:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=9f8ce6c1:1792:9)
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx:91:45)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=57F4uIN8vloLsoVsXAn-9:83:23)
+    at component
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f8ce6c1:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f8ce6c1:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9f8ce6c1:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=57F4uIN8vloLsoVsXAn-9:527:3)
+printWarning @ chunk-276SZO74.js?v=9f8ce6c1:521Understand this error
+SimpleStoryEditor.tsx:119 [INFO] [Stories] Creating new story for campaign Object
+SimpleStoryEditor.tsx:119 [INFO] [Stories] New story created Object
+SimpleStoryEditor.tsx:220 [ERROR] [Stories] Failed to parse metadata: SyntaxError: "[object Object]" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at SimpleStoryEditor.tsx:218:42
+    at commitHookEffectListMount (chunk-276SZO74.js?v=9f8ce6c1:16915:34)
+    at commitPassiveMountOnFiber (chunk-276SZO74.js?v=9f8ce6c1:18156:19)
+    at commitPassiveMountEffects_complete (chunk-276SZO74.js?v=9f8ce6c1:18129:17)
+    at commitPassiveMountEffects_begin (chunk-276SZO74.js?v=9f8ce6c1:18119:15)
+    at commitPassiveMountEffects (chunk-276SZO74.js?v=9f8ce6c1:18109:11)
+    at flushPassiveEffectsImpl (chunk-276SZO74.js?v=9f8ce6c1:19490:11)
+    at flushPassiveEffects (chunk-276SZO74.js?v=9f8ce6c1:19447:22)
+    at commitRootImpl (chunk-276SZO74.js?v=9f8ce6c1:19416:13)
+(anonymous) @ SimpleStoryEditor.tsx:220Understand this error
+SimpleStoryEditor.tsx:119 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:119 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:119 [INFO] [Stories] Image uploaded to Imgbb Object
+2index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
