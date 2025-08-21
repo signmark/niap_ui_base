@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle, Smartphone, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 import Draggable from 'react-draggable';
 import axios from 'axios';
 import { z } from 'zod';
@@ -139,7 +140,19 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [, setLocation] = useLocation();
   const [actualStoryId, setActualStoryId] = useState<string | undefined>(storyId);
+
+  // Функция для правильного возврата назад
+  const handleBackNavigation = useCallback(() => {
+    // Если есть storyId, значит мы редактируем существующую историю - возвращаемся к контенту
+    if (storyId) {
+      setLocation(`/content?campaignId=${campaignId}`);
+    } else {
+      // Если storyId нет, значит мы создаем новую - возвращаемся к селектору режимов
+      onBack();
+    }
+  }, [storyId, campaignId, setLocation, onBack]);
 
   // Инициализация состояния согласно ТЗ
   const [storyData, setStoryData] = useState<SimpleStoryData>({
@@ -559,7 +572,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Основные настройки</CardTitle>
-              <Button variant="outline" size="sm" onClick={onBack}>
+              <Button variant="outline" size="sm" onClick={handleBackNavigation}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Назад
               </Button>
