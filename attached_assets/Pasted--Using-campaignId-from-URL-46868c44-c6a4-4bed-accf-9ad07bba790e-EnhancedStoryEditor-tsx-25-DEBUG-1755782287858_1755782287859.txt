@@ -1,0 +1,19 @@
+🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: undefined, selectedMode: null}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Creating new story for campaign {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: undefined, selectedMode: 'simple'}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] New story created {storyId: 'c429c17b-dc70-4117-b3c9-83473dc0e5a4'}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story {storyId: 'c429c17b-dc70-4117-b3c9-83473dc0e5a4', title: 'Новая Stories'}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb {fileSize: 127878}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb {imgbbUrl: 'https://i.ibb.co/h12s9hkH/1755781987646-100247198-photo-2025-06-16-12-08-27-1-1.jpg', fileSize: 127878}
+SimpleStoryEditor.tsx:789 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: undefined, selectedMode: null}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: undefined, selectedMode: null}

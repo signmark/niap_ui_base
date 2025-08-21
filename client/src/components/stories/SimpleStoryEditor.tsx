@@ -204,6 +204,9 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
             state: 'idle'
           }));
           
+          // Обновляем URL с новым storyId для корректной навигации
+          setLocation(`/stories/${newStory.id}/edit?campaignId=${campaignId}`);
+          
           logger.info('New story created', { storyId: newStory.id });
           logger.debug('Story state after creation', { actualStoryId: newStory.id, originalStoryId: storyId });
           
