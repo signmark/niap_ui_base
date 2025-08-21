@@ -22,7 +22,9 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
 
   // Если у нас есть storyId, автоматически переходим в простой режим
   useEffect(() => {
+    console.log('[DEBUG] [EnhancedStoryEditor] useEffect triggered', { activeStoryId, selectedMode });
     if (activeStoryId && !selectedMode) {
+      console.log('[DEBUG] [EnhancedStoryEditor] Setting mode to simple');
       setSelectedMode('simple');
     }
   }, [activeStoryId, selectedMode]);
@@ -38,6 +40,7 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
 
   // Функция для возврата к селектору режимов
   const handleBack = () => {
+    console.log('[DEBUG] [EnhancedStoryEditor] handleBack called - resetting mode to null');
     setSelectedMode(null);
   };
 

@@ -145,12 +145,15 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
 
   // Функция для правильного возврата назад
   const handleBackNavigation = useCallback(() => {
+    logger.debug('Navigation triggered', { storyId, actualStoryId, campaignId });
     // Если есть storyId (редактирование) или actualStoryId (новая Stories уже создана), 
     // возвращаемся к списку контента
     if (storyId || actualStoryId) {
+      logger.info('Navigating to content list', { storyId, actualStoryId });
       setLocation(`/content?campaignId=${campaignId}`);
     } else {
       // Если нет никакого ID, возвращаемся к селектору режимов
+      logger.info('Navigating back to mode selector (no story ID)');
       onBack();
     }
   }, [storyId, actualStoryId, campaignId, setLocation, onBack]);
@@ -202,6 +205,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
           }));
           
           logger.info('New story created', { storyId: newStory.id });
+          logger.debug('Story state after creation', { actualStoryId: newStory.id, originalStoryId: storyId });
           
         } catch (error: any) {
           logger.error('Failed to create new story', error);
