@@ -5,6 +5,7 @@ SMM Manager is an intelligent social media content management platform designed 
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Work approach: Thoughtful and deliberate implementation with minimal errors, prioritizing quality over speed.
 
 ## System Architecture
 
