@@ -145,14 +145,15 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
 
   // Функция для правильного возврата назад
   const handleBackNavigation = useCallback(() => {
-    // Если есть storyId, значит мы редактируем существующую историю - возвращаемся к контенту
-    if (storyId) {
+    // Если есть storyId (редактирование) или actualStoryId (новая Stories уже создана), 
+    // возвращаемся к списку контента
+    if (storyId || actualStoryId) {
       setLocation(`/content?campaignId=${campaignId}`);
     } else {
-      // Если storyId нет, значит мы создаем новую - возвращаемся к селектору режимов
+      // Если нет никакого ID, возвращаемся к селектору режимов
       onBack();
     }
-  }, [storyId, campaignId, setLocation, onBack]);
+  }, [storyId, actualStoryId, campaignId, setLocation, onBack]);
 
   // Инициализация состояния согласно ТЗ
   const [storyData, setStoryData] = useState<SimpleStoryData>({

@@ -1,0 +1,24 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+/content:1 Some resource load requests were throttled while the tab was in background, and no request was sent from the queue in the last 1 minute. This means previously requested in-flight requests haven't received any response from servers. See https://www.chromestatus.com/feature/5527160148197376 for more details
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19Understand this error
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Creating new story for campaign Object
+SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] New story created Object
+2SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:784 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+3index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
