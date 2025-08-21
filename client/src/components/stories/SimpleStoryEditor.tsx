@@ -154,7 +154,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       fontFamily: 'Arial',
       fontWeight: 'bold',
       textAlign: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: '#000000',
       padding: 10,
       borderRadius: 8
     }],

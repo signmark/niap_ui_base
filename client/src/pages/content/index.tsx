@@ -1954,7 +1954,7 @@ export default function ContentPage() {
                           <div className="flex gap-2 justify-center">
                             <Button 
                               onClick={() => {
-                                navigate(`/stories/${currentContent.id}/edit`);
+                                navigate(`/campaigns/${selectedCampaignId}/stories/edit/${currentContent.id}`);
                               }}
                               className="bg-purple-600 hover:bg-purple-700"
                             >

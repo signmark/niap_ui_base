@@ -742,6 +742,7 @@ router.post('/simple', authMiddleware, async (req, res) => {
       title: title || 'Новая Stories',
       content_type: 'story',
       status: 'draft',
+      content: ' ', // Обязательное поле для Directus
       image_url: null, // Фоновое изображение - отдельное поле
       metadata: JSON.stringify({
         textOverlays: [{
@@ -754,7 +755,7 @@ router.post('/simple', authMiddleware, async (req, res) => {
           fontFamily: 'Arial',
           fontWeight: 'bold',
           textAlign: 'center',
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: '#000000',
           padding: 10,
           borderRadius: 8
         }],
