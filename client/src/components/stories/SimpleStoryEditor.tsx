@@ -348,19 +348,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
     setStoryData(prev => ({ ...prev, state: 'loading', error: null }));
     
     try {
-      // 1. Optimistic update с base64 preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          setStoryData(prev => ({ 
-            ...prev, 
-            backgroundImageUrl: e.target!.result as string
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-      
-      // 2. Загрузить на Imgbb
+      // 1. Загрузить на Imgbb (без optimistic update)
       const formData = new FormData();
       formData.append('image', file);
       
@@ -374,7 +362,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       const imgbbUrl = response.data.url;
       logger.info('Image uploaded to Imgbb', { imgbbUrl, fileSize: file.size });
       
-      // 3. Обновить состояние с реальным URL
+      // 2. Обновить состояние с реальным URL
       setStoryData(prev => ({ 
         ...prev, 
         backgroundImageUrl: imgbbUrl,
@@ -385,9 +373,28 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       
       console.log('[DEBUG] [Stories] State updated with new background URL:', imgbbUrl);
       
+      // 3. Автоматически сохранить фоновое изображение в базу данных
+      if (actualStoryId) {
+        try {
+          await apiRequest(`/api/stories/simple/${actualStoryId}`, {
+            method: 'PUT',
+            data: { 
+              image_url: imgbbUrl // Обновляем только фоновое изображение
+            }
+          });
+          
+          // Инвалидировать кэш для обновления данных
+          queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
+          
+          console.log('[DEBUG] [Stories] Background image automatically saved to database');
+        } catch (saveError) {
+          console.error('[ERROR] [Stories] Failed to auto-save background image:', saveError);
+        }
+      }
+      
       toast({
         title: "Изображение загружено",
-        description: "Изображение успешно загружено на Imgbb"
+        description: "Изображение успешно загружено и сохранено"
       });
       
     } catch (error: any) {
