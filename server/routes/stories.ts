@@ -240,7 +240,7 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
 
       // Instagram Stories через отдельный webhook (с fallback на общий)
       if (instagramPlatforms.length > 0) {
-        const instagramWebhookUrl = `${n8nUrl}/webhook/publish-instagram-stories`;
+        const instagramWebhookUrl = `${n8nUrl}/webhook/publish-stories`;
         const instagramPayload = {
           contentId: updatedStory.id
         };
@@ -624,18 +624,13 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
     // Webhook attempts для работающего workflow (который работал с другими видео)
     const webhookAttempts = [
       {
-        name: 'Working Instagram Stories',
-        url: 'https://n8n.nplanner.ru/webhook/publish-instagram-stories', // ПРАВИЛЬНЫЙ endpoint
+        name: 'Primary Instagram Stories',
+        url: 'https://n8n.roboflow.space/webhook/publish-stories', // ПРАВИЛЬНЫЙ endpoint
         payload: n8nPayload
       },
       {
-        name: 'Fallback Stories',
+        name: 'Fallback nplanner',
         url: 'https://n8n.nplanner.ru/webhook/publish-stories',
-        payload: n8nPayload
-      },
-      {
-        name: 'Legacy fallback',
-        url: 'https://n8n.roboflow.space/webhook/publish-instagram-stories',
         payload: n8nPayload
       }
     ];
