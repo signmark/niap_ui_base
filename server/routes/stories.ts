@@ -719,4 +719,107 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Get story by ID для SimpleStoryEditor
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Fetching story:', id, 'for user:', userId);
+
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = response.data.data;
+
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
+    console.log('[DEV] [stories] Story fetched successfully');
+    res.json({ success: true, data: story });
+  } catch (error: any) {
+    console.error('Error fetching story:', error?.response?.data || error?.message);
+    
+    if (error?.response?.status === 403) {
+      res.status(403).json({ error: 'Access denied' });
+    } else if (error?.response?.status === 404) {
+      res.status(404).json({ error: 'Story not found' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch story' });
+    }
+  }
+});
+
+// Update story with image_url and metadata - согласно ТЗ SimpleStoryEditor
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, image_url, metadata, status } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Валидация входных данных согласно ТЗ
+    if (metadata) {
+      try {
+        const parsedMetadata = JSON.parse(metadata);
+        
+        // Базовая проверка структуры metadata
+        if (!parsedMetadata.textOverlays || !Array.isArray(parsedMetadata.textOverlays)) {
+          return res.status(400).json({ error: 'Invalid metadata structure: textOverlays required' });
+        }
+        
+        if (!parsedMetadata.additionalImages || !Array.isArray(parsedMetadata.additionalImages)) {
+          return res.status(400).json({ error: 'Invalid metadata structure: additionalImages required' });
+        }
+        
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid JSON in metadata' });
+      }
+    }
+
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (title !== undefined) updateData.title = title;
+    if (image_url !== undefined) updateData.image_url = image_url; // Фоновое изображение в отдельное поле
+    if (metadata !== undefined) updateData.metadata = metadata; // JSON строка с данными Stories
+    if (status !== undefined) updateData.status = status;
+
+    console.log('[DEV] [stories] Updating story:', id, updateData);
+
+    // Используем пользовательский токен из запроса согласно ТЗ
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
+      headers: {
+        'Authorization': req.headers.authorization // Пользовательский токен
+      }
+    });
+
+    const story = updateResponse.data.data;
+    console.log('[DEV] [stories] Story updated successfully');
+    
+    res.json({ success: true, data: story });
+  } catch (error: any) {
+    console.error('Error updating story:', error?.response?.data || error?.message);
+    
+    if (error?.response?.status === 403) {
+      res.status(403).json({ error: 'Access denied' });
+    } else if (error?.response?.status === 404) {
+      res.status(404).json({ error: 'Story not found' });
+    } else {
+      res.status(500).json({ error: 'Failed to update story' });
+    }
+  }
+});
+
 export default router;
