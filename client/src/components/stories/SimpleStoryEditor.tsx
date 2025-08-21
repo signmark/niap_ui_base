@@ -213,7 +213,13 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
   useEffect(() => {
     if (existingStory?.data) {
       const story = existingStory.data;
-      const metadata = story.metadata ? JSON.parse(story.metadata) : {};
+      let metadata = {};
+      try {
+        metadata = story.metadata ? JSON.parse(story.metadata) : {};
+      } catch (e) {
+        console.error('[ERROR] [Stories] Failed to parse metadata:', e);
+        metadata = {};
+      }
       
       logger.info('Loading story', { storyId: actualStoryId, title: story.title });
       logger.debug('Background image from image_url', story.image_url);
@@ -222,8 +228,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         ...prev,
         title: story.title || 'Без названия',
         backgroundImageUrl: story.image_url || null, // из отдельного поля
-        textOverlays: metadata.textOverlays || prev.textOverlays,
-        additionalImages: metadata.additionalImages || [],
+        textOverlays: (metadata as any)?.textOverlays || prev.textOverlays,
+        additionalImages: (metadata as any)?.additionalImages || [],
         hasUnsavedChanges: false
       }));
     }
@@ -237,20 +243,23 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         try {
           const data = JSON.parse(saved);
           // Проверяем что данные не старше 24 часов
-          if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+          if (data.timestamp && Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
             const shouldRestore = window.confirm('Найдены несохраненные изменения. Восстановить их?');
             if (shouldRestore) {
               setStoryData(prev => ({
                 ...prev,
-                backgroundImageUrl: data.backgroundImageUrl,
-                textOverlays: data.textOverlays,
-                additionalImages: data.additionalImages,
-                title: data.title,
+                backgroundImageUrl: data.backgroundImageUrl || prev.backgroundImageUrl,
+                textOverlays: Array.isArray(data.textOverlays) ? data.textOverlays : prev.textOverlays,
+                additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+                title: data.title || prev.title,
                 hasUnsavedChanges: true
               }));
             }
+          } else {
+            localStorage.removeItem(`story-draft-${actualStoryId}`);
           }
         } catch (e) {
+          console.error('[ERROR] [Stories] Failed to parse localStorage data:', e);
           localStorage.removeItem(`story-draft-${actualStoryId}`);
         }
       }

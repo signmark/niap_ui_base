@@ -1946,10 +1946,10 @@ export default function ContentPage() {
                       
                       const slidesCount = storyData?.slides?.length || 0;
                       
-                      return slidesCount > 0 ? (
+                      return (
                         <div className="space-y-3">
                           <p className="text-purple-600">
-                            Создано слайдов: {slidesCount}
+                            {slidesCount > 0 ? `Создано слайдов: ${slidesCount}` : 'Stories контент'}
                           </p>
                           <div className="flex gap-2 justify-center">
                             <Button 
@@ -1962,19 +1962,6 @@ export default function ContentPage() {
                               Редактировать Stories
                             </Button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-purple-600">Stories не созданы</p>
-                          <Button 
-                            onClick={() => {
-                              navigate(`/campaigns/${selectedCampaignId}/stories/new`);
-                            }}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Layers className="mr-2 h-4 w-4" />
-                            Создать Stories
-                          </Button>
                         </div>
                       );
                     })()}
