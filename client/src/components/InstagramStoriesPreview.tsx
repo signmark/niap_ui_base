@@ -3,9 +3,10 @@ import { PlayCircle, MoreHorizontal, Pause, Play } from 'lucide-react';
 
 interface StoriesPreviewProps {
   metadata: any;
+  backgroundImageUrl?: string;
 }
 
-export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadata }) => {
+export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadata, backgroundImageUrl }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -27,34 +28,45 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   let slides = [];
   const legacySlides = parsedData?.slides || [];
   const hasTextOverlays = parsedData?.textOverlays && parsedData.textOverlays.length > 0;
-  const backgroundImageUrl = parsedData?.backgroundImageUrl || parsedData?.image_url;
+  const finalBackgroundImageUrl = backgroundImageUrl || parsedData?.backgroundImageUrl || parsedData?.image_url;
   
-  if (hasTextOverlays || backgroundImageUrl) {
+
+  
+  if (hasTextOverlays || finalBackgroundImageUrl) {
     // Создаем слайд для нового формата Stories
-    slides = [{
+    const newSlide = {
       background: {
-        type: backgroundImageUrl ? 'image' : 'color',
-        value: backgroundImageUrl || '#6366f1'
+        type: finalBackgroundImageUrl ? 'image' : 'color',
+        value: finalBackgroundImageUrl || '#6366f1'
       },
-      elements: (parsedData.textOverlays || []).map((overlay: any) => ({
-        type: 'text',
-        position: { 
-          x: overlay.x || 50, 
-          y: overlay.y || 50, 
-          width: 200, 
-          height: 40 
-        },
-        content: { text: overlay.text || 'Текст' },
-        style: {
-          fontSize: overlay.fontSize || 24,
-          color: overlay.color || '#ffffff',
-          fontFamily: overlay.fontFamily || 'Arial',
-          fontWeight: overlay.fontWeight || 'bold',
-          textAlign: overlay.textAlign || 'center',
-          backgroundColor: overlay.backgroundColor || 'transparent'
-        }
-      }))
-    }];
+      elements: (parsedData.textOverlays || []).map((overlay: any) => {
+        // Масштабируем позицию для превью (Stories editor: 350x620px, Preview: 280x497px)
+        const scaleX = 280 / 350;
+        const scaleY = 497 / 620;
+        const scaledX = (overlay.x || 50) * scaleX;
+        const scaledY = (overlay.y || 50) * scaleY;
+        
+        return {
+          type: 'text',
+          position: { 
+            x: scaledX, 
+            y: scaledY, 
+            width: 200 * scaleX, 
+            height: 40 
+          },
+          content: { text: overlay.text || 'Текст' },
+          style: {
+            fontSize: (overlay.fontSize || 24) * scaleY,
+            color: overlay.color || '#ffffff',
+            fontFamily: overlay.fontFamily || 'Arial',
+            fontWeight: overlay.fontWeight || 'bold',
+            textAlign: overlay.textAlign || 'center',
+            backgroundColor: overlay.backgroundColor || 'transparent'
+          }
+        };
+      })
+    };
+    slides = [newSlide];
   } else {
     slides = legacySlides;
   }

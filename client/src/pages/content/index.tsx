@@ -1374,7 +1374,17 @@ export default function ContentPage() {
                                             
                                             // Удален избыточный лог для уменьшения спама в консоли
                                             
-                                            const slidesCount = storyData?.slides?.length || 0;
+                                            // Поддержка нового формата Stories (textOverlays) и старого формата (slides)
+                                            let slidesCount = 0;
+                                            if (storyData?.slides && Array.isArray(storyData.slides)) {
+                                              slidesCount = storyData.slides.length;
+                                            } else if (storyData?.textOverlays && Array.isArray(storyData.textOverlays) && storyData.textOverlays.length > 0) {
+                                              slidesCount = 1; // textOverlays означает 1 слайд с наложениями
+                                            } else {
+                                              // Фоллбек: если есть любые данные Stories, считаем 1 слайд
+                                              slidesCount = (storyData && Object.keys(storyData).length > 0) ? 1 : 0;
+                                            }
+
                                             return (
                                               <div className="text-xs text-purple-700">
                                                 <div className="flex items-center gap-2">
@@ -1944,7 +1954,9 @@ export default function ContentPage() {
                         storyData = currentContent.metadata;
                       }
                       
-                      const slidesCount = storyData?.slides?.length || 0;
+                      // Поддержка нового формата Stories (textOverlays) и старого формата (slides)
+                      const slidesCount = storyData?.slides?.length || 
+                                         (storyData?.textOverlays && storyData.textOverlays.length > 0 ? 1 : 0);
                       
                       return (
                         <div className="space-y-3">
@@ -2699,7 +2711,10 @@ export default function ContentPage() {
             {/* Stories Preview */}
             {previewContent?.contentType === 'story' && previewContent?.metadata ? (
               <div className="space-y-4">
-                <InstagramStoriesPreview metadata={previewContent.metadata} />
+                <InstagramStoriesPreview 
+                  metadata={previewContent.metadata} 
+                  backgroundImageUrl={previewContent.imageUrl}
+                />
               </div>
             ) : (
               <div>
