@@ -400,8 +400,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
             }
           });
           
-          // Инвалидировать кэш для обновления данных
-          queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
+          // НЕ инвалидируем кэш чтобы избежать сброса состояния
+          // queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
         } catch (saveError) {
           logger.error('Failed to auto-save background image', saveError);
         }
@@ -529,8 +529,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         localStorage.removeItem(`story-draft-${actualStoryId}`);
       }
       
-      // Инвалидировать кэш
-      queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
+      // НЕ инвалидируем кэш при ручном сохранении чтобы сохранить состояние
+      // queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
       
       toast({
         title: "История сохранена",

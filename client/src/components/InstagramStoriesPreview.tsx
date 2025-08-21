@@ -189,7 +189,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                     <span className="text-xs">📱</span>
                   </div>
                 </div>
-                <span className="text-white text-sm font-medium">your_account</span>
+                <span className="text-white text-sm font-medium">SMM Manager</span>
                 <span className="text-white/60 text-xs">5м</span>
               </div>
               <div className="flex gap-3">
