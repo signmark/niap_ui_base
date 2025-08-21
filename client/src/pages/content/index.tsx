@@ -567,11 +567,14 @@ export default function ContentPage() {
   
   // Мутация для немедленной публикации контента через новый API эндпоинт
   const publishContentMutation = useMutation({
-    mutationFn: async ({ id, platforms }: { id: string, platforms?: {[key: string]: boolean} }) => {
+    mutationFn: async ({ id, platforms, contentType }: { id: string, platforms?: {[key: string]: boolean}, contentType?: string }) => {
       // Проверяем наличие необходимых параметров
       if (!id) {
         throw new Error('ID контента не указан');
       }
+      
+      console.log(`[DEV] [content-publish] 🎬 Publishing content ${id} of type: ${contentType}`);
+      console.log(`[DEV] [content-publish] 🎬 Platforms: ${JSON.stringify(platforms)}`);
       
       // Если платформы не указаны, используем пустой объект
       const platformsToPublish = platforms || {
@@ -582,13 +585,19 @@ export default function ContentPage() {
         youtube: false
       };
       
-
-
-
+      // Определяем API endpoint в зависимости от типа контента
+      let apiEndpoint = '/api/publish/now'; // по умолчанию для обычного контента
       
-      // Вызываем новый API эндпоинт, который сразу публикует во все выбранные платформы
-      // и сохраняет информацию о выбранных платформах в Directus
-      const response = await fetch('/api/publish/now', {
+      // Для Stories используем специальный роут
+      if (contentType === 'story') {
+        apiEndpoint = '/api/stories/publish';
+        console.log(`[DEV] [content-publish] 🎬 Using Stories-specific endpoint: ${apiEndpoint}`);
+      } else {
+        console.log(`[DEV] [content-publish] 🎬 Using general content endpoint: ${apiEndpoint}`);
+      }
+      
+      // Вызываем соответствующий API эндпоинт
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2444,11 +2453,23 @@ export default function ContentPage() {
                     };
                     
                     console.log("Публикация контента - contentId:", currentContent?.id);
+                    console.log("Публикация контента - type:", currentContent?.contentType);
                     console.log("Публикация контента - platforms:", selectedPlatformList);
                     console.log("Публикация контента - полный объект:", requestData);
                     
-                    // Вызываем API эндпоинт для публикации контента
-                    const response = await apiRequest('/api/publish-content', {
+                    // Определяем API endpoint в зависимости от типа контента
+                    let publishEndpoint = '/api/publish-content'; // по умолчанию для обычного контента
+                    
+                    // Для Stories используем специальный роут
+                    if (currentContent?.contentType === 'story') {
+                      publishEndpoint = '/api/stories/publish';
+                      console.log(`[DEV] [content-publish-dialog] 🎬 Using Stories endpoint: ${publishEndpoint}`);
+                    } else {
+                      console.log(`[DEV] [content-publish-dialog] 🎬 Using general endpoint: ${publishEndpoint}`);
+                    }
+                    
+                    // Вызываем соответствующий API эндпоинт
+                    const response = await apiRequest(publishEndpoint, {
                       method: 'POST',
                       data: requestData
                     });

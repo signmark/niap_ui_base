@@ -16,6 +16,166 @@ import { SocialPlatform } from '@shared/schema';
 const router = express.Router();
 
 /**
+ * @api {post} /api/stories/publish Публикация Stories в выбранные платформы
+ * @apiDescription Отдельный роут для публикации Stories (Instagram, будущие Telegram Stories)
+ * @apiVersion 1.0.0
+ * @apiName PublishStories
+ * @apiGroup StoriesPublishing
+ * 
+ * @apiParam {String} contentId ID Stories контента для публикации
+ * @apiParam {Object} platforms Объект с выбранными платформами для Stories
+ * 
+ * @apiSuccess {Boolean} success Статус операции
+ * @apiSuccess {Object} result Результат публикации Stories
+ */
+router.post('/stories/publish', authMiddleware, async (req, res) => {
+  try {
+    const { contentId, platforms } = req.body;
+    
+    console.log(`[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Content ID: ${contentId}`);
+    console.log(`[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Platforms: ${JSON.stringify(platforms)}`);
+    console.log(`[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Request body: ${JSON.stringify(req.body)}`);
+    
+    if (!contentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо указать contentId для Stories'
+      });
+    }
+    
+    // Валидируем платформы для Stories
+    const validStoriesPlatforms = ['instagram', 'telegram', 'vk']; // поддерживаемые платформы для Stories
+    let selectedPlatforms: string[] = [];
+    
+    if (Array.isArray(platforms)) {
+      selectedPlatforms = platforms.filter(platform => 
+        typeof platform === 'string' && validStoriesPlatforms.includes(platform)
+      );
+    } else if (typeof platforms === 'object') {
+      selectedPlatforms = Object.entries(platforms)
+        .filter(([platform, enabled]) => enabled && validStoriesPlatforms.includes(platform))
+        .map(([platform]) => platform);
+    }
+    
+    console.log(`[DEV] [stories-publishing] 🎬 Selected Stories platforms: ${selectedPlatforms.join(', ')}`);
+    
+    if (selectedPlatforms.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Необходимо выбрать хотя бы одну платформу для Stories'
+      });
+    }
+    
+    // Получаем Stories контент из Directus
+    const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.space';
+    
+    try {
+      const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
+        headers: {
+          'Authorization': req.headers.authorization
+        }
+      });
+      
+      const storyContent = contentResponse.data.data;
+      console.log(`[DEV] [stories-publishing] 🎬 Stories content type: ${storyContent.content_type}`);
+      
+      // Проверяем, что это действительно Stories контент
+      if (storyContent.content_type !== 'story') {
+        return res.status(400).json({
+          success: false,
+          error: 'Контент не является Stories'
+        });
+      }
+      
+      // Обновляем статус Stories перед публикацией
+      await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
+        status: 'published',
+        platforms: JSON.stringify(selectedPlatforms),
+        updated_at: new Date().toISOString()
+      }, {
+        headers: {
+          'Authorization': req.headers.authorization
+        }
+      });
+      
+      // Отправляем Stories на соответствующие N8N webhooks
+      const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+      const webhookPromises = [];
+      
+      for (const platform of selectedPlatforms) {
+        let webhookUrl = '';
+        
+        if (platform === 'instagram') {
+          webhookUrl = `${n8nUrl}/webhook/publish-stories`;
+        } else if (platform === 'telegram') {
+          webhookUrl = `${n8nUrl}/webhook/publish-telegram-stories`; // будущий webhook
+        } else if (platform === 'vk') {
+          webhookUrl = `${n8nUrl}/webhook/publish-vk-stories`; // VK Stories webhook
+        }
+        
+        if (webhookUrl) {
+          console.log(`[DEV] [stories-publishing] 🎬 Sending to ${platform} Stories webhook: ${webhookUrl}`);
+          
+          webhookPromises.push(
+            axios.post(webhookUrl, {
+              contentId: contentId,
+              platform: platform,
+              storyType: 'stories'
+            }, {
+              timeout: 30000,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(response => ({
+              platform,
+              success: true,
+              status: response.status,
+              data: response.data
+            })).catch(error => ({
+              platform,
+              success: false,
+              error: error.message,
+              status: error.response?.status
+            }))
+          );
+        }
+      }
+      
+      const results = await Promise.all(webhookPromises);
+      console.log(`[DEV] [stories-publishing] 🎬 Webhook results:`, results);
+      
+      const successfulPublications = results.filter(r => r.success);
+      const failedPublications = results.filter(r => !r.success);
+      
+      return res.json({
+        success: successfulPublications.length > 0,
+        message: `Stories опубликован в ${successfulPublications.length} из ${results.length} платформ`,
+        results: {
+          successful: successfulPublications,
+          failed: failedPublications
+        }
+      });
+      
+    } catch (directusError: any) {
+      console.error(`[DEV] [stories-publishing] 🎬 Directus error:`, directusError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Ошибка получения Stories контента',
+        details: directusError.message
+      });
+    }
+    
+  } catch (error: any) {
+    console.error(`[DEV] [stories-publishing] 🎬 Stories publish error:`, error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Ошибка публикации Stories',
+      details: error.message
+    });
+  }
+});
+
+/**
  * @api {post} /api/publish/now Публикация контента сразу в выбранные социальные сети
  * @apiDescription Публикует контент сразу в выбранные социальные сети и сохраняет выбранные платформы
  * @apiVersion 1.0.0
