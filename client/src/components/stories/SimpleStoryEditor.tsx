@@ -424,11 +424,17 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       borderRadius: 4
     };
 
-    setStoryData(prev => ({
-      ...prev,
-      textOverlays: [...prev.textOverlays, newOverlay],
-      hasUnsavedChanges: true
-    }));
+    console.log('[DEBUG] Adding text overlay:', newOverlay);
+    
+    setStoryData(prev => {
+      const updated = {
+        ...prev,
+        textOverlays: [...prev.textOverlays, newOverlay],
+        hasUnsavedChanges: true
+      };
+      console.log('[DEBUG] Updated textOverlays count:', updated.textOverlays.length);
+      return updated;
+    });
   }, []);
 
   const updateTextOverlay = useCallback((index: number, updates: Partial<TextOverlay>) => {
@@ -741,31 +747,35 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
               )}
               
               {/* Текстовые наложения */}
-              {storyData.textOverlays.map((overlay, index) => (
-                <Draggable
-                  key={overlay.id}
-                  position={{ x: overlay.x, y: overlay.y }}
-                  onDrag={(e, data) => handleTextDrag(index, e, data)}
-                >
-                  <div
-                    style={{
-                      position: 'absolute',
-                      fontSize: overlay.fontSize,
-                      color: overlay.color,
-                      fontFamily: overlay.fontFamily,
-                      fontWeight: overlay.fontWeight,
-                      textAlign: overlay.textAlign,
-                      backgroundColor: overlay.backgroundColor,
-                      padding: overlay.padding,
-                      borderRadius: overlay.borderRadius,
-                      cursor: 'move',
-                      userSelect: 'none'
-                    }}
+              {(() => {
+                console.log('[DEBUG] Rendering text overlays, count:', storyData.textOverlays.length, storyData.textOverlays);
+                return storyData.textOverlays.map((overlay, index) => (
+                  <Draggable
+                    key={overlay.id}
+                    position={{ x: overlay.x, y: overlay.y }}
+                    onDrag={(e, data) => handleTextDrag(index, e, data)}
                   >
-                    {overlay.text}
-                  </div>
-                </Draggable>
-              ))}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        fontSize: overlay.fontSize,
+                        color: overlay.color,
+                        fontFamily: overlay.fontFamily,
+                        fontWeight: overlay.fontWeight,
+                        textAlign: overlay.textAlign,
+                        backgroundColor: overlay.backgroundColor,
+                        padding: overlay.padding,
+                        borderRadius: overlay.borderRadius,
+                        cursor: 'move',
+                        userSelect: 'none',
+                        zIndex: 10
+                      }}
+                    >
+                      {overlay.text}
+                    </div>
+                  </Draggable>
+                ));
+              })()}
               
               {/* Заглушка если нет фонового изображения */}
               {!storyData.backgroundImageUrl && (
