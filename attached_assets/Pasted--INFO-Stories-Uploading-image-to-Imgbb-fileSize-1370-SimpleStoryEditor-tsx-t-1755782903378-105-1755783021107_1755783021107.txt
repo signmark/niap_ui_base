@@ -1,0 +1,38 @@
+[INFO] [Stories] Uploading image to Imgbb {fileSize: 1370}
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx?t=1755782903378:81 [INFO] [Stories] Image uploaded to Imgbb {imgbbUrl: 'https://i.ibb.co/SwSFq3JS/1755782947324-391852899-upload.jpg', fileSize: 1370}
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782903378:81 [INFO] [Stories] Loading story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782903378:81 [INFO] [Stories] Loading story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx?t=1755782903378:1053 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Saving story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Story saved successfully {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11'}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:794 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28

@@ -253,15 +253,24 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       logger.debug('Background image from image_url', story.image_url);
       logger.debug('Current backgroundImageUrl in state', storyData.backgroundImageUrl);
       
-      setStoryData(prev => ({
-        ...prev,
-        title: story.title || 'Без названия',
-        // НЕ перезаписываем backgroundImageUrl если уже есть в состоянии (свежезагруженное)
-        backgroundImageUrl: prev.backgroundImageUrl || story.image_url || null,
-        textOverlays: (metadata as any)?.textOverlays || prev.textOverlays,
-        additionalImages: (metadata as any)?.additionalImages || [],
-        hasUnsavedChanges: prev.hasUnsavedChanges // Сохраняем статус изменений
-      }));
+      setStoryData(prev => {
+        const finalImageUrl = prev.backgroundImageUrl || story.image_url || null;
+        logger.debug('Setting story data', { 
+          prevImageUrl: prev.backgroundImageUrl, 
+          dbImageUrl: story.image_url,
+          finalImageUrl 
+        });
+        
+        return {
+          ...prev,
+          title: story.title || 'Без названия',
+          // НЕ перезаписываем backgroundImageUrl если уже есть в состоянии (свежезагруженное)
+          backgroundImageUrl: finalImageUrl,
+          textOverlays: (metadata as any)?.textOverlays || prev.textOverlays,
+          additionalImages: (metadata as any)?.additionalImages || [],
+          hasUnsavedChanges: prev.hasUnsavedChanges // Сохраняем статус изменений
+        };
+      });
     }
   }, [existingStory?.data?.id, actualStoryId]);
 
@@ -509,14 +518,18 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       setStoryData(prev => ({ ...prev, state: 'saving', error: null }));
       logger.info('Saving story', { storyId: actualStoryId, title: storyData.title });
       
+      const saveData = { 
+        title: storyData.title,
+        image_url: storyData.backgroundImageUrl,
+        metadata: JSON.stringify(metadata)
+      };
+      
+      logger.debug('Saving story with data', saveData);
+      
       // Используем пользовательский токен из headers
       const response = await apiRequest(`/api/stories/simple/${actualStoryId}`, {
         method: 'PUT',
-        data: { 
-          title: storyData.title,
-          image_url: storyData.backgroundImageUrl,
-          metadata: JSON.stringify(metadata)
-        }
+        data: saveData
       });
       
       setStoryData(prev => ({ 
@@ -525,6 +538,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         state: 'idle',
         validationErrors: {}
       }));
+      
+      logger.debug('Story saved with backgroundImageUrl', storyData.backgroundImageUrl);
       
       // Очистить localStorage после успешного сохранения
       if (actualStoryId) {
