@@ -249,19 +249,17 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       if (saved) {
         try {
           const data = JSON.parse(saved);
-          // Проверяем что данные не старше 24 часов
+          // Проверяем что данные не старше 24 часов и автоматически восстанавливаем
           if (data.timestamp && Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-            const shouldRestore = window.confirm('Найдены несохраненные изменения. Восстановить их?');
-            if (shouldRestore) {
-              setStoryData(prev => ({
-                ...prev,
-                backgroundImageUrl: data.backgroundImageUrl || prev.backgroundImageUrl,
-                textOverlays: Array.isArray(data.textOverlays) ? data.textOverlays : prev.textOverlays,
-                additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
-                title: data.title || prev.title,
-                hasUnsavedChanges: true
-              }));
-            }
+            setStoryData(prev => ({
+              ...prev,
+              backgroundImageUrl: data.backgroundImageUrl || prev.backgroundImageUrl,
+              textOverlays: Array.isArray(data.textOverlays) ? data.textOverlays : prev.textOverlays,
+              additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
+              title: data.title || prev.title,
+              hasUnsavedChanges: true
+            }));
+            logger.debug('Auto-restored data from localStorage');
           } else {
             localStorage.removeItem(`story-draft-${actualStoryId}`);
           }
@@ -371,8 +369,6 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         error: null
       }));
       
-      console.log('[DEBUG] [Stories] State updated with new background URL:', imgbbUrl);
-      
       // 3. Автоматически сохранить фоновое изображение в базу данных
       if (actualStoryId) {
         try {
@@ -385,10 +381,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
           
           // Инвалидировать кэш для обновления данных
           queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
-          
-          console.log('[DEBUG] [Stories] Background image automatically saved to database');
         } catch (saveError) {
-          console.error('[ERROR] [Stories] Failed to auto-save background image:', saveError);
+          logger.error('Failed to auto-save background image', saveError);
         }
       }
       
@@ -543,7 +537,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-6 max-w-7xl mx-auto">
+    <div className="flex flex-col lg:flex-row gap-4 p-4 min-h-screen max-w-7xl mx-auto">
       <input
         type="file"
         ref={fileInputRef}
@@ -553,19 +547,19 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       />
       
       {/* Левая панель - Настройки */}
-      <div className="lg:w-2/3 space-y-6">
+      <div className="lg:w-1/2 space-y-3 overflow-y-auto pr-2">
         {/* Основные настройки */}
-        <Card>
-          <CardHeader>
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle>Основные настройки</CardTitle>
+              <CardTitle className="text-lg">Основные настройки</CardTitle>
               <Button variant="outline" size="sm" onClick={onBack}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Назад
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div>
               <Label htmlFor="title">Название истории</Label>
               <Input
@@ -606,10 +600,10 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         </Card>
         
         {/* Настройки текста */}
-        <Card>
-          <CardHeader>
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle>Настройки текста</CardTitle>
+              <CardTitle className="text-lg">Настройки текста</CardTitle>
               <Button
                 variant="outline"
                 size="sm"
@@ -620,9 +614,9 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {storyData.textOverlays.map((overlay, index) => (
-              <div key={overlay.id} className="p-4 border rounded-lg space-y-3">
+              <div key={overlay.id} className="p-3 border rounded-lg space-y-2">
                 <div>
                   <Label>Текст</Label>
                   <Textarea
@@ -633,7 +627,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Размер шрифта: {overlay.fontSize}px</Label>
                     <Slider
@@ -657,7 +651,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Шрифт</Label>
                     <Select
@@ -722,28 +716,27 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       </div>
 
       {/* Правая панель - Превью */}
-      <div className="lg:w-1/3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <div className="lg:w-1/2 lg:sticky lg:top-4 lg:self-start">
+        <Card className="h-fit">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Smartphone className="h-5 w-5" />
               Превью Stories
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex justify-center">
             <div 
-              className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto"
+              className="relative bg-gray-100 rounded-lg overflow-hidden shadow-lg"
               style={{ width: '350px', height: '620px' }}
             >
-              {console.log('[DEBUG] [Stories] Preview rendering with backgroundImageUrl:', storyData.backgroundImageUrl)}
               {/* Фоновое изображение */}
               {storyData.backgroundImageUrl && (
                 <img
                   src={storyData.backgroundImageUrl}
                   alt="Background"
                   className="w-full h-full object-cover"
-                  onLoad={() => console.log('[DEBUG] [Stories] Background image loaded successfully', storyData.backgroundImageUrl)}
-                  onError={(e) => console.error('[ERROR] [Stories] Background image failed to load', storyData.backgroundImageUrl, e)}
+                  onLoad={() => logger.debug('Background image loaded successfully', storyData.backgroundImageUrl)}
+                  onError={(e) => logger.error('Background image failed to load', storyData.backgroundImageUrl)}
                 />
               )}
               
