@@ -197,6 +197,11 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
     const { id } = req.params;
     const { platforms, scheduledAt } = req.body;
     const userId = req.user?.id;
+    
+    console.log(`[DEV] [stories] 🎬 Публикация Stories ID: ${id}`);
+    console.log(`[DEV] [stories] 🎬 Платформы: ${JSON.stringify(platforms)}`);
+    console.log(`[DEV] [stories] 🎬 Запланировано: ${scheduledAt}`);
+    console.log(`[DEV] [stories] 🎬 UserID: ${userId}`);
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });

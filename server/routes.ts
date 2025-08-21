@@ -10564,6 +10564,10 @@ ${commentTexts}`;
       const contentId = req.params.id;
       const { socialPlatforms, status } = req.body;
       
+      console.log(`[DEV] [publish] 🎬 Публикация через общий роут - Content ID: ${contentId}`);
+      console.log(`[DEV] [publish] 🎬 Платформы: ${JSON.stringify(socialPlatforms)}`);
+      console.log(`[DEV] [publish] 🎬 Статус: ${status}`);
+      
       // Проверка авторизации
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {

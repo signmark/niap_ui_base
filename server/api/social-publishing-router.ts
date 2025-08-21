@@ -30,10 +30,13 @@ const router = express.Router();
  */
 router.post('/publish/now', authMiddleware, async (req, res) => {
   try {
-    log(`[Social Publishing] Получен запрос на публикацию с телом: ${JSON.stringify(req.body)}`);
-    
     const { contentId, platforms } = req.body;
     
+    console.log(`[DEV] [social-publishing] 🎬 PUBLISH NOW - Content ID: ${contentId}`);
+    console.log(`[DEV] [social-publishing] 🎬 PUBLISH NOW - Platforms: ${JSON.stringify(platforms)}`);
+    console.log(`[DEV] [social-publishing] 🎬 PUBLISH NOW - Request body: ${JSON.stringify(req.body)}`);
+    
+    log(`[Social Publishing] Получен запрос на публикацию с телом: ${JSON.stringify(req.body)}`);
     log(`[Social Publishing] Запрос на публикацию контента ${contentId} сразу в несколько платформ: ${JSON.stringify(platforms)}`);
     
     if (!contentId) {
