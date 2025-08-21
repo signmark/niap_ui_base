@@ -383,6 +383,8 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         error: null
       }));
       
+      console.log('[DEBUG] [Stories] State updated with new background URL:', imgbbUrl);
+      
       toast({
         title: "Изображение загружено",
         description: "Изображение успешно загружено на Imgbb"
@@ -726,12 +728,15 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
               className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto"
               style={{ width: '350px', height: '620px' }}
             >
+              {console.log('[DEBUG] [Stories] Preview rendering with backgroundImageUrl:', storyData.backgroundImageUrl)}
               {/* Фоновое изображение */}
               {storyData.backgroundImageUrl && (
                 <img
                   src={storyData.backgroundImageUrl}
                   alt="Background"
                   className="w-full h-full object-cover"
+                  onLoad={() => console.log('[DEBUG] [Stories] Background image loaded successfully', storyData.backgroundImageUrl)}
+                  onError={(e) => console.error('[ERROR] [Stories] Background image failed to load', storyData.backgroundImageUrl, e)}
                 />
               )}
               
