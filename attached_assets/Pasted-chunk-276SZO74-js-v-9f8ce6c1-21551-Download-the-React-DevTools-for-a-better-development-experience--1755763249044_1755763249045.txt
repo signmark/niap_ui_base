@@ -1,0 +1,96 @@
+chunk-276SZO74.js?v=9f8ce6c1:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+chunk-276SZO74.js?v=9f8ce6c1:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=9f8ce6c1:1360:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=9f8ce6c1:1792:9)
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx:91:45)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=gHce293Huczxa51KO-t25:83:23)
+    at component
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f8ce6c1:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f8ce6c1:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9f8ce6c1:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=gHce293Huczxa51KO-t25:527:3)
+printWarning @ chunk-276SZO74.js?v=9f8ce6c1:521
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+The specified value "rgba(0, 0, 0, 0.5)" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers.
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Image uploaded to Imgbb Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Image uploaded to Imgbb Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Loading story Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Loading story Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx?t=1755763207757:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:751 [DEBUG] Rendering text overlays, count: 2 (2) [{…}, {…}]
+SimpleStoryEditor.tsx:119 [INFO] [Stories] Loading story {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'Story'}
+SimpleStoryEditor.tsx:751 [DEBUG] Rendering text overlays, count: 2 (2) [{…}, {…}]0: {id: 'text1', text: 'Фака', x: 100, y: 200, fontSize: 15, …}1: {id: 'text-1755763116859', text: 'Новый текст', x: 50, y: 50, fontSize: 24, …}length: 2[[Prototype]]: Array(0)

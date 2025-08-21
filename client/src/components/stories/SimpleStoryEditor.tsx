@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle, Smartphone } from 'lucide-react';
+import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle, Smartphone, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import Draggable from 'react-draggable';
@@ -419,7 +419,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       fontFamily: 'Arial',
       fontWeight: '500',
       textAlign: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: '#000000',
       padding: 8,
       borderRadius: 4
     };
@@ -694,14 +694,34 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
                   </div>
                 </div>
 
-                <div>
-                  <Label>Цвет фона</Label>
-                  <Input
-                    type="color"
-                    value={overlay.backgroundColor}
-                    onChange={(e) => updateTextOverlay(index, { backgroundColor: e.target.value })}
-                    className="h-10 mt-2"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Цвет фона</Label>
+                    <Input
+                      type="color"
+                      value={overlay.backgroundColor.startsWith('#') ? overlay.backgroundColor : '#000000'}
+                      onChange={(e) => updateTextOverlay(index, { backgroundColor: e.target.value })}
+                      className="h-10 mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label>Действие</Label>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setStoryData(prev => ({
+                          ...prev,
+                          textOverlays: prev.textOverlays.filter((_, i) => i !== index),
+                          hasUnsavedChanges: true
+                        }));
+                      }}
+                      className="mt-2 w-full"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Удалить
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -747,35 +767,54 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
               )}
               
               {/* Текстовые наложения */}
-              {(() => {
-                console.log('[DEBUG] Rendering text overlays, count:', storyData.textOverlays.length, storyData.textOverlays);
-                return storyData.textOverlays.map((overlay, index) => (
-                  <Draggable
+              {storyData.textOverlays.map((overlay, index) => {
+                console.log('[DEBUG] Rendering overlay:', overlay.id, overlay.text, 'at position:', overlay.x, overlay.y);
+                return (
+                  <div
                     key={overlay.id}
-                    position={{ x: overlay.x, y: overlay.y }}
-                    onDrag={(e, data) => handleTextDrag(index, e, data)}
+                    style={{
+                      position: 'absolute',
+                      left: overlay.x,
+                      top: overlay.y,
+                      fontSize: overlay.fontSize,
+                      color: overlay.color,
+                      fontFamily: overlay.fontFamily,
+                      fontWeight: overlay.fontWeight,
+                      textAlign: overlay.textAlign,
+                      backgroundColor: overlay.backgroundColor.startsWith('#') ? overlay.backgroundColor : '#000000',
+                      padding: overlay.padding,
+                      borderRadius: overlay.borderRadius,
+                      cursor: 'move',
+                      userSelect: 'none',
+                      zIndex: 10,
+                      minWidth: '50px',
+                      maxWidth: '250px',
+                      wordWrap: 'break-word'
+                    }}
+                    onMouseDown={(e) => {
+                      // Простое перетаскивание без библиотеки
+                      const startX = e.clientX - overlay.x;
+                      const startY = e.clientY - overlay.y;
+                      
+                      const handleMouseMove = (moveEvent: MouseEvent) => {
+                        const newX = Math.max(0, Math.min(300, moveEvent.clientX - startX));
+                        const newY = Math.max(0, Math.min(570, moveEvent.clientY - startY));
+                        updateTextOverlay(index, { x: newX, y: newY });
+                      };
+                      
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
                   >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        fontSize: overlay.fontSize,
-                        color: overlay.color,
-                        fontFamily: overlay.fontFamily,
-                        fontWeight: overlay.fontWeight,
-                        textAlign: overlay.textAlign,
-                        backgroundColor: overlay.backgroundColor,
-                        padding: overlay.padding,
-                        borderRadius: overlay.borderRadius,
-                        cursor: 'move',
-                        userSelect: 'none',
-                        zIndex: 10
-                      }}
-                    >
-                      {overlay.text}
-                    </div>
-                  </Draggable>
-                ));
-              })()}
+                    {overlay.text}
+                  </div>
+                );
+              })}
               
               {/* Заглушка если нет фонового изображения */}
               {!storyData.backgroundImageUrl && (
