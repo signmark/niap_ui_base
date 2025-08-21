@@ -127,10 +127,19 @@ interface SimpleStoryEditorProps {
   onBack: () => void;
 }
 
+// Создание новой Story
+const createNewStory = async (campaignId: string, title: string = 'Новая Stories') => {
+  return apiRequest('/api/stories/simple', {
+    method: 'POST',
+    data: { campaignId, title }
+  });
+};
+
 export default function SimpleStoryEditor({ campaignId, storyId, onBack }: SimpleStoryEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [actualStoryId, setActualStoryId] = useState<string | undefined>(storyId);
 
   // Инициализация состояния согласно ТЗ
   const [storyData, setStoryData] = useState<SimpleStoryData>({
@@ -152,18 +161,53 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
     additionalImages: [],
     title: 'Новая Stories',
     campaignId,
-    storyId,
+    storyId: actualStoryId,
     state: 'idle',
     hasUnsavedChanges: false,
     error: null,
     validationErrors: {}
   });
 
+  // Создание новой Story если storyId не передан
+  useEffect(() => {
+    if (!storyId && !actualStoryId) {
+      const createStory = async () => {
+        try {
+          setStoryData(prev => ({ ...prev, state: 'loading' }));
+          logger.info('Creating new story for campaign', { campaignId });
+          
+          const response = await createNewStory(campaignId, 'Новая Stories');
+          const newStory = response.data;
+          
+          setActualStoryId(newStory.id);
+          setStoryData(prev => ({
+            ...prev,
+            storyId: newStory.id,
+            title: newStory.title,
+            state: 'idle'
+          }));
+          
+          logger.info('New story created', { storyId: newStory.id });
+          
+        } catch (error: any) {
+          logger.error('Failed to create new story', error);
+          setStoryData(prev => ({
+            ...prev,
+            state: 'error',
+            error: error?.message || 'Ошибка создания истории'
+          }));
+        }
+      };
+      
+      createStory();
+    }
+  }, [campaignId, storyId, actualStoryId]);
+
   // Загрузка существующей Story согласно ТЗ
   const { data: existingStory } = useQuery({
-    queryKey: ['story', storyId],
-    queryFn: () => storyId ? apiRequest(`/api/stories/${storyId}`) : null,
-    enabled: !!storyId,
+    queryKey: ['story', actualStoryId],
+    queryFn: () => actualStoryId ? apiRequest(`/api/stories/simple/${actualStoryId}`) : null,
+    enabled: !!actualStoryId,
   });
 
   useEffect(() => {
@@ -171,7 +215,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       const story = existingStory.data;
       const metadata = story.metadata ? JSON.parse(story.metadata) : {};
       
-      logger.info('Loading story', { storyId, title: story.title });
+      logger.info('Loading story', { storyId: actualStoryId, title: story.title });
       logger.debug('Background image from image_url', story.image_url);
       
       setStoryData(prev => ({
@@ -183,12 +227,12 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         hasUnsavedChanges: false
       }));
     }
-  }, [existingStory?.data?.id, storyId]);
+  }, [existingStory?.data?.id, actualStoryId]);
 
   // Восстановление из localStorage при загрузке согласно ТЗ
   useEffect(() => {
-    if (storyId) {
-      const saved = localStorage.getItem(`story-draft-${storyId}`);
+    if (actualStoryId) {
+      const saved = localStorage.getItem(`story-draft-${actualStoryId}`);
       if (saved) {
         try {
           const data = JSON.parse(saved);
@@ -207,18 +251,18 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
             }
           }
         } catch (e) {
-          localStorage.removeItem(`story-draft-${storyId}`);
+          localStorage.removeItem(`story-draft-${actualStoryId}`);
         }
       }
     }
-  }, [storyId]);
+  }, [actualStoryId]);
 
   // Автосохранение в localStorage согласно ТЗ
   const saveToLocalStorage = useMemo(
     () => debounce(() => {
-      if (storyData.hasUnsavedChanges && storyId) {
-        logger.debug('Saving to localStorage', { storyId });
-        localStorage.setItem(`story-draft-${storyId}`, JSON.stringify({
+      if (storyData.hasUnsavedChanges && actualStoryId) {
+        logger.debug('Saving to localStorage', { storyId: actualStoryId });
+        localStorage.setItem(`story-draft-${actualStoryId}`, JSON.stringify({
           backgroundImageUrl: storyData.backgroundImageUrl,
           textOverlays: storyData.textOverlays,
           additionalImages: storyData.additionalImages,
@@ -227,7 +271,7 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         }));
       }
     }, 2000),
-    [storyData.hasUnsavedChanges, storyData.backgroundImageUrl, storyData.textOverlays, storyData.additionalImages, storyData.title, storyId]
+    [storyData.hasUnsavedChanges, storyData.backgroundImageUrl, storyData.textOverlays, storyData.additionalImages, storyData.title, actualStoryId]
   );
 
   // Автосохранение при изменениях
@@ -244,11 +288,13 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
           validationErrors: { ...prev.validationErrors, backgroundImageUrl: 'Неверный URL изображения' }
         }));
       } else {
-        const { backgroundImageUrl, ...otherErrors } = prev.validationErrors;
-        setStoryData(prev => ({
-          ...prev,
-          validationErrors: otherErrors
-        }));
+        setStoryData(prev => {
+          const { backgroundImageUrl, ...otherErrors } = prev.validationErrors;
+          return {
+            ...prev,
+            validationErrors: otherErrors
+          };
+        });
       }
     }, 500),
     []
@@ -289,10 +335,12 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       // 1. Optimistic update с base64 preview
       const reader = new FileReader();
       reader.onload = (e) => {
-        setStoryData(prev => ({ 
-          ...prev, 
-          backgroundImageUrl: e.target.result as string
-        }));
+        if (e.target?.result) {
+          setStoryData(prev => ({ 
+            ...prev, 
+            backgroundImageUrl: e.target!.result as string
+          }));
+        }
       };
       reader.readAsDataURL(file);
       
@@ -383,11 +431,15 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
         return;
       }
       
+      if (!actualStoryId) {
+        throw new Error('No story ID available for saving');
+      }
+
       setStoryData(prev => ({ ...prev, state: 'saving', error: null }));
-      logger.info('Saving story', { storyId, title: storyData.title });
+      logger.info('Saving story', { storyId: actualStoryId, title: storyData.title });
       
       // Используем пользовательский токен из headers
-      const response = await apiRequest(`/api/stories/${storyId}`, {
+      const response = await apiRequest(`/api/stories/simple/${actualStoryId}`, {
         method: 'PUT',
         data: { 
           title: storyData.title,
@@ -404,19 +456,19 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       }));
       
       // Очистить localStorage после успешного сохранения
-      if (storyId) {
-        localStorage.removeItem(`story-draft-${storyId}`);
+      if (actualStoryId) {
+        localStorage.removeItem(`story-draft-${actualStoryId}`);
       }
       
       // Инвалидировать кэш
-      queryClient.invalidateQueries({ queryKey: ['story', storyId] });
+      queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
       
       toast({
         title: "История сохранена",
         description: "Все изменения успешно сохранены"
       });
       
-      logger.info('Story saved successfully', { storyId });
+      logger.info('Story saved successfully', { storyId: actualStoryId });
       
     } catch (error: any) {
       logger.error('Failed to save story', error);

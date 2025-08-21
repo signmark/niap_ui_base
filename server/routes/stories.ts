@@ -719,46 +719,77 @@ router.post('/publish-video/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Get story by ID для SimpleStoryEditor
-router.get('/:id', authMiddleware, async (req, res) => {
+// Create new story for SimpleStoryEditor
+router.post('/simple', authMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { campaignId, title } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    console.log('[DEV] [stories] Fetching story:', id, 'for user:', userId);
+    if (!campaignId) {
+      return res.status(400).json({ error: 'campaignId is required' });
+    }
 
-    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+    console.log('[DEV] [stories] Creating new story for campaign:', campaignId);
+
+    // Создаем базовую Stories с пустыми данными
+    const storyData = {
+      campaign_id: campaignId,
+      user_id: userId,
+      title: title || 'Новая Stories',
+      content_type: 'story',
+      status: 'draft',
+      image_url: null, // Фоновое изображение - отдельное поле
+      metadata: JSON.stringify({
+        textOverlays: [{
+          id: 'text1',
+          text: 'Добавьте ваш текст',
+          x: 100,
+          y: 200,
+          fontSize: 32,
+          color: '#ffffff',
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          padding: 10,
+          borderRadius: 8
+        }],
+        additionalImages: [],
+        storyType: 'instagram',
+        format: '9:16',
+        version: '1.0'
+      }),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const createResponse = await directusApi.post('/items/campaign_content', storyData, {
       headers: {
         'Authorization': req.headers.authorization
       }
     });
-    const story = response.data.data;
 
-    if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-
-    console.log('[DEV] [stories] Story fetched successfully');
+    const story = createResponse.data.data;
+    console.log('[DEV] [stories] Story created successfully with ID:', story.id);
+    
     res.json({ success: true, data: story });
   } catch (error: any) {
-    console.error('Error fetching story:', error?.response?.data || error?.message);
+    console.error('Error creating story:', error?.response?.data || error?.message);
     
     if (error?.response?.status === 403) {
       res.status(403).json({ error: 'Access denied' });
-    } else if (error?.response?.status === 404) {
-      res.status(404).json({ error: 'Story not found' });
     } else {
-      res.status(500).json({ error: 'Failed to fetch story' });
+      res.status(500).json({ error: 'Failed to create story' });
     }
   }
 });
 
 // Update story with image_url and metadata - согласно ТЗ SimpleStoryEditor
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/simple/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, image_url, metadata, status } = req.body;
@@ -818,6 +849,44 @@ router.put('/:id', authMiddleware, async (req, res) => {
       res.status(404).json({ error: 'Story not found' });
     } else {
       res.status(500).json({ error: 'Failed to update story' });
+    }
+  }
+});
+
+// Get story by ID для SimpleStoryEditor
+router.get('/simple/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Fetching story:', id, 'for user:', userId);
+
+    const response = await directusApi.get(`/items/campaign_content/${id}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = response.data.data;
+
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
+    console.log('[DEV] [stories] Story fetched successfully');
+    res.json({ success: true, data: story });
+  } catch (error: any) {
+    console.error('Error fetching story:', error?.response?.data || error?.message);
+    
+    if (error?.response?.status === 403) {
+      res.status(403).json({ error: 'Access denied' });
+    } else if (error?.response?.status === 404) {
+      res.status(404).json({ error: 'Story not found' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch story' });
     }
   }
 });
