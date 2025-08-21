@@ -14,7 +14,6 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   let parsedData;
   try {
     parsedData = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
-
   } catch (e) {
     console.error('🎬 InstagramStoriesPreview: Error parsing metadata:', e);
     return (
@@ -24,11 +23,43 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
     );
   }
 
-  const slides = parsedData?.slides || [];
-
+  // Поддержка нового формата Stories (textOverlays) и старого формата (slides)
+  let slides = [];
+  const legacySlides = parsedData?.slides || [];
+  const hasTextOverlays = parsedData?.textOverlays && parsedData.textOverlays.length > 0;
+  const backgroundImageUrl = parsedData?.backgroundImageUrl || parsedData?.image_url;
+  
+  if (hasTextOverlays || backgroundImageUrl) {
+    // Создаем слайд для нового формата Stories
+    slides = [{
+      background: {
+        type: backgroundImageUrl ? 'image' : 'color',
+        value: backgroundImageUrl || '#6366f1'
+      },
+      elements: (parsedData.textOverlays || []).map((overlay: any) => ({
+        type: 'text',
+        position: { 
+          x: overlay.x || 50, 
+          y: overlay.y || 50, 
+          width: 200, 
+          height: 40 
+        },
+        content: { text: overlay.text || 'Текст' },
+        style: {
+          fontSize: overlay.fontSize || 24,
+          color: overlay.color || '#ffffff',
+          fontFamily: overlay.fontFamily || 'Arial',
+          fontWeight: overlay.fontWeight || 'bold',
+          textAlign: overlay.textAlign || 'center',
+          backgroundColor: overlay.backgroundColor || 'transparent'
+        }
+      }))
+    }];
+  } else {
+    slides = legacySlides;
+  }
   
   if (slides.length === 0) {
-
     return (
       <div className="text-center text-muted-foreground p-8">
         <p>Нет слайдов для отображения</p>
@@ -41,14 +72,13 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   
   // Force re-render when metadata changes
   useEffect(() => {
-
     setCurrentSlideIndex(0);
     setProgress(0);
   }, [metadata]);
 
   // Auto advance slides
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || slides.length <= 1) return;
 
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -91,14 +121,18 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
         <div className="relative w-full h-full">
           
           {/* Click areas for navigation */}
-          <div 
-            className="absolute left-0 top-0 w-1/2 h-full z-30"
-            onClick={() => handleSlideClick('prev')}
-          />
-          <div 
-            className="absolute right-0 top-0 w-1/2 h-full z-30"
-            onClick={() => handleSlideClick('next')}
-          />
+          {slides.length > 1 && (
+            <>
+              <div 
+                className="absolute left-0 top-0 w-1/2 h-full z-30"
+                onClick={() => handleSlideClick('prev')}
+              />
+              <div 
+                className="absolute right-0 top-0 w-1/2 h-full z-30"
+                onClick={() => handleSlideClick('next')}
+              />
+            </>
+          )}
 
           {/* Background */}
           <div className="absolute inset-0">
@@ -122,7 +156,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
           <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/60 to-transparent p-3">
             {/* Progress bars */}
             <div className="flex gap-1 mb-3">
-              {slides.map((_, index) => (
+              {slides.map((_: any, index: number) => (
                 <div key={index} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-white rounded-full transition-all duration-100"
@@ -191,6 +225,9 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                       fontFamily: element.style?.fontFamily || 'Arial',
                       fontWeight: element.style?.fontWeight || 'bold',
                       textAlign: element.style?.textAlign || 'center',
+                      backgroundColor: element.style?.backgroundColor !== 'transparent' ? element.style?.backgroundColor : 'rgba(0,0,0,0.5)',
+                      borderRadius: '8px',
+                      padding: '8px',
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                       wordWrap: 'break-word',
                       overflow: 'hidden',
@@ -240,13 +277,15 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
           })}
           
           {/* Slide indicator */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
-            <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1">
-              <span className="text-white text-xs">
-                {currentSlideIndex + 1} / {slides.length}
-              </span>
+          {slides.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+              <div className="bg-black/50 backdrop-blur rounded-full px-3 py-1">
+                <span className="text-white text-xs">
+                  {currentSlideIndex + 1} / {slides.length}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Bottom gradient overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/40 to-transparent z-5"></div>
