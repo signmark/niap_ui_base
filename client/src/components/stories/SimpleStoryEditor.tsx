@@ -251,14 +251,16 @@ export default function SimpleStoryEditor({ campaignId, storyId, onBack }: Simpl
       
       logger.info('Loading story', { storyId: actualStoryId, title: story.title });
       logger.debug('Background image from image_url', story.image_url);
+      logger.debug('Current backgroundImageUrl in state', storyData.backgroundImageUrl);
       
       setStoryData(prev => ({
         ...prev,
         title: story.title || 'Без названия',
-        backgroundImageUrl: story.image_url || null, // из отдельного поля
+        // НЕ перезаписываем backgroundImageUrl если уже есть в состоянии (свежезагруженное)
+        backgroundImageUrl: prev.backgroundImageUrl || story.image_url || null,
         textOverlays: (metadata as any)?.textOverlays || prev.textOverlays,
         additionalImages: (metadata as any)?.additionalImages || [],
-        hasUnsavedChanges: false
+        hasUnsavedChanges: prev.hasUnsavedChanges // Сохраняем статус изменений
       }));
     }
   }, [existingStory?.data?.id, actualStoryId]);

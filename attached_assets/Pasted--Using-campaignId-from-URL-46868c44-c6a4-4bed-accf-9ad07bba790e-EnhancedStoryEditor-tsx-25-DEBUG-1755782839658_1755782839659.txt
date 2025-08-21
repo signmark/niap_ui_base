@@ -1,0 +1,280 @@
+🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Creating new story for campaign Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] New story created Object
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+2SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+25SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 201
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 93 207
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 50 244
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 294
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 332
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 350
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 359
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 363
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 364
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 М at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Мо at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя  at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя н at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя но at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя нов at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя нова at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая  at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая и at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая ис at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая ист at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая исто at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая истор at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая исто at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая истор at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая истори at position: 0 365
+25SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 365
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 366
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 2 370
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 3 377
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 7 386
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 8 390
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 8 392
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 8 395
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 8 397
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 5 397
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 389
+2SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 385
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 384
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 0 381
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 2 368
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 8 345
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 19 307
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 31 268
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 37 246
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 39 231
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 41 216
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 44 192
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 47 181
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 51 169
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 54 158
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 55 152
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 57 146
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 57 135
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 60 111
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 62 97
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 63 93
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 64 90
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 64 87
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 63 85
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 63 83
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 63 81
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 60 72
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 57 62
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 56 48
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 55 41
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 53 37
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 51 34
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 50 32
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 29
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 46 25
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 45 23
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 43 21
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 40 17
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 40 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 39 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 38 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 37 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 36 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 37 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 38 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 40 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 42 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 45 15
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 47 15
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 48 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 15
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 14
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 10
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 7
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 51 5
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 52 4
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 52 3
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 52 2
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 52 4
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 51 6
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 50 8
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 49 12
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 48 15
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 48 16
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 50 19
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 51 20
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 53 22
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 54 23
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 57 26
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 60 30
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 32
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 31
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 29
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Story saved successfully Object
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+2SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Navigating to content list Object
+5chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx?t=1755782319551:1054 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx?t=1755782319551:81 [INFO] [Stories] Navigating to content list Object
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+commitHookEffectListMount @ chunk-276SZO74.js?v=9f8ce6c1:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=9f8ce6c1:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=9f8ce6c1:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=9f8ce6c1:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=9f8ce6c1:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=9f8ce6c1:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=9f8ce6c1:19447
+(anonymous) @ chunk-276SZO74.js?v=9f8ce6c1:19328
+workLoop @ chunk-276SZO74.js?v=9f8ce6c1:197
+flushWork @ chunk-276SZO74.js?v=9f8ce6c1:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=9f8ce6c1:384Understand this error
+/content?campaignId=46868c44-c6a4-4bed-accf-9ad07bba790e:1 Some resource load requests were throttled while the tab was in background, and no request was sent from the queue in the last 1 minute. This means previously requested in-flight requests haven't received any response from servers. See https://www.chromestatus.com/feature/5527160148197376 for more details
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Story saved successfully Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Navigating to content list Object
+2chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Story saved successfully Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:792 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
