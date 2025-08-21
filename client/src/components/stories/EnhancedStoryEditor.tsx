@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCampaignStore } from '@/lib/campaignStore';
 import { useParams } from 'wouter';
 import StoryModeSelector, { StoryMode } from './StoryModeSelector';
@@ -20,7 +20,14 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
 
   const [selectedMode, setSelectedMode] = useState<StoryMode | null>(null);
 
-  // Если режим не выбран, показываем селектор
+  // Если у нас есть storyId, автоматически переходим в простой режим
+  useEffect(() => {
+    if (activeStoryId && !selectedMode) {
+      setSelectedMode('simple');
+    }
+  }, [activeStoryId, selectedMode]);
+
+  // Если режим не выбран и нет storyId, показываем селектор
   if (!selectedMode) {
     return (
       <StoryModeSelector 
@@ -39,6 +46,7 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
     return (
       <SimpleStoryEditor 
         campaignId={activeCampaignId}
+        storyId={activeStoryId}
         onBack={handleBack}
       />
     );
