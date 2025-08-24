@@ -28,7 +28,11 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
   let slides = [];
   const legacySlides = parsedData?.slides || [];
   const hasTextOverlays = parsedData?.textOverlays && parsedData.textOverlays.length > 0;
-  const finalBackgroundImageUrl = backgroundImageUrl || parsedData?.backgroundImageUrl || parsedData?.image_url;
+  
+  // ЧЕТКИЙ ПРИОРИТЕТ: переданное изображение важнее метаданных из базы
+  const finalBackgroundImageUrl = backgroundImageUrl || parsedData?.image_url || parsedData?.backgroundImageUrl;
+  
+  // Отключено избыточное логирование для плавности работы
   
 
   
@@ -39,29 +43,36 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
         type: finalBackgroundImageUrl ? 'image' : 'color',
         value: finalBackgroundImageUrl || '#6366f1'
       },
-      elements: (parsedData.textOverlays || []).map((overlay: any) => {
-        // Масштабируем позицию для превью (Stories editor: 350x620px, Preview: 280x497px)
+      elements: (parsedData.textOverlays || []).map((overlay: any, index: number) => {
+        // Правильное масштабирование: Stories editor (350x620px) → Preview (280x497px)
         const scaleX = 280 / 350;
         const scaleY = 497 / 620;
-        const scaledX = (overlay.x || 50) * scaleX;
-        const scaledY = (overlay.y || 50) * scaleY;
+        
+        // Если координаты не заданы, размещаем элементы друг под другом
+        const defaultX = 20;
+        const defaultY = 50 + (index * 60); // Размещаем с отступом между элементами
+        
+        const scaledX = (overlay.x !== undefined ? overlay.x : defaultX) * scaleX;
+        const scaledY = (overlay.y !== undefined ? overlay.y : defaultY) * scaleY;
         
         return {
           type: 'text',
           position: { 
-            x: scaledX, 
-            y: scaledY, 
-            width: 200 * scaleX, 
-            height: 40 
+            x: Math.max(0, scaledX), 
+            y: Math.max(0, scaledY), 
+            width: 240 * scaleX, 
+            height: 40 * scaleY 
           },
           content: { text: overlay.text || 'Текст' },
           style: {
-            fontSize: (overlay.fontSize || 24) * scaleY,
+            fontSize: Math.max(12, (overlay.fontSize || 24) * scaleY),
             color: overlay.color || '#ffffff',
             fontFamily: overlay.fontFamily || 'Arial',
             fontWeight: overlay.fontWeight || 'bold',
             textAlign: overlay.textAlign || 'center',
-            backgroundColor: overlay.backgroundColor || 'transparent'
+            backgroundColor: overlay.backgroundColor === 'transparent' ? 'transparent' : (overlay.backgroundColor || 'transparent'),
+            transform: `rotate(${overlay.rotation || 0}deg)`,
+            transformOrigin: 'center center'
           }
         };
       })
@@ -214,7 +225,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                   top: `${position.y}px`,
                   width: `${position.width}px`,
                   height: `${position.height}px`,
-                  transform: `rotate(${element.rotation || 0}deg)`,
+                  transform: element.style?.transform || `rotate(${element.rotation || 0}deg)`,
                   zIndex: element.zIndex || 10,
                 }}
               >
@@ -228,7 +239,7 @@ export const InstagramStoriesPreview: React.FC<StoriesPreviewProps> = ({ metadat
                       fontFamily: element.style?.fontFamily || 'Arial',
                       fontWeight: element.style?.fontWeight || 'bold',
                       textAlign: element.style?.textAlign || 'center',
-                      backgroundColor: element.style?.backgroundColor !== 'transparent' ? element.style?.backgroundColor : 'rgba(0,0,0,0.5)',
+                      backgroundColor: element.style?.backgroundColor !== 'transparent' ? element.style?.backgroundColor : 'rgba(0,0,0,0.6)',
                       borderRadius: '8px',
                       padding: '8px',
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',

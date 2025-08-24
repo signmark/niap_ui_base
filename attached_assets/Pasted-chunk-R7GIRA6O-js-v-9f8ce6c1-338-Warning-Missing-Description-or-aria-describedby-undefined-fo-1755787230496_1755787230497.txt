@@ -1,0 +1,53 @@
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338
+commitHookEffectListMount @ chunk-276SZO74.js?v=9f8ce6c1:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=9f8ce6c1:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=9f8ce6c1:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=9f8ce6c1:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=9f8ce6c1:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=9f8ce6c1:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=9f8ce6c1:19447
+commitRootImpl @ chunk-276SZO74.js?v=9f8ce6c1:19416
+commitRoot @ chunk-276SZO74.js?v=9f8ce6c1:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=9f8ce6c1:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=9f8ce6c1:9119
+(anonymous) @ chunk-276SZO74.js?v=9f8ce6c1:18627Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Creating new story for campaign {campaignId: '46868c44-c6a4-4bed-accf-9ad07bba790e'}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] New story created {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0'}
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', title: 'Новая Stories', dbImageUrl: null, storyCreatedAt: '2025-08-21T14:40:09', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: null, source: 'none', storyTitle: 'Новая Stories', prevBackgroundUrl: null}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Uploading image to Imgbb {fileSize: 32448}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Image uploaded to Imgbb {imgbbUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', fileSize: 32448}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', title: 'Новая Stories', dbImageUrl: null, storyCreatedAt: '2025-08-21T14:40:09', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: null, source: 'none', storyTitle: 'Новая Stories', prevBackgroundUrl: null}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 L at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', title: 'Новая Stories', dbImageUrl: null, storyCreatedAt: '2025-08-21T14:40:09', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: null, source: 'none', storyTitle: 'Новая Stories', prevBackgroundUrl: null}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', title: 'Новая Stories', dbImageUrl: null, storyCreatedAt: '2025-08-21T14:40:09', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: null, source: 'none', storyTitle: 'Новая Stories', prevBackgroundUrl: null}
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 L at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 L at position: 100 200

@@ -1,31 +1,20 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Type, Move, Save, ArrowLeft, Play, Pause } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import Draggable from 'react-draggable';
 
 interface TextOverlay {
+  id: string;
   text: string;
   x: number;
   y: number;
   fontSize: number;
   color: string;
-  fontFamily: string;
-  fontWeight: string;
-  textAlign: 'left' | 'center' | 'right';
-  backgroundColor?: string;
-  padding?: number;
-  borderRadius?: number;
-  startTime: number; // Время появления текста (в секундах)
-  endTime: number;   // Время исчезновения текста (в секундах)
+  startTime: number;
+  endTime: number;
 }
 
 interface VideoStoryData {
@@ -44,22 +33,15 @@ interface VideoStoryEditorProps {
 
 export default function VideoStoryEditor({ campaignId, onBack }: VideoStoryEditorProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [storyData, setStoryData] = useState<VideoStoryData>({
-    videoFile: null,
-    videoUrl: null,
-    textOverlays: [],
-    campaignId,
-    title: 'Новая видео Stories',
-    duration: 0
-  });
-
-  const [currentTime, setCurrentTime] = useState(0);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedOverlay, setSelectedOverlay] = useState<number>(-1);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Загрузка видео
   const handleVideoUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {

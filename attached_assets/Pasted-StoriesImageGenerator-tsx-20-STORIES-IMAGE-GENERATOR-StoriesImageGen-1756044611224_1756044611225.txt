@@ -1,0 +1,29 @@
+StoriesImageGenerator.tsx:20 [STORIES-IMAGE-GENERATOR] Начало генерации изображения
+StoriesImageGenerator.tsx:21 [STORIES-IMAGE-GENERATOR] Story: {title: 'Охуенный чел', backgroundImageUrl: 'https://i.ibb.co/kVCHjJMC/1755848302113-420324722.jpg', textOverlays: Array(1), loading: false, error: null}
+StoriesImageGenerator.tsx:22 [STORIES-IMAGE-GENERATOR] textOverlays: [{…}]
+StoriesImageGenerator.tsx:34 [STORIES-IMAGE-GENERATOR] Запускаем генерацию для 1 элементов
+StoriesImageGenerator.tsx:97 [STORIES-IMAGE-GENERATOR] Исходные координаты из базы: x=6.25, y=551.25
+StoriesImageGenerator.tsx:105 [STORIES-IMAGE-GENERATOR] Координаты в превью: x=5, y=441
+StoriesImageGenerator.tsx:116 [STORIES-IMAGE-GENERATOR] Canvas размеры: width=540, height=960
+StoriesImageGenerator.tsx:117 [STORIES-IMAGE-GENERATOR] Scale факторы: scaleX=1.9285714285714286, scaleY=1.93158953722334
+StoriesImageGenerator.tsx:164 [STORIES-IMAGE-GENERATOR] Canvas создан, размер base64: 31623
+StoriesImageGenerator.tsx:174 [STORIES-IMAGE-GENERATOR] Загружаем на ImgBB...
+StoriesImageGenerator.tsx:200 [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://i.ibb.co/7JRWBwpV/story-1756044603612.jpg
+StoriesImageGenerator.tsx:210  PATCH https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/stories/simple/undefined 500 (Internal Server Error)
+generateImage @ StoriesImageGenerator.tsx:210
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449

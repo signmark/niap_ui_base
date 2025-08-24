@@ -1,0 +1,47 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] FINAL LOAD from database {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'My Story', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T07:23:42', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', imageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg'}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] Saving story {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'My Story'}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] СОХРАНЕНИЕ: Отправляю данные на сервер {title: 'My Story', image_url: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', metadata: '{"textOverlays":[{"id":"text1","text":"Дмитрий Жда…ype":"instagram","format":"9:16","version":"1.0"}'}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] Story saved successfully {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e'}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] FINAL LOAD from database {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'My Story', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T07:23:42', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', imageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg'}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] FINAL LOAD from database {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'My Story', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T07:23:42', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', imageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg'}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] FINAL LOAD from database {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', title: 'My Story', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T07:23:42', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx?t=1755792153384:82 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', imageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg'}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 🧹 Очистил sessionStorage при выходе из редактора {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e'}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Navigating to content list {storyId: '61313f6a-c1e8-488e-8d77-a05c82904e7e', actualStoryId: '61313f6a-c1e8-488e-8d77-a05c82904e7e'}
+2chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338
+commitHookEffectListMount @ chunk-276SZO74.js?v=9f8ce6c1:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=9f8ce6c1:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=9f8ce6c1:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=9f8ce6c1:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=9f8ce6c1:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=9f8ce6c1:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=9f8ce6c1:19447
+commitRootImpl @ chunk-276SZO74.js?v=9f8ce6c1:19416
+commitRoot @ chunk-276SZO74.js?v=9f8ce6c1:19277
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=9f8ce6c1:18895
+flushSyncCallbacks @ chunk-276SZO74.js?v=9f8ce6c1:9119
+(anonymous) @ chunk-276SZO74.js?v=9f8ce6c1:18627Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Uploading image to Imgbb {fileSize: 127878}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Image uploaded to Imgbb {imgbbUrl: 'https://i.ibb.co/MxCcQnQh/1755791673613-957715443-photo-2025-06-16-12-08-27-1-1.jpg', fileSize: 127878}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 61313f6a-c1e8-488e-8d77-a05c82904e7e

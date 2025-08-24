@@ -1,0 +1,115 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+5SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+3SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 🧹 Очистил sessionStorage при выходе из редактора Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Navigating to content list Object
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+4SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Background image auto-saved to database Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] СОХРАНЕНИЕ: Отправляю данные на сервер Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Story saved successfully Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено Object
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 4d6b7c40-ca61-485a-ac2d-d13ad335ee7c
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: '4d6b7c40-ca61-485a-ac2d-d13ad335ee7c', title: 'Bitch', dbImageUrl: 'https://i.ibb.co/pv6mNxQC/1755776334738-941482913.jpg', storyCreatedAt: '2025-08-20T12:10:21', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: '4d6b7c40-ca61-485a-ac2d-d13ad335ee7c', imageUrl: 'https://i.ibb.co/pv6mNxQC/1755776334738-941482913.jpg'}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: 'https://i.ibb.co/pv6mNxQC/1755776334738-941482913.jpg', source: 'sessionStorage', storyTitle: 'Bitch', prevBackgroundUrl: null, sessionImage: 'https://i.ibb.co/pv6mNxQC/1755776334738-941482913.jpg', …}
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ✅ ПРЕВЬЮ: Фоновое изображение загружено {url: 'https://i.ibb.co/xtgTV9cQ/1755791876017-668064091-no.webp', storyState: 'idle'}
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text1 Bitch at position: 118 461
+SimpleStoryEditor.tsx:982 [DEBUG] Rendering overlay: text-1755776349683 Cукин сын at position: 110 549

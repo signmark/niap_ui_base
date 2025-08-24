@@ -1,0 +1,60 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+2SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb {fileSize: 32448}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb {imgbbUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', fileSize: 32448}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Saving story {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Story saved successfully {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11'}
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: null}
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Новая моя история'}
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered {activeStoryId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', selectedMode: 'simple'}
+SimpleStoryEditor.tsx:813 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536

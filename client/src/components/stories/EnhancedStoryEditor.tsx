@@ -3,7 +3,7 @@ import { useCampaignStore } from '@/lib/campaignStore';
 import { useParams } from 'wouter';
 import StoryModeSelector, { StoryMode } from './StoryModeSelector';
 import SimpleStoryEditor from './SimpleStoryEditor';
-import VideoStoryEditor from './VideoStoryEditor';
+import SimpleVideoEditor from './SimpleVideoEditor';
 
 interface EnhancedStoryEditorProps {
   campaignId?: string;
@@ -20,11 +20,9 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
 
   const [selectedMode, setSelectedMode] = useState<StoryMode | null>(null);
 
-  // Если у нас есть storyId, автоматически переходим в простой режим
+  // СТАБИЛЬНАЯ инициализация режима - только один раз при монтированию
   useEffect(() => {
-    console.log('[DEBUG] [EnhancedStoryEditor] useEffect triggered', { activeStoryId, selectedMode });
-    if (activeStoryId && !selectedMode) {
-      console.log('[DEBUG] [EnhancedStoryEditor] Setting mode to simple');
+    if (activeStoryId && selectedMode === null) {
       setSelectedMode('simple');
     }
   }, [activeStoryId, selectedMode]);
@@ -34,30 +32,29 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
     return (
       <StoryModeSelector 
         onModeSelect={setSelectedMode}
+        campaignId={activeCampaignId}
       />
     );
   }
 
   // Функция для возврата к селектору режимов
   const handleBack = () => {
-    console.log('[DEBUG] [EnhancedStoryEditor] handleBack called - resetting mode to null');
     setSelectedMode(null);
   };
 
   // Рендерим соответствующий редактор
-  if (selectedMode === 'simple') {
+  if (selectedMode === 'simple' && activeStoryId) {
     return (
       <SimpleStoryEditor 
         campaignId={activeCampaignId}
         storyId={activeStoryId}
-        onBack={handleBack}
       />
     );
   }
 
   if (selectedMode === 'video') {
     return (
-      <VideoStoryEditor 
+      <SimpleVideoEditor 
         campaignId={activeCampaignId}
         onBack={handleBack}
       />

@@ -1,0 +1,61 @@
+ailed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+multi-tabs.js:4806 Injected CSS loaded successfully
+2chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Story saved successfully Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+EnhancedStoryEditor.tsx:27 [DEBUG] [EnhancedStoryEditor] Setting mode to simple
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:120 [INFO] [Stories] Loading story Object
+EnhancedStoryEditor.tsx:25 [DEBUG] [EnhancedStoryEditor] useEffect triggered Object
+SimpleStoryEditor.tsx:809 [DEBUG] Rendering overlay: text1 Моя новая история at position: 61 28

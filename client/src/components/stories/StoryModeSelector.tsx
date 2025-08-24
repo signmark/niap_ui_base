@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +9,59 @@ export type StoryMode = 'simple' | 'video';
 
 interface StoryModeSelectorProps {
   onModeSelect: (mode: StoryMode) => void;
+  campaignId?: string;
 }
 
-export default function StoryModeSelector({ onModeSelect }: StoryModeSelectorProps) {
+export default function StoryModeSelector({ onModeSelect, campaignId }: StoryModeSelectorProps) {
   const [selectedMode, setSelectedMode] = useState<StoryMode | null>(null);
+  const [, setLocation] = useLocation();
 
-  const handleModeSelect = (mode: StoryMode) => {
+  const handleModeSelect = async (mode: StoryMode) => {
     setSelectedMode(mode);
-    onModeSelect(mode);
+    
+    if (mode === 'simple') {
+      // Создаем новую story и переходим к редактору
+      try {
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
+        if (!token) {
+          console.error('Токен не найден в localStorage');
+          throw new Error('Токен авторизации не найден');
+        }
+
+        const response = await fetch('/api/stories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: 'Новая Stories',
+            campaignId: campaignId || "46868c44-c6a4-4bed-accf-9ad07bba790e",
+            content: '',
+            type: 'story',
+            status: 'draft'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (result.success && result.data?.id) {
+          // Переходим к редактору новой Stories
+          setLocation(`/stories/${result.data.id}/edit`);
+        } else {
+          throw new Error('Не удалось создать Stories');
+        }
+      } catch (error) {
+        console.error('Ошибка создания Stories:', error);
+        // Fallback: просто переключаем режим
+        onModeSelect(mode);
+      }
+    } else {
+      onModeSelect(mode);
+    }
   };
 
   return (
@@ -94,7 +140,7 @@ export default function StoryModeSelector({ onModeSelect }: StoryModeSelectorPro
               </div>
               
               <Button 
-                onClick={() => handleModeSelect('advanced')}
+                onClick={() => handleModeSelect('video')}
                 className="w-full"
                 variant="outline"
               >

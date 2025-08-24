@@ -1,0 +1,76 @@
+Injected CSS loaded successfully
+chunk-RPCDYKBN.js?v=a033f6ef:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1311:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1718:9)
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx?t=1755869788399:32:3)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx?t=1755869788399:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx?t=1755869788399:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?t=1755869788399&v=vJpmbCZPbOLA7EH2kAlo7:82:23)
+    at component
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a033f6ef:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?t=1755869788399&v=vJpmbCZPbOLA7EH2kAlo7:509:3)
+printWarning @ chunk-RPCDYKBN.js?v=a033f6ef:521Understand this error
+StoriesImageGenerator.tsx:20 [STORIES-IMAGE-GENERATOR] Начало генерации изображения
+StoriesImageGenerator.tsx:21 [STORIES-IMAGE-GENERATOR] Story: {title: 'Новая Stories', backgroundImageUrl: 'https://i.ibb.co/m5QX0ZW2/1755868791431-938652835-SSH.jpg', textOverlays: Array(1), loading: false, error: null}
+StoriesImageGenerator.tsx:22 [STORIES-IMAGE-GENERATOR] textOverlays: [{…}]
+StoriesImageGenerator.tsx:34 [STORIES-IMAGE-GENERATOR] Запускаем генерацию для 1 элементов
+StoriesImageGenerator.tsx:145 [STORIES-IMAGE-GENERATOR] Canvas создан, размер base64: 1841518
+StoriesImageGenerator.tsx:149 [STORIES-IMAGE-GENERATOR] Загружаем на ImgBB...
+StoriesImageGenerator.tsx:150  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/imgbb/upload 413 (Request Entity Too Large)
+generateImage @ StoriesImageGenerator.tsx:150
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449Understand this error
+StoriesImageGenerator.tsx:206 [STORIES-IMAGE-GENERATOR] Ошибка загрузки: Error: ImgBB upload failed: 413
+    at generateImage (StoriesImageGenerator.tsx:163:17)
+generateImage @ StoriesImageGenerator.tsx:206
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449Understand this error

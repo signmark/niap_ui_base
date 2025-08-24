@@ -9,16 +9,8 @@ export default function StoriesPage() {
   
   // Стабилизируем campaignId с приоритетом URL параметру
   const activeCampaignId = useMemo(() => {
-    // URL параметр имеет приоритет и НЕ должен перезаписываться
-    if (campaignId) {
-      console.log('🌟 Using campaignId from URL:', campaignId);
-      return campaignId;
-    }
-    
-    const storeId = selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
-    console.log('🌟 Using campaignId from store:', storeId);
-    return storeId;
-  }, [campaignId]); // Убираем selectedCampaign?.id из зависимостей!
+    return campaignId || selectedCampaign?.id || "46868c44-c6a4-4bed-accf-9ad07bba790e";
+  }, [campaignId, selectedCampaign?.id]);
 
   // Если storyId отсутствует, это новая Stories - очищаем состояние
   const cleanStoryId = storyId || undefined;

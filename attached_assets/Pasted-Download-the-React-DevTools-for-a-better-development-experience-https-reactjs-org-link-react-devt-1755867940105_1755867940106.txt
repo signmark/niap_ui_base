@@ -1,0 +1,77 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+chunk-LQHIBHTY.js?v=a033f6ef:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-LQHIBHTY.js?v=a033f6ef:338Understand this warning
+SimpleStoryEditor.tsx:130 Загружаем изображение на Imgbb...
+SimpleStoryEditor.tsx:152 Изображение загружено и сохранено: https://i.ibb.co/kVCHjJMC/1755848302113-420324722.jpg
+chunk-RPCDYKBN.js?v=a033f6ef:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1311:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1718:9)
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx:32:3)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=Ed5NL-VosKgb9zrUlzr3c:82:23)
+    at component
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a033f6ef:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=Ed5NL-VosKgb9zrUlzr3c:509:3)
+printWarning @ chunk-RPCDYKBN.js?v=a033f6ef:521Understand this error
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -5 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -4 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -3 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -1 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 4 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 5 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 6 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 10 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 21 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 20 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 19 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 23 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 22 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 21 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 22 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 25 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 21 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 18 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 17 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 14 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 11 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 7 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 3 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 2 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: 1 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -1 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -2 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -5 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -7 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -10 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -11 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -14 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -18 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -20 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -23 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -26 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -27 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -26 для элемента: text_1755867887475
+SimpleStoryEditor.tsx:470 Устанавливаем поворот: -17 для элемента: text_1755867887475

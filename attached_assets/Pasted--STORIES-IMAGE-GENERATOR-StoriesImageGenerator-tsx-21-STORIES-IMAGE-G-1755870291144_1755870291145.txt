@@ -1,0 +1,61 @@
+[STORIES-IMAGE-GENERATOR] Начало генерации изображения
+StoriesImageGenerator.tsx:21 [STORIES-IMAGE-GENERATOR] Story: {title: 'SSH', backgroundImageUrl: 'https://i.ibb.co/m5QX0ZW2/1755868791431-938652835-SSH.jpg', textOverlays: Array(1), loading: false, error: null}
+StoriesImageGenerator.tsx:22 [STORIES-IMAGE-GENERATOR] textOverlays: [{…}]
+StoriesImageGenerator.tsx:34 [STORIES-IMAGE-GENERATOR] Запускаем генерацию для 1 элементов
+StoriesImageGenerator.tsx:145 [STORIES-IMAGE-GENERATOR] Canvas создан, размер base64: 242887
+StoriesImageGenerator.tsx:156 [STORIES-IMAGE-GENERATOR] Загружаем на ImgBB...
+StoriesImageGenerator.tsx:157  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/imgbb/upload 413 (Request Entity Too Large)
+generateImage @ StoriesImageGenerator.tsx:157
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449Understand this error
+StoriesImageGenerator.tsx:171 [STORIES-IMAGE-GENERATOR] ImgBB response: {"message":"request entity too large"}
+generateImage @ StoriesImageGenerator.tsx:171
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449Understand this error
+StoriesImageGenerator.tsx:215 [STORIES-IMAGE-GENERATOR] Ошибка загрузки: Error: ImgBB upload failed: 413 - {"message":"request entity too large"}
+    at generateImage (StoriesImageGenerator.tsx:172:17)
+generateImage @ StoriesImageGenerator.tsx:215
+await in generateImage
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449Understand this error

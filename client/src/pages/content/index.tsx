@@ -1105,6 +1105,16 @@ export default function ContentPage() {
           </Button>
 
           <Button 
+            onClick={() => navigate('/stories')}
+            disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
+            variant="outline"
+            className="bg-purple-50 border-purple-200 hover:bg-purple-100"
+          >
+            <Layers className="mr-2 h-4 w-4" />
+            Создать Stories
+          </Button>
+          
+          <Button 
             onClick={() => setIsContentTypeDialogOpen(true)} 
             disabled={!selectedCampaignId || selectedCampaignId === "loading" || selectedCampaignId === "empty"}
           >
@@ -2460,31 +2470,66 @@ export default function ContentPage() {
                     // Определяем API endpoint в зависимости от типа контента
                     let publishEndpoint = '/api/publish-content'; // по умолчанию для обычного контента
                     
-                    // Для Stories используем специальный роут
+                    // Для Stories используем специальную функцию с генерацией изображений
                     if (currentContent?.contentType === 'story') {
-                      publishEndpoint = '/api/stories/publish';
-                      console.log(`[DEV] [content-publish-dialog] 🎬 Using Stories endpoint: ${publishEndpoint}`);
+                      console.log(`[DEV] [content-publish-dialog] 🎬 Using Stories with image generation`);
+                      
+                      // Импортируем функцию генерации изображений
+                      const { publishWithImageGeneration } = await import('@/utils/publishWithImageGeneration');
+                      
+                      // Получаем полные данные Stories с textOverlays
+                      const storyResponse = await apiRequest(`/api/stories/simple/${currentContent.id}`, {
+                        method: 'GET'
+                      });
+                      
+                      if (!storyResponse.success) {
+                        throw new Error('Не удалось получить данные Stories');
+                      }
+                      
+                      const storyData = storyResponse.data;
+                      console.log('[DEV] [content-publish] Story data for generation:', storyData);
+                      
+                      // Вызываем публикацию с генерацией изображений
+                      const response = await publishWithImageGeneration({
+                        contentId: currentContent.id,
+                        platforms: selectedPlatformList,
+                        story: storyData
+                      });
+                      
+                      if (response.success) {
+                        toast({
+                          description: response.imageGenerated 
+                            ? "Stories опубликована с автоматически сгенерированным изображением"
+                            : "Stories опубликована",
+                          variant: "default"
+                        });
+                        return;
+                      } else {
+                        throw new Error(response.message || 'Ошибка публикации Stories');
+                      }
                     } else {
                       console.log(`[DEV] [content-publish-dialog] 🎬 Using general endpoint: ${publishEndpoint}`);
+                      
+                      // Вызываем обычный API эндпоинт для не-Stories контента
+                      const response = await apiRequest(publishEndpoint, {
+                        method: 'POST',
+                        data: requestData
+                      });
+                      
+                      if (response.success) {
+                        toast({
+                          description: response.message || "Контент успешно отправлен на публикацию",
+                          variant: "default"
+                        });
+                      } else {
+                        toast({
+                          description: response.error || "Ошибка при публикации контента",
+                          variant: "destructive"
+                        });
+                      }
                     }
                     
-                    // Вызываем соответствующий API эндпоинт
-                    const response = await apiRequest(publishEndpoint, {
-                      method: 'POST',
-                      data: requestData
-                    });
-                    
-                    if (response.success) {
-                      toast({
-                        description: response.message || "Контент успешно отправлен на публикацию",
-                        variant: "default"
-                      });
-                    } else {
-                      toast({
-                        description: response.error || "Ошибка при публикации контента",
-                        variant: "destructive"
-                      });
-                    }
+
                   } catch (error: any) {
                     console.error("Ошибка публикации контента:", error);
                     toast({

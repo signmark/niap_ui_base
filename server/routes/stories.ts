@@ -129,6 +129,111 @@ router.put('/story/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// UPDATE SIMPLE STORY - NEW ENDPOINT FOR SIMPLE EDITOR (PUT и PATCH)
+router.put('/simple/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, image_url, metadata } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Updating simple story:', id, { 
+      title, 
+      image_url,
+      metadata: metadata ? 'provided' : 'not provided'
+    });
+
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Добавляем только переданные поля
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+    
+    if (image_url !== undefined) {
+      updateData.image_url = image_url;
+    }
+    
+    if (metadata !== undefined) {
+      updateData.metadata = metadata; // metadata уже JSON string
+    }
+
+    // Используем токен пользователя для обновления записи
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = updateResponse.data.data;
+
+    console.log('[DEV] [stories] Simple story updated successfully');
+    res.json({ success: true, data: story });
+  } catch (error) {
+    console.error('Error updating simple story:', error);
+    res.status(500).json({ error: 'Failed to update simple story' });
+  }
+});
+
+// PATCH для частичного обновления (дублируем логику PUT)
+router.patch('/simple/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, image_url, metadata, additional_media } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('[DEV] [stories] Patching simple story:', id, { 
+      title, 
+      image_url,
+      metadata: metadata ? 'provided' : 'not provided',
+      additional_media: additional_media ? 'provided' : 'not provided'
+    });
+
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Добавляем только переданные поля
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+    
+    if (image_url !== undefined) {
+      updateData.image_url = image_url;
+    }
+    
+    if (metadata !== undefined) {
+      updateData.metadata = metadata; // metadata уже JSON string
+    }
+    
+    if (additional_media !== undefined) {
+      updateData.additional_media = additional_media; // additional_media уже JSON string
+    }
+
+    // Используем токен пользователя для обновления записи
+    const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = updateResponse.data.data;
+
+    console.log('[DEV] [stories] Simple story patched successfully');
+    res.json({ success: true, data: story });
+  } catch (error) {
+    console.error('Error patching simple story:', error);
+    res.status(500).json({ error: 'Failed to patch simple story' });
+  }
+});
+
 // Get story by ID - SPECIFIC ROUTE FOR STORIES ONLY
 router.get('/story/:id', authMiddleware, async (req, res) => {
   try {
@@ -877,6 +982,21 @@ router.get('/simple/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
 
+    // Детальное логирование для диагностики проблемы разных изображений
+    console.log('[DEV] [stories] Story fetched - ID:', story.id);
+    console.log('[DEV] [stories] Story title:', story.title);
+    console.log('[DEV] [stories] Story image_url:', story.image_url);
+    console.log('[DEV] [stories] Story created_at:', story.created_at);
+    console.log('[DEV] [stories] Story updated_at:', story.updated_at);
+    console.log('[DEV] [stories] Story user_id:', story.user_id, '| Request user_id:', userId);
+    console.log('[DEV] [stories] Story content_type:', story.content_type);
+    
+    // Проверяем принадлежность пользователю
+    if (story.user_id !== userId) {
+      console.warn('[DEV] [stories] Story ownership mismatch! Story belongs to:', story.user_id, 'but requested by:', userId);
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
     console.log('[DEV] [stories] Story fetched successfully');
     res.json({ success: true, data: story });
   } catch (error: any) {
@@ -889,6 +1009,133 @@ router.get('/simple/:id', authMiddleware, async (req, res) => {
     } else {
       res.status(500).json({ error: 'Failed to fetch story' });
     }
+  }
+});
+
+// Main publish endpoint for Stories - ДОБАВИМ ПОДДЕРЖКУ СГЕНЕРИРОВАННЫХ ИЗОБРАЖЕНИЙ
+router.post('/publish', authMiddleware, async (req, res) => {
+  try {
+    const { contentId, platforms, generatedImageUrl, useGeneratedImage } = req.body;
+    const userId = req.user?.id;
+    
+    console.log('[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Content ID:', contentId);
+    console.log('[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Platforms:', platforms);
+    console.log('[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Generated Image URL:', generatedImageUrl);
+    console.log('[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Use Generated Image:', useGeneratedImage);
+    console.log('[DEV] [stories-publishing] 🎬 STORIES PUBLISH - Request body:', JSON.stringify(req.body, null, 2));
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!contentId || !platforms) {
+      return res.status(400).json({ error: 'contentId and platforms are required' });
+    }
+
+    // Get story content
+    const response = await directusApi.get(`/items/campaign_content/${contentId}`, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+    const story = response.data.data;
+
+    if (!story || story.user_id !== userId) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+
+    // Update story status
+    await directusApi.patch(`/items/campaign_content/${contentId}`, {
+      status: 'published',
+      published_at: new Date().toISOString(),
+      social_platforms: JSON.stringify(platforms)
+    }, {
+      headers: {
+        'Authorization': req.headers.authorization
+      }
+    });
+
+    // Prepare webhook data
+    const selectedPlatforms = Array.isArray(platforms) ? platforms : [platforms];
+    console.log('[DEV] [stories-publishing] 🎬 Selected Stories platforms:', selectedPlatforms.join(', '));
+
+    if (story.content_type !== 'story') {
+      return res.status(400).json({ error: 'Content is not a story type' });
+    }
+
+    console.log('[DEV] [stories-publishing] 🎬 Stories content type:', story.content_type);
+
+    // Send to webhooks
+    const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
+    const webhookResults = [];
+
+    for (const platform of selectedPlatforms) {
+      if (platform === 'instagram') {
+        const webhookUrl = `${n8nUrl}/webhook/publish-stories`;
+        console.log('[DEV] [stories-publishing] 🎬 Sending to instagram Stories webhook:', webhookUrl);
+
+        const webhookPayload = {
+          contentId: contentId,
+          platform: platform,
+          story: story,
+          // ДОБАВЛЯЕМ ПОДДЕРЖКУ СГЕНЕРИРОВАННОГО ИЗОБРАЖЕНИЯ
+          generatedImageUrl: generatedImageUrl,
+          useGeneratedImage: useGeneratedImage,
+          content: {
+            title: story.title,
+            image_url: useGeneratedImage && generatedImageUrl ? generatedImageUrl : story.image_url,
+            metadata: story.metadata
+          }
+        };
+
+        try {
+          const webhookResponse = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookPayload)
+          });
+
+          const responseData = await webhookResponse.json();
+          
+          webhookResults.push({
+            platform: platform,
+            success: webhookResponse.ok,
+            status: webhookResponse.status,
+            data: responseData
+          });
+
+        } catch (error) {
+          console.error(`[DEV] [stories-publishing] 🎬 Webhook error for ${platform}:`, error);
+          webhookResults.push({
+            platform: platform,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+    }
+
+    console.log('[DEV] [stories-publishing] 🎬 Webhook results:', JSON.stringify(webhookResults, null, 2));
+
+    const allSuccessful = webhookResults.every(result => result.success);
+    const message = allSuccessful 
+      ? `Stories успешно опубликована на платформах: ${selectedPlatforms.join(', ')}`
+      : `Stories частично опубликована. Проверьте детали.`;
+
+    res.json({
+      success: allSuccessful,
+      message: message,
+      results: webhookResults,
+      generatedImageUsed: useGeneratedImage && generatedImageUrl
+    });
+
+  } catch (error) {
+    console.error('[DEV] [stories-publishing] 🎬 Error publishing stories:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to publish stories',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

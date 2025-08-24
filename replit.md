@@ -6,6 +6,8 @@ SMM Manager is an intelligent social media content management platform designed 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Work approach: Thoughtful and deliberate implementation with minimal errors, prioritizing quality over speed.
+Work schedule: Prefers working sessions on weekends when available.
+Task planning: Focus on achievable tasks that can be completed in 2-3 hours maximum.
 
 ## System Architecture
 
@@ -30,7 +32,8 @@ Work approach: Thoughtful and deliberate implementation with minimal errors, pri
 - **Social Media API Wizards**: Guided setup wizards automate complex API configurations, including OAuth flows.
 - **Dynamic Environment Detection**: Automatic configuration of API endpoints and credentials based on development, staging, or production environments.
 - **Centralized API Key Management**: Global API keys stored in the database for central administration.
-- **Stories Editor**: Dual-mode editor (Simple and Video) with independent local state management, extended type system for interactive elements, and content loading from Directus `metadata` field. Supports drag-and-drop text positioning and timed text overlays for videos. **Stories have separate publication routes** from regular content, with platform-specific routing (Instagram Stories, future Telegram Stories, VK Stories). Publication is integrated with platform-specific N8N webhooks. **Recent fixes (Aug 2025)**: Resolved metadata JSON parsing errors, improved UI layout with larger preview (350x620px) positioned on the right, fixed JSX structural issues, and ensured proper data persistence in browser state until explicit save.
+- **Stories Editor**: **COMPLETELY REWRITTEN (Aug 21, 2025)** - Clean, simple Stories editor without complex state management or cyclical reloads. Single useEffect for data loading, direct state updates, immediate image auto-save to database, simple text overlay management. No React Query dependencies, no excessive logging, no cache invalidation conflicts. Stable operation with instant UI updates and reliable persistence.
+- **Stories Image Generation**: **COMPLETED (Aug 24, 2025)** - Полная синхронизация координат между редактором и генератором изображений достигнута. Система использует точные коррекции координат (X: +60px, Y: +25px) для преобразования позиций текста из превью-размера (280x497px) в canvas-размер (540x960px). ImgBB хостинг работает стабильно, JPEG-сжатие оптимизировано. Генерируемые изображения точно соответствуют позиционированию текста в редакторе.
 - **Instagram Stories Video Conversion**: **BREAKTHROUGH**: Instagram Graph API accepts H.264 Main profile videos successfully. After extensive testing with Baseline, High, and Constrained Baseline profiles (all rejected with ERROR status), discovered that H.264 Main profile with Level 4.0, 1080x1920 resolution, 30 FPS, yuv420p format works perfectly. Key requirements: proper S3 hosting with Accept-Ranges: bytes headers, video/mp4 content-type, and H.264 Main profile encoding. Complete workflow: Main profile conversion → S3 upload → Directus URL update → N8N publication through Instagram Graph API.
 - **Trend Collection Configuration**: Users can configure the number of days for trend analysis data collection (1-30 days).
 - **Duplicate Prevention**: A 4-level system ensures no duplicate posts across platforms using `postUrl` checks, caching, Publication Tracker, and Lock Manager.

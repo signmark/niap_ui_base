@@ -1,0 +1,17 @@
+Injected CSS loaded successfully
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: 17eadccf-4b3b-4ecf-a9bf-9bebfb053b11
+SimpleStoryEditor.tsx:1124 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:1124 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+2SimpleStoryEditor.tsx:1124 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:82 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Личная история', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T13:19:14', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:1124 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+5SimpleStoryEditor.tsx:1124 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx?t=1755786573172:1133 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx?t=1755786573172:1133 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx?t=1755786579135:1139 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx?t=1755786579135:1139 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536
+SimpleStoryEditor.tsx:905 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: '17eadccf-4b3b-4ecf-a9bf-9bebfb053b11', title: 'Личная история', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T13:19:14', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', source: 'database', storyTitle: 'Личная история'}
+SimpleStoryEditor.tsx:905 [DEBUG] Rendering overlay: text1 Норм чел at position: 101 536

@@ -67,6 +67,7 @@ import YouTubeCallback from "@/pages/youtube-callback";
 import InstagramCallback from "@/pages/instagram-callback";
 import VkCallback from "@/pages/vk-callback";
 import StoryEditor from "@/components/stories/StoryEditor";
+import StoriesGeneratorTest from "@/pages/test/stories-generator-test";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -104,6 +105,7 @@ const LayoutUserManagement = React.memo(() => <WithLayout Component={UserManagem
 const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage} />);
 const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
 const LayoutInstagramSetup = React.memo(() => <WithLayout Component={InstagramSimplePage} />);
+const LayoutStoriesGeneratorTest = React.memo(() => <WithLayout Component={StoriesGeneratorTest} />);
 
 function Router() {
   return (
@@ -111,11 +113,16 @@ function Router() {
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/register" component={Register} />
       <Route path="/login" component={Login} />
+      
+      {/* Stories routes - нужно поставить ДО других роутов */}
+      <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
+      
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
       <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/campaigns/:campaignId/stories/edit/:storyId" component={() => <WithLayout Component={StoriesPage} />} />
-      <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />
@@ -140,14 +147,14 @@ function Router() {
       <Route path="/test/telegram" component={TelegramTestPage} />
       <Route path="/test/ai-image" component={LayoutAiImageTester} />
       <Route path="/test/error-handling" component={LayoutErrorHandlingTest} />
+      <Route path="/test/stories-generator" component={LayoutStoriesGeneratorTest} />
       <Route path="/test" component={LayoutTestPage} />
       <Route path="/admin/global-api-keys" component={LayoutGlobalApiKeysPage} />
       <Route path="/admin/users" component={LayoutUserManagement} />
       <Route path="/settings/instagram-setup" component={LayoutInstagramSetup} />
       
-      {/* Video and Stories routes */}
+      {/* Video routes */}
       <Route path="/video" component={() => <WithLayout Component={VideoEditor} />} />
-      <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
       
       {/* OAuth callbacks */}
       <Route path="/api/youtube/auth/callback" component={YouTubeCallback} />
@@ -155,17 +162,7 @@ function Router() {
       <Route path="/instagram-callback" component={InstagramCallback} />
       <Route path="/vk-callback" component={VkCallback} />
       
-      {/* Stories routes */}
-      <Route path="/campaigns/:campaignId/stories/new">
-        {(params) => (
-          <WithLayout Component={() => <StoryEditor campaignId={params.campaignId} />} />
-        )}
-      </Route>
-      <Route path="/stories/:storyId/edit">
-        {(params) => (
-          <WithLayout Component={() => <StoryEditor storyId={params.storyId} />} />
-        )}
-      </Route>
+
       
       {/* Добавляем корневой роут */}
       <Route path="/" component={LayoutCampaigns} />

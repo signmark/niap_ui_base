@@ -13,6 +13,7 @@ import { registerDeepSeekModelsRoute } from "./routes-deepseek-models";
 import { registerQwenRoutes } from "./routes-qwen";
 import { registerGeminiRoutes } from "./routes-gemini";
 import { registerImgurRoutes } from "./routes-imgur";
+import imgbbUploadRouter from "./routes/imgbb-upload";
 import { registerBegetS3Routes } from "./routes-beget-s3";
 import { registerUserApiKeysRoutes } from "./routes-user-api-keys";
 import { registerAnalyticsRoutes } from "./routes/analytics";
@@ -28,6 +29,8 @@ import testRouter from './api/test-routes';
 import telegramDiagnosticsRouter from './api/test-routes-last-telegram';
 // Импортируем API аналитики
 import analyticsRouter from './analytics-api';
+// Импортируем маршруты для видео
+import videoRouter from './routes/video.js';
 // Импортируем валидатор статусов публикаций
 import { statusValidator } from './services/status-validator';
 // Импортируем исправленный планировщик публикаций
@@ -79,8 +82,9 @@ export function broadcastNotification(type: string, data: any) {
 // Экспортируем WebSocket server для использования в других модулях
 export { wss };
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Увеличиваем лимиты для обработки изображений Stories
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(cookieParser());
 
 // Health check endpoint for deployment monitoring
@@ -318,6 +322,10 @@ app.use((req, res, next) => {
     console.log("=== SERVER INITIALIZATION START ===");
     log("Starting server initialization...");
 
+    // Регистрируем видео роуты
+    app.use('/api/video', videoRouter);
+    log("Video processing routes registered");
+    
     // Регистрируем тестовые маршруты для проверки Telegram и других API
     console.log("Registering test API routes...");
     log("Registering test API routes first...");
@@ -489,6 +497,14 @@ app.use((req, res, next) => {
     console.log("Stories routes registered");
     log("Stories routes registered successfully");
     
+    // Register stories image generator
+    console.log("Registering Stories Image Generator routes...");
+    log("Registering Stories Image Generator routes...");
+    const storiesImageGenerator = (await import('./routes/stories-image-generator')).default;
+    app.use('/api/stories', storiesImageGenerator);
+    console.log("Stories Image Generator routes registered");
+    log("Stories Image Generator routes registered successfully");
+    
     // Регистрируем маршруты аналитики
     log("Registering Analytics routes...");
     registerAnalyticsRoutes(app);
@@ -524,6 +540,11 @@ app.use((req, res, next) => {
     const clearCacheRouter = (await import('./routes/clear-cache')).default;
     app.use('/api', clearCacheRouter);
     log("Clear cache routes registered successfully");
+    
+    // Регистрируем ImgBB upload endpoint с увеличенными лимитами
+    log("Registering ImgBB upload endpoint...");
+    app.use('/api/imgbb', imgbbUploadRouter);
+    log("ImgBB upload endpoint registered successfully");
     
     // Маршруты для работы с личными API ключами пользователя уже зарегистрированы в начале файла
     log("User API keys routes already registered early");

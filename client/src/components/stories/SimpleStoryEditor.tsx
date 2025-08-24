@@ -1,22 +1,18 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Upload, Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Type, Move, Save, ArrowLeft, Download, Palette, AlertCircle, Smartphone, Trash2 } from 'lucide-react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { InstagramStoriesPreview } from '../InstagramStoriesPreview';
+import { StoriesImageGenerator } from './StoriesImageGenerator';
+import { StoryPublishButton } from './StoryPublishButton';
 import { apiRequest } from '@/lib/queryClient';
-import { useLocation } from 'wouter';
-import Draggable from 'react-draggable';
 import axios from 'axios';
-import { z } from 'zod';
+import Draggable from 'react-draggable';
 
-// Типы согласно ТЗ
-type StoryState = 'idle' | 'loading' | 'saving' | 'error';
 
 interface TextOverlay {
   id: string;
@@ -27,846 +23,569 @@ interface TextOverlay {
   color: string;
   fontFamily: string;
   fontWeight: string;
-  textAlign: 'left' | 'center' | 'right';
+  textAlign: string;
   backgroundColor: string;
-  padding: number;
-  borderRadius: number;
+  rotation?: number;
 }
 
-interface AdditionalImage {
-  id: string;
-  url: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface SimpleStoryData {
-  // Фоновое изображение - отдельное поле
-  backgroundImageUrl: string | null; // из поля image_url
-  
-  // Данные Stories - хранится в metadata
-  textOverlays: TextOverlay[];
-  additionalImages: AdditionalImage[];
-  
-  // Метаданные
+interface StoryData {
+  id?: string; // ID story из базы данных
   title: string;
-  campaignId: string;
-  storyId?: string;
-  
-  // Улучшенное управление состоянием
-  state: StoryState;
-  hasUnsavedChanges: boolean;
+  backgroundImageUrl: string | null;
+  textOverlays: TextOverlay[];
+  loading: boolean;
   error: string | null;
-  validationErrors: Record<string, string>;
 }
-
-// Zod схемы для валидации согласно ТЗ
-const TextOverlaySchema = z.object({
-  id: z.string(),
-  text: z.string().min(1, "Текст не может быть пустым"),
-  x: z.number().min(0).max(1080),
-  y: z.number().min(0).max(1920),
-  fontSize: z.number().min(8).max(120),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Неверный формат цвета"),
-  fontFamily: z.string(),
-  fontWeight: z.string(),
-  textAlign: z.enum(['left', 'center', 'right']),
-  backgroundColor: z.string(),
-  padding: z.number().min(0).max(50),
-  borderRadius: z.number().min(0).max(50),
-});
-
-const StoryMetadataSchema = z.object({
-  textOverlays: z.array(TextOverlaySchema),
-  additionalImages: z.array(z.object({
-    id: z.string(),
-    url: z.string().url("Неверный URL изображения"),
-    x: z.number().min(0).max(1080),
-    y: z.number().min(0).max(1920),
-    width: z.number().min(10).max(500),
-    height: z.number().min(10).max(500),
-  })),
-  storyType: z.enum(['instagram', 'facebook', 'vk']),
-  format: z.string(),
-  version: z.string(),
-});
-
-// Утилиты согласно ТЗ
-const isValidImageUrl = (url: string): boolean => {
-  try {
-    const parsed = new URL(url);
-    return /\.(jpg|jpeg|png|gif|webp)$/i.test(parsed.pathname);
-  } catch {
-    return false;
-  }
-};
-
-const debounce = (func: Function, wait: number) => {
-  let timeout: NodeJS.Timeout;
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-
-// Логгер согласно ТЗ
-const logger = {
-  info: (message: string, data?: any) => console.log(`[INFO] [Stories] ${message}`, data),
-  error: (message: string, error?: any) => console.error(`[ERROR] [Stories] ${message}`, error),
-  debug: (message: string, data?: any) => console.debug(`[DEBUG] [Stories] ${message}`, data)
-};
 
 interface SimpleStoryEditorProps {
+  storyId: string;
   campaignId: string;
-  storyId?: string;
-  onBack: () => void;
 }
 
-// Создание новой Story
-const createNewStory = async (campaignId: string, title: string = 'Новая Stories') => {
-  return apiRequest('/api/stories/simple', {
-    method: 'POST',
-    data: { campaignId, title }
-  });
-};
-
-export default function SimpleStoryEditor({ campaignId, storyId, onBack }: SimpleStoryEditorProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({ 
+  storyId, 
+  campaignId 
+}) => {
   const [, setLocation] = useLocation();
-  const [actualStoryId, setActualStoryId] = useState<string | undefined>(storyId);
+  const { toast } = useToast();
 
-  // Функция для правильного возврата назад
-  const handleBackNavigation = useCallback(() => {
-    logger.debug('Navigation triggered', { storyId, actualStoryId, campaignId });
-    // Если есть storyId (редактирование) или actualStoryId (новая Stories уже создана), 
-    // возвращаемся к списку контента
-    if (storyId || actualStoryId) {
-      logger.info('Navigating to content list', { storyId, actualStoryId });
-      setLocation(`/content?campaignId=${campaignId}`);
-    } else {
-      // Если нет никакого ID, возвращаемся к селектору режимов
-      logger.info('Navigating back to mode selector (no story ID)');
-      onBack();
-    }
-  }, [storyId, actualStoryId, campaignId, setLocation, onBack]);
 
-  // Инициализация состояния согласно ТЗ
-  const [storyData, setStoryData] = useState<SimpleStoryData>({
+  // Простое состояние без сложностей
+  const [story, setStory] = useState<StoryData>({
+    id: storyId, // Устанавливаем ID сразу
+    title: '',
     backgroundImageUrl: null,
-    textOverlays: [{
-      id: 'text1',
-      text: 'Добавьте ваш текст',
-      x: 100,
-      y: 200,
-      fontSize: 32,
-      color: '#ffffff',
-      fontFamily: 'Arial',
-      fontWeight: 'bold',
-      textAlign: 'center',
-      backgroundColor: '#000000',
-      padding: 10,
-      borderRadius: 8
-    }],
-    additionalImages: [],
-    title: 'Новая Stories',
-    campaignId,
-    storyId: actualStoryId,
-    state: 'idle',
-    hasUnsavedChanges: false,
-    error: null,
-    validationErrors: {}
+    textOverlays: [],
+    loading: true,
+    error: null
   });
 
-  // Создание новой Story если storyId не передан
-  useEffect(() => {
-    if (!storyId && !actualStoryId) {
-      const createStory = async () => {
-        try {
-          setStoryData(prev => ({ ...prev, state: 'loading' }));
-          logger.info('Creating new story for campaign', { campaignId });
-          
-          const response = await createNewStory(campaignId, 'Новая Stories');
-          const newStory = response.data;
-          
-          setActualStoryId(newStory.id);
-          setStoryData(prev => ({
-            ...prev,
-            storyId: newStory.id,
-            title: newStory.title,
-            state: 'idle'
-          }));
-          
-          // Обновляем URL с новым storyId для корректной навигации
-          setLocation(`/stories/${newStory.id}/edit?campaignId=${campaignId}`);
-          
-          logger.info('New story created', { storyId: newStory.id });
-          logger.debug('Story state after creation', { actualStoryId: newStory.id, originalStoryId: storyId });
-          
-        } catch (error: any) {
-          logger.error('Failed to create new story', error);
-          setStoryData(prev => ({
-            ...prev,
-            state: 'error',
-            error: error?.message || 'Ошибка создания истории'
-          }));
-        }
-      };
-      
-      createStory();
-    }
-  }, [campaignId, storyId, actualStoryId]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Загрузка существующей Story согласно ТЗ
-  const { data: existingStory } = useQuery({
-    queryKey: ['story', actualStoryId],
-    queryFn: () => actualStoryId ? apiRequest(`/api/stories/simple/${actualStoryId}`) : null,
-    enabled: !!actualStoryId,
-  });
-
+  // Загрузка данных ОДИН РАЗ при инициализации
   useEffect(() => {
-    if (existingStory?.data) {
-      const story = existingStory.data;
-      let metadata = {};
+    if (!storyId || isLoaded) return;
+
+    const loadStory = async () => {
       try {
-        if (story.metadata) {
-          // Если metadata уже объект, используем как есть
-          if (typeof story.metadata === 'object') {
-            metadata = story.metadata;
-          } else if (typeof story.metadata === 'string') {
-            metadata = JSON.parse(story.metadata);
-          }
-        }
-      } catch (e) {
-        console.error('[ERROR] [Stories] Failed to parse metadata:', e);
-        metadata = {};
-      }
-      
-      logger.info('Loading story', { storyId: actualStoryId, title: story.title });
-      logger.debug('Background image from image_url', story.image_url);
-      logger.debug('Current backgroundImageUrl in state', storyData.backgroundImageUrl);
-      
-      setStoryData(prev => {
-        const finalImageUrl = prev.backgroundImageUrl || story.image_url || null;
-        logger.debug('Setting story data', { 
-          prevImageUrl: prev.backgroundImageUrl, 
-          dbImageUrl: story.image_url,
-          finalImageUrl 
-        });
+        setStory(prev => ({ ...prev, loading: true }));
         
-        return {
-          ...prev,
-          title: story.title || 'Без названия',
-          // НЕ перезаписываем backgroundImageUrl если уже есть в состоянии (свежезагруженное)
-          backgroundImageUrl: finalImageUrl,
-          textOverlays: (metadata as any)?.textOverlays || prev.textOverlays,
-          additionalImages: (metadata as any)?.additionalImages || [],
-          hasUnsavedChanges: prev.hasUnsavedChanges // Сохраняем статус изменений
-        };
-      });
-    }
-  }, [existingStory?.data?.id, actualStoryId]);
-
-  // Восстановление из localStorage при загрузке согласно ТЗ
-  useEffect(() => {
-    if (actualStoryId) {
-      const saved = localStorage.getItem(`story-draft-${actualStoryId}`);
-      if (saved) {
-        try {
-          const data = JSON.parse(saved);
-          // Проверяем что данные не старше 24 часов и автоматически восстанавливаем
-          if (data.timestamp && Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-            setStoryData(prev => ({
-              ...prev,
-              backgroundImageUrl: data.backgroundImageUrl || prev.backgroundImageUrl,
-              textOverlays: Array.isArray(data.textOverlays) ? data.textOverlays : prev.textOverlays,
-              additionalImages: Array.isArray(data.additionalImages) ? data.additionalImages : [],
-              title: data.title || prev.title,
-              hasUnsavedChanges: true
+        const response = await apiRequest(`/api/stories/simple/${storyId}`);
+        const storyData = response.data || response;
+        
+        let textOverlays = [];
+        if (storyData.metadata) {
+          try {
+            const metadata = typeof storyData.metadata === 'string' 
+              ? JSON.parse(storyData.metadata) 
+              : storyData.metadata;
+            // Убеждаемся что у всех элементов есть поле rotation
+            textOverlays = (metadata.textOverlays || []).map((overlay: any) => ({
+              ...overlay,
+              rotation: overlay.rotation !== undefined ? overlay.rotation : 0
             }));
-            logger.debug('Auto-restored data from localStorage');
-          } else {
-            localStorage.removeItem(`story-draft-${actualStoryId}`);
+          } catch (e) {
+            console.error('Ошибка парсинга метаданных:', e);
           }
-        } catch (e) {
-          console.error('[ERROR] [Stories] Failed to parse localStorage data:', e);
-          localStorage.removeItem(`story-draft-${actualStoryId}`);
         }
-      }
-    }
-  }, [actualStoryId]);
 
-  // Автосохранение в localStorage согласно ТЗ
-  const saveToLocalStorage = useMemo(
-    () => debounce(() => {
-      if (storyData.hasUnsavedChanges && actualStoryId) {
-        logger.debug('Saving to localStorage', { storyId: actualStoryId });
-        localStorage.setItem(`story-draft-${actualStoryId}`, JSON.stringify({
-          backgroundImageUrl: storyData.backgroundImageUrl,
-          textOverlays: storyData.textOverlays,
-          additionalImages: storyData.additionalImages,
-          title: storyData.title,
-          timestamp: Date.now()
-        }));
-      }
-    }, 2000),
-    [storyData.hasUnsavedChanges, storyData.backgroundImageUrl, storyData.textOverlays, storyData.additionalImages, storyData.title, actualStoryId]
-  );
-
-  // Автосохранение при изменениях
-  useEffect(() => {
-    saveToLocalStorage();
-  }, [saveToLocalStorage]);
-
-  // Debounced URL validation согласно ТЗ
-  const debouncedUrlValidation = useMemo(
-    () => debounce((url: string) => {
-      if (url && !isValidImageUrl(url)) {
-        setStoryData(prev => ({
-          ...prev,
-          validationErrors: { ...prev.validationErrors, backgroundImageUrl: 'Неверный URL изображения' }
-        }));
-      } else {
-        setStoryData(prev => {
-          const { backgroundImageUrl, ...otherErrors } = prev.validationErrors;
-          return {
-            ...prev,
-            validationErrors: otherErrors
-          };
+        setStory({
+          id: storyData.id, // ВАЖНО: сохраняем ID из базы
+          title: storyData.title || '',
+          backgroundImageUrl: storyData.image_url || null,
+          textOverlays,
+          loading: false,
+          error: null
         });
+
+        setIsLoaded(true);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки Story:', error);
+        setStory(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Ошибка загрузки Story'
+        }));
       }
-    }, 500),
-    []
-  );
+    };
 
-  // Обработка изменения URL вручную согласно ТЗ
-  const handleUrlChange = (url: string) => {
-    setStoryData(prev => ({ 
-      ...prev, 
-      backgroundImageUrl: url,
-      hasUnsavedChanges: true 
-    }));
-    debouncedUrlValidation(url);
-  };
+    loadStory();
+  }, [storyId]);
 
-  // Загрузка изображения с оптимизацией согласно ТЗ
+  // Загрузка изображения
   const handleImageUpload = async (file: File) => {
-    // Валидация файла
     if (!file.type.startsWith('image/')) {
-      setStoryData(prev => ({ 
-        ...prev, 
-        error: 'Можно загружать только изображения' 
-      }));
+      toast({
+        title: "Ошибка",
+        description: "Можно загружать только изображения",
+        variant: "destructive"
+      });
       return;
     }
-    
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      setStoryData(prev => ({ 
-        ...prev, 
-        error: 'Размер файла не должен превышать 10MB' 
-      }));
-      return;
-    }
-    
-    setStoryData(prev => ({ ...prev, state: 'loading', error: null }));
-    
+
+    setStory(prev => ({ ...prev, loading: true }));
+
     try {
-      // 1. Загрузить на Imgbb (без optimistic update)
       const formData = new FormData();
       formData.append('image', file);
-      
-      logger.info('Uploading image to Imgbb', { fileSize: file.size });
+
+      console.log('Загружаем изображение на Imgbb...');
       const response = await axios.post('/api/imgur/upload-file', formData);
-      
-      if (!response.data?.url) {
-        throw new Error('Не получен URL от Imgbb');
+
+      if (response.data?.url) {
+        // Обновляем состояние И сохраняем в БД
+        setStory(prev => ({
+          ...prev,
+          backgroundImageUrl: response.data.url,
+          loading: false
+        }));
+
+        // Сохраняем в БД
+        await apiRequest(`/api/stories/simple/${storyId}`, {
+          method: 'PUT',
+          data: { image_url: response.data.url }
+        });
+
+        toast({
+          title: "Изображение загружено",
+          description: "Изображение успешно сохранено"
+        });
+
+        console.log('Изображение загружено и сохранено:', response.data.url);
       }
-      
-      const imgbbUrl = response.data.url;
-      logger.info('Image uploaded to Imgbb', { imgbbUrl, fileSize: file.size });
-      
-      // 2. Обновить состояние с реальным URL
-      setStoryData(prev => ({ 
-        ...prev, 
-        backgroundImageUrl: imgbbUrl,
-        hasUnsavedChanges: true,
-        state: 'idle',
-        error: null
-      }));
-      
-      // 3. Автоматически сохранить фоновое изображение в базу данных
-      if (actualStoryId) {
-        try {
-          await apiRequest(`/api/stories/simple/${actualStoryId}`, {
-            method: 'PUT',
-            data: { 
-              image_url: imgbbUrl // Обновляем только фоновое изображение
-            }
-          });
-          
-          // НЕ инвалидируем кэш чтобы избежать сброса состояния
-          // queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
-        } catch (saveError) {
-          logger.error('Failed to auto-save background image', saveError);
-        }
-      }
-      
-      toast({
-        title: "Изображение загружено",
-        description: "Изображение успешно загружено и сохранено"
-      });
-      
-    } catch (error: any) {
-      logger.error('Failed to upload image', error);
-      setStoryData(prev => ({ 
-        ...prev, 
-        state: 'error',
-        error: error?.message || 'Ошибка загрузки изображения'
+    } catch (error) {
+      console.error('Ошибка загрузки изображения:', error);
+      setStory(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Ошибка загрузки изображения'
       }));
       
       toast({
-        title: "Ошибка загрузки",
-        description: error?.message || 'Не удалось загрузить изображение',
+        title: "Ошибка",
+        description: "Не удалось загрузить изображение",
         variant: "destructive"
       });
     }
   };
 
-  // Обновление текстового наложения согласно ТЗ
-  const addTextOverlay = useCallback(() => {
+  // Добавление текста
+  const addTextOverlay = () => {
     const newOverlay: TextOverlay = {
-      id: `text-${Date.now()}`,
+      id: `text_${Date.now()}`,
       text: 'Новый текст',
       x: 50,
       y: 50,
       fontSize: 24,
       color: '#ffffff',
       fontFamily: 'Arial',
-      fontWeight: '500',
+      fontWeight: 'bold',
       textAlign: 'center',
-      backgroundColor: '#000000',
-      padding: 8,
-      borderRadius: 4
+      backgroundColor: 'transparent',
+      rotation: 0
     };
 
-    console.log('[DEBUG] Adding text overlay:', newOverlay);
-    
-    setStoryData(prev => {
-      const updated = {
-        ...prev,
-        textOverlays: [...prev.textOverlays, newOverlay],
-        hasUnsavedChanges: true
-      };
-      console.log('[DEBUG] Updated textOverlays count:', updated.textOverlays.length);
-      return updated;
-    });
-  }, []);
-
-  const updateTextOverlay = useCallback((index: number, updates: Partial<TextOverlay>) => {
-    setStoryData(prev => ({
+    setStory(prev => ({
       ...prev,
-      textOverlays: prev.textOverlays.map((overlay, i) => 
-        i === index ? { ...overlay, ...updates } : overlay
-      ),
-      hasUnsavedChanges: true
+      textOverlays: [...prev.textOverlays, newOverlay]
     }));
-  }, []);
+  };
 
-  // Обновление позиции текста при перетаскивании
-  const handleTextDrag = useCallback((index: number, e: any, data: any) => {
-    updateTextOverlay(index, { x: data.x, y: data.y });
-  }, [updateTextOverlay]);
+  // Обновление текста
+  const updateTextOverlay = (id: string, updates: Partial<TextOverlay>) => {
+    setStory(prev => ({
+      ...prev,
+      textOverlays: prev.textOverlays.map(overlay =>
+        overlay.id === id ? { ...overlay, ...updates } : overlay
+      )
+    }));
+  };
 
-  // Сохранение Stories с валидацией согласно ТЗ
-  const handleSaveStory = async () => {
+  // Удаление текста
+  const removeTextOverlay = (id: string) => {
+    setStory(prev => ({
+      ...prev,
+      textOverlays: prev.textOverlays.filter(overlay => overlay.id !== id)
+    }));
+  };
+
+  // Сохранение Story
+  const [saveInProgress, setSaveInProgress] = useState(false);
+  
+  const handleSave = async () => {
+    if (saveInProgress) return; // Предотвращаем множественные вызовы
+    
     try {
-      // Валидация данных перед сохранением
+      setSaveInProgress(true);
+
       const metadata = {
-        textOverlays: storyData.textOverlays,
-        additionalImages: storyData.additionalImages,
-        storyType: 'instagram' as const,
+        textOverlays: story.textOverlays,
+        type: 'instagram',
         format: '9:16',
         version: '1.0'
       };
-      
-      const validationResult = StoryMetadataSchema.safeParse(metadata);
-      if (!validationResult.success) {
-        const errors = validationResult.error.errors.reduce((acc, err) => {
-          acc[err.path.join('.')] = err.message;
-          return acc;
-        }, {} as Record<string, string>);
-        
-        setStoryData(prev => ({ 
-          ...prev, 
-          validationErrors: errors,
-          error: 'Исправьте ошибки валидации'
-        }));
-        return;
-      }
-      
-      if (!actualStoryId) {
-        throw new Error('No story ID available for saving');
-      }
 
-      setStoryData(prev => ({ ...prev, state: 'saving', error: null }));
-      logger.info('Saving story', { storyId: actualStoryId, title: storyData.title });
-      
-      const saveData = { 
-        title: storyData.title,
-        image_url: storyData.backgroundImageUrl,
-        metadata: JSON.stringify(metadata)
-      };
-      
-      logger.debug('Saving story with data', saveData);
-      
-      // Используем пользовательский токен из headers
-      const response = await apiRequest(`/api/stories/simple/${actualStoryId}`, {
+      await apiRequest(`/api/stories/simple/${storyId}`, {
         method: 'PUT',
-        data: saveData
+        data: {
+          title: story.title,
+          image_url: story.backgroundImageUrl,
+          metadata: JSON.stringify(metadata)
+        }
       });
-      
-      setStoryData(prev => ({ 
-        ...prev, 
-        hasUnsavedChanges: false,
-        state: 'idle',
-        validationErrors: {}
-      }));
-      
-      logger.debug('Story saved with backgroundImageUrl', storyData.backgroundImageUrl);
-      
-      // Очистить localStorage после успешного сохранения
-      if (actualStoryId) {
-        localStorage.removeItem(`story-draft-${actualStoryId}`);
-      }
-      
-      // НЕ инвалидируем кэш при ручном сохранении чтобы сохранить состояние
-      // queryClient.invalidateQueries({ queryKey: ['story', actualStoryId] });
-      
+
       toast({
-        title: "История сохранена",
-        description: "Все изменения успешно сохранены"
+        title: "Сохранено",
+        description: "Story успешно сохранена"
       });
-      
-      logger.info('Story saved successfully', { storyId: actualStoryId });
-      
-    } catch (error: any) {
-      logger.error('Failed to save story', error);
-      setStoryData(prev => ({ 
-        ...prev, 
-        state: 'error',
-        error: error?.message || 'Ошибка сохранения'
-      }));
-      
+
+
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+
       toast({
-        title: "Ошибка сохранения",
-        description: error?.message || 'Не удалось сохранить историю',
+        title: "Ошибка",
+        description: "Не удалось сохранить Story",
         variant: "destructive"
       });
     }
+    
+    // Задержка перед разблокировкой для предотвращения спама
+    setTimeout(() => {
+      setSaveInProgress(false);
+    }, 1000);
   };
 
-  // Обработчик загрузки файла
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleImageUpload(file);
-    }
+  // Возврат к списку
+  const goBack = () => {
+    setLocation(`/content`);
   };
+
+  if (story.loading && !isLoaded) {
+    return (
+      <div className="p-6">
+        <div className="text-center">Загрузка Story...</div>
+      </div>
+    );
+  }
+
+  // Обработчик перетаскивания текста в превью
+  const handleDrag = (overlayId: string, e: any, data: any) => {
+    updateTextOverlay(overlayId, {
+      x: Math.max(-50, Math.min(350, data.x / 0.8)), // Максимально расширяем границы
+      y: Math.max(-50, Math.min(600, data.y / 0.8))  // Позволяем перетаскивать за пределы
+    });
+  };
+
+  if (story.error) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-600">{story.error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 p-4 min-h-screen max-w-7xl mx-auto">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileInputChange}
-        accept="image/*"
-        className="hidden"
-      />
-      
-      {/* Левая панель - Настройки */}
-      <div className="lg:w-1/2 space-y-3 overflow-y-auto pr-2">
-        {/* Основные настройки */}
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Основные настройки</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleBackNavigation}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Назад
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <Label htmlFor="title">Название истории</Label>
-              <Input
-                id="title"
-                value={storyData.title}
-                onChange={(e) => setStoryData(prev => ({ 
-                  ...prev, 
-                  title: e.target.value,
-                  hasUnsavedChanges: true 
-                }))}
-                placeholder="Введите название"
-              />
-            </div>
+    <div className="p-6 space-y-6">
+      {/* Заголовок */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" onClick={goBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Назад
+          </Button>
+          <h1 className="text-2xl font-bold">Редактор Stories</h1>
+        </div>
+        <Button onClick={handleSave} disabled={saveInProgress}>
+          <Save className="w-4 h-4 mr-2" />
+          Сохранить
+        </Button>
+      </div>
 
-            <div>
-              <Label htmlFor="backgroundUrl">URL фонового изображения</Label>
-              <div className="flex gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Редактор */}
+        <div className="space-y-6">
+          {/* Название */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Основные настройки</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Название Story
+                </label>
                 <Input
-                  id="backgroundUrl"
-                  value={storyData.backgroundImageUrl || ''}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  placeholder="https://i.ibb.co/xxx/image.jpg"
-                  className={storyData.validationErrors.backgroundImageUrl ? 'border-red-500' : ''}
+                  value={story.title}
+                  onChange={(e) => setStory(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Введите название"
                 />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={storyData.state === 'loading'}
-                >
-                  <Upload className="h-4 w-4" />
-                </Button>
               </div>
-              {storyData.validationErrors.backgroundImageUrl && (
-                <p className="text-sm text-red-600 mt-1">{storyData.validationErrors.backgroundImageUrl}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Настройки текста */}
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Настройки текста</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addTextOverlay}
-              >
-                <Type className="h-4 w-4 mr-2" />
-                Добавить текст
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {storyData.textOverlays.map((overlay, index) => (
-              <div key={overlay.id} className="p-3 border rounded-lg space-y-2">
-                <div>
-                  <Label>Текст</Label>
+
+              {/* URL изображения как редактируемое поле */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  URL изображения
+                </label>
+                <Input
+                  type="url"
+                  value={story.backgroundImageUrl || ''}
+                  onChange={(e) => setStory(prev => ({ ...prev, backgroundImageUrl: e.target.value }))}
+                  placeholder="https://example.com/image.jpg"
+                  className="text-sm"
+                />
+              </div>
+
+              {/* Загрузка изображения */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Загрузить изображение
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      Нажмите для загрузки изображения
+                    </p>
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Текстовые слои */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Текстовые слои
+                <Button size="sm" onClick={addTextOverlay}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Добавить текст
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {story.textOverlays.map((overlay) => (
+                <div key={overlay.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Текст {overlay.id}</span>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => removeTextOverlay(overlay.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
                   <Textarea
                     value={overlay.text}
-                    onChange={(e) => updateTextOverlay(index, { text: e.target.value })}
+                    onChange={(e) => updateTextOverlay(overlay.id, { text: e.target.value })}
                     placeholder="Введите текст"
                     rows={2}
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Размер шрифта: {overlay.fontSize}px</Label>
-                    <Slider
-                      value={[overlay.fontSize]}
-                      onValueChange={([value]) => updateTextOverlay(index, { fontSize: value })}
-                      min={12}
-                      max={72}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
                   
-                  <div>
-                    <Label>Цвет текста</Label>
-                    <Input
-                      type="color"
-                      value={overlay.color}
-                      onChange={(e) => updateTextOverlay(index, { color: e.target.value })}
-                      className="h-10 mt-2"
-                    />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Размер шрифта</label>
+                      <Input
+                        type="range"
+                        min="12"
+                        max="72"
+                        value={overlay.fontSize}
+                        onChange={(e) => updateTextOverlay(overlay.id, { fontSize: Number(e.target.value) })}
+                        className="w-full"
+                      />
+                      <div className="text-xs text-gray-500 text-center">{overlay.fontSize}px</div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Цвет текста</label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="color"
+                          value={overlay.color}
+                          onChange={(e) => updateTextOverlay(overlay.id, { color: e.target.value })}
+                          className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                        />
+                        <div className="text-xs text-gray-500">{overlay.color}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Цвет фона</label>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="color"
+                          value={overlay.backgroundColor === 'transparent' ? '#ffffff' : overlay.backgroundColor || '#ffffff'}
+                          onChange={(e) => updateTextOverlay(overlay.id, { backgroundColor: e.target.value })}
+                          className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                        />
+                        <Button
+                          size="sm"
+                          variant={overlay.backgroundColor === 'transparent' ? 'default' : 'outline'}
+                          onClick={() => updateTextOverlay(overlay.id, { backgroundColor: 'transparent' })}
+                          className="text-xs px-2 py-1 h-6"
+                        >
+                          Прозрачный
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Шрифт</label>
+                      <select 
+                        value={overlay.fontFamily}
+                        onChange={(e) => updateTextOverlay(overlay.id, { fontFamily: e.target.value })}
+                        className="w-full p-1 text-xs border rounded"
+                      >
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Open Sans">Open Sans</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Impact">Impact</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1">Поворот: {overlay.rotation || 0}°</label>
+                      <input
+                        type="range"
+                        min="-180"
+                        max="180"
+                        value={overlay.rotation || 0}
+                        onChange={(e) => {
+                          const newRotation = parseInt(e.target.value);
+                          console.log('Устанавливаем поворот:', newRotation, 'для элемента:', overlay.id);
+                          // Форсируем обновление
+                          updateTextOverlay(overlay.id, { rotation: newRotation });
+                          // Принудительное обновление стиля
+                          setTimeout(() => {
+                            const element = document.querySelector(`[data-overlay-id="${overlay.id}"]`);
+                            if (element) {
+                              (element as HTMLElement).style.transform = `rotate(${newRotation}deg)`;
+                              (element as HTMLElement).style.transformOrigin = 'center center';
+                            }
+                          }, 10);
+                        }}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Шрифт</Label>
-                    <Select
-                      value={overlay.fontFamily}
-                      onValueChange={(value) => updateTextOverlay(index, { fontFamily: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Arial">Arial</SelectItem>
-                        <SelectItem value="Helvetica">Helvetica</SelectItem>
-                        <SelectItem value="Georgia">Georgia</SelectItem>
-                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Выравнивание</Label>
-                    <Select
-                      value={overlay.textAlign}
-                      onValueChange={(value: 'left' | 'center' | 'right') => updateTextOverlay(index, { textAlign: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="left">Слева</SelectItem>
-                        <SelectItem value="center">По центру</SelectItem>
-                        <SelectItem value="right">Справа</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              ))}
+              
+              {story.textOverlays.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  Нет текстовых слоев. Нажмите "Добавить текст" для создания.
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Цвет фона</Label>
-                    <Input
-                      type="color"
-                      value={overlay.backgroundColor.startsWith('#') ? overlay.backgroundColor : '#000000'}
-                      onChange={(e) => updateTextOverlay(index, { backgroundColor: e.target.value })}
-                      className="h-10 mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>Действие</Label>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setStoryData(prev => ({
-                          ...prev,
-                          textOverlays: prev.textOverlays.filter((_, i) => i !== index),
-                          hasUnsavedChanges: true
-                        }));
-                      }}
-                      className="mt-2 w-full"
+        {/* Превью */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Превью</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="relative">
+                {/* Фоновое изображение Stories */}
+                <div 
+                  className="w-[280px] h-[497px] rounded-lg overflow-hidden bg-gray-900 relative"
+                  style={{
+                    backgroundImage: story.backgroundImageUrl ? `url(${story.backgroundImageUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center'
+                  }}
+                >
+                  {/* Перетаскиваемые текстовые элементы */}
+                  {story.textOverlays.map((overlay) => (
+                    <Draggable
+                      key={overlay.id}
+                      position={{ x: overlay.x * 0.8, y: overlay.y * 0.8 }} // Масштабируем для превью
+                      onDrag={(e, data) => handleDrag(overlay.id, e, data)}
+                      bounds={{left: -50, top: -50, right: 320, bottom: 550}} // Максимально расширяем границы
+                      enableUserSelectHack={false}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Удалить
-                    </Button>
-                  </div>
+                      <div className="absolute">
+                        <div
+                          className="cursor-move border border-dashed border-blue-400 bg-blue-50 bg-opacity-20 p-1 rounded select-none"
+                          data-overlay-id={overlay.id}
+                          style={{
+                            fontSize: (overlay.fontSize * 0.8) + 'px',
+                            color: overlay.color,
+                            fontFamily: overlay.fontFamily,
+                            fontWeight: overlay.fontWeight,
+                            textAlign: overlay.textAlign as any,
+                            backgroundColor: overlay.backgroundColor === 'transparent' ? 'transparent' : overlay.backgroundColor,
+                            minWidth: '40px',
+                            minHeight: '16px',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                            transform: `rotate(${overlay.rotation || 0}deg)`,
+                            transformOrigin: 'center center',
+                            display: 'inline-block'
+                          }}
+                        >
+                          {overlay.text || 'Текст'}
+                        </div>
+                      </div>
+                    </Draggable>
+                  ))}
+                  
+
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Кнопки действий */}
-        <div className="flex gap-4">
-          <Button
-            onClick={handleSaveStory}
-            disabled={!storyData.hasUnsavedChanges || storyData.state === 'saving'}
-            className="flex-1"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {storyData.state === 'saving' ? 'Сохранение...' : 'Сохранить'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Правая панель - Превью */}
-      <div className="lg:w-1/2 lg:sticky lg:top-4 lg:self-start">
-        <Card className="h-fit">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Smartphone className="h-5 w-5" />
-              Превью Stories
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <div 
-              className="relative bg-gray-100 rounded-lg overflow-hidden shadow-lg"
-              style={{ width: '350px', height: '620px' }}
-            >
-              {/* Фоновое изображение */}
-              {storyData.backgroundImageUrl && (
-                <img
-                  src={storyData.backgroundImageUrl}
-                  alt="Background"
-                  className="w-full h-full object-cover"
-                  onLoad={() => logger.debug('Background image loaded successfully', storyData.backgroundImageUrl)}
-                  onError={(e) => logger.error('Background image failed to load', storyData.backgroundImageUrl)}
-                />
-              )}
-              
-              {/* Текстовые наложения */}
-              {storyData.textOverlays.map((overlay, index) => {
-                console.log('[DEBUG] Rendering overlay:', overlay.id, overlay.text, 'at position:', overlay.x, overlay.y);
-                return (
-                  <div
-                    key={overlay.id}
-                    style={{
-                      position: 'absolute',
-                      left: overlay.x,
-                      top: overlay.y,
-                      fontSize: overlay.fontSize,
-                      color: overlay.color,
-                      fontFamily: overlay.fontFamily,
-                      fontWeight: overlay.fontWeight,
-                      textAlign: overlay.textAlign,
-                      backgroundColor: overlay.backgroundColor.startsWith('#') ? overlay.backgroundColor : '#000000',
-                      padding: overlay.padding,
-                      borderRadius: overlay.borderRadius,
-                      cursor: 'move',
-                      userSelect: 'none',
-                      zIndex: 10,
-                      minWidth: '50px',
-                      maxWidth: '250px',
-                      wordWrap: 'break-word'
-                    }}
-                    onMouseDown={(e) => {
-                      // Простое перетаскивание без библиотеки
-                      const startX = e.clientX - overlay.x;
-                      const startY = e.clientY - overlay.y;
-                      
-                      const handleMouseMove = (moveEvent: MouseEvent) => {
-                        const newX = Math.max(0, Math.min(300, moveEvent.clientX - startX));
-                        const newY = Math.max(0, Math.min(570, moveEvent.clientY - startY));
-                        updateTextOverlay(index, { x: newX, y: newY });
-                      };
-                      
-                      const handleMouseUp = () => {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', handleMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', handleMouseMove);
-                      document.addEventListener('mouseup', handleMouseUp);
-                    }}
-                  >
-                    {overlay.text}
-                  </div>
-                );
-              })}
-              
-              {/* Заглушка если нет фонового изображения */}
-              {!storyData.backgroundImageUrl && (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center">
-                    <Upload className="h-12 w-12 mx-auto mb-2" />
-                    <p>Загрузите фоновое изображение</p>
-                  </div>
+            </CardContent>
+          </Card>
+          
+          {/* Генератор изображений */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Генератор изображений</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <StoriesImageGenerator story={story} />
+                
+                {/* Кнопка публикации с автоматической генерацией */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-2">Публикация:</h4>
+                  <StoryPublishButton 
+                    story={story} 
+                    contentId={storyId}
+                    platforms={['instagram']}
+                    disabled={!story.textOverlays?.length}
+                  />
+                  {!story.textOverlays?.length && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Добавьте текст для публикации
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default SimpleStoryEditor;

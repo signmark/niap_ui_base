@@ -1,0 +1,422 @@
+🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Creating new story for campaign Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] New story created Object
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+2SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Д at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Ди at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Дим at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димм at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Дим at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димо at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:612 [DEBUG] Adding text overlay: Object
+SimpleStoryEditor.tsx:620 [DEBUG] Updated textOverlays count: 2
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Новый текст at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 К at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Кр at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Кра at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Крас at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Краса at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красав at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 200
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 201
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 203
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 101 205
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 101 209
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 101 221
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 103 232
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 239
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 241
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 246
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 251
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 253
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 271
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 110 290
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 114 308
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 117 314
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 117 315
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 116 315
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 113 322
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 110 367
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 403
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 418
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 423
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 430
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 437
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 442
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 445
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 451
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 462
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 110 471
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 111 474
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 50
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 49 51
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 49 52
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 49 54
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 50 74
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 60 105
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 68 142
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 76 173
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 87 199
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 92 221
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 96 241
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 259
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 108 275
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 110 278
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 110 279
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 108 270
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 106 267
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 106 265
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 106 260
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 104 247
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 104 236
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 105 221
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 106 205
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 108 180
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 157
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 141
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 129
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 117
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 115
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 114
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 109 112
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 110 109
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 113 99
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 115 86
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 115 75
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 64
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 51
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 46
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 44
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 43
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 114 40
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 113 37
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 110 28
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 105 14
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 103 11
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 103 10
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 102 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 110 476
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 477
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 107 482
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 486
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 105 488
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 104 489
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 102 491
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 494
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 497
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 498
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 506
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 103 510
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 104 511
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 104 510
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 101 507
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 503
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 501
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 99 500
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 97 494
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 94 486
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 90 468
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 87 442
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 85 413
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 83 384
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 83 360
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 76 311
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 70 257
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 68 202
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 70 159
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 73 137
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 73 123
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 72 110
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 72 102
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 72 96
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 72 93
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 72 92
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 74 91
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 77 88
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 80 85
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 83 79
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 86 72
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 87 69
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 87 67
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 88 73
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 89 85
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 94 123
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 100 157
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 104 180
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 106 190
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 108 197
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 209
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 118 234
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 250
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 258
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 261
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 262
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 263
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 118 265
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 118 266
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 117 272
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 117 296
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 123 374
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 121 421
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 121 455
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 126 482
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 129 505
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 129 508
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 129 511
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 128 513
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 127 513
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 127 514
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 127 520
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 127 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 125 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 124 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 122 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 121 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 120 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 119 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 118 522
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 115 523
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 112 525
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 527
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 108 530
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 108 532
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 108 535
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 108 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Saving story Object
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Story saved successfully Object
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+3SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+3SimpleStoryEditor.tsx:974 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200

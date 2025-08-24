@@ -1,0 +1,87 @@
+Injected CSS loaded successfully
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(2)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(2)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ Fetched trends data: Object
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js:338Understand this warning
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(2)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js:338Understand this warning
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(1)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ Загружаем изображение на Imgbb...
+ DEBUG: Current story state: Object
+ DEBUG: Current story state: Object
+ Изображение загружено и сохранено: https://i.ibb.co/twvXRYzT/1755792059096-488548302.jpg
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(1)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(1)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping
+ 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+ [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ SimpleStoryEditor useEffect triggered: Object
+ 🔄 Загружаем Story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+ 📦 Response from API: Object
+ 📦 Story data: Object
+ 📝 Parsed textOverlays: Array(1)
+ ✅ Setting new story state: Object
+ DEBUG: Current story state: Object
+ SimpleStoryEditor useEffect triggered: Object
+ Already loaded, skipping

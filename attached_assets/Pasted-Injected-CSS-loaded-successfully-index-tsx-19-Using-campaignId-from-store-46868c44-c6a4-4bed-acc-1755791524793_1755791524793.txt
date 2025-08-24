@@ -1,0 +1,136 @@
+Injected CSS loaded successfully
+index.tsx:19 🌟 Using campaignId from store: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+3SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+commitHookEffectListMount @ chunk-276SZO74.js?v=9f8ce6c1:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=9f8ce6c1:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=9f8ce6c1:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=9f8ce6c1:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=9f8ce6c1:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=9f8ce6c1:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=9f8ce6c1:19447
+(anonymous) @ chunk-276SZO74.js?v=9f8ce6c1:19328
+workLoop @ chunk-276SZO74.js?v=9f8ce6c1:197
+flushWork @ chunk-276SZO74.js?v=9f8ce6c1:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=9f8ce6c1:384Understand this error
+auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 🧹 Очистил sessionStorage при выходе из редактора Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Navigating to content list Object
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: a3c5db82-0d81-47a5-aee0-2c3d138d45ca
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Димон at position: 109 536
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text-1755787268334 Красава at position: 101 9
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 🧹 Очистил sessionStorage при выходе из редактора Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Navigating to content list Object
+chunk-R7GIRA6O.js?v=9f8ce6c1:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-R7GIRA6O.js?v=9f8ce6c1:338Understand this warning
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+2SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+4SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 L at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+2SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Н at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 На at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наше at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш  at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш я at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш яч at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш яче at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш яч at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш я at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш  at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш ч at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш че at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чег at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чего at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чег at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш че at position: 100 200
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Uploading image to Imgbb Object
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Image uploaded to Imgbb Object
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] Background image auto-saved to database Object
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+3SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage Object
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: Object
+3SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+index.tsx:14 🌟 Using campaignId from URL: 46868c44-c6a4-4bed-accf-9ad07bba790e
+EnhancedStoryEditor.tsx:26 [DEBUG] [EnhancedStoryEditor] Initial mode setup to simple for story: d587f3b0-cf1f-46ee-82b1-da34e253bce0
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Добавьте ваш текст at position: 100 200
+SimpleStoryEditor.tsx:121 [INFO] [Stories] FINAL LOAD from database {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', title: 'Новая Stories', dbImageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', storyCreatedAt: '2025-08-21T14:40:09', storyUpdatedAt: 'unknown', …}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] 💾 Сохранил правильное изображение в sessionStorage {storyId: 'd587f3b0-cf1f-46ee-82b1-da34e253bce0', imageUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg'}
+SimpleStoryEditor.tsx:121 [INFO] [Stories] ПРИМЕНЯЮ ИЗОБРАЖЕНИЕ: {finalUrl: 'https://i.ibb.co/zHNd84tq/1755784542008-553314371.jpg', source: 'sessionStorage', storyTitle: 'Новая Stories', prevBackgroundUrl: null}
+SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
+2SimpleStoryEditor.tsx:973 [DEBUG] Rendering overlay: text1 Наш чел at position: 100 200
