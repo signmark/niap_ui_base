@@ -68,6 +68,7 @@ import InstagramCallback from "@/pages/instagram-callback";
 import VkCallback from "@/pages/vk-callback";
 import StoryEditor from "@/components/stories/StoryEditor";
 import StoriesGeneratorTest from "@/pages/test/stories-generator-test";
+import VideoStoryEditor from "@/components/stories/VideoStoryEditor";
 
 // Создаем обертки для компонентов с Layout
 const WithLayout = ({ Component }: { Component: React.ComponentType }) => (
@@ -108,6 +109,22 @@ const LayoutInstagramSetup = React.memo(() => <WithLayout Component={InstagramSi
 const LayoutStoriesGeneratorTest = React.memo(() => <WithLayout Component={StoriesGeneratorTest} />);
 const LayoutStoriesPage = React.memo(() => <WithLayout Component={StoriesPage} />);
 
+// Wrapper для VideoStoryEditor
+const LayoutVideoStoryEditor = React.memo(() => {
+  const path = window.location.pathname;
+  const storyId = path.match(/\/stories\/([^\/]+)\/video-edit/)?.[1];
+  
+  if (!storyId) {
+    return <NotFound />;
+  }
+  
+  return (
+    <Layout>
+      <VideoStoryEditor storyId={storyId} />
+    </Layout>
+  );
+});
+
 function Router() {
   return (
     <Switch>
@@ -116,6 +133,7 @@ function Router() {
       <Route path="/login" component={Login} />
       
       {/* Stories routes - нужно поставить ДО других роутов */}
+      <Route path="/stories/:storyId/video-edit" component={LayoutVideoStoryEditor} />
       <Route path="/stories/:storyId/edit" component={LayoutStoriesPage} />
       <Route path="/stories/new" component={LayoutStoriesPage} />
       <Route path="/stories" component={LayoutStoriesPage} />

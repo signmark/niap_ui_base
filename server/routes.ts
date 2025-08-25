@@ -10167,6 +10167,84 @@ ${commentTexts}`;
     }
   });
 
+  // PUT endpoint для обновления campaign_content (например, video_url для Stories)
+  app.put("/api/campaign-content/:id", async (req, res) => {
+    try {
+      const contentId = req.params.id;
+      const authHeader = req.headers['authorization'];
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const token = authHeader.replace('Bearer ', '');
+      
+      try {
+        console.log(`Updating campaign content with ID: ${contentId}`, req.body);
+        
+        // Получаем ID пользователя из токена для проверки прав доступа
+        const userResponse = await directusApi.get('/users/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const userId = userResponse.data.data.id;
+        
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+        
+        // Сначала проверим, что контент принадлежит пользователю
+        const checkResponse = await directusApi.get(`/items/campaign_content/${contentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!checkResponse.data || !checkResponse.data.data) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+        
+        const existingItem = checkResponse.data.data;
+        
+        if (existingItem.user_id !== userId) {
+          return res.status(403).json({ error: "You don't have permission to update this content" });
+        }
+        
+        // Обновляем контент
+        const updateData = {
+          ...req.body,
+          updated_at: new Date().toISOString()
+        };
+        
+        const updateResponse = await directusApi.patch(`/items/campaign_content/${contentId}`, updateData, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log(`Campaign content ${contentId} updated successfully`);
+        res.json({ success: true, data: updateResponse.data.data });
+        
+      } catch (error) {
+        console.error('Error updating campaign content:', error);
+        if (error.response) {
+          console.error('API error details:', error.response.data);
+          if (error.response.status === 404) {
+            return res.status(404).json({ error: "Content not found" });
+          } else if (error.response.status === 403) {
+            return res.status(403).json({ error: "Access denied" });
+          }
+        }
+        return res.status(500).json({ error: "Failed to update content" });
+      }
+    } catch (error) {
+      console.error("Error updating campaign content:", error);
+      res.status(500).json({ error: "Failed to update campaign content" });
+    }
+  });
+
   app.post("/api/campaign-content", authenticateUser, async (req, res) => {
     try {
       console.log('📝 POST /api/campaign-content - Creating new content');

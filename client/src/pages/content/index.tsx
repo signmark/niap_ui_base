@@ -1985,7 +1985,12 @@ export default function ContentPage() {
                           <div className="flex gap-2 justify-center">
                             <Button 
                               onClick={() => {
-                                navigate(`/campaigns/${selectedCampaignId}/stories/edit/${currentContent.id}`);
+                                // Направляем в соответствующий редактор в зависимости от типа контента
+                                if (currentContent.video_url) {
+                                  navigate(`/stories/${currentContent.id}/video-edit`);
+                                } else {
+                                  navigate(`/stories/${currentContent.id}/edit`);
+                                }
                               }}
                               className="bg-purple-600 hover:bg-purple-700"
                             >

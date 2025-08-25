@@ -486,7 +486,7 @@ router.post('/convert-and-publish', authMiddleware, async (req, res) => {
       campaign_id: campaignId,
       user_id: userId,
       title: title,
-      content_type: 'video_story',
+      content_type: 'story',
       status: scheduledAt ? 'scheduled' : 'published',
       content: storyContent,
       metadata: JSON.stringify({ 
