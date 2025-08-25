@@ -82,10 +82,10 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
     }
 
     command
-      .on('start', (commandLine) => {
+      .on('start', (commandLine: string) => {
         console.log('[VIDEO] FFmpeg command:', commandLine);
       })
-      .on('progress', (progress) => {
+      .on('progress', (progress: any) => {
         console.log(`[VIDEO] Processing: ${Math.round(progress.percent || 0)}%`);
       })
       .on('end', () => {
@@ -100,7 +100,7 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
           message: 'Видео обработано успешно'
         });
       })
-      .on('error', (err) => {
+      .on('error', (err: any) => {
         console.error('[VIDEO] FFmpeg error:', err);
         
         // Удаляем временный файл при ошибке
@@ -133,7 +133,7 @@ router.post('/video-info', authMiddleware, upload.single('video'), async (req, r
 
     const inputPath = req.file.path;
 
-    ffmpeg.ffprobe(inputPath, (err, metadata) => {
+    ffmpeg.ffprobe(inputPath, (err: any, metadata: any) => {
       // Удаляем временный файл
       fs.unlinkSync(inputPath);
 
@@ -142,7 +142,7 @@ router.post('/video-info', authMiddleware, upload.single('video'), async (req, r
         return res.status(500).json({ error: 'Ошибка получения информации о видео' });
       }
 
-      const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+      const videoStream = metadata.streams.find((stream: any) => stream.codec_type === 'video');
       
       res.json({
         success: true,

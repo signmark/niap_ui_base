@@ -44,15 +44,19 @@ export const generateStoriesVideo = async (story: VideoStoryData): Promise<strin
 
   try {
     // Преобразуем textOverlays в формат для FFmpeg
+    // Правильные коэффициенты масштабирования из превью (280x497) в Instagram Stories (1080x1920)
+    const scaleX = 1080 / 280; // = 3.857
+    const scaleY = 1920 / 497; // = 3.863 (исправлено!)
+    
     const videoOverlays: VideoTextOverlay[] = story.textOverlays.map(overlay => ({
       text: overlay.text,
-      x: Math.round(overlay.x * 3.857), // Масштабируем с 280px на 1080px (1080/280 = 3.857)
-      y: Math.round(overlay.y * 3.857), // Масштабируем с 497px на 1920px (1920/497 = 3.863)
-      fontSize: Math.round(overlay.fontSize * 3.857), // Масштабируем размер шрифта
+      x: Math.round(overlay.x * scaleX), // Масштабируем с 280px на 1080px
+      y: Math.round(overlay.y * scaleY), // Масштабируем с 497px на 1920px (правильно!)
+      fontSize: Math.round(overlay.fontSize * scaleX), // Масштабируем размер шрифта
       color: overlay.color,
       fontFamily: overlay.fontFamily || 'Arial',
-      startTime: 0, // Текст показывается всё время видео
-      endTime: 60   // Максимум 60 секунд для Stories
+      startTime: (overlay as any).startTime || 0, // Поддержка временных интервалов
+      endTime: (overlay as any).endTime || 60     // Поддержка временных интервалов
     }));
 
     console.log('[STORIES-VIDEO] Отправляем на обработку видео:', {

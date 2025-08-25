@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2, Move, Type } from 'lucide-react';
+import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2, Move, Type, Video } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import DraggableWrapper from './DraggableWrapper';
 import { apiRequest } from '@/lib/queryClient';
+import { generateStoriesVideo } from '@/utils/storiesVideoUtils';
 
 interface TextOverlay {
   id: string;
@@ -55,6 +56,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
   const [selectedOverlay, setSelectedOverlay] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   // Загрузка видео
@@ -322,6 +324,73 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
     }
   };
 
+  // Генерация видео с текстовыми наложениями
+  const handleGenerateVideo = async () => {
+    if (!story.backgroundVideoUrl) {
+      toast({
+        title: "Ошибка",
+        description: "Сначала загрузите фоновое видео",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (story.textOverlays.length === 0) {
+      toast({
+        title: "Предупреждение", 
+        description: "Нет текстовых наложений для генерации",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setGenerating(true);
+    
+    try {
+      console.log('Начинаем генерацию видео с данными:', {
+        backgroundVideoUrl: story.backgroundVideoUrl,
+        textOverlays: story.textOverlays
+      });
+
+      const generatedVideoUrl = await generateStoriesVideo({
+        backgroundVideoUrl: story.backgroundVideoUrl,
+        textOverlays: story.textOverlays.map(overlay => ({
+          id: overlay.id,
+          text: overlay.text,
+          x: overlay.x,
+          y: overlay.y,
+          fontSize: overlay.fontSize,
+          color: overlay.color,
+          fontFamily: 'Arial',
+          rotation: 0
+        }))
+      });
+
+      console.log('Видео сгенерировано:', generatedVideoUrl);
+      
+      // Обновляем backgroundVideoUrl на сгенерированное видео
+      setStory(prev => ({
+        ...prev,
+        backgroundVideoUrl: generatedVideoUrl
+      }));
+
+      toast({
+        title: "Успешно",
+        description: "Видео с текстовыми наложениями сгенерировано",
+      });
+
+    } catch (error) {
+      console.error('Ошибка генерации видео:', error);
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Не удалось сгенерировать видео",
+        variant: "destructive"
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const selectedOverlayData = selectedOverlay >= 0 ? story.textOverlays[selectedOverlay] : null;
   
   const getCampaignId = () => {
@@ -359,6 +428,14 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
           </div>
           
           <div className="flex gap-2">
+            <Button
+              onClick={handleGenerateVideo}
+              disabled={generating || !story.backgroundVideoUrl}
+              variant="outline"
+            >
+              <Video className="h-4 w-4 mr-2" />
+              {generating ? 'Генерация...' : 'Генерировать видео'}
+            </Button>
             <Button
               onClick={handleSave}
               disabled={saving}
