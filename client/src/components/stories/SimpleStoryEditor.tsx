@@ -552,7 +552,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
           {/* ПУБЛИКАЦИЯ */}
           <StoryPublishButton
             story={{ ...story, id: storyId }}
-            contentId={campaignId}
+            contentId={storyId}
             platforms={['instagram']}
           />
         </div>

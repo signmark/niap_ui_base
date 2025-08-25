@@ -83,6 +83,28 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
     console.log(`[DEV] [stories-publishing] 🔐 Используем пользовательский токен: ${userToken.substring(0, 20)}...`);
     console.log(`[DEV] [stories-publishing] 👤 User ID: ${(req as any).user?.id}`);
     
+    // Тестируем валидность пользовательского токена
+    try {
+      console.log(`[DEV] [stories-publishing] 🧪 ТЕСТ ТОКЕНА - проверяем валидность...`);
+      const tokenTestResponse = await axios.get(`${directusUrl}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+      console.log(`[DEV] [stories-publishing] ✅ ТОКЕН ВАЛИДЕН - пользователь: ${tokenTestResponse.data.data.email} (${tokenTestResponse.data.data.id})`);
+    } catch (tokenError: any) {
+      console.error(`[DEV] [stories-publishing] ❌ ТОКЕН НЕ ВАЛИДЕН:`, {
+        status: tokenError.response?.status,
+        message: tokenError.message,
+        data: tokenError.response?.data
+      });
+      return res.status(401).json({
+        success: false,
+        error: 'Недействительный токен пользователя',
+        details: tokenError.message
+      });
+    }
+    
     try {
       console.log(`[DEV] [stories-publishing] 📡 Запрос: GET ${directusUrl}/items/campaign_content/${contentId}`);
       console.log(`[DEV] [stories-publishing] 🔐 С токеном: ${userToken.substring(0, 20)}...`);
@@ -132,7 +154,9 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
         }
         
         if (webhookUrl) {
-          console.log(`[DEV] [stories-publishing] 🎬 Sending to ${platform} Stories webhook: ${webhookUrl}`);
+          console.log(`[DEV] [stories-publishing] 🚀 WEBHOOK ПУБЛИКАЦИИ - ${platform.toUpperCase()}: ${webhookUrl}`);
+          console.log(`[DEV] [stories-publishing] 📡 N8N URL базовый: ${n8nUrl}`);
+          console.log(`[DEV] [stories-publishing] 🎯 Полный путь webhook: ${webhookUrl}`);
           
           webhookPromises.push(
             axios.post(webhookUrl, {
