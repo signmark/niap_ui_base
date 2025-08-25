@@ -1,0 +1,91 @@
+StoriesImageGenerator.tsx:180 [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://i.ibb.co/d0CvzG5k/story-1756134189903.jpg
+StoriesImageGenerator.tsx:202 [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+SimpleStoryEditor.tsx:637 Изображение: https://i.ibb.co/d0CvzG5k/story-1756134189903.jpg
+StoriesImageGenerator.tsx:180 [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://i.ibb.co/nqPcBZ2Z/story-1756134206088.jpg
+StoriesImageGenerator.tsx:202 [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+SimpleStoryEditor.tsx:637 Изображение: https://i.ibb.co/nqPcBZ2Z/story-1756134206088.jpg
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+StoryPublishButton.tsx:33 [STORY-PUBLISH-BUTTON] Начинаем публикацию: {contentId: '46868c44-c6a4-4bed-accf-9ad07bba790e', story: {…}}
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: (2) [{…}, {…}]
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: ['instagram']
+publishWithImageGeneration.ts:12 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: {contentId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platforms: Array(1), story: {…}}
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Story object keys: (4) ['id', 'title', 'backgroundImageUrl', 'textOverlays']
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:28 [PUBLISH-WITH-IMAGE] Final textOverlays: (2) [{…}, {…}]
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] textOverlays length: 2
+publishWithImageGeneration.ts:36 [PUBLISH-WITH-IMAGE] Найдены textOverlays, проверяем additional_media...
+publishWithImageGeneration.ts:56 [PUBLISH-WITH-IMAGE] Генерируем новое изображение...
+publishWithImageGeneration.ts:64 [PUBLISH-WITH-IMAGE] Story для генерации: {id: 'bad91708-452f-41e0-abde-c978293f2fd9', title: 'Командная строка', backgroundImageUrl: 'https://i.ibb.co/bgf9gTFB/story-SHELL-1756100808344.jpg', textOverlays: Array(2)}
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: {id: 'bad91708-452f-41e0-abde-c978293f2fd9', title: 'Командная строка', backgroundImageUrl: 'https://i.ibb.co/bgf9gTFB/story-SHELL-1756100808344.jpg', textOverlays: Array(2)}
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: {width: 280, height: 497}
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: (2) [{…}, {…}]
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: {id: 'text_1756045782534', text: 'Командная строка', x: 0, y: 235, fontSize: 38, …}
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: {id: 'text_1756134184942', text: 'Новый текст', x: 97.5, y: 580, fontSize: 24, …}
+storiesImageUtils.ts:112 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 23339
+publishWithImageGeneration.ts:68 [PUBLISH-WITH-IMAGE] Изображение сгенерировано, размер base64: 23339
+publishWithImageGeneration.ts:71 [PUBLISH-WITH-IMAGE] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:202 [STORIES-IMAGE-UPLOAD] Изображение загружено: https://i.ibb.co/nqPcBZ2Z/story-1756134206088.jpg
+publishWithImageGeneration.ts:74 [PUBLISH-WITH-IMAGE] Изображение загружено: https://i.ibb.co/nqPcBZ2Z/story-1756134206088.jpg
+publishWithImageGeneration.ts:99 [PUBLISH-WITH-IMAGE] additional_media обновлено
+publishWithImageGeneration.ts:116 [PUBLISH-WITH-IMAGE] Отправляем на публикацию с generatedImageUrl: https://i.ibb.co/nqPcBZ2Z/story-1756134206088.jpg
+publishWithImageGeneration.ts:118  POST https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/stories/publish 500 (Internal Server Error)
+publishWithImageGeneration @ publishWithImageGeneration.ts:118
+await in publishWithImageGeneration
+handlePublish @ StoryPublishButton.tsx:39
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
+publishWithImageGeneration.ts:148 [PUBLISH-WITH-IMAGE] Ошибка: Error: Ошибка публикации: 500 Internal Server Error - {"success":false,"error":"Failed to publish stories","details":"Request failed with status code 403"}
+    at publishWithImageGeneration (publishWithImageGeneration.ts:134:13)
+    at async handlePublish (StoryPublishButton.tsx:39:22)
+publishWithImageGeneration @ publishWithImageGeneration.ts:148
+await in publishWithImageGeneration
+handlePublish @ StoryPublishButton.tsx:39
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
+StoryPublishButton.tsx:59 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Ошибка публикации: 500 Internal Server Error - {"success":false,"error":"Failed to publish stories","details":"Request failed with status code 403"}
+    at publishWithImageGeneration (publishWithImageGeneration.ts:134:13)
+    at async handlePublish (StoryPublishButton.tsx:39:22)
+handlePublish @ StoryPublishButton.tsx:59
+await in handlePublish
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
