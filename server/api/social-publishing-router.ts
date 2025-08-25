@@ -175,7 +175,29 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
       });
       
     } catch (directusError: any) {
-      console.error(`[DEV] [stories-publishing] 🎬 Directus error:`, directusError.message);
+      console.error(`[DEV] [stories-publishing] 🚨 DIRECTUS ERROR 403 ДЕТАЛИ:`, {
+        message: directusError.message,
+        status: directusError.response?.status,
+        statusText: directusError.response?.statusText,
+        data: directusError.response?.data,
+        headers: directusError.response?.headers,
+        url: directusError.config?.url,
+        method: directusError.config?.method
+      });
+      
+      // Проверяем, действительно ли это 403
+      if (directusError.response?.status === 403) {
+        console.error(`[DEV] [stories-publishing] 🔒 ПРАВА ДОСТУПА - пользователь ${(req as any).user?.id} не может получить доступ к контенту ${contentId}`);
+        console.error(`[DEV] [stories-publishing] 🔒 Ошибки Directus:`, directusError.response?.data?.errors);
+        
+        return res.status(403).json({
+          success: false,
+          error: 'Нет прав доступа к Stories контенту',
+          details: `User ${(req as any).user?.id} cannot access content ${contentId}`,
+          directusErrors: directusError.response?.data?.errors
+        });
+      }
+      
       return res.status(500).json({
         success: false,
         error: 'Ошибка получения Stories контента',
