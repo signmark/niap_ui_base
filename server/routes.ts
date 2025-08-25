@@ -10169,6 +10169,7 @@ ${commentTexts}`;
 
   // PUT endpoint для обновления campaign_content (например, video_url для Stories)
   app.put("/api/campaign-content/:id", async (req, res) => {
+    console.log(`[CAMPAIGN-CONTENT] PUT ${req.originalUrl} - Starting update for ID: ${req.params.id}`);
     try {
       const contentId = req.params.id;
       const authHeader = req.headers['authorization'];
@@ -10180,8 +10181,12 @@ ${commentTexts}`;
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        console.log(`Updating campaign content with ID: ${contentId}`);
-        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        console.log(`[CAMPAIGN-CONTENT] Updating campaign content with ID: ${contentId}`);
+        console.log('[CAMPAIGN-CONTENT] Request body:', JSON.stringify(req.body, null, 2));
+        console.log('[CAMPAIGN-CONTENT] Headers:', {
+          authorization: req.headers.authorization ? 'Present' : 'Missing',
+          contentType: req.headers['content-type']
+        });
         
         // Получаем ID пользователя из токена для проверки прав доступа
         const userResponse = await directusApi.get('/users/me', {
@@ -10225,14 +10230,14 @@ ${commentTexts}`;
           }
         });
         
-        console.log(`Campaign content ${contentId} updated successfully`);
-        console.log('Update response:', JSON.stringify(updateResponse.data, null, 2));
+        console.log(`[CAMPAIGN-CONTENT] Campaign content ${contentId} updated successfully`);
+        console.log('[CAMPAIGN-CONTENT] Update response:', JSON.stringify(updateResponse.data, null, 2));
         res.json({ success: true, data: updateResponse.data.data });
         
       } catch (error) {
-        console.error('Error updating campaign content:', error);
+        console.error('[CAMPAIGN-CONTENT] Error updating campaign content:', error);
         if (error.response) {
-          console.error('API error details:', error.response.data);
+          console.error('[CAMPAIGN-CONTENT] API error details:', error.response.data);
           if (error.response.status === 404) {
             return res.status(404).json({ error: "Content not found" });
           } else if (error.response.status === 403) {
@@ -10242,7 +10247,7 @@ ${commentTexts}`;
         return res.status(500).json({ error: "Failed to update content" });
       }
     } catch (error) {
-      console.error("Error updating campaign content:", error);
+      console.error("[CAMPAIGN-CONTENT] Error updating campaign content:", error);
       res.status(500).json({ error: "Failed to update campaign content" });
     }
   });
