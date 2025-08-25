@@ -1986,7 +1986,14 @@ export default function ContentPage() {
                             <Button 
                               onClick={() => {
                                 // Направляем в соответствующий редактор в зависимости от типа контента
-                                if (currentContent.video_url) {
+                                console.log('Stories redirect logic:', {
+                                  contentId: currentContent.id,
+                                  videoUrl: currentContent.videoUrl,
+                                  video_url: currentContent.video_url,
+                                  hasVideo: !!(currentContent.videoUrl || currentContent.video_url)
+                                });
+                                
+                                if (currentContent.videoUrl || currentContent.video_url) {
                                   navigate(`/stories/${currentContent.id}/video-edit`);
                                 } else {
                                   navigate(`/stories/${currentContent.id}/edit`);

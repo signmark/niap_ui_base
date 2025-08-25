@@ -10180,7 +10180,8 @@ ${commentTexts}`;
       const token = authHeader.replace('Bearer ', '');
       
       try {
-        console.log(`Updating campaign content with ID: ${contentId}`, req.body);
+        console.log(`Updating campaign content with ID: ${contentId}`);
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
         
         // Получаем ID пользователя из токена для проверки прав доступа
         const userResponse = await directusApi.get('/users/me', {
@@ -10225,6 +10226,7 @@ ${commentTexts}`;
         });
         
         console.log(`Campaign content ${contentId} updated successfully`);
+        console.log('Update response:', JSON.stringify(updateResponse.data, null, 2));
         res.json({ success: true, data: updateResponse.data.data });
         
       } catch (error) {

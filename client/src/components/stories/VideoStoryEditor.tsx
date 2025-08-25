@@ -255,6 +255,12 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
       };
 
       // Сохраняем Stories
+      console.log('Сохранение Stories:', {
+        title: story.title,
+        video_url: story.backgroundVideoUrl,
+        metadata: JSON.stringify(metadata)
+      });
+      
       await apiRequest(`/api/stories/simple/${storyId}`, {
         method: 'PUT',
         data: {
