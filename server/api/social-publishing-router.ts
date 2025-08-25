@@ -153,6 +153,9 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
           webhookUrl = `${n8nUrl}/webhook/publish-vk-stories`; // VK Stories webhook
         }
         
+        // Убираем двойные слеши из URL
+        webhookUrl = webhookUrl.replace(/([^:]\/)\/+/g, "$1");
+        
         if (webhookUrl) {
           console.log(`[DEV] [stories-publishing] 🚀 WEBHOOK ПУБЛИКАЦИИ - ${platform.toUpperCase()}: ${webhookUrl}`);
           console.log(`[DEV] [stories-publishing] 📡 N8N URL базовый: ${n8nUrl}`);
@@ -168,17 +171,33 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
               headers: {
                 'Content-Type': 'application/json'
               }
-            }).then(response => ({
-              platform,
-              success: true,
-              status: response.status,
-              data: response.data
-            })).catch(error => ({
-              platform,
-              success: false,
-              error: error.message,
-              status: error.response?.status
-            }))
+            }).then(response => {
+              console.log(`[DEV] [stories-publishing] ✅ ${platform} webhook успешно: HTTP ${response.status}`);
+              
+              // N8N может вернуть пустой ответ - это нормально для webhook
+              let responseData = null;
+              try {
+                responseData = response.data || { status: 'accepted' };
+              } catch (parseError) {
+                console.log(`[DEV] [stories-publishing] 📝 ${platform} webhook вернул пустой ответ (норма)`);
+                responseData = { status: 'accepted' };
+              }
+              
+              return {
+                platform,
+                success: true,
+                status: response.status,
+                data: responseData
+              };
+            }).catch(error => {
+              console.error(`[DEV] [stories-publishing] ❌ ${platform} webhook ошибка:`, error.message);
+              return {
+                platform,
+                success: false,
+                error: error.message,
+                status: error.response?.status
+              };
+            })
           );
         }
       }
