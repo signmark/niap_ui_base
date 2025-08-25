@@ -460,13 +460,18 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
     try {
       console.log('Сохранение видео в additional_media:', videoUrl);
       
-      await apiRequest(`/api/stories/simple/${storyId}`, {
+      const requestData = {
+        additional_media: JSON.stringify([videoUrl])
+      };
+      
+      console.log('Отправка данных:', requestData);
+      
+      const response = await apiRequest(`/api/stories/simple/${storyId}`, {
         method: 'PUT',
-        data: {
-          additional_media: [videoUrl]
-        }
+        data: requestData
       });
       
+      console.log('Ответ сервера:', response);
       console.log('Видео успешно сохранено в additional_media');
     } catch (error) {
       console.error('Ошибка сохранения в additional_media:', error);

@@ -133,7 +133,7 @@ router.put('/story/:id', authMiddleware, async (req, res) => {
 router.put('/simple/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, image_url, metadata } = req.body;
+    const { title, image_url, metadata, additional_media } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -143,7 +143,8 @@ router.put('/simple/:id', authMiddleware, async (req, res) => {
     console.log('[DEV] [stories] Updating simple story:', id, { 
       title, 
       image_url,
-      metadata: metadata ? 'provided' : 'not provided'
+      metadata: metadata ? 'provided' : 'not provided',
+      additional_media: additional_media ? 'provided' : 'not provided'
     });
 
     const updateData: any = {
@@ -161,6 +162,11 @@ router.put('/simple/:id', authMiddleware, async (req, res) => {
     
     if (metadata !== undefined) {
       updateData.metadata = metadata; // metadata уже JSON string
+    }
+    
+    if (additional_media !== undefined) {
+      updateData.additional_media = additional_media; // additional_media уже JSON string
+      console.log('[DEV] [stories] Setting additional_media:', additional_media);
     }
 
     // Используем токен пользователя для обновления записи
