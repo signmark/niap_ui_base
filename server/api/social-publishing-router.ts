@@ -69,10 +69,27 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
     // Получаем Stories контент из Directus
     const directusUrl = process.env.DIRECTUS_URL || 'https://directus.roboflow.space';
     
+    // Используем токен текущего пользователя из сессии
+    const userToken = req.headers.authorization?.replace('Bearer ', '');
+    
+    console.log(`[DEV] [stories-publishing] 🔐 Пользовательский токен из сессии: ${userToken ? userToken.substring(0, 20) + '...' : 'НЕТ'}`);
+    console.log(`[DEV] [stories-publishing] 👤 User ID из middleware: ${(req as any).user?.id}`);
+    
+    if (!userToken) {
+      console.log(`[DEV] [stories-publishing] Пользовательский токен не найден в заголовках`);
+      return res.status(401).json({
+        success: false,
+        error: 'Отсутствует токен авторизации'
+      });
+    }
+    
     try {
+      console.log(`[DEV] [stories-publishing] 🔐 Делаем запрос к Directus с пользовательским токеном: ${userToken.substring(0, 20)}...`);
+      console.log(`[DEV] [stories-publishing] 📡 URL: ${directusUrl}/items/campaign_content/${contentId}`);
+      
       const contentResponse = await axios.get(`${directusUrl}/items/campaign_content/${contentId}`, {
         headers: {
-          'Authorization': req.headers.authorization
+          'Authorization': `Bearer ${userToken}`
         }
       });
       
@@ -87,14 +104,15 @@ router.post('/stories/publish', authMiddleware, async (req, res) => {
         });
       }
       
-      // Обновляем статус Stories перед публикацией
+      // Обновляем статус Stories перед публикацией  
+      console.log(`[DEV] [stories-publishing] 🔄 Обновляем статус с пользовательским токеном...`);
       await axios.patch(`${directusUrl}/items/campaign_content/${contentId}`, {
         status: 'published',
         platforms: JSON.stringify(selectedPlatforms),
         updated_at: new Date().toISOString()
       }, {
         headers: {
-          'Authorization': req.headers.authorization
+          'Authorization': `Bearer ${userToken}`
         }
       });
       

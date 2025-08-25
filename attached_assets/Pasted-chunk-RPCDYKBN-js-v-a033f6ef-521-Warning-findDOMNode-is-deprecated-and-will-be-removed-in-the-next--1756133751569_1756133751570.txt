@@ -1,0 +1,51 @@
+chunk-RPCDYKBN.js?v=a033f6ef:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.de…ner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1311:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.de…ner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1718:9)
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx:34:3)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=lcNv1FPQk4PKnAzkK5qnj:83:23)
+    at _c58
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.de…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.de…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a033f6ef:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=lcNv1FPQk4PKnAzkK5qnj:507:3)
+printWarning	@	chunk-RPCDYKBN.js?v=a033f6ef:521
+error	@	chunk-RPCDYKBN.js?v=a033f6ef:505
+findDOMNode	@	chunk-RPCDYKBN.js?v=a033f6ef:21379
+findDOMNode	@	react-draggable.js?v=a033f6ef:1458
+componentDidMount	@	react-draggable.js?v=a033f6ef:1430
+commitLayoutEffectOnFiber	@	chunk-RPCDYKBN.js?v=a033f6ef:17030
+commitLayoutMountEffects_complete	@	chunk-RPCDYKBN.js?v=a033f6ef:17980
+commitLayoutEffects_begin	@	chunk-RPCDYKBN.js?v=a033f6ef:17969
+commitLayoutEffects	@	chunk-RPCDYKBN.js?v=a033f6ef:17920
+commitRootImpl	@	chunk-RPCDYKBN.js?v=a033f6ef:19353
+commitRoot	@	chunk-RPCDYKBN.js?v=a033f6ef:19277
+finishConcurrentRender	@	chunk-RPCDYKBN.js?v=a033f6ef:18805
+performConcurrentWorkOnRoot	@	chunk-RPCDYKBN.js?v=a033f6ef:18718
+workLoop	@	chunk-RPCDYKBN.js?v=a033f6ef:197
+flushWork	@	chunk-RPCDYKBN.js?v=a033f6ef:176
+performWorkUntilDeadline	@	chunk-RPCDYKBN.js?v=a033f6ef:384
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+7
+auth.ts:42 Запущено обновление токена по расписанию
+﻿
+

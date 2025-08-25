@@ -25,7 +25,7 @@ import {
   Plus,
   Download
 } from 'lucide-react';
-import Draggable from 'react-draggable';
+import DraggableWrapper from './DraggableWrapper';
 import ElementDialog from './ElementDialog';
 import { useStoryStore } from '@/lib/storyStore';
 import { useCampaignStore } from '@/lib/campaignStore';
@@ -626,9 +626,9 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
               >
                 {/* Story elements */}
                 {currentSlide?.elements?.map((element) => (
-                  <Draggable
+                  <DraggableWrapper
                     key={element.id}
-                    defaultPosition={element.position}
+                    position={element.position}
                     onStop={(e, data) => {
                       updateElement(element.id, {
                         position: { x: data.x, y: data.y }
@@ -726,7 +726,7 @@ export default function StoryEditor({ campaignId: propCampaignId, storyId: propS
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
-                  </Draggable>
+                  </DraggableWrapper>
                 ))}
                 
                 {/* Debug info */}

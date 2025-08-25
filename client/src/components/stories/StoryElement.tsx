@@ -1,5 +1,5 @@
 import React from 'react';
-import Draggable from 'react-draggable';
+import DraggableWrapper from './DraggableWrapper';
 import { Button } from '@/components/ui/button';
 import { Trash2, Move } from 'lucide-react';
 
@@ -155,7 +155,7 @@ export default function StoryElement({
   };
 
   return (
-    <Draggable
+    <DraggableWrapper
       position={element.position}
       onDrag={handleDrag}
       handle=".drag-handle"
@@ -197,6 +197,6 @@ export default function StoryElement({
           </div>
         )}
       </div>
-    </Draggable>
+    </DraggableWrapper>
   );
 }

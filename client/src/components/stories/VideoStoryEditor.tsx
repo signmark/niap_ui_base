@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2 } from 'lucide-react';
+import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2, Move } from 'lucide-react';
+import DraggableWrapper from './DraggableWrapper';
 import { apiRequest } from '@/lib/queryClient';
 
 interface TextOverlay {
@@ -436,7 +437,7 @@ export default function VideoStoryEditor({ campaignId, onBack }: VideoStoryEdito
                     if (!isOverlayVisible(overlay)) return null;
 
                     return (
-                      <Draggable
+                      <DraggableWrapper
                         key={index}
                         position={{ x: overlay.x, y: overlay.y }}
                         onDrag={handleTextDrag(index)}
@@ -462,7 +463,7 @@ export default function VideoStoryEditor({ campaignId, onBack }: VideoStoryEdito
                         >
                           {overlay.text}
                         </div>
-                      </Draggable>
+                      </DraggableWrapper>
                     );
                   })}
 

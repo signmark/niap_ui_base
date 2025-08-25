@@ -13,7 +13,7 @@ import { StoriesImageGenerator } from './StoriesImageGenerator';
 import { StoryPublishButton } from './StoryPublishButton';
 import { apiRequest } from '@/lib/queryClient';
 import axios from 'axios';
-import Draggable from 'react-draggable';
+import DraggableWrapper from './DraggableWrapper';
 
 interface TextOverlay {
   id: string;
@@ -588,7 +588,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
 
                 {/* ТЕКСТОВЫЕ ЭЛЕМЕНТЫ */}
                 {story.textOverlays.map((overlay) => (
-                  <Draggable
+                  <DraggableWrapper
                     key={overlay.id}
                     position={{ x: overlay.x * 0.8, y: overlay.y * 0.8 }}
                     onStop={(e, data) => handleDrag(overlay.id, data)}
@@ -625,7 +625,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
                         {overlay.text || 'Новый текст'}
                       </div>
                     </div>
-                  </Draggable>
+                  </DraggableWrapper>
                 ))}
               </div>
             </CardContent>

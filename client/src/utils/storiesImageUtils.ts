@@ -34,9 +34,9 @@ export const generateStoriesImage = async (story: StoryData): Promise<string> =>
         throw new Error('Не удалось создать контекст canvas');
       }
 
-      // Уменьшенные размеры для меньшего файла (сохраняем пропорции 9:16)
-      const width = 540;  // Половина от 1080
-      const height = 960; // Половина от 1920
+      // Размер точно как в превью для идеального совпадения координат
+      const width = 280;  // Размер превью
+      const height = 497; // Размер превью
       canvas.width = width;
       canvas.height = height;
       
@@ -49,13 +49,11 @@ export const generateStoriesImage = async (story: StoryData): Promise<string> =>
         if (story.textOverlays && story.textOverlays.length > 0) {
           for (const overlay of story.textOverlays) {
             console.log('[GENERATE-STORIES-IMAGE] Обрабатываем overlay:', overlay);
-            // Масштабируем координаты с редактора (350x620) до финального размера (1080x1920)
-            const scaleX = width / 350;
-            const scaleY = height / 620;
-            
-            const x = (overlay.x || 50) * scaleX;
-            const y = (overlay.y || 50) * scaleY;
-            const fontSize = (overlay.fontSize || 24) * scaleY;
+            // Используем такие же координаты как в превью (1:1, без масштабирования)
+            const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 : 2;
+            const x = (overlay.x !== undefined ? overlay.x : 50) * 0.8 + textPaddingX;
+            const y = (overlay.y !== undefined ? overlay.y : 50) * 0.8;
+            const fontSize = (overlay.fontSize || 24) * 0.8;
             
             ctx.save();
             
@@ -74,19 +72,20 @@ export const generateStoriesImage = async (story: StoryData): Promise<string> =>
               const textHeight = fontSize;
               
               ctx.fillStyle = overlay.backgroundColor;
+              // Фон начинается с позиции текста (как в превью)
               ctx.fillRect(
-                x - textWidth / 2 - 10,
-                y - textHeight / 2 - 5,
-                textWidth + 20,
-                textHeight + 10
+                x - 10,                   // Небольшой отступ слева
+                y - 5,                    // Небольшой отступ сверху
+                textWidth + 20,           // Ширина фона
+                textHeight + 10           // Высота фона
               );
             }
             
-            // Настройки текста
+            // Настройки текста - точно как позиционируется в превью
             ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
             ctx.fillStyle = overlay.color || '#ffffff';
-            ctx.textAlign = overlay.textAlign as CanvasTextAlign || 'center';
-            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'left';    // Текст начинается С координаты, не центрируется
+            ctx.textBaseline = 'top';   // Текст начинается СВЕРХУ координаты
             
             // Добавляем тень для лучшей читаемости
             ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
@@ -181,7 +180,7 @@ export const uploadImageToImgbb = async (base64Image: string, title: string = 's
     // Удаляем префикс data:image/png;base64, из base64 строки
     const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
     
-    const response = await fetch('/api/imgur/upload', {
+    const response = await fetch('/api/imgbb/upload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -189,9 +188,7 @@ export const uploadImageToImgbb = async (base64Image: string, title: string = 's
       },
       body: JSON.stringify({
         image: base64Data,
-        type: 'base64',
-        title: `Generated Stories Image - ${title}`,
-        description: `Auto-generated image for Stories: ${title}`
+        name: `story-${Date.now()}.jpg`
       })
     });
 
@@ -201,9 +198,9 @@ export const uploadImageToImgbb = async (base64Image: string, title: string = 's
 
     const result = await response.json();
     
-    if (result.success && result.data?.link) {
-      console.log('[STORIES-IMAGE-UPLOAD] Изображение загружено:', result.data.link);
-      return result.data.link;
+    if (result.success && result.data?.url) {
+      console.log('[STORIES-IMAGE-UPLOAD] Изображение загружено:', result.data.url);
+      return result.data.url;
     } else {
       throw new Error(result.error || 'Ошибка загрузки изображения');
     }

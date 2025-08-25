@@ -1,0 +1,76 @@
+[STORY-PUBLISH-BUTTON] Начинаем публикацию: {contentId: '46868c44-c6a4-4bed-accf-9ad07bba790e', story: {…}}
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: [{…}]
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: ['instagram']
+publishWithImageGeneration.ts:12 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: {contentId: '46868c44-c6a4-4bed-accf-9ad07bba790e', platforms: Array(1), story: {…}}
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Story object keys: (4) ['id', 'title', 'backgroundImageUrl', 'textOverlays']
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:28 [PUBLISH-WITH-IMAGE] Final textOverlays: [{…}]
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:36 [PUBLISH-WITH-IMAGE] Найдены textOverlays, проверяем additional_media...
+publishWithImageGeneration.ts:56 [PUBLISH-WITH-IMAGE] Генерируем новое изображение...
+publishWithImageGeneration.ts:64 [PUBLISH-WITH-IMAGE] Story для генерации: {id: 'bad91708-452f-41e0-abde-c978293f2fd9', title: 'Командная строка', backgroundImageUrl: 'https://i.ibb.co/bgf9gTFB/story-SHELL-1756100808344.jpg', textOverlays: Array(1)}
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: {id: 'bad91708-452f-41e0-abde-c978293f2fd9', title: 'Командная строка', backgroundImageUrl: 'https://i.ibb.co/bgf9gTFB/story-SHELL-1756100808344.jpg', textOverlays: Array(1)}
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: {width: 540, height: 960}
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: [{…}]
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: {id: 'text_1756045782534', text: 'Командная строка', x: 0, y: 441.25, fontSize: 38, …}
+storiesImageUtils.ts:113 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 51623
+publishWithImageGeneration.ts:68 [PUBLISH-WITH-IMAGE] Изображение сгенерировано, размер base64: 51623
+publishWithImageGeneration.ts:71 [PUBLISH-WITH-IMAGE] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:212 [STORIES-IMAGE-UPLOAD] Ошибка загрузки: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+uploadImageToImgbb @ storiesImageUtils.ts:212
+await in uploadImageToImgbb
+publishWithImageGeneration @ publishWithImageGeneration.ts:72
+await in publishWithImageGeneration
+handlePublish @ StoryPublishButton.tsx:39
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
+publishWithImageGeneration.ts:148 [PUBLISH-WITH-IMAGE] Ошибка: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+publishWithImageGeneration @ publishWithImageGeneration.ts:148
+await in publishWithImageGeneration
+handlePublish @ StoryPublishButton.tsx:39
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
+StoryPublishButton.tsx:59 [STORY-PUBLISH-BUTTON] Ошибка публикации: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+handlePublish @ StoryPublishButton.tsx:59
+await in handlePublish
+callCallback2 @ chunk-RPCDYKBN.js?v=a033f6ef:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=a033f6ef:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=a033f6ef:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=a033f6ef:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=a033f6ef:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=a033f6ef:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=a033f6ef:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=a033f6ef:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=a033f6ef:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=a033f6ef:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=a033f6ef:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=a033f6ef:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=a033f6ef:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=a033f6ef:5449
