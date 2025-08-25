@@ -165,8 +165,17 @@ router.put('/simple/:id', authMiddleware, async (req, res) => {
     }
     
     if (additional_media !== undefined) {
-      updateData.additional_media = additional_media; // additional_media уже JSON string
-      console.log('[DEV] [stories] Setting additional_media:', additional_media);
+      // Если это массив, конвертируем в JSON string для Directus
+      if (Array.isArray(additional_media)) {
+        updateData.additional_media = JSON.stringify(additional_media);
+        console.log('[DEV] [stories] Setting additional_media (array->JSON):', additional_media, '->', updateData.additional_media);
+      } else if (typeof additional_media === 'string') {
+        updateData.additional_media = additional_media; // уже JSON string
+        console.log('[DEV] [stories] Setting additional_media (string):', additional_media);
+      } else {
+        updateData.additional_media = JSON.stringify(additional_media);
+        console.log('[DEV] [stories] Setting additional_media (other->JSON):', additional_media, '->', updateData.additional_media);
+      }
     }
 
     // Используем токен пользователя для обновления записи
@@ -221,7 +230,17 @@ router.patch('/simple/:id', authMiddleware, async (req, res) => {
     }
     
     if (additional_media !== undefined) {
-      updateData.additional_media = additional_media; // additional_media уже JSON string
+      // Если это массив, конвертируем в JSON string для Directus
+      if (Array.isArray(additional_media)) {
+        updateData.additional_media = JSON.stringify(additional_media);
+        console.log('[DEV] [stories] Setting additional_media (array->JSON):', additional_media, '->', updateData.additional_media);
+      } else if (typeof additional_media === 'string') {
+        updateData.additional_media = additional_media; // уже JSON string
+        console.log('[DEV] [stories] Setting additional_media (string):', additional_media);
+      } else {
+        updateData.additional_media = JSON.stringify(additional_media);
+        console.log('[DEV] [stories] Setting additional_media (other->JSON):', additional_media, '->', updateData.additional_media);
+      }
     }
 
     // Используем токен пользователя для обновления записи

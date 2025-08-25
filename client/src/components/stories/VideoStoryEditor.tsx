@@ -460,8 +460,9 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
     try {
       console.log('Сохранение видео в additional_media:', videoUrl);
       
+      // Отправляем как массив, не как JSON string
       const requestData = {
-        additional_media: JSON.stringify([videoUrl])
+        additional_media: [videoUrl]
       };
       
       console.log('Отправка данных:', requestData);
