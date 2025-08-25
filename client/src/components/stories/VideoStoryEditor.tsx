@@ -58,6 +58,10 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingMessage, setProcessingMessage] = useState('');
 
   // Загрузка видео
   const handleVideoUpload = async (file: File) => {
@@ -344,6 +348,67 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
       return;
     }
 
+    const progressId = Date.now().toString();
+    setIsProcessing(true);
+    setProcessingProgress(0);
+    setProcessingMessage('Подготовка к обработке...');
+    
+    // Подключаемся к SSE для получения прогресса
+    const eventSource = new EventSource(`/api/video-processing/progress/${progressId}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'progress') {
+          setProcessingProgress(data.percent);
+          setProcessingMessage(data.message);
+        } else if (data.type === 'complete') {
+          setProcessingProgress(100);
+          setProcessingMessage(data.message);
+          setGeneratedVideoUrl(data.videoUrl);
+          setIsProcessing(false);
+          eventSource.close();
+          
+          // Сохраняем видео в additional_media
+          saveToAdditionalMedia(data.videoUrl);
+          
+          toast({
+            title: "Успех!",
+            description: "Видео успешно обработано и сохранено в additional_media",
+          });
+        } else if (data.type === 'connected') {
+          setProcessingMessage('Соединение установлено');
+        } else if (data.type === 'error') {
+          setProcessingProgress(0);
+          setProcessingMessage(data.message);
+          setIsProcessing(false);
+          eventSource.close();
+          
+          toast({
+            title: "Ошибка",
+            description: data.error || data.message,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('Ошибка парсинга SSE данных:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE ошибка:', error);
+      eventSource.close();
+      setIsProcessing(false);
+      setProcessingMessage('Ошибка соединения');
+      
+      toast({
+        title: "Ошибка",
+        description: "Потеряно соединение с сервером",
+        variant: "destructive"
+      });
+    };
+
     setGenerating(true);
     
     try {
@@ -352,35 +417,34 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
         textOverlays: story.textOverlays
       });
 
-      const generatedVideoUrl = await generateStoriesVideo({
-        backgroundVideoUrl: story.backgroundVideoUrl,
-        textOverlays: story.textOverlays.map(overlay => ({
-          id: overlay.id,
-          text: overlay.text,
-          x: overlay.x,
-          y: overlay.y,
-          fontSize: overlay.fontSize,
-          color: overlay.color,
-          fontFamily: 'Arial',
-          rotation: 0
-        }))
+      const response = await apiRequest('/api/video-processing/process-video-from-url', {
+        method: 'POST',
+        data: {
+          videoUrl: story.backgroundVideoUrl,
+          textOverlays: story.textOverlays.map(overlay => ({
+            text: overlay.text,
+            x: Math.round(overlay.x * 3.863), // Масштабирование для 1080x1920
+            y: Math.round(overlay.y * 3.863),
+            fontSize: Math.round(overlay.fontSize * 3.863),
+            color: overlay.color,
+            fontFamily: overlay.fontFamily || 'Arial',
+            startTime: overlay.startTime || 0,
+            endTime: overlay.endTime || 60
+          })),
+          campaignId: storyId,
+          progressId: progressId
+        }
       });
 
-      console.log('Видео сгенерировано:', generatedVideoUrl);
-      
-      // Обновляем backgroundVideoUrl на сгенерированное видео
-      setStory(prev => ({
-        ...prev,
-        backgroundVideoUrl: generatedVideoUrl
-      }));
-
-      toast({
-        title: "Успешно",
-        description: "Видео с текстовыми наложениями сгенерировано",
-      });
+      if (!response.success) {
+        throw new Error(response.error || 'Неизвестная ошибка');
+      }
 
     } catch (error) {
       console.error('Ошибка генерации видео:', error);
+      eventSource.close();
+      setIsProcessing(false);
+      
       toast({
         title: "Ошибка",
         description: error instanceof Error ? error.message : "Не удалось сгенерировать видео",
@@ -388,6 +452,29 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Функция для сохранения видео в additional_media
+  const saveToAdditionalMedia = async (videoUrl: string) => {
+    try {
+      console.log('Сохранение видео в additional_media:', videoUrl);
+      
+      await apiRequest(`/api/stories/simple/${storyId}`, {
+        method: 'PUT',
+        data: {
+          additional_media: [videoUrl]
+        }
+      });
+      
+      console.log('Видео успешно сохранено в additional_media');
+    } catch (error) {
+      console.error('Ошибка сохранения в additional_media:', error);
+      toast({
+        title: "Предупреждение",
+        description: "Видео обработано, но не сохранено в additional_media",
+        variant: "destructive"
+      });
     }
   };
 
@@ -430,11 +517,11 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
           <div className="flex gap-2">
             <Button
               onClick={handleGenerateVideo}
-              disabled={generating || !story.backgroundVideoUrl}
+              disabled={generating || isProcessing || !story.backgroundVideoUrl}
               variant="outline"
             >
               <Video className="h-4 w-4 mr-2" />
-              {generating ? 'Генерация...' : 'Генерировать видео'}
+              {isProcessing ? 'Обработка...' : generating ? 'Генерация...' : 'Генерировать видео'}
             </Button>
             <Button
               onClick={handleSave}
@@ -445,6 +532,32 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
             </Button>
           </div>
         </div>
+
+        {/* Прогресс обработки видео */}
+        {isProcessing && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+              </div>
+              <span className="font-medium text-blue-900">Обработка видео</span>
+            </div>
+            
+            {/* Прогресс бар */}
+            <div className="relative">
+              <div className="w-full bg-blue-200 rounded-full h-3 mb-2">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${processingProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-700">{processingMessage}</span>
+                <span className="font-semibold text-blue-900">{processingProgress}%</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Панель настроек */}
@@ -749,6 +862,54 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
             </Card>
           </div>
         </div>
+
+        {/* Превью сгенерированного видео */}
+        {generatedVideoUrl && (
+          <div className="mt-6">
+            <Card className="bg-white/80 backdrop-blur-sm border border-gray-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Play className="h-4 w-4 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-gray-800">
+                    Превью сгенерированного видео
+                  </CardTitle>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Видео с наложенными текстами готово и загружено на S3
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="relative max-w-[280px] mx-auto">
+                  <div 
+                    className="relative w-[280px] h-[497px] bg-black rounded-lg overflow-hidden shadow-lg"
+                    style={{ aspectRatio: '9/16' }}
+                  >
+                    <video
+                      className="absolute inset-0 w-full h-full object-cover"
+                      src={generatedVideoUrl}
+                      controls
+                      muted
+                      playsInline
+                      onError={(e) => {
+                        console.error('Ошибка загрузки сгенерированного видео:', e);
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Информация о видео */}
+                  <div className="mt-4 text-center text-sm text-gray-600">
+                    <p>✅ Видео обработано и сохранено</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Формат: 1080x1920 • MP4 • H.264
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

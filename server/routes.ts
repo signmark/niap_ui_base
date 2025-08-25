@@ -54,6 +54,7 @@ import { getPublishScheduler } from './services/publish-scheduler';
 import storiesRouter from './routes/stories';
 import videoRouter from './routes/video';
 import realVideoConverterRouter from './routes/real-video-converter';
+import videoProcessingRoutes from './routes/videoProcessing';
 import { directusCrud } from './services/directus-crud';
 import { CampaignDataService } from './services/campaign-data';
 import { directusAuthManager } from './services/directus-auth-manager';
@@ -4051,6 +4052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/stories', storiesRouter);
   app.use('/api/video', videoRouter);
   app.use('/api/real-video-converter', realVideoConverterRouter);
+  app.use('/api/video-processing', videoProcessingRoutes);
   
   // ВАЖНО: Сначала регистрируем socialPublishingRouter с конкретными маршрутами,
   // чтобы его специфичные маршруты (например, /api/publish/now) не перехватывались

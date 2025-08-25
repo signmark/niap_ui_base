@@ -3,10 +3,14 @@ import multer from 'multer';
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware } from '../middleware/auth';
+import { begetS3VideoService } from '../services/beget-s3-video-service';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/temp/' });
+
+// Хранилище SSE соединений для прогресса
+const progressClients = new Map<string, express.Response>();
 
 interface TextOverlay {
   text: string;
@@ -48,37 +52,30 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
       .videoCodec('libx264')
       .audioCodec('aac')
       .format('mp4')
-      .size('1080x1920') // Instagram Stories format
       .fps(30);
 
     // Добавляем текстовые overlays
     if (overlays.length > 0) {
-      let filterComplex = '';
+      let videoFilter = 'scale=1080:1920';
       
       overlays.forEach((overlay, index) => {
-        const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:");
+        const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:").replace(/,/g, "\\,");
         const fontColor = overlay.color.replace('#', '');
         
-        // Конвертируем hex цвет в RGB для FFmpeg
-        const r = parseInt(fontColor.substr(0, 2), 16);
-        const g = parseInt(fontColor.substr(2, 2), 16);
-        const b = parseInt(fontColor.substr(4, 2), 16);
+        // Используем реальные временные интервалы из overlay
+        const startTime = overlay.startTime || 0;
+        const endTime = overlay.endTime || 60;
         
-        const textFilter = `drawtext=text='${escapedText}':` +
+        videoFilter += `,drawtext=text='${escapedText}':` +
           `x=${overlay.x}:y=${overlay.y}:` +
           `fontsize=${overlay.fontSize}:` +
-          `fontcolor=rgb(${r},${g},${b}):` +
-          `fontfile='/System/Library/Fonts/Arial.ttf':` +
-          `enable='between(t,${overlay.startTime},${overlay.endTime})'`;
-        
-        if (index === 0) {
-          filterComplex = `[0:v]${textFilter}[v${index}]`;
-        } else {
-          filterComplex += `;[v${index-1}]${textFilter}[v${index}]`;
-        }
+          `fontcolor=0x${fontColor}:` +
+          `enable='between(t\\,${startTime}\\,${endTime})'`;
       });
 
-      command = command.complexFilter(filterComplex).map(`[v${overlays.length-1}]`);
+      command = command.videoFilters(videoFilter);
+    } else {
+      command = command.videoFilters('scale=1080:1920');
     }
 
     command
@@ -158,6 +155,250 @@ router.post('/video-info', authMiddleware, upload.single('video'), async (req, r
     console.error('[VIDEO] Error getting video info:', error);
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
   }
+});
+
+// Обработка видео по URL с наложением текста
+router.post('/process-video-from-url', authMiddleware, async (req, res) => {
+  console.log('[VIDEO] Starting process-video-from-url endpoint');
+  console.log('[VIDEO] Request body:', req.body);
+  try {
+    const { videoUrl, textOverlays, campaignId } = req.body;
+  const progressId = req.body.progressId || Date.now().toString();
+    
+    if (!videoUrl) {
+      return res.status(400).json({ error: 'URL видео не указан' });
+    }
+
+    const overlays: TextOverlay[] = textOverlays || [];
+    
+    console.log('[VIDEO] Processing video from URL with text overlays:', {
+      videoUrl,
+      overlaysCount: overlays.length
+    });
+
+    // Скачиваем видео с сервера
+    const videoResponse = await fetch(videoUrl);
+    
+    if (!videoResponse.ok) {
+      throw new Error(`Не удалось скачать видео: ${videoResponse.status}`);
+    }
+    
+    const videoBuffer = await videoResponse.arrayBuffer();
+    
+    // Создаем временный файл для входного видео
+    const inputFileName = `temp_input_${Date.now()}.mp4`;
+    const inputPath = path.join('uploads/temp/', inputFileName);
+    
+    // Ensure temp directory exists
+    if (!fs.existsSync('uploads/temp/')) {
+      fs.mkdirSync('uploads/temp/', { recursive: true });
+    }
+    
+    // Записываем видео во временный файл
+    fs.writeFileSync(inputPath, Buffer.from(videoBuffer));
+
+    const outputFileName = `processed_${Date.now()}.mp4`;
+    const outputPath = path.join('uploads/processed/', outputFileName);
+
+    // Ensure output directory exists
+    if (!fs.existsSync('uploads/processed/')) {
+      fs.mkdirSync('uploads/processed/', { recursive: true });
+    }
+
+    let command = ffmpeg(inputPath)
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .format('mp4')
+      .fps(30);
+
+    // Добавляем текстовые overlays
+    if (overlays.length > 0) {
+      let videoFilter = 'scale=1080:1920';
+      
+      overlays.forEach((overlay, index) => {
+        const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:").replace(/,/g, "\\,");
+        const fontColor = overlay.color.replace('#', '');
+        
+        // Используем реальные временные интервалы из overlay
+        const startTime = overlay.startTime || 0;
+        const endTime = overlay.endTime || 60;
+        
+        videoFilter += `,drawtext=text='${escapedText}':` +
+          `x=${overlay.x}:y=${overlay.y}:` +
+          `fontsize=${overlay.fontSize}:` +
+          `fontcolor=0x${fontColor}:` +
+          `enable='between(t\\,${startTime}\\,${endTime})'`;
+      });
+
+      command = command.videoFilters(videoFilter);
+    } else {
+      command = command.videoFilters('scale=1080:1920');
+    }
+
+    command
+      .on('start', (commandLine: string) => {
+        console.log('[VIDEO] FFmpeg command:', commandLine);
+      })
+      .on('progress', (progress: any) => {
+        const percent = Math.round(progress.percent || 0);
+        console.log(`[VIDEO] Processing: ${percent}%`);
+        
+        // Отправляем прогресс клиенту
+        const client = progressClients.get(progressId);
+        if (client) {
+          client.write(`data: ${JSON.stringify({ 
+            type: 'progress', 
+            percent,
+            message: `Обработка видео: ${percent}%`
+          })}\n\n`);
+        }
+      })
+      .on('end', async () => {
+        console.log('[VIDEO] Processing finished successfully');
+        
+        try {
+          // Загружаем обработанное видео на S3
+          console.log('[VIDEO] Uploading processed video to S3...');
+          const s3Result = await begetS3VideoService.uploadLocalVideo(outputPath, false);
+          
+          if (!s3Result.success) {
+            throw new Error(`Failed to upload to S3: ${s3Result.error}`);
+          }
+          
+          console.log('[VIDEO] Video uploaded to S3:', s3Result.videoUrl);
+          
+          // Отправляем уведомление о завершении
+          const client = progressClients.get(progressId);
+          if (client) {
+            client.write(`data: ${JSON.stringify({ 
+              type: 'complete', 
+              percent: 100,
+              videoUrl: s3Result.videoUrl,
+              message: 'Видео обработано и загружено!'
+            })}\n\n`);
+            client.end();
+            progressClients.delete(progressId);
+          }
+          
+          // Удаляем временные файлы
+          fs.unlinkSync(inputPath);
+          if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+          }
+          
+          res.json({
+            success: true,
+            videoUrl: s3Result.videoUrl,
+            message: 'Видео обработано и загружено на S3'
+          });
+          
+        } catch (uploadError) {
+          console.error('[VIDEO] Error uploading to S3:', uploadError);
+          
+          // Отправляем уведомление об ошибке загрузки
+          const client = progressClients.get(progressId);
+          if (client) {
+            client.write(`data: ${JSON.stringify({ 
+              type: 'error', 
+              percent: 0,
+              message: 'Ошибка загрузки видео на S3',
+              error: uploadError instanceof Error ? uploadError.message : 'Неизвестная ошибка'
+            })}\n\n`);
+            client.end();
+            progressClients.delete(progressId);
+          }
+          
+          // Удаляем временные файлы
+          fs.unlinkSync(inputPath);
+          if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+          }
+          
+          res.status(500).json({
+            error: 'Ошибка загрузки видео на S3',
+            details: uploadError instanceof Error ? uploadError.message : 'Неизвестная ошибка'
+          });
+        }
+      })
+      .on('error', (err: any) => {
+        console.error('[VIDEO] FFmpeg error:', err);
+        
+        // Отправляем уведомление об ошибке
+        const client = progressClients.get(progressId);
+        if (client) {
+          client.write(`data: ${JSON.stringify({ 
+            type: 'error', 
+            percent: 0,
+            message: 'Ошибка обработки видео',
+            error: err.message
+          })}\n\n`);
+          client.end();
+          progressClients.delete(progressId);
+        }
+        
+        // Удаляем временные файлы при ошибке
+        if (fs.existsSync(inputPath)) {
+          fs.unlinkSync(inputPath);
+        }
+        if (fs.existsSync(outputPath)) {
+          fs.unlinkSync(outputPath);
+        }
+        
+        res.status(500).json({
+          error: 'Ошибка обработки видео',
+          details: err.message
+        });
+      })
+      .save(outputPath);
+
+  } catch (error) {
+    console.error('[VIDEO] Error processing video from URL:', error);
+    
+    // Отправляем уведомление об ошибке
+    const client = progressClients.get(progressId);
+    if (client) {
+      client.write(`data: ${JSON.stringify({ 
+        type: 'error', 
+        percent: 0,
+        message: 'Внутренняя ошибка сервера',
+        error: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      })}\n\n`);
+      client.end();
+      progressClients.delete(progressId);
+    }
+    
+    res.status(500).json({
+      error: 'Внутренняя ошибка сервера',
+      details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+    });
+  }
+});
+
+// SSE эндпоинт для прогресса
+router.get('/progress/:progressId', (req, res) => {
+  const progressId = req.params.progressId;
+  
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+  
+  // Сохраняем соединение
+  progressClients.set(progressId, res);
+  
+  // Отправляем начальное сообщение
+  res.write(`data: ${JSON.stringify({ 
+    type: 'connected',
+    message: 'Соединение установлено'
+  })}\n\n`);
+  
+  // Очистка при отключении
+  req.on('close', () => {
+    progressClients.delete(progressId);
+  });
 });
 
 export default router;

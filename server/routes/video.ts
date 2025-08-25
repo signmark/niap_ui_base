@@ -53,4 +53,23 @@ router.post('/process', authMiddleware, upload.single('video'), async (req, res)
   }
 });
 
+// Раздача обработанных видео файлов
+router.get('/uploads/processed/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '../../uploads/processed', filename);
+  
+  // Проверяем существование файла
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Файл не найден' });
+  }
+  
+  // Устанавливаем правильные заголовки
+  res.setHeader('Content-Type', 'video/mp4');
+  res.setHeader('Accept-Ranges', 'bytes');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  
+  // Отправляем файл
+  res.sendFile(filePath);
+});
+
 export default router;

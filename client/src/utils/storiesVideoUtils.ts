@@ -30,7 +30,7 @@ export interface VideoStoryData {
 /**
  * Генерирует видео Stories с наложением текста
  */
-export const generateStoriesVideo = async (story: VideoStoryData): Promise<string> => {
+export const generateStoriesVideo = async (story: VideoStoryData, campaignId?: string): Promise<string> => {
   console.log('[STORIES-VIDEO] Начинаем генерацию видео с текстом:', story);
 
   if (!story.backgroundVideoUrl) {
@@ -73,22 +73,22 @@ export const generateStoriesVideo = async (story: VideoStoryData): Promise<strin
       throw new Error('Токен авторизации не найден');
     }
 
-    // Скачиваем видео
-    const videoResponse = await fetch(story.backgroundVideoUrl);
-    const videoBlob = await videoResponse.blob();
-    
-    // Создаем FormData для отправки
-    const formData = new FormData();
-    formData.append('video', videoBlob, 'story_video.mp4');
-    formData.append('textOverlays', JSON.stringify(videoOverlays));
+    // Отправляем только URL видео и наложения на сервер для обработки
+    // Сервер сам скачает видео и обработает его
+    const requestData = {
+      videoUrl: story.backgroundVideoUrl,
+      textOverlays: videoOverlays,
+      campaignId: campaignId
+    };
 
     // Отправляем на обработку
-    const response = await fetch('/api/video/process-video', {
+    const response = await fetch('/api/video-processing/process-video-from-url', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authToken}`
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
       },
-      body: formData
+      body: JSON.stringify(requestData)
     });
 
     if (!response.ok) {
