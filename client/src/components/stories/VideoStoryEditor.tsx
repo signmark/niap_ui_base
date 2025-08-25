@@ -222,6 +222,14 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
             console.error('Ошибка парсинга метаданных:', e);
           }
 
+          console.log('Загруженные данные Stories:', {
+            id: storyId,
+            title: data.title || '',
+            video_url: data.video_url,
+            backgroundVideoUrl: data.video_url || null,
+            hasVideoUrl: !!data.video_url
+          });
+          
           setStory({
             id: storyId,
             title: data.title || '',
@@ -571,6 +579,14 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                       className="absolute inset-0 w-full h-full object-cover"
                       onLoadedMetadata={handleVideoLoadedMetadata}
                       onTimeUpdate={handleTimeUpdate}
+                      onError={(e) => {
+                        console.error('Ошибка загрузки видео:', e);
+                        console.error('Video URL:', story.backgroundVideoUrl);
+                        console.error('Video element error:', e.target.error);
+                      }}
+                      onLoadStart={() => {
+                        console.log('Начало загрузки видео:', story.backgroundVideoUrl);
+                      }}
                       onPlay={() => setIsPlaying(true)}
                       onPause={() => setIsPlaying(false)}
                     />

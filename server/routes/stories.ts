@@ -986,10 +986,12 @@ router.get('/simple/:id', authMiddleware, async (req, res) => {
     console.log('[DEV] [stories] Story fetched - ID:', story.id);
     console.log('[DEV] [stories] Story title:', story.title);
     console.log('[DEV] [stories] Story image_url:', story.image_url);
+    console.log('[DEV] [stories] Story video_url:', story.video_url);
     console.log('[DEV] [stories] Story created_at:', story.created_at);
     console.log('[DEV] [stories] Story updated_at:', story.updated_at);
     console.log('[DEV] [stories] Story user_id:', story.user_id, '| Request user_id:', userId);
     console.log('[DEV] [stories] Story content_type:', story.content_type);
+    console.log('[DEV] [stories] Full story object keys:', Object.keys(story));
     
     // Проверяем принадлежность пользователю
     if (story.user_id !== userId) {
