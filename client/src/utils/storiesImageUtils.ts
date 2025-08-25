@@ -173,7 +173,7 @@ export const generateStoriesImage = async (story: StoryData): Promise<string> =>
 
 export const uploadImageToImgbb = async (base64Image: string, title: string = 'story'): Promise<string> => {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
     if (!token) {
       throw new Error('Токен авторизации не найден');
     }

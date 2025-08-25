@@ -46,6 +46,7 @@ export default function EnhancedStoryEditor({ campaignId: propCampaignId, storyI
   if (selectedMode === 'simple' && activeStoryId) {
     return (
       <SimpleStoryEditor 
+        key={`${activeCampaignId}-${activeStoryId}`}
         campaignId={activeCampaignId}
         storyId={activeStoryId}
       />

@@ -106,6 +106,7 @@ const LayoutEditorDemo = React.memo(() => <WithLayout Component={EditorDemoPage}
 const LayoutBusinessQuestionnaire = React.memo(() => <WithLayout Component={BusinessQuestionnairePage} />);
 const LayoutInstagramSetup = React.memo(() => <WithLayout Component={InstagramSimplePage} />);
 const LayoutStoriesGeneratorTest = React.memo(() => <WithLayout Component={StoriesGeneratorTest} />);
+const LayoutStoriesPage = React.memo(() => <WithLayout Component={StoriesPage} />);
 
 function Router() {
   return (
@@ -115,14 +116,14 @@ function Router() {
       <Route path="/login" component={Login} />
       
       {/* Stories routes - нужно поставить ДО других роутов */}
-      <Route path="/stories/:storyId/edit" component={() => <WithLayout Component={StoriesPage} />} />
-      <Route path="/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
-      <Route path="/stories" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/stories/:storyId/edit" component={LayoutStoriesPage} />
+      <Route path="/stories/new" component={LayoutStoriesPage} />
+      <Route path="/stories" component={LayoutStoriesPage} />
       
       <Route path="/campaigns" component={LayoutCampaigns} />
       <Route path="/campaigns/:id" component={LayoutCampaignDetails} />
-      <Route path="/campaigns/:campaignId/stories/new" component={() => <WithLayout Component={StoriesPage} />} />
-      <Route path="/campaigns/:campaignId/stories/edit/:storyId" component={() => <WithLayout Component={StoriesPage} />} />
+      <Route path="/campaigns/:campaignId/stories/new" component={LayoutStoriesPage} />
+      <Route path="/campaigns/:campaignId/stories/edit/:storyId" component={LayoutStoriesPage} />
       <Route path="/business-questionnaire/:id" component={LayoutBusinessQuestionnaire} />
       <Route path="/keywords" component={LayoutKeywords} />
       <Route path="/content" component={LayoutContent} />

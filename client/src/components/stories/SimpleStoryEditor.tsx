@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Upload, Save, ArrowLeft, Plus, Trash2, Type, Palette, RotateCw, Eye, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InstagramStoriesPreview } from '../InstagramStoriesPreview';
 import { StoriesImageGenerator } from './StoriesImageGenerator';
@@ -12,7 +14,6 @@ import { StoryPublishButton } from './StoryPublishButton';
 import { apiRequest } from '@/lib/queryClient';
 import axios from 'axios';
 import Draggable from 'react-draggable';
-
 
 interface TextOverlay {
   id: string;
@@ -29,12 +30,10 @@ interface TextOverlay {
 }
 
 interface StoryData {
-  id?: string; // ID story из базы данных
+  id?: string;
   title: string;
   backgroundImageUrl: string | null;
   textOverlays: TextOverlay[];
-  loading: boolean;
-  error: string | null;
 }
 
 interface SimpleStoryEditorProps {
@@ -49,128 +48,111 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-
-  // Простое состояние без сложностей
+  // ПРОСТОЕ СОСТОЯНИЕ - БЕЗ СЛОЖНОСТЕЙ
   const [story, setStory] = useState<StoryData>({
-    id: storyId, // Устанавливаем ID сразу
+    id: storyId,
     title: '',
     backgroundImageUrl: null,
-    textOverlays: [],
-    loading: true,
-    error: null
+    textOverlays: []
   });
 
-  const [isLoaded, setIsLoaded] = useState(false);
+  // ОТДЕЛЬНЫЕ ФЛАГИ СОСТОЯНИЯ
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  // REF ДЛЯ ОДНОКРАТНОЙ ЗАГРУЗКИ
+  const hasLoadedRef = useRef(false);
 
-  // Загрузка данных ОДИН РАЗ при инициализации
+  // ЗАГРУЗКА ДАННЫХ - ТОЛЬКО ОДИН РАЗ БЕЗ ЗАВИСИМОСТЕЙ
   useEffect(() => {
-    if (!storyId || isLoaded) return;
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
 
     const loadStory = async () => {
       try {
-        setStory(prev => ({ ...prev, loading: true }));
-        
+        setLoading(true);
         const response = await apiRequest(`/api/stories/simple/${storyId}`);
-        const storyData = response.data || response;
+        const data = response.data || response;
         
         let textOverlays = [];
-        if (storyData.metadata) {
+        if (data.metadata) {
           try {
-            const metadata = typeof storyData.metadata === 'string' 
-              ? JSON.parse(storyData.metadata) 
-              : storyData.metadata;
-            // Убеждаемся что у всех элементов есть поле rotation
+            const metadata = typeof data.metadata === 'string' 
+              ? JSON.parse(data.metadata) 
+              : data.metadata;
             textOverlays = (metadata.textOverlays || []).map((overlay: any) => ({
               ...overlay,
-              rotation: overlay.rotation !== undefined ? overlay.rotation : 0
+              rotation: overlay.rotation || 0
             }));
           } catch (e) {
-            console.error('Ошибка парсинга метаданных:', e);
+            console.error('Ошибка метаданных:', e);
           }
         }
 
         setStory({
-          id: storyData.id, // ВАЖНО: сохраняем ID из базы
-          title: storyData.title || '',
-          backgroundImageUrl: storyData.image_url || null,
-          textOverlays,
-          loading: false,
-          error: null
+          id: data.id,
+          title: data.title || '',
+          backgroundImageUrl: data.image_url || null,
+          textOverlays
         });
-
-        setIsLoaded(true);
-        
       } catch (error) {
-        console.error('Ошибка загрузки Story:', error);
-        setStory(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Ошибка загрузки Story'
-        }));
+        console.error('Ошибка загрузки:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось загрузить Story",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
     loadStory();
-  }, [storyId]);
+  }, []); // ПУСТОЙ МАССИВ ЗАВИСИМОСТЕЙ!
 
-  // Загрузка изображения
+  // ЗАГРУЗКА ИЗОБРАЖЕНИЯ - БЕЗ АВТОСОХРАНЕНИЯ
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Ошибка",
-        description: "Можно загружать только изображения",
+        description: "Только изображения",
         variant: "destructive"
       });
       return;
     }
 
-    setStory(prev => ({ ...prev, loading: true }));
-
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append('image', file);
 
-      console.log('Загружаем изображение на Imgbb...');
       const response = await axios.post('/api/imgur/upload-file', formData);
-
+      
       if (response.data?.url) {
-        // Обновляем состояние И сохраняем в БД
         setStory(prev => ({
           ...prev,
-          backgroundImageUrl: response.data.url,
-          loading: false
+          backgroundImageUrl: response.data.url
         }));
 
-        // Сохраняем в БД
-        await apiRequest(`/api/stories/simple/${storyId}`, {
-          method: 'PUT',
-          data: { image_url: response.data.url }
-        });
-
         toast({
-          title: "Изображение загружено",
-          description: "Изображение успешно сохранено"
+          title: "Загружено",
+          description: "Изображение готово. Нажмите 'Сохранить'"
         });
-
-        console.log('Изображение загружено и сохранено:', response.data.url);
       }
     } catch (error) {
-      console.error('Ошибка загрузки изображения:', error);
-      setStory(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Ошибка загрузки изображения'
-      }));
-      
+      console.error('Ошибка загрузки:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить изображение",
         variant: "destructive"
       });
+    } finally {
+      setUploading(false);
     }
   };
 
-  // Добавление текста
+  // ДОБАВЛЕНИЕ ТЕКСТА
   const addTextOverlay = () => {
     const newOverlay: TextOverlay = {
       id: `text_${Date.now()}`,
@@ -192,7 +174,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
     }));
   };
 
-  // Обновление текста
+  // ОБНОВЛЕНИЕ ТЕКСТА
   const updateTextOverlay = (id: string, updates: Partial<TextOverlay>) => {
     setStory(prev => ({
       ...prev,
@@ -202,7 +184,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
     }));
   };
 
-  // Удаление текста
+  // УДАЛЕНИЕ ТЕКСТА
   const removeTextOverlay = (id: string) => {
     setStory(prev => ({
       ...prev,
@@ -210,15 +192,20 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
     }));
   };
 
-  // Сохранение Story
-  const [saveInProgress, setSaveInProgress] = useState(false);
-  
-  const handleSave = async () => {
-    if (saveInProgress) return; // Предотвращаем множественные вызовы
-    
-    try {
-      setSaveInProgress(true);
+  // ОБРАБОТКА ПЕРЕТАСКИВАНИЯ
+  const handleDrag = (overlayId: string, data: { x: number; y: number }) => {
+    updateTextOverlay(overlayId, {
+      x: Math.max(-50, Math.min(350, data.x / 0.8)),
+      y: Math.max(-50, Math.min(600, data.y / 0.8))
+    });
+  };
 
+  // СОХРАНЕНИЕ - БЕЗ ЦИКЛОВ
+  const handleSave = async () => {
+    if (saving) return;
+
+    setSaving(true);
+    try {
       const metadata = {
         textOverlays: story.textOverlays,
         type: 'instagram',
@@ -237,351 +224,418 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
 
       toast({
         title: "Сохранено",
-        description: "Story успешно сохранена"
+        description: "Story сохранена"
       });
-
-
     } catch (error) {
       console.error('Ошибка сохранения:', error);
-
       toast({
         title: "Ошибка",
-        description: "Не удалось сохранить Story",
+        description: "Не удалось сохранить",
         variant: "destructive"
       });
+    } finally {
+      setSaving(false);
     }
-    
-    // Задержка перед разблокировкой для предотвращения спама
-    setTimeout(() => {
-      setSaveInProgress(false);
-    }, 1000);
   };
 
-  // Возврат к списку
+  // ВОЗВРАТ НАЗАД
   const goBack = () => {
-    setLocation(`/content`);
+    setLocation('/content');
   };
 
-  if (story.loading && !isLoaded) {
+  if (loading) {
     return (
       <div className="p-6">
-        <div className="text-center">Загрузка Story...</div>
-      </div>
-    );
-  }
-
-  // Обработчик перетаскивания текста в превью
-  const handleDrag = (overlayId: string, e: any, data: any) => {
-    updateTextOverlay(overlayId, {
-      x: Math.max(-50, Math.min(350, data.x / 0.8)), // Максимально расширяем границы
-      y: Math.max(-50, Math.min(600, data.y / 0.8))  // Позволяем перетаскивать за пределы
-    });
-  };
-
-  if (story.error) {
-    return (
-      <div className="p-6">
-        <div className="text-center text-red-600">{story.error}</div>
+        <div className="text-center">Загрузка...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Заголовок */}
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-4 space-y-4">
+      {/* ЗАГОЛОВОК */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border-2 border-gray-200 shadow-lg">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" onClick={goBack}>
+          <Button 
+            variant="outline" 
+            onClick={goBack}
+            className="border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Назад
           </Button>
-          <h1 className="text-2xl font-bold">Редактор Stories</h1>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+              <Type className="w-5 h-5 text-white" />
+            </div>
+            <span>Редактор Stories</span>
+          </h1>
         </div>
-        <Button onClick={handleSave} disabled={saveInProgress}>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg text-white border-none px-6 py-2"
+        >
           <Save className="w-4 h-4 mr-2" />
-          Сохранить
+          {saving ? (
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Сохранение...</span>
+            </div>
+          ) : (
+            'Сохранить'
+          )}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Редактор */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* НАСТРОЙКИ */}
         <div className="space-y-6">
-          {/* Название */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Основные настройки</CardTitle>
+          {/* ОСНОВНЫЕ НАСТРОЙКИ */}
+          <Card className="border-2 border-gradient-to-r from-green-100 to-blue-100 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-2 text-gray-800">
+                <Image className="w-5 h-5 text-green-600" />
+                <span>Основные настройки</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
+            <CardContent className="space-y-3 p-4">
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-600 mb-2">
+                  <Type className="w-4 h-4 mr-1" />
                   Название Story
                 </label>
                 <Input
                   value={story.title}
                   onChange={(e) => setStory(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Введите название"
+                  placeholder="Введите название..."
+                  className="border-2 border-gray-200 focus:border-green-400 rounded-lg h-10"
                 />
               </div>
 
-              {/* URL изображения как редактируемое поле */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-gray-600 mb-2">
+                  <Image className="w-4 h-4 mr-1" />
                   URL изображения
                 </label>
-                <Input
-                  type="url"
-                  value={story.backgroundImageUrl || ''}
-                  onChange={(e) => setStory(prev => ({ ...prev, backgroundImageUrl: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  className="text-sm"
-                />
-              </div>
-
-              {/* Загрузка изображения */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Загрузить изображение
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file);
-                    }}
-                    className="hidden"
-                    id="image-upload"
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="url"
+                    value={story.backgroundImageUrl || ''}
+                    onChange={(e) => setStory(prev => ({ ...prev, backgroundImageUrl: e.target.value }))}
+                    placeholder="https://example.com/image.jpg"
+                    className="border-2 border-gray-200 focus:border-green-400 rounded-lg h-9 flex-1"
                   />
-                  <label htmlFor="image-upload" className="cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Нажмите для загрузки изображения
-                    </p>
-                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                      className="hidden"
+                      id="image-upload"
+                      disabled={uploading}
+                    />
+                    <label 
+                      htmlFor="image-upload" 
+                      className="cursor-pointer w-9 h-9 bg-gradient-to-br from-green-400 to-blue-400 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-all"
+                      title="Загрузить изображение"
+                    >
+                      {uploading ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <Upload className="w-4 h-4 text-white" />
+                      )}
+                    </label>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Текстовые слои */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Текстовые слои
-                <Button size="sm" onClick={addTextOverlay}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Добавить текст
+          {/* ТЕКСТОВЫЕ ЭЛЕМЕНТЫ */}
+          <Card className="border-2 border-gradient-to-r from-blue-100 to-purple-100 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg">
+              <CardTitle className="flex items-center justify-between text-gray-800">
+                <div className="flex items-center space-x-2">
+                  <Type className="w-5 h-5 text-blue-600" />
+                  <span>Текстовые элементы</span>
+                </div>
+                <Button 
+                  onClick={addTextOverlay} 
+                  size="sm" 
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-md"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Добавить
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 p-4">
               {story.textOverlays.map((overlay) => (
-                <div key={overlay.id} className="border rounded-lg p-4 space-y-3">
+                <div key={overlay.id} className="border-2 border-gray-200 rounded-lg p-2 space-y-2 bg-gradient-to-br from-white to-gray-50 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Текст {overlay.id}</span>
-                    <Button
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+                        <Type className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-semibold text-gray-700">Элемент {overlay.id.split('_')[1]}</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
                       size="sm"
-                      variant="destructive"
                       onClick={() => removeTextOverlay(overlay.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                  
-                  <Textarea
-                    value={overlay.text}
-                    onChange={(e) => updateTextOverlay(overlay.id, { text: e.target.value })}
-                    placeholder="Введите текст"
-                    rows={2}
-                  />
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Размер шрифта</label>
-                      <Input
-                        type="range"
-                        min="12"
-                        max="72"
-                        value={overlay.fontSize}
-                        onChange={(e) => updateTextOverlay(overlay.id, { fontSize: Number(e.target.value) })}
-                        className="w-full"
-                      />
-                      <div className="text-xs text-gray-500 text-center">{overlay.fontSize}px</div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Цвет текста</label>
-                      <div className="flex items-center space-x-1">
-                        <input
-                          type="color"
-                          value={overlay.color}
-                          onChange={(e) => updateTextOverlay(overlay.id, { color: e.target.value })}
-                          className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                        />
-                        <div className="text-xs text-gray-500">{overlay.color}</div>
+
+                  <div>
+                    <label className="flex items-center text-xs font-medium text-gray-600 mb-1">
+                      <Type className="w-3 h-3 mr-1" />
+                      Текст
+                    </label>
+                    <Input
+                      value={overlay.text}
+                      onChange={(e) => updateTextOverlay(overlay.id, { text: e.target.value })}
+                      placeholder="Введите текст..."
+                      className="border-2 border-gray-200 focus:border-blue-400 rounded-lg h-8 text-sm"
+                    />
+                  </div>
+
+                  {/* РАЗМЕР ТЕКСТА - СЛАЙДЕР */}
+                  <div className="bg-blue-50 p-2 rounded-lg">
+                    <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                      <Eye className="w-3 h-3 mr-1" />
+                      Размер: <span className="ml-1 font-bold text-blue-600">{overlay.fontSize}px</span>
+                    </label>
+                    <Slider
+                      value={[overlay.fontSize]}
+                      onValueChange={(value) => updateTextOverlay(overlay.id, { fontSize: value[0] })}
+                      max={72}
+                      min={8}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* ШРИФТ */}
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-600">
+                      <Type className="w-4 h-4 mr-1" />
+                      Шрифт
+                    </label>
+                    <Select value={overlay.fontFamily} onValueChange={(value) => updateTextOverlay(overlay.id, { fontFamily: value })}>
+                      <SelectTrigger className="border-2 border-gray-200 focus:border-blue-400 rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Arial">Arial</SelectItem>
+                        <SelectItem value="Helvetica">Helvetica</SelectItem>
+                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                        <SelectItem value="Georgia">Georgia</SelectItem>
+                        <SelectItem value="Courier New">Courier New</SelectItem>
+                        <SelectItem value="Verdana">Verdana</SelectItem>
+                        <SelectItem value="Impact">Impact</SelectItem>
+                        <SelectItem value="Comic Sans MS">Comic Sans MS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* ЦВЕТА */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-pink-50 to-red-50 p-3 rounded-lg">
+                      <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                        <Palette className="w-3 h-3 mr-1" />
+                        Цвет текста
+                      </label>
+                      <div className="relative">
+                        <div className="w-full h-10 rounded-lg border-2 border-gray-300 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                          <input
+                            type="color"
+                            value={overlay.color}
+                            onChange={(e) => updateTextOverlay(overlay.id, { color: e.target.value })}
+                            className="w-full h-full cursor-pointer border-none outline-none"
+                            style={{ WebkitAppearance: 'none', border: 'none' }}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Цвет фона</label>
-                      <div className="flex items-center space-x-1">
-                        <input
-                          type="color"
-                          value={overlay.backgroundColor === 'transparent' ? '#ffffff' : overlay.backgroundColor || '#ffffff'}
-                          onChange={(e) => updateTextOverlay(overlay.id, { backgroundColor: e.target.value })}
-                          className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                        />
-                        <Button
-                          size="sm"
-                          variant={overlay.backgroundColor === 'transparent' ? 'default' : 'outline'}
-                          onClick={() => updateTextOverlay(overlay.id, { backgroundColor: 'transparent' })}
-                          className="text-xs px-2 py-1 h-6"
-                        >
-                          Прозрачный
-                        </Button>
+                    <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
+                      <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                        <Palette className="w-3 h-3 mr-1" />
+                        Фон текста
+                      </label>
+                      <div className="space-y-3">
+                        {overlay.backgroundColor !== 'transparent' && (
+                          <div className="w-full h-10 rounded-lg border-2 border-gray-300 overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                            <input
+                              type="color"
+                              value={overlay.backgroundColor}
+                              onChange={(e) => updateTextOverlay(overlay.id, { backgroundColor: e.target.value })}
+                              className="w-full h-full cursor-pointer border-none outline-none"
+                              style={{ WebkitAppearance: 'none', border: 'none' }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-2 bg-white p-2 rounded-lg border border-gray-200">
+                          <Checkbox
+                            id={`transparent-${overlay.id}`}
+                            checked={overlay.backgroundColor === 'transparent'}
+                            onCheckedChange={(checked) => 
+                              updateTextOverlay(overlay.id, { 
+                                backgroundColor: checked ? 'transparent' : '#000000' 
+                              })
+                            }
+                          />
+                          <label htmlFor={`transparent-${overlay.id}`} className="text-sm text-gray-600 font-medium">
+                            Прозрачный фон
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Шрифт</label>
-                      <select 
-                        value={overlay.fontFamily}
-                        onChange={(e) => updateTextOverlay(overlay.id, { fontFamily: e.target.value })}
-                        className="w-full p-1 text-xs border rounded"
-                      >
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Helvetica">Helvetica</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Open Sans">Open Sans</option>
-                        <option value="Montserrat">Montserrat</option>
-                        <option value="Impact">Impact</option>
-                        <option value="Comic Sans MS">Comic Sans MS</option>
-                      </select>
+                  {/* НАКЛОН - СЛАЙДЕР */}
+                  <div className="bg-purple-50 p-2 rounded-lg">
+                    <label className="flex items-center text-xs font-medium text-gray-700 mb-1">
+                      <RotateCw className="w-3 h-3 mr-1" />
+                      Наклон: <span className="ml-1 font-bold text-purple-600">{overlay.rotation || 0}°</span>
+                    </label>
+                    
+                    {/* Индикаторы направления */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                      <div className="flex items-center space-x-1">
+                        <div className="w-4 h-4 border-2 border-gray-400 rounded transform -rotate-45 flex items-center justify-center">
+                          <div className="w-1 h-1 bg-gray-400 rounded"></div>
+                        </div>
+                        <span>Влево (-45°)</span>
+                      </div>
+                      <span className="text-center font-medium">0°</span>
+                      <div className="flex items-center space-x-1">
+                        <span>Вправо (+45°)</span>
+                        <div className="w-4 h-4 border-2 border-gray-400 rounded transform rotate-45 flex items-center justify-center">
+                          <div className="w-1 h-1 bg-gray-400 rounded"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1">Поворот: {overlay.rotation || 0}°</label>
-                      <input
-                        type="range"
-                        min="-180"
-                        max="180"
-                        value={overlay.rotation || 0}
-                        onChange={(e) => {
-                          const newRotation = parseInt(e.target.value);
-                          console.log('Устанавливаем поворот:', newRotation, 'для элемента:', overlay.id);
-                          // Форсируем обновление
-                          updateTextOverlay(overlay.id, { rotation: newRotation });
-                          // Принудительное обновление стиля
-                          setTimeout(() => {
-                            const element = document.querySelector(`[data-overlay-id="${overlay.id}"]`);
-                            if (element) {
-                              (element as HTMLElement).style.transform = `rotate(${newRotation}deg)`;
-                              (element as HTMLElement).style.transformOrigin = 'center center';
-                            }
-                          }, 10);
-                        }}
+                    
+                    <div className="relative">
+                      <Slider
+                        value={[overlay.rotation || 0]}
+                        onValueChange={(value) => updateTextOverlay(overlay.id, { rotation: value[0] })}
+                        max={45}
+                        min={-45}
+                        step={1}
                         className="w-full"
                       />
+                      {/* Центральная метка */}
+                      <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
+                        <div className="w-px h-2 bg-gray-400"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
-              
+
               {story.textOverlays.length === 0 && (
-                <div className="text-center text-gray-500 py-8">
-                  Нет текстовых слоев. Нажмите "Добавить текст" для создания.
-                </div>
+                <p className="text-gray-500 text-center py-4">
+                  Нет текстовых элементов
+                </p>
               )}
             </CardContent>
           </Card>
+
+          {/* ПУБЛИКАЦИЯ */}
+          <StoryPublishButton
+            story={{ ...story, id: storyId }}
+            contentId={campaignId}
+            platforms={['instagram']}
+          />
         </div>
 
-        {/* Превью */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Превью</CardTitle>
+        {/* ПРЕВЬЮ */}
+        <div className="space-y-4">
+          <Card className="border-2 border-gradient-to-r from-purple-100 to-pink-100 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-lg">
+              <CardTitle className="flex items-center space-x-2 text-gray-800">
+                <Eye className="w-5 h-5 text-purple-600" />
+                <span>Превью</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center">
-              <div className="relative">
-                {/* Фоновое изображение Stories */}
-                <div 
-                  className="w-[280px] h-[497px] rounded-lg overflow-hidden bg-gray-900 relative"
-                  style={{
-                    backgroundImage: story.backgroundImageUrl ? `url(${story.backgroundImageUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  {/* Перетаскиваемые текстовые элементы */}
-                  {story.textOverlays.map((overlay) => (
-                    <Draggable
-                      key={overlay.id}
-                      position={{ x: overlay.x * 0.8, y: overlay.y * 0.8 }} // Масштабируем для превью
-                      onDrag={(e, data) => handleDrag(overlay.id, e, data)}
-                      bounds={{left: -50, top: -50, right: 320, bottom: 550}} // Максимально расширяем границы
-                      enableUserSelectHack={false}
-                    >
-                      <div className="absolute">
-                        <div
-                          className="cursor-move border border-dashed border-blue-400 bg-blue-50 bg-opacity-20 p-1 rounded select-none"
-                          data-overlay-id={overlay.id}
-                          style={{
-                            fontSize: (overlay.fontSize * 0.8) + 'px',
-                            color: overlay.color,
-                            fontFamily: overlay.fontFamily,
-                            fontWeight: overlay.fontWeight,
-                            textAlign: overlay.textAlign as any,
-                            backgroundColor: overlay.backgroundColor === 'transparent' ? 'transparent' : overlay.backgroundColor,
-                            minWidth: '40px',
-                            minHeight: '16px',
-                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                            transform: `rotate(${overlay.rotation || 0}deg)`,
-                            transformOrigin: 'center center',
-                            display: 'inline-block'
-                          }}
-                        >
-                          {overlay.text || 'Текст'}
-                        </div>
-                      </div>
-                    </Draggable>
-                  ))}
-                  
-
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Генератор изображений */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Генератор изображений</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <StoriesImageGenerator story={story} />
-                
-                {/* Кнопка публикации с автоматической генерацией */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium mb-2">Публикация:</h4>
-                  <StoryPublishButton 
-                    story={story} 
-                    contentId={storyId}
-                    platforms={['instagram']}
-                    disabled={!story.textOverlays?.length}
+            <CardContent className="p-4">
+              <div 
+                className="relative mx-auto bg-gray-100 rounded-lg overflow-hidden"
+                style={{ width: '280px', height: '497px' }}
+              >
+                {/* ФОН */}
+                {story.backgroundImageUrl ? (
+                  <img
+                    src={story.backgroundImageUrl}
+                    alt="Background"
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    style={{ zIndex: 1 }}
                   />
-                  {!story.textOverlays?.length && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Добавьте текст для публикации
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg" 
+                    style={{ zIndex: 1 }}
+                  />
+                )}
+
+                {/* ТЕКСТОВЫЕ ЭЛЕМЕНТЫ */}
+                {story.textOverlays.map((overlay) => (
+                  <Draggable
+                    key={overlay.id}
+                    position={{ x: overlay.x * 0.8, y: overlay.y * 0.8 }}
+                    onStop={(e, data) => handleDrag(overlay.id, data)}
+                    bounds="parent"
+                  >
+                    <div
+                      className="absolute cursor-move select-none"
+                      style={{
+                        minWidth: '20px',
+                        zIndex: 100,
+                        pointerEvents: 'auto',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: `${overlay.fontSize * 0.8}px`,
+                          color: overlay.color,
+                          fontFamily: overlay.fontFamily,
+                          fontWeight: overlay.fontWeight,
+                          textAlign: overlay.textAlign as any,
+                          backgroundColor: overlay.backgroundColor !== 'transparent' ? overlay.backgroundColor : undefined,
+                          textShadow: overlay.backgroundColor === 'transparent' ? '2px 2px 4px rgba(0,0,0,0.8)' : 'none',
+                          padding: overlay.backgroundColor !== 'transparent' ? '4px 8px' : '2px',
+                          borderRadius: overlay.backgroundColor !== 'transparent' ? '4px' : '0',
+                          whiteSpace: 'nowrap',
+                          transform: `rotate(${overlay.rotation || 0}deg)`,
+                          transformOrigin: 'center center',
+                          display: 'inline-block'
+                        }}
+                      >
+                        {overlay.text || 'Новый текст'}
+                      </div>
+                    </div>
+                  </Draggable>
+                ))}
               </div>
             </CardContent>
           </Card>
+
+          {/* ГЕНЕРАТОР ИЗОБРАЖЕНИЙ */}
+          <StoriesImageGenerator 
+            story={{ ...story, id: storyId }} 
+            onImageGenerated={(url) => console.log('Изображение:', url)}
+          />
         </div>
       </div>
     </div>

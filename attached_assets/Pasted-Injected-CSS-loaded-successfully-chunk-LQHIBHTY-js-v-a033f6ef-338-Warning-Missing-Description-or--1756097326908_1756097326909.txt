@@ -1,0 +1,107 @@
+Injected CSS loaded successfully
+chunk-LQHIBHTY.js?v=a033f6ef:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-LQHIBHTY.js?v=a033f6ef:338
+chunk-RPCDYKBN.js?v=a033f6ef:521 Warning: findDOMNode is deprecated and will be removed in the next major release. Instead, add a ref directly to the element you want to reference. Learn more about using refs safely here: https://reactjs.org/link/strict-mode-find-node
+    at DraggableCore (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1311:9)
+    at Draggable (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-draggable.js?v=a033f6ef:1718:9)
+    at div
+    at div
+    at div
+    at _c9 (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at SimpleStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/SimpleStoryEditor.tsx:32:3)
+    at EnhancedStoryEditor (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/stories/EnhancedStoryEditor.tsx:24:59)
+    at div
+    at div
+    at StoriesPage (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/pages/stories/index.tsx:24:35)
+    at main
+    at div
+    at div
+    at ThemeProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/ThemeProvider.tsx:20:33)
+    at Layout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at WithLayout (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=s5HxUxefnyqgChiGa93rc:83:23)
+    at component
+    at Route (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:323:16)
+    at Switch (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a033f6ef:379:17)
+    at Router
+    at AuthGuard (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/components/AuthGuard.tsx:23:29)
+    at AuthProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a033f6ef:2805:3)
+    at App (https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/src/App.tsx?v=s5HxUxefnyqgChiGa93rc:521:3)
+printWarning @ chunk-RPCDYKBN.js?v=a033f6ef:521
+StoriesImageGenerator.tsx:20 [STORIES-IMAGE-GENERATOR] Начало генерации изображения
+StoriesImageGenerator.tsx:21 [STORIES-IMAGE-GENERATOR] Story: Object
+StoriesImageGenerator.tsx:22 [STORIES-IMAGE-GENERATOR] textOverlays: Array(1)
+StoriesImageGenerator.tsx:34 [STORIES-IMAGE-GENERATOR] Запускаем генерацию для 1 элементов
+StoriesImageGenerator.tsx:97 [STORIES-IMAGE-GENERATOR] Исходные координаты из базы: x=101.25, y=328.75
+StoriesImageGenerator.tsx:105 [STORIES-IMAGE-GENERATOR] Координаты в превью: x=81, y=263
+StoriesImageGenerator.tsx:116 [STORIES-IMAGE-GENERATOR] Canvas размеры: width=540, height=960
+StoriesImageGenerator.tsx:117 [STORIES-IMAGE-GENERATOR] Scale факторы: scaleX=1.9285714285714286, scaleY=1.93158953722334
+StoriesImageGenerator.tsx:164 [STORIES-IMAGE-GENERATOR] Canvas создан, размер base64: 49491
+StoriesImageGenerator.tsx:174 [STORIES-IMAGE-GENERATOR] Загружаем на ImgBB...
+StoriesImageGenerator.tsx:200 [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://i.ibb.co/B5Sdw6Qr/story-SHELL-1756045801051.jpg
+StoriesImageGenerator.tsx:222 [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+StoryPublishButton.tsx:33 [STORY-PUBLISH-BUTTON] Начинаем публикацию: Object
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: Array(1)
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: Array(1)
+publishWithImageGeneration.ts:12 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Story object keys: Array(6)
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:28 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:36 [PUBLISH-WITH-IMAGE] Найдены textOverlays, проверяем additional_media...
+publishWithImageGeneration.ts:56 [PUBLISH-WITH-IMAGE] Генерируем новое изображение...
+publishWithImageGeneration.ts:64 [PUBLISH-WITH-IMAGE] Story для генерации: Object
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: Object
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: Object
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: Array(1)
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: Object
+storiesImageUtils.ts:113 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 48931
+publishWithImageGeneration.ts:68 [PUBLISH-WITH-IMAGE] Изображение сгенерировано, размер base64: 48931
+publishWithImageGeneration.ts:71 [PUBLISH-WITH-IMAGE] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:212 [STORIES-IMAGE-UPLOAD] Ошибка загрузки: Error: Токен авторизации не найден
+    at uploadImageToImgbb (storiesImageUtils.ts:178:13)
+    at publishWithImageGeneration (publishWithImageGeneration.ts:72:35)
+    at async handlePublish (StoryPublishButton.tsx:39:22)
+uploadImageToImgbb @ storiesImageUtils.ts:212
+publishWithImageGeneration.ts:148 [PUBLISH-WITH-IMAGE] Ошибка: Error: Токен авторизации не найден
+    at uploadImageToImgbb (storiesImageUtils.ts:178:13)
+    at publishWithImageGeneration (publishWithImageGeneration.ts:72:35)
+    at async handlePublish (StoryPublishButton.tsx:39:22)
+publishWithImageGeneration @ publishWithImageGeneration.ts:148
+StoryPublishButton.tsx:59 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Токен авторизации не найден
+    at uploadImageToImgbb (storiesImageUtils.ts:178:13)
+    at publishWithImageGeneration (publishWithImageGeneration.ts:72:35)
+    at async handlePublish (StoryPublishButton.tsx:39:22)
+handlePublish @ StoryPublishButton.tsx:59
+index.tsx:2465 Публикация контента - contentId: bad91708-452f-41e0-abde-c978293f2fd9
+index.tsx:2466 Публикация контента - type: story
+index.tsx:2467 Публикация контента - platforms: Array(1)
+index.tsx:2468 Публикация контента - полный объект: Object
+index.tsx:2475 [DEV] [content-publish-dialog] 🎬 Using Stories with image generation
+index.tsx:2490 [DEV] [content-publish] Story data for generation: Object
+publishWithImageGeneration.ts:12 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Story object keys: Array(18)
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story metadata: Object
+publishWithImageGeneration.ts:22 [PUBLISH-WITH-IMAGE] Извлечены textOverlays из metadata: Array(1)
+publishWithImageGeneration.ts:28 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:36 [PUBLISH-WITH-IMAGE] Найдены textOverlays, проверяем additional_media...
+publishWithImageGeneration.ts:46 [PUBLISH-WITH-IMAGE] Используем ранее сгенерированное изображение: https://i.ibb.co/B5Sdw6Qr/story-SHELL-1756045801051.jpg
+publishWithImageGeneration.ts:99 [PUBLISH-WITH-IMAGE] additional_media обновлено
+publishWithImageGeneration.ts:116 [PUBLISH-WITH-IMAGE] Отправляем на публикацию с generatedImageUrl: https://i.ibb.co/B5Sdw6Qr/story-SHELL-1756045801051.jpg
+publishWithImageGeneration.ts:139 [PUBLISH-WITH-IMAGE] Результат публикации: Object
+index.tsx:2534 Ошибка публикации контента: Error: Stories частично опубликована. Проверьте детали.
+    at onClick (index.tsx:2508:31)
+onClick @ index.tsx:2534
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+chunk-LQHIBHTY.js?v=a033f6ef:338 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-LQHIBHTY.js?v=a033f6ef:338
+71auth.ts:42 Запущено обновление токена по расписанию
+SimpleStoryEditor.tsx:133 Загружаем изображение на Imgbb...
+SimpleStoryEditor.tsx:155 Изображение загружено и сохранено: https://i.ibb.co/H5mw82g/1756097278616-450597066.png

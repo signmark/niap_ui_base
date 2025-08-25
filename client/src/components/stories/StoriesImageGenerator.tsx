@@ -17,12 +17,7 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
   const { toast } = useToast();
 
   const generateImage = async () => {
-    console.log('[STORIES-IMAGE-GENERATOR] Начало генерации изображения');
-    console.log('[STORIES-IMAGE-GENERATOR] Story:', story);
-    console.log('[STORIES-IMAGE-GENERATOR] textOverlays:', story?.textOverlays);
-    
     if (!story || !story.textOverlays?.length) {
-      console.log('[STORIES-IMAGE-GENERATOR] Нет textOverlays для генерации');
       toast({
         title: "Ошибка",
         description: "Нет текстовых элементов для генерации",
@@ -30,8 +25,6 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
       });
       return;
     }
-
-    console.log('[STORIES-IMAGE-GENERATOR] Запускаем генерацию для', story.textOverlays.length, 'элементов');
     setIsGenerating(true);
     
     try {
@@ -43,9 +36,9 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         throw new Error('Не удалось создать контекст canvas');
       }
 
-      // Уменьшенные размеры для меньшего файла (сохраняем пропорции 9:16)
-      const width = 540;  // Половина от 1080
-      const height = 960; // Половина от 1920
+      // Размер точно как превью для идеального совпадения координат
+      const width = 280;  // Размер превью
+      const height = 497; // Размер превью
       canvas.width = width;
       canvas.height = height;
 
@@ -89,32 +82,21 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
 
       // Добавляем текстовые элементы
       for (const overlay of story.textOverlays) {
-        // ПРАВИЛЬНАЯ ЛОГИКА: повторяем точно как в превью редактора
+        // ИДЕАЛЬНАЯ ЛОГИКА: размер canvas = размер превью, никакого масштабирования!
         // 1. Берем координаты из базы
-        // 2. Умножаем на 0.8 (как в превью)  
-        // 3. Масштабируем с размера превью (280x497) до canvas размера (540x960)
+        // 2. Умножаем на 0.8 (как в превью)
+        // 3. Используем напрямую - НЕТ МАСШТАБИРОВАНИЯ!
         
-        console.log('[STORIES-IMAGE-GENERATOR] Исходные координаты из базы:', `x=${overlay.x}, y=${overlay.y}`);
+        // Используем точно те же координаты что и в превью
+        // ВАЖНО: overlay.x может быть 0, поэтому не используем || 50
+        // + учитываем padding текста как в превью
+        const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 : 2; // padding как в превью
+        const x = (overlay.x !== undefined ? overlay.x : 50) * 0.8 + textPaddingX;
+        const y = (overlay.y !== undefined ? overlay.y : 50) * 0.8;
         
-        const PREVIEW_WIDTH = 280;
-        const PREVIEW_HEIGHT = 497;
+        const fontSize = (overlay.fontSize || 24) * 0.8;
         
-        // Используем координаты из превью с небольшой коррекцией X
-        const previewX = (overlay.x || 50) * 0.8;
-        const previewY = (overlay.y || 50) * 0.8;
-        console.log('[STORIES-IMAGE-GENERATOR] Координаты в превью:', `x=${previewX}, y=${previewY}`);
-        
-        // Масштабируем с размера превью до canvas размера
-        const scaleX = width / PREVIEW_WIDTH;   // 540/280 = 1.93
-        const scaleY = height / PREVIEW_HEIGHT; // 960/497 = 1.93
-        
-        // Добавляем коррекцию X и Y для точного совпадения с редактором
-        const x = (previewX + 60) * scaleX; // +60px компенсация отклонения влево
-        const y = (previewY + 25) * scaleY; // +25px компенсация отклонения вниз
-        
-        const fontSize = (overlay.fontSize || 24) * scaleY;
-        console.log('[STORIES-IMAGE-GENERATOR] Canvas размеры:', `width=${width}, height=${height}`);
-        console.log('[STORIES-IMAGE-GENERATOR] Scale факторы:', `scaleX=${scaleX}, scaleY=${scaleY}`);
+        // Координаты готовы для рисования
         
         ctx.save();
         
@@ -133,19 +115,20 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           const textHeight = fontSize;
           
           ctx.fillStyle = overlay.backgroundColor;
+          // Фон начинается с позиции текста (как в превью)
           ctx.fillRect(
-            x - textWidth / 2 - 10,
-            y - textHeight / 2 - 5,
-            textWidth + 20,
-            textHeight + 10
+            x - 10,                   // Небольшой отступ слева
+            y - 5,                    // Небольшой отступ сверху
+            textWidth + 20,           // Ширина фона
+            textHeight + 10           // Высота фона
           );
         }
         
-        // Настройки текста
+        // Настройки текста - точно как позиционируется в превью
         ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
         ctx.fillStyle = overlay.color || '#ffffff';
-        ctx.textAlign = overlay.textAlign as CanvasTextAlign || 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';    // Текст начинается С координаты, не центрируется
+        ctx.textBaseline = 'top';   // Текст начинается СВЕРХУ координаты
         
         // Добавляем тень для лучшей читаемости
         ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
@@ -161,17 +144,14 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
 
       // Конвертируем в base64 с максимальным сжатием для ImgBB
       let finalImage = canvas.toDataURL('image/jpeg', 0.3); // Максимальное сжатие 30%
-      console.log('[STORIES-IMAGE-GENERATOR] Canvas создан, размер base64:', finalImage.length);
       
       // Если все еще большое, еще больше сжимаем
       if (finalImage.length > 100000) { // 100KB limit для ImgBB
         finalImage = canvas.toDataURL('image/jpeg', 0.1); // Экстремальное сжатие 10%
-        console.log('[STORIES-IMAGE-GENERATOR] Изображение максимально сжато до:', finalImage.length);
       }
       
       // Загружаем на ImgBB и сохраняем в Stories
       try {
-        console.log('[STORIES-IMAGE-GENERATOR] Загружаем на ImgBB...');
         const uploadResponse = await fetch('/api/imgbb/upload', {
           method: 'POST',
           headers: {
@@ -312,8 +292,8 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
             <img 
               src={generatedImage} 
               alt="Сгенерированное изображение Stories"
-              className="max-w-full h-auto max-h-96 rounded-lg shadow-lg"
-              style={{ aspectRatio: '9/16' }}
+              className="rounded-lg shadow-lg"
+              style={{ width: '280px', height: '497px', objectFit: 'cover' }}
             />
           </div>
         </div>
