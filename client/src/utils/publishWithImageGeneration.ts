@@ -1,4 +1,5 @@
 import { generateStoriesImage, uploadImageToImgbb } from './storiesImageUtils';
+import { generateStoriesVideo, uploadVideoToS3 } from './storiesVideoUtils';
 
 export interface PublishWithImageGenerationOptions {
   contentId: string;
@@ -29,61 +30,106 @@ export const publishWithImageGeneration = async (options: PublishWithImageGenera
   console.log('[PUBLISH-WITH-IMAGE] textOverlays length:', textOverlays?.length);
   
   try {
-    // Step 1: Generate image if story has text overlays
+    // Step 1: Generate media (image or video) if story has text overlays
     let generatedImageUrl = null;
+    let generatedVideoUrl = null;
     
     if (textOverlays && textOverlays.length > 0) {
-      console.log('[PUBLISH-WITH-IMAGE] Найдены textOverlays, проверяем additional_media...');
+      console.log('[PUBLISH-WITH-MEDIA] Найдены textOverlays, проверяем тип медиа:', story.mediaType || 'image');
       
-      // Сначала проверяем, есть ли уже сгенерированное изображение в additional_media
+      const isVideo = story.mediaType === 'video' && story.backgroundVideoUrl;
+      
+      // Сначала проверяем, есть ли уже сгенерированный контент в additional_media
       if (story.additional_media) {
         try {
           const additionalMedia = typeof story.additional_media === 'string' ? 
             JSON.parse(story.additional_media) : story.additional_media;
           
-          const generatedImage = additionalMedia.find((media: any) => media.type === 'generated_image');
-          if (generatedImage && generatedImage.url) {
-            console.log('[PUBLISH-WITH-IMAGE] Используем ранее сгенерированное изображение:', generatedImage.url);
-            generatedImageUrl = generatedImage.url;
+          if (isVideo) {
+            const generatedVideo = additionalMedia.find((media: any) => media.type === 'generated_video');
+            if (generatedVideo && generatedVideo.url) {
+              console.log('[PUBLISH-WITH-MEDIA] Используем ранее сгенерированное видео:', generatedVideo.url);
+              generatedVideoUrl = generatedVideo.url;
+            }
+          } else {
+            const generatedImage = additionalMedia.find((media: any) => media.type === 'generated_image');
+            if (generatedImage && generatedImage.url) {
+              console.log('[PUBLISH-WITH-MEDIA] Используем ранее сгенерированное изображение:', generatedImage.url);
+              generatedImageUrl = generatedImage.url;
+            }
           }
         } catch (e) {
-          console.log('[PUBLISH-WITH-IMAGE] Ошибка парсинга additional_media:', e);
+          console.log('[PUBLISH-WITH-MEDIA] Ошибка парсинга additional_media:', e);
         }
       }
       
-      // Если нет готового изображения, генерируем новое
-      if (!generatedImageUrl) {
-        console.log('[PUBLISH-WITH-IMAGE] Генерируем новое изображение...');
+      // Если нет готового контента, генерируем новый
+      if (isVideo && !generatedVideoUrl) {
+        console.log('[PUBLISH-WITH-MEDIA] Генерируем новое видео с текстом...');
         
-        // Создаем объект story с textOverlays для генерации
+        // Создаем объект story с textOverlays для генерации видео
+        const storyForVideoGeneration = {
+          backgroundVideoUrl: story.backgroundVideoUrl,
+          textOverlays
+        };
+        
+        console.log('[PUBLISH-WITH-MEDIA] Story для генерации видео:', storyForVideoGeneration);
+        
+        // Generate video with text overlays
+        const processedVideoUrl = await generateStoriesVideo(storyForVideoGeneration);
+        console.log('[PUBLISH-WITH-MEDIA] Видео обработано:', processedVideoUrl);
+        
+        // Upload to S3
+        console.log('[PUBLISH-WITH-MEDIA] Загружаем видео в S3...');
+        generatedVideoUrl = await uploadVideoToS3(processedVideoUrl);
+        
+        console.log('[PUBLISH-WITH-MEDIA] Видео загружено в S3:', generatedVideoUrl);
+        
+      } else if (!isVideo && !generatedImageUrl) {
+        console.log('[PUBLISH-WITH-MEDIA] Генерируем новое изображение...');
+        
+        // Создаем объект story с textOverlays для генерации изображения
         const storyForGeneration = {
           ...story,
           textOverlays
         };
         
-        console.log('[PUBLISH-WITH-IMAGE] Story для генерации:', storyForGeneration);
+        console.log('[PUBLISH-WITH-MEDIA] Story для генерации изображения:', storyForGeneration);
         
         // Generate image using canvas
         const base64Image = await generateStoriesImage(storyForGeneration);
-        console.log('[PUBLISH-WITH-IMAGE] Изображение сгенерировано, размер base64:', base64Image.length);
+        console.log('[PUBLISH-WITH-MEDIA] Изображение сгенерировано, размер base64:', base64Image.length);
         
         // Upload to ImgBB
-        console.log('[PUBLISH-WITH-IMAGE] Загружаем изображение на ImgBB...');
+        console.log('[PUBLISH-WITH-MEDIA] Загружаем изображение на ImgBB...');
         generatedImageUrl = await uploadImageToImgbb(base64Image, story.title || 'Generated Story');
         
-        console.log('[PUBLISH-WITH-IMAGE] Изображение загружено:', generatedImageUrl);
+        console.log('[PUBLISH-WITH-MEDIA] Изображение загружено:', generatedImageUrl);
       }
       
-      // Step 2: Update story with generated image URL in additional_media
+      // Step 2: Update story with generated media URL in additional_media
       const authToken = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
-      if (authToken) {
+      if (authToken && (generatedImageUrl || generatedVideoUrl)) {
         try {
-          const additionalMedia = [{
-            type: 'generated_image',
-            url: generatedImageUrl,
-            generated_at: new Date().toISOString(),
-            purpose: 'stories_publication'
-          }];
+          const additionalMedia = [];
+          
+          if (generatedImageUrl) {
+            additionalMedia.push({
+              type: 'generated_image',
+              url: generatedImageUrl,
+              generated_at: new Date().toISOString(),
+              purpose: 'stories_publication'
+            });
+          }
+          
+          if (generatedVideoUrl) {
+            additionalMedia.push({
+              type: 'generated_video',
+              url: generatedVideoUrl,
+              generated_at: new Date().toISOString(),
+              purpose: 'stories_publication'
+            });
+          }
           
           await fetch(`/api/stories/simple/${contentId}`, {
             method: 'PATCH',
@@ -96,9 +142,9 @@ export const publishWithImageGeneration = async (options: PublishWithImageGenera
             })
           });
           
-          console.log('[PUBLISH-WITH-IMAGE] additional_media обновлено');
+          console.log('[PUBLISH-WITH-MEDIA] additional_media обновлено');
         } catch (updateError) {
-          console.warn('[PUBLISH-WITH-IMAGE] Не удалось обновить additional_media:', updateError);
+          console.warn('[PUBLISH-WITH-MEDIA] Не удалось обновить additional_media:', updateError);
         }
       }
     } else {
@@ -113,7 +159,8 @@ export const publishWithImageGeneration = async (options: PublishWithImageGenera
       throw new Error('Токен авторизации не найден');
     }
     
-    console.log('[PUBLISH-WITH-IMAGE] Отправляем на публикацию с generatedImageUrl:', generatedImageUrl);
+    console.log('[PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedImageUrl:', generatedImageUrl);
+    console.log('[PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedVideoUrl:', generatedVideoUrl);
     
     const publishResponse = await fetch('/api/stories/publish', {
       method: 'POST',
@@ -125,7 +172,10 @@ export const publishWithImageGeneration = async (options: PublishWithImageGenera
         contentId,
         platforms,
         generatedImageUrl,
-        useGeneratedImage: !!generatedImageUrl
+        generatedVideoUrl,
+        useGeneratedImage: !!generatedImageUrl,
+        useGeneratedVideo: !!generatedVideoUrl,
+        mediaType: story.mediaType || 'image'
       })
     });
     
@@ -141,7 +191,10 @@ export const publishWithImageGeneration = async (options: PublishWithImageGenera
     return {
       ...publishResult,
       generatedImageUrl,
-      imageGenerated: !!generatedImageUrl
+      generatedVideoUrl,
+      imageGenerated: !!generatedImageUrl,
+      videoGenerated: !!generatedVideoUrl,
+      mediaType: story.mediaType || 'image'
     };
     
   } catch (error) {

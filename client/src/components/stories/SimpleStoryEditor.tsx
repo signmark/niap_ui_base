@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Save, ArrowLeft, Plus, Trash2, Type, Palette, RotateCw, Eye, Image } from 'lucide-react';
+import { Upload, Save, ArrowLeft, Plus, Trash2, Type, Palette, RotateCw, Eye, Image, Video, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InstagramStoriesPreview } from '../InstagramStoriesPreview';
 import { StoriesImageGenerator } from './StoriesImageGenerator';
@@ -33,6 +33,8 @@ interface StoryData {
   id?: string;
   title: string;
   backgroundImageUrl: string | null;
+  backgroundVideoUrl: string | null;
+  mediaType: 'image' | 'video';
   textOverlays: TextOverlay[];
 }
 
@@ -53,6 +55,8 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
     id: storyId,
     title: '',
     backgroundImageUrl: null,
+    backgroundVideoUrl: null,
+    mediaType: 'image',
     textOverlays: []
   });
 
@@ -94,6 +98,8 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
           id: data.id,
           title: data.title || '',
           backgroundImageUrl: data.image_url || null,
+          backgroundVideoUrl: data.video_url || null,
+          mediaType: data.video_url ? 'video' : 'image',
           textOverlays
         });
       } catch (error) {
@@ -132,7 +138,8 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
       if (response.data?.url) {
         setStory(prev => ({
           ...prev,
-          backgroundImageUrl: response.data.url
+          backgroundImageUrl: response.data.url,
+          mediaType: 'image'
         }));
 
         toast({
@@ -145,6 +152,48 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
       toast({
         title: "Ошибка",
         description: "Не удалось загрузить изображение",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ЗАГРУЗКА ВИДЕО
+  const handleVideoUpload = async (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Ошибка",
+        description: "Только видео файлы",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const response = await axios.post('/api/beget-s3/upload-video', formData);
+      
+      if (response.data?.url) {
+        setStory(prev => ({
+          ...prev,
+          backgroundVideoUrl: response.data.url,
+          mediaType: 'video'
+        }));
+
+        toast({
+          title: "Загружено",
+          description: "Видео готово. Нажмите 'Сохранить'"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки видео:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить видео",
         variant: "destructive"
       });
     } finally {
@@ -218,6 +267,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
         data: {
           title: story.title,
           image_url: story.backgroundImageUrl,
+          video_url: story.backgroundVideoUrl,
           metadata: JSON.stringify(metadata)
         }
       });
@@ -313,45 +363,119 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
                 />
               </div>
 
+              {/* ПЕРЕКЛЮЧАТЕЛЬ МЕДИА ТИПА */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-600 mb-2">
-                  <Image className="w-4 h-4 mr-1" />
-                  URL изображения
+                  <Type className="w-4 h-4 mr-1" />
+                  Тип медиа
                 </label>
                 <div className="flex items-center space-x-2">
-                  <Input
-                    type="url"
-                    value={story.backgroundImageUrl || ''}
-                    onChange={(e) => setStory(prev => ({ ...prev, backgroundImageUrl: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
-                    className="border-2 border-gray-200 focus:border-green-400 rounded-lg h-9 flex-1"
-                  />
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file);
-                      }}
-                      className="hidden"
-                      id="image-upload"
-                      disabled={uploading}
-                    />
-                    <label 
-                      htmlFor="image-upload" 
-                      className="cursor-pointer w-9 h-9 bg-gradient-to-br from-green-400 to-blue-400 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-all"
-                      title="Загрузить изображение"
-                    >
-                      {uploading ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <Upload className="w-4 h-4 text-white" />
-                      )}
-                    </label>
-                  </div>
+                  <Button
+                    variant={story.mediaType === 'image' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStory(prev => ({ ...prev, mediaType: 'image' }))}
+                    className="flex items-center space-x-1"
+                  >
+                    <Image className="w-4 h-4" />
+                    <span>Изображение</span>
+                  </Button>
+                  <Button
+                    variant={story.mediaType === 'video' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStory(prev => ({ ...prev, mediaType: 'video' }))}
+                    className="flex items-center space-x-1"
+                  >
+                    <Video className="w-4 h-4" />
+                    <span>Видео</span>
+                  </Button>
                 </div>
               </div>
+
+              {/* ИЗОБРАЖЕНИЕ */}
+              {story.mediaType === 'image' && (
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-600 mb-2">
+                    <Image className="w-4 h-4 mr-1" />
+                    URL изображения
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="url"
+                      value={story.backgroundImageUrl || ''}
+                      onChange={(e) => setStory(prev => ({ ...prev, backgroundImageUrl: e.target.value }))}
+                      placeholder="https://example.com/image.jpg"
+                      className="border-2 border-gray-200 focus:border-green-400 rounded-lg h-9 flex-1"
+                    />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                        }}
+                        className="hidden"
+                        id="image-upload"
+                        disabled={uploading}
+                      />
+                      <label 
+                        htmlFor="image-upload" 
+                        className="cursor-pointer w-9 h-9 bg-gradient-to-br from-green-400 to-blue-400 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-all"
+                        title="Загрузить изображение"
+                      >
+                        {uploading ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Upload className="w-4 h-4 text-white" />
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ВИДЕО */}
+              {story.mediaType === 'video' && (
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-600 mb-2">
+                    <Video className="w-4 h-4 mr-1" />
+                    URL видео
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="url"
+                      value={story.backgroundVideoUrl || ''}
+                      onChange={(e) => setStory(prev => ({ ...prev, backgroundVideoUrl: e.target.value }))}
+                      placeholder="https://example.com/video.mp4"
+                      className="border-2 border-gray-200 focus:border-green-400 rounded-lg h-9 flex-1"
+                    />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleVideoUpload(file);
+                        }}
+                        className="hidden"
+                        id="video-upload"
+                        disabled={uploading}
+                      />
+                      <label 
+                        htmlFor="video-upload" 
+                        className="cursor-pointer w-9 h-9 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center shadow-md hover:shadow-lg transition-all"
+                        title="Загрузить видео"
+                      >
+                        {uploading ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Upload className="w-4 h-4 text-white" />
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -572,7 +696,17 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
                 style={{ width: '280px', height: '497px' }}
               >
                 {/* ФОН */}
-                {story.backgroundImageUrl ? (
+                {story.mediaType === 'video' && story.backgroundVideoUrl ? (
+                  <video
+                    src={story.backgroundVideoUrl}
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    style={{ zIndex: 1 }}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : story.mediaType === 'image' && story.backgroundImageUrl ? (
                   <img
                     src={story.backgroundImageUrl}
                     alt="Background"
@@ -581,9 +715,23 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
                   />
                 ) : (
                   <div 
-                    className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg" 
+                    className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center" 
                     style={{ zIndex: 1 }}
-                  />
+                  >
+                    <div className="text-white text-center p-4">
+                      {story.mediaType === 'video' ? (
+                        <div className="flex flex-col items-center space-y-2">
+                          <Video className="w-12 h-12 opacity-60" />
+                          <span className="text-sm opacity-80">Добавьте видео</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center space-y-2">
+                          <Image className="w-12 h-12 opacity-60" />
+                          <span className="text-sm opacity-80">Добавьте изображение</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {/* ТЕКСТОВЫЕ ЭЛЕМЕНТЫ */}

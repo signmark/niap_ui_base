@@ -45,11 +45,15 @@ export const StoryPublishButton: React.FC<StoryPublishButtonProps> = ({
       console.log('[STORY-PUBLISH-BUTTON] Результат публикации:', result);
       
       if (result.success) {
+        const mediaDescription = result.videoGenerated 
+          ? 'с автоматически сгенерированным видео'
+          : result.imageGenerated 
+            ? 'с автоматически сгенерированным изображением'
+            : '';
+            
         toast({
           title: "Публикация успешна!",
-          description: result.imageGenerated 
-            ? `Stories опубликована с автоматически сгенерированным изображением` 
-            : `Stories опубликована`,
+          description: `Stories опубликована ${mediaDescription}`.trim(),
         });
       } else {
         throw new Error(result.message || 'Ошибка публикации');
