@@ -118,8 +118,9 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         const scaleX = width / 280;  // Масштабирование по X: 540/280 = 1.93
         const scaleY = height / 497; // Масштабирование по Y: 960/497 = 1.93
         const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 * scaleX : 2 * scaleX;
-        const x = (overlay.x !== undefined ? overlay.x : 50) * scaleX + textPaddingX;
-        const y = (overlay.y !== undefined ? overlay.y : 50) * scaleY;
+        // Применяем тот же коэффициент 0.8 что и в превью
+        const x = (overlay.x !== undefined ? overlay.x : 50) * 0.8 * scaleX + textPaddingX;
+        const y = (overlay.y !== undefined ? overlay.y : 50) * 0.8 * scaleY;
         
         const fontSize = (overlay.fontSize || 24) * scaleX;
         
