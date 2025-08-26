@@ -54,9 +54,10 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
       .format('mp4')
       .fps(30);
 
-    // Добавляем текстовые overlays
+    // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
     if (overlays.length > 0) {
-      let videoFilter = 'scale=1080:1920';
+      // ВАЖНО: Instagram Stories требует точно 1080x1920 для оптимального качества
+      let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
       overlays.forEach((overlay, index) => {
         const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:").replace(/,/g, "\\,");
@@ -75,7 +76,8 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
 
       command = command.videoFilters(videoFilter);
     } else {
-      command = command.videoFilters('scale=1080:1920');
+      // Даже без текста, обеспечиваем правильный формат для Instagram Stories
+      command = command.videoFilters('scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920');
     }
 
     command
@@ -211,9 +213,10 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
       .format('mp4')
       .fps(30);
 
-    // Добавляем текстовые overlays
+    // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
     if (overlays.length > 0) {
-      let videoFilter = 'scale=1080:1920';
+      // ВАЖНО: Instagram Stories требует точно 1080x1920 для оптимального качества
+      let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
       overlays.forEach((overlay, index) => {
         const escapedText = overlay.text.replace(/'/g, "\\'").replace(/:/g, "\\:").replace(/,/g, "\\,");
@@ -232,7 +235,8 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
 
       command = command.videoFilters(videoFilter);
     } else {
-      command = command.videoFilters('scale=1080:1920');
+      // Даже без текста, обеспечиваем правильный формат для Instagram Stories
+      command = command.videoFilters('scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920');
     }
 
     command

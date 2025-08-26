@@ -165,18 +165,69 @@ router.put('/simple/:id', authMiddleware, async (req, res) => {
     }
     
     if (additional_media !== undefined) {
-      // Если это массив, конвертируем в JSON string для Directus
+      let processedMedia = additional_media;
+      
+      // Если это массив, обрабатываем каждый элемент
       if (Array.isArray(additional_media)) {
-        updateData.additional_media = JSON.stringify(additional_media);
-        console.log('[DEV] [stories] Setting additional_media (array->JSON):', additional_media, '->', updateData.additional_media);
+        processedMedia = additional_media.map((item: any) => {
+          // Если это объект с video URL, добавляем прокси URL для Instagram
+          if (item && typeof item === 'object' && item.type === 'generated_video' && item.url) {
+            const fileName = item.url.split('/').pop();
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const instagramProxyUrl = `${baseUrl}/api/instagram-video-proxy/${fileName}`;
+            console.log('[DEV] [stories] Добавляем Instagram proxy URL:', instagramProxyUrl);
+            return {
+              ...item,
+              instagram_proxy_url: instagramProxyUrl
+            };
+          }
+          return item;
+        });
+        updateData.additional_media = JSON.stringify(processedMedia);
+        console.log('[DEV] [stories] Setting additional_media (array->JSON):', processedMedia, '->', updateData.additional_media);
       } else if (typeof additional_media === 'string') {
-        updateData.additional_media = additional_media; // уже JSON string
-        console.log('[DEV] [stories] Setting additional_media (string):', additional_media);
+        // Попробуем распарсить и обработать
+        console.log('[DEV] [stories] Parsing additional_media string:', additional_media);
+        try {
+          const parsed = JSON.parse(additional_media);
+          console.log('[DEV] [stories] Parsed additional_media:', parsed);
+          if (Array.isArray(parsed)) {
+            console.log('[DEV] [stories] Processing array of', parsed.length, 'items');
+            processedMedia = parsed.map((item: any, index: number) => {
+              console.log('[DEV] [stories] Processing item', index, ':', item);
+              if (item && typeof item === 'object' && item.type === 'generated_video' && item.url) {
+                const fileName = item.url.split('/').pop();
+                const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const instagramProxyUrl = `${baseUrl}/api/instagram-video-proxy/${fileName}`;
+                console.log('[DEV] [stories] Добавляем Instagram proxy URL (из string):', instagramProxyUrl);
+                const result = {
+                  ...item,
+                  instagram_proxy_url: instagramProxyUrl
+                };
+                console.log('[DEV] [stories] Результат обработки:', result);
+                return result;
+              }
+              console.log('[DEV] [stories] Элемент не подходит для обработки');
+              return item;
+            });
+            updateData.additional_media = JSON.stringify(processedMedia);
+            console.log('[DEV] [stories] Final processed media:', processedMedia);
+          } else {
+            console.log('[DEV] [stories] Parsed is not array, leaving as is');
+            updateData.additional_media = additional_media; // оставляем как есть
+          }
+        } catch (e) {
+          console.log('[DEV] [stories] JSON parse error:', e);
+          updateData.additional_media = additional_media; // если не JSON, оставляем как есть
+        }
+        console.log('[DEV] [stories] Setting additional_media (string):', updateData.additional_media);
       } else {
         updateData.additional_media = JSON.stringify(additional_media);
         console.log('[DEV] [stories] Setting additional_media (other->JSON):', additional_media, '->', updateData.additional_media);
       }
     }
+
+    console.log('[DEV] [stories] Final updateData being sent to Directus:', JSON.stringify(updateData, null, 2));
 
     // Используем токен пользователя для обновления записи
     const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
@@ -184,6 +235,8 @@ router.put('/simple/:id', authMiddleware, async (req, res) => {
         'Authorization': req.headers.authorization
       }
     });
+    
+    console.log('[DEV] [stories] Directus response:', JSON.stringify(updateResponse.data, null, 2));
     const story = updateResponse.data.data;
 
     console.log('[DEV] [stories] Simple story updated successfully');
@@ -230,19 +283,71 @@ router.patch('/simple/:id', authMiddleware, async (req, res) => {
     }
     
     if (additional_media !== undefined) {
-      // Если это массив, конвертируем в JSON string для Directus
+      let processedMedia = additional_media;
+      
+      // Если это массив, обрабатываем каждый элемент
       if (Array.isArray(additional_media)) {
-        updateData.additional_media = JSON.stringify(additional_media);
-        console.log('[DEV] [stories] Setting additional_media (array->JSON):', additional_media, '->', updateData.additional_media);
+        processedMedia = additional_media.map((item: any) => {
+          // Если это объект с video URL, добавляем прокси URL для Instagram
+          if (item && typeof item === 'object' && item.type === 'generated_video' && item.url) {
+            const fileName = item.url.split('/').pop();
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const instagramProxyUrl = `${baseUrl}/api/instagram-video-proxy/${fileName}`;
+            console.log('[DEV] [stories] Добавляем Instagram proxy URL:', instagramProxyUrl);
+            return {
+              ...item,
+              instagram_proxy_url: instagramProxyUrl
+            };
+          }
+          return item;
+        });
+        updateData.additional_media = JSON.stringify(processedMedia);
+        console.log('[DEV] [stories] Setting additional_media (array->JSON):', processedMedia, '->', updateData.additional_media);
       } else if (typeof additional_media === 'string') {
-        updateData.additional_media = additional_media; // уже JSON string
-        console.log('[DEV] [stories] Setting additional_media (string):', additional_media);
+        // Попробуем распарсить и обработать
+        console.log('[DEV] [stories] Parsing additional_media string:', additional_media);
+        try {
+          const parsed = JSON.parse(additional_media);
+          console.log('[DEV] [stories] Parsed additional_media:', parsed);
+          if (Array.isArray(parsed)) {
+            console.log('[DEV] [stories] Processing array of', parsed.length, 'items');
+            processedMedia = parsed.map((item: any, index: number) => {
+              console.log('[DEV] [stories] Processing item', index, ':', item);
+              if (item && typeof item === 'object' && item.type === 'generated_video' && item.url) {
+                const fileName = item.url.split('/').pop();
+                const baseUrl = `${req.protocol}://${req.get('host')}`;
+            const instagramProxyUrl = `${baseUrl}/api/instagram-video-proxy/${fileName}`;
+                console.log('[DEV] [stories] Добавляем Instagram proxy URL (из string):', instagramProxyUrl);
+                const result = {
+                  ...item,
+                  instagram_proxy_url: instagramProxyUrl
+                };
+                console.log('[DEV] [stories] Результат обработки:', result);
+                return result;
+              }
+              console.log('[DEV] [stories] Элемент не подходит для обработки');
+              return item;
+            });
+            updateData.additional_media = JSON.stringify(processedMedia);
+            console.log('[DEV] [stories] Final processed media:', processedMedia);
+          } else {
+            console.log('[DEV] [stories] Parsed is not array, leaving as is');
+            updateData.additional_media = additional_media; // оставляем как есть
+          }
+        } catch (e) {
+          console.log('[DEV] [stories] JSON parse error:', e);
+          updateData.additional_media = additional_media; // если не JSON, оставляем как есть
+        }
+        console.log('[DEV] [stories] Setting additional_media (string):', updateData.additional_media);
       } else {
         updateData.additional_media = JSON.stringify(additional_media);
         console.log('[DEV] [stories] Setting additional_media (other->JSON):', additional_media, '->', updateData.additional_media);
       }
     }
 
+    // Отладка: что отправляем в Directus
+    console.log('[DEV] [stories] PATCH - Отправляем в Directus updateData:', JSON.stringify(updateData, null, 2));
+    
     // Используем токен пользователя для обновления записи
     const updateResponse = await directusApi.patch(`/items/campaign_content/${id}`, updateData, {
       headers: {

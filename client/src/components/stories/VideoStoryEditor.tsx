@@ -455,25 +455,49 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
     }
   };
 
-  // Функция для сохранения видео в additional_media
+  // Функция для сохранения видео в additional_media структуру Directus
   const saveToAdditionalMedia = async (videoUrl: string) => {
     try {
-      console.log('Сохранение видео в additional_media:', videoUrl);
+      console.log('Сохранение видео URL в additional_media:', videoUrl);
       
-      // Отправляем как массив, не как JSON string
-      const requestData = {
-        additional_media: [videoUrl]
+      // Создаем Instagram-совместимый прокси URL
+      const fileName = videoUrl.split('/').pop();
+      const baseUrl = window.location.origin;
+      const proxyUrl = `${baseUrl}/api/instagram-video-proxy/${fileName}`;
+      
+      console.log('Создан прокси URL:', proxyUrl);
+      
+      // Структура для поля additional_media в Directus
+      const mediaStructure = {
+        url: proxyUrl,  // Прокси URL в поле URL
+        type: 'generated_video',  // Тип контента
+        title: 'Instagram Stories Video',  // Заголовок
+        description: 'Generated video with text overlays for Instagram Stories'  // Описание
       };
       
-      console.log('Отправка данных:', requestData);
+      console.log('Структура для additional_media:', mediaStructure);
       
-      const response = await apiRequest(`/api/stories/simple/${storyId}`, {
-        method: 'PUT',
-        data: requestData
+      // Сохраняем структуру в additional_media
+      const response = await fetch(`/api/stories/simple/${storyId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token') || localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          additional_media: mediaStructure
+        })
       });
       
-      console.log('Ответ сервера:', response);
-      console.log('Видео успешно сохранено в additional_media');
+      if (response.ok) {
+        console.log('Структура additional_media успешно сохранена');
+        toast({
+          title: "Успешно",
+          description: "Видео готово для Instagram Stories",
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
     } catch (error) {
       console.error('Ошибка сохранения в additional_media:', error);
       toast({

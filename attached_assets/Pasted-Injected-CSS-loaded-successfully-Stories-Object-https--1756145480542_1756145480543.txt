@@ -1,0 +1,24 @@
+Injected CSS loaded successfully
+ Загруженные данные Stories: Object
+ Начало загрузки видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/23f95909-d36a-43e5-9aac-8f01b021c710.mp4
+ Начинаем генерацию видео с данными: Object
+ Сохранение видео в additional_media: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/9bb2c27b-eebe-4c4c-9124-20ac3c4fa47f.mp4
+ Отправка данных: Object
+ Ответ сервера: Object
+ Видео успешно сохранено в additional_media
+ Загруженные данные Stories: Object
+ Сохранение Stories: Object
+ Сохранение video_url в контент: Object
+ Контент успешно обновлен с video_url: Object
+ Начинаем генерацию видео с данными: {backgroundVideoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/23f95909-d36a-43e5-9aac-8f01b021c710.mp4', textOverlays: Array(3)}
+ Сохранение видео в additional_media: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/fe90b142-9092-447c-96d8-cef5c2a5849b.mp4
+ Отправка данных: {additional_media: Array(1)}additional_media: ['https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/fe90b142-9092-447c-96d8-cef5c2a5849b.mp4'][[Prototype]]: Object
+ Ответ сервера: {success: true, data: {…}}
+ Видео успешно сохранено в additional_media
+ WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ /src/hooks/use-websocket.ts:9
+ Начинаем генерацию видео с данными: {backgroundVideoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/23f95909-d36a-43e5-9aac-8f01b021c710.mp4', textOverlays: Array(3)}
+ Сохранение видео в additional_media: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/715dc6a2-b871-4706-a536-a468a6b49561.mp4
+ Отправка данных: {additional_media: Array(1)}
+ Ответ сервера: {success: true, data: {…}}data: additional_images: nulladditional_media: ['https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/715dc6a2-b871-4706-a536-a468a6b49561.mp4']campaign_id: "46868c44-c6a4-4bed-accf-9ad07bba790e"content: ""content_type: "story"created_at: "2025-08-25T17:05:18"id: "f249cfa4-d7b7-49de-81be-1b05212261c1"image_url: nullkeywords: nullmetadata: {textOverlays: Array(3), version: '1.0'}prompt: nullpublished_at: nullscheduled_at: nullsocial_platforms: {}status: "draft"title: "Кролик"user_id: "53921f16-f51d-4591-80b9-8caa4fde4d13"video_url: "https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/23f95909-d36a-43e5-9aac-8f01b021c710.mp4"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()success: true[[Prototype]]: Object
+ Видео успешно сохранено в additional_media
