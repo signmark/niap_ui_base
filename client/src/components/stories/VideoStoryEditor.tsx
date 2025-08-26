@@ -421,16 +421,33 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
         method: 'POST',
         data: {
           videoUrl: story.backgroundVideoUrl,
-          textOverlays: story.textOverlays.map(overlay => ({
-            text: overlay.text,
-            x: Math.round(overlay.x * 3.863), // Масштабирование для 1080x1920
-            y: Math.round(overlay.y * 3.863),
-            fontSize: Math.round(overlay.fontSize * 3.863),
-            color: overlay.color,
-            fontFamily: overlay.fontFamily || 'Arial',
-            startTime: overlay.startTime || 0,
-            endTime: overlay.endTime || 60
-          })),
+          textOverlays: story.textOverlays.map(overlay => {
+            // Простое масштабирование: редактор 280x497 -> видео 1080x1920
+            const scaleX = 1080 / 280;  // 3.857
+            const scaleY = 1920 / 497;  // 3.864
+            
+            const scaledX = Math.round(overlay.x * scaleX);
+            const scaledY = Math.round(overlay.y * scaleY);
+            const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+            
+            // Ограничиваем координаты границами видео
+            const finalX = Math.max(0, Math.min(scaledX, 1080 - 100)); // -100 отступ от края
+            const finalY = Math.max(50, Math.min(scaledY, 1920 - 50));  // отступы сверху и снизу
+            const finalFontSize = Math.max(20, Math.min(scaledFontSize, 200)); // ограничение размера шрифта
+            
+            console.log(`Текст "${overlay.text}": ${overlay.x},${overlay.y} -> ${finalX},${finalY}`);
+            
+            return {
+              text: overlay.text,
+              x: finalX,
+              y: finalY,
+              fontSize: finalFontSize,
+              color: overlay.color,
+              fontFamily: overlay.fontFamily || 'Arial',
+              startTime: overlay.startTime || 0,
+              endTime: overlay.endTime || 60
+            };
+          }),
           campaignId: storyId,
           progressId: progressId
         }
