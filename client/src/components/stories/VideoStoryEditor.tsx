@@ -964,7 +964,9 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                             }
                           });
                           
-                          if (result.success) {
+                          console.log('[PUBLISH] Результат от сервера:', result);
+                          
+                          if (result && result.success) {
                             toast({
                               title: "Публикация запущена",
                               description: "Видео отправлено на публикацию в Instagram Stories",
@@ -972,7 +974,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                           } else {
                             toast({
                               title: "Ошибка публикации",
-                              description: `Не удалось опубликовать: ${result.error || 'Неизвестная ошибка'}`,
+                              description: `Не удалось опубликовать: ${result?.error || 'Неизвестная ошибка'}`,
                               variant: "destructive"
                             });
                           }
