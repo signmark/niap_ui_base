@@ -955,29 +955,22 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                     {/* Кнопка публикации */}
                     <Button 
                       className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      onClick={async () => {
-                        console.log('[PUBLISH] Кнопка нажата!');
-                        
-                        // Простой toast для проверки
+                      onClick={() => {
+                        // Показываем toast сразу
                         toast({
                           title: "Публикация запущена",
                           description: "Видео отправлено на публикацию в Instagram Stories",
                         });
                         
-                        try {
-                          console.log('[PUBLISH] Отправляем запрос...');
-                          const result = await apiRequest(`/api/stories/story/${storyId}/publish`, {
-                            method: 'POST',
-                            data: {
-                              platforms: ['instagram']
-                            }
-                          });
-                          
-                          console.log('[PUBLISH] Результат от сервера:', result);
-                          
-                        } catch (error) {
-                          console.error('[PUBLISH] Ошибка публикации Stories:', error);
-                        }
+                        // Запускаем публикацию в фоне без ожидания
+                        apiRequest(`/api/stories/story/${storyId}/publish`, {
+                          method: 'POST',
+                          data: {
+                            platforms: ['instagram']
+                          }
+                        }).catch(error => {
+                          console.error('Ошибка публикации Stories:', error);
+                        });
                       }}
                     >
                       <Send className="h-4 w-4 mr-2" />
