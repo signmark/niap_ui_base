@@ -103,7 +103,10 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
       }
 
       // Добавляем текстовые элементы
+      console.log('[STORIES-IMAGE-GEN] Рисуем текстовые элементы:', story.textOverlays);
+      
       for (const overlay of story.textOverlays) {
+        console.log('[STORIES-IMAGE-GEN] Обрабатываем overlay:', overlay);
         // ИДЕАЛЬНАЯ ЛОГИКА: размер canvas = размер превью, никакого масштабирования!
         // 1. Берем координаты из базы
         // 2. Умножаем на 0.8 (как в превью)

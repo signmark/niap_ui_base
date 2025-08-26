@@ -140,9 +140,9 @@ export const generateStoriesImage = async (story: StoryData): Promise<string> =>
           ctx.fillStyle = overlay.backgroundColor;
           ctx.fillRect(
             x - 8 * scale,                    // Масштабированный отступ слева
-            y - 5 * scale,                    // Масштабированный отступ сверху
+            y - 4 * scale,                    // Масштабированный отступ сверху (как в StoriesImageGenerator)
             textWidth + 16 * scale,           // Масштабированная ширина фона
-            textHeight + 10 * scale           // Масштабированная высота фона
+            textHeight + 8 * scale            // Масштабированная высота фона (как в StoriesImageGenerator)
           );
         }
         
