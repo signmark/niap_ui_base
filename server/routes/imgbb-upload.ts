@@ -46,7 +46,7 @@ router.post('/upload', authMiddleware, async (req, res) => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000 // 30 секунд timeout
+      timeout: 8000 // 8 секунд timeout - быстрое переключение на fallback
     });
 
     if (imgbbResponse.data.success) {
