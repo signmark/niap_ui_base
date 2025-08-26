@@ -24,150 +24,163 @@ export interface StoryData {
 export const generateStoriesImage = async (story: StoryData): Promise<string> => {
   console.log('[GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story:', story);
   
-  return new Promise((resolve, reject) => {
-    try {
-      // Создаем canvas в браузере
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Не удалось создать контекст canvas');
-      }
+  try {
+    // Создаем canvas в браузере - ТОЧНО КАК В РЕДАКТОРЕ
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      throw new Error('Не удалось создать контекст canvas');
+    }
 
-      // Размер точно как в превью для идеального совпадения координат
-      const width = 280;  // Размер превью
-      const height = 497; // Размер превью
-      canvas.width = width;
-      canvas.height = height;
-      
-      console.log('[GENERATE-STORIES-IMAGE] Canvas создан:', { width, height });
+    // Размер как в редакторе для качества
+    const width = 540;   // Средний размер для хорошего качества
+    const height = 960;  // Соотношение 9:16 для Instagram Stories
+    canvas.width = width;
+    canvas.height = height;
+    
+    console.log('[GENERATE-STORIES-IMAGE] Canvas создан:', { width, height });
 
-      const drawTextOverlays = () => {
-        console.log('[GENERATE-STORIES-IMAGE] Рисуем текстовые элементы:', story.textOverlays);
-        
-        // Добавляем текстовые элементы
-        if (story.textOverlays && story.textOverlays.length > 0) {
-          for (const overlay of story.textOverlays) {
-            console.log('[GENERATE-STORIES-IMAGE] Обрабатываем overlay:', overlay);
-            // Используем такие же координаты как в превью (1:1, без масштабирования)
-            const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 : 2;
-            const x = (overlay.x !== undefined ? overlay.x : 50) * 0.8 + textPaddingX;
-            const y = (overlay.y !== undefined ? overlay.y : 50) * 0.8;
-            const fontSize = (overlay.fontSize || 24) * 0.8;
-            
-            ctx.save();
-            
-            // Поворот текста
-            if (overlay.rotation) {
-              ctx.translate(x, y);
-              ctx.rotate((overlay.rotation * Math.PI) / 180);
-              ctx.translate(-x, -y);
-            }
-            
-            // Фон для текста (если не прозрачный)
-            if (overlay.backgroundColor && overlay.backgroundColor !== 'transparent') {
-              ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
-              const textMetrics = ctx.measureText(overlay.text || 'Текст');
-              const textWidth = textMetrics.width;
-              const textHeight = fontSize;
-              
-              ctx.fillStyle = overlay.backgroundColor;
-              // Фон начинается с позиции текста (как в превью)
-              ctx.fillRect(
-                x - 10,                   // Небольшой отступ слева
-                y - 5,                    // Небольшой отступ сверху
-                textWidth + 20,           // Ширина фона
-                textHeight + 10           // Высота фона
-              );
-            }
-            
-            // Настройки текста - точно как позиционируется в превью
-            ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
-            ctx.fillStyle = overlay.color || '#ffffff';
-            ctx.textAlign = 'left';    // Текст начинается С координаты, не центрируется
-            ctx.textBaseline = 'top';   // Текст начинается СВЕРХУ координаты
-            
-            // Добавляем тень для лучшей читаемости
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            
-            // Рисуем текст
-            ctx.fillText(overlay.text || 'Текст', x, y);
-            
-            ctx.restore();
-          }
-        }
-
-        // Конвертируем в base64 с максимальным сжатием
-        let base64Image = canvas.toDataURL('image/jpeg', 0.3); // Максимальное сжатие 30%
-        
-        // Если слишком большое, еще больше сжимаем
-        if (base64Image.length > 100000) { // 100KB limit для ImgBB
-          base64Image = canvas.toDataURL('image/jpeg', 0.1); // Экстремальное сжатие 10%
-          console.log('[GENERATE-STORIES-IMAGE] Изображение максимально сжато до:', base64Image.length);
+    // Заливаем фон - СНАЧАЛА ФОН КАК В РЕДАКТОРЕ
+    if (story.backgroundImageUrl || story.image_url) {
+      try {
+        const imageUrl = story.backgroundImageUrl || story.image_url;
+        if (!imageUrl) {
+          throw new Error('No background image URL');
         }
         
-        console.log('[GENERATE-STORIES-IMAGE] Изображение готово, размер base64:', base64Image.length);
-        resolve(base64Image);
-      };
-
-      // Заливаем фон
-      const backgroundUrl = story.backgroundImageUrl || story.image_url;
-      if (backgroundUrl) {
+        console.log('[GENERATE-STORIES-IMAGE] Загружаем фоновое изображение:', imageUrl);
+        
         const img = new Image();
         img.crossOrigin = 'anonymous';
         
-        img.onload = () => {
-          try {
-            // Масштабируем изображение чтобы покрыть весь canvas
-            const scale = Math.max(width / img.width, height / img.height);
-            const scaledWidth = img.width * scale;
-            const scaledHeight = img.height * scale;
-            const x = (width - scaledWidth) / 2;
-            const y = (height - scaledHeight) / 2;
-            
-            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-            drawTextOverlays();
-          } catch (error) {
-            console.warn('Ошибка отрисовки фонового изображения, используем градиент');
-            // Градиентный фон как fallback
-            const gradient = ctx.createLinearGradient(0, 0, 0, height);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-            drawTextOverlays();
-          }
-        };
+        // Используем прокси для всех внешних изображений (включая Beget S3 - у него нет CORS)
+        let proxyUrl = imageUrl;
+        const isSameDomain = imageUrl.includes(window.location.hostname);
         
-        img.onerror = () => {
-          console.warn('Ошибка загрузки фонового изображения, используем градиент');
-          // Градиентный фон как fallback
-          const gradient = ctx.createLinearGradient(0, 0, 0, height);
-          gradient.addColorStop(0, '#667eea');
-          gradient.addColorStop(1, '#764ba2');
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, width, height);
-          drawTextOverlays();
-        };
+        if (imageUrl.startsWith('http') && !isSameDomain) {
+          proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+          console.log('[GENERATE-STORIES-IMAGE] Используем прокси для внешнего изображения:', proxyUrl);
+        } else {
+          console.log('[GENERATE-STORIES-IMAGE] Загружаем изображение напрямую (тот же домен):', imageUrl);
+        }
         
-        img.src = backgroundUrl;
-      } else {
-        // Градиентный фон по умолчанию
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            console.log('[GENERATE-STORIES-IMAGE] Изображение загружено успешно');
+            resolve();
+          };
+          img.onerror = (error) => {
+            console.error('[GENERATE-STORIES-IMAGE] Ошибка загрузки изображения:', error);
+            reject(error);
+          };
+          img.src = proxyUrl;
+        });
+        
+        // Масштабируем изображение чтобы покрыть весь canvas - КАК В РЕДАКТОРЕ
+        const scale = Math.max(width / img.width, height / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const x = (width - scaledWidth) / 2;
+        const y = (height - scaledHeight) / 2;
+        
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+        console.log('[GENERATE-STORIES-IMAGE] Изображение нарисовано на canvas');
+      } catch (error) {
+        console.warn('[GENERATE-STORIES-IMAGE] Ошибка загрузки фонового изображения, используем градиент:', error);
+        // Градиентный фон как fallback
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
         gradient.addColorStop(0, '#667eea');
         gradient.addColorStop(1, '#764ba2');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
-        drawTextOverlays();
       }
-      
-    } catch (error) {
-      reject(error);
+    } else {
+      console.log('[GENERATE-STORIES-IMAGE] Используем градиентный фон по умолчанию');
+      // Градиентный фон по умолчанию
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
     }
-  });
+
+    // Добавляем текстовые элементы - КАК В РЕДАКТОРЕ
+    console.log('[GENERATE-STORIES-IMAGE] Рисуем текстовые элементы:', story.textOverlays);
+    
+    if (story.textOverlays && story.textOverlays.length > 0) {
+      for (const overlay of story.textOverlays) {
+        console.log('[GENERATE-STORIES-IMAGE] Обрабатываем overlay:', overlay);
+        
+        // Масштабируем координаты под новый размер canvas - КАК В РЕДАКТОРЕ
+        // Превью: 280x497 -> Canvas: 540x960 (масштаб ~1.93x)
+        const scale = width / 280; // Масштабирование координат
+        const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 * scale : 2 * scale;
+        const x = (overlay.x !== undefined ? overlay.x : 50) * scale + textPaddingX;
+        const y = (overlay.y !== undefined ? overlay.y : 50) * scale;
+        
+        const fontSize = (overlay.fontSize || 24) * scale;
+        
+        ctx.save();
+        
+        // Поворот текста
+        if (overlay.rotation) {
+          ctx.translate(x, y);
+          ctx.rotate((overlay.rotation * Math.PI) / 180);
+          ctx.translate(-x, -y);
+        }
+        
+        // Фон для текста (если не прозрачный) - КАК В РЕДАКТОРЕ
+        if (overlay.backgroundColor && overlay.backgroundColor !== 'transparent') {
+          ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
+          const textMetrics = ctx.measureText(overlay.text || 'Текст');
+          const textWidth = textMetrics.width;
+          const textHeight = fontSize;
+          
+          ctx.fillStyle = overlay.backgroundColor;
+          ctx.fillRect(
+            x - 8 * scale,                    // Масштабированный отступ слева
+            y - 5 * scale,                    // Масштабированный отступ сверху
+            textWidth + 16 * scale,           // Масштабированная ширина фона
+            textHeight + 10 * scale           // Масштабированная высота фона
+          );
+        }
+        
+        // Настройки текста - КАК В РЕДАКТОРЕ
+        ctx.font = `${overlay.fontWeight || 'bold'} ${fontSize}px ${overlay.fontFamily || 'Arial'}`;
+        ctx.fillStyle = overlay.color || '#ffffff';
+        ctx.textAlign = 'left';    // Текст начинается С координаты, не центрируется
+        ctx.textBaseline = 'top';   // Текст начинается СВЕРХУ координаты
+        
+        // Добавляем тень для лучшей читаемости
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+        
+        // Рисуем текст
+        ctx.fillText(overlay.text || 'Текст', x, y);
+        
+        ctx.restore();
+      }
+    }
+
+    // Конвертируем в base64 с максимальным сжатием
+    let base64Image = canvas.toDataURL('image/jpeg', 0.3); // Максимальное сжатие 30%
+    
+    // Если слишком большое, еще больше сжимаем
+    if (base64Image.length > 100000) { // 100KB limit для ImgBB
+      base64Image = canvas.toDataURL('image/jpeg', 0.1); // Экстремальное сжатие 10%
+      console.log('[GENERATE-STORIES-IMAGE] Изображение максимально сжато до:', base64Image.length);
+    }
+    
+    console.log('[GENERATE-STORIES-IMAGE] Изображение готово, размер base64:', base64Image.length);
+    return base64Image;
+    
+  } catch (error) {
+    console.error('[GENERATE-STORIES-IMAGE] Ошибка генерации:', error);
+    throw error;
+  }
 };
 
 export const uploadImageToImgbb = async (base64Image: string, title: string = 'story'): Promise<string> => {

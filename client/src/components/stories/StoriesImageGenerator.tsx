@@ -51,11 +51,15 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           const img = new Image();
           img.crossOrigin = 'anonymous';
           
-          // Используем прокси для загрузки изображений с других доменов
+          // Используем прокси для всех внешних изображений (включая Beget S3 - у него нет CORS)
           let proxyUrl = imageUrl;
-          if (imageUrl.startsWith('http') && !imageUrl.includes(window.location.hostname)) {
+          const isSameDomain = imageUrl.includes(window.location.hostname);
+          
+          if (imageUrl.startsWith('http') && !isSameDomain) {
             proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
-            console.log('[STORIES-IMAGE-GEN] Используем прокси:', proxyUrl);
+            console.log('[STORIES-IMAGE-GEN] Используем прокси для внешнего изображения:', proxyUrl);
+          } else {
+            console.log('[STORIES-IMAGE-GEN] Загружаем изображение напрямую (тот же домен):', imageUrl);
           }
           
           await new Promise((resolve, reject) => {

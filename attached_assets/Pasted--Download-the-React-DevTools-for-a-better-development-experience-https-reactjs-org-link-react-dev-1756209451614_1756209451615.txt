@@ -1,0 +1,201 @@
+ Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+ Injected CSS loaded successfully
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-DMFJI7XL.js?v=11963b2f:338
+ Current content before update: Object
+ Selected keyword IDs: Array(0)
+ Update data being sent: Object
+ Keywords type: Array
+ Stories redirect logic: Object
+edit:1 Access to image at 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp' from origin 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp:1  Failed to load resource: net::ERR_FAILED
+ Ошибка загрузки фонового изображения, используем градиент
+generateImage @ StoriesImageGenerator.tsx:66
+ [STORIES-IMAGE-GENERATOR] Размер изображения: 11KB
+ [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207497413-y0etmh.jpg
+ [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+ Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207497413-y0etmh.jpg
+ WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:9
+ Запущено обновление токена по расписанию
+ [STORIES-IMAGE-GEN] Загружаем фоновое изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Используем прокси: /api/proxy-image?url=https%3A%2F%2F6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud%2Fimages%2Fupload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Изображение загружено успешно
+ [STORIES-IMAGE-GEN] Изображение нарисовано на canvas
+ [STORIES-IMAGE-GENERATOR] Размер изображения: 76KB
+ [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208261747-pwha5l.jpg
+ [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+ Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208261747-pwha5l.jpg
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-DMFJI7XL.js?v=11963b2f:338
+ Загруженные данные Stories: Object
+ Начало загрузки видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/d381b910-5c84-4a7a-b2ab-1d4742624df0.mp4
+ Сохранение Stories: Object
+ Сохранение video_url в контент: Object
+ Контент успешно обновлен с video_url: Object
+ Сохранение Stories: Object
+ Сохранение video_url в контент: Object
+ Контент успешно обновлен с video_url: Object
+ Начинаем генерацию видео с данными: Object
+ Текст "Ебланская хуерага": 26,12 -> 78,36 (масштаб x3.0)
+ Текст "Ну и хуета!": 35,286 -> 105,858 (масштаб x3.0)
+ Сохранение видео URL в additional_media: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/f3b82f9d-b423-417e-8360-209d0d943dd7.mp4
+ Создан прокси URL: https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/api/instagram-video-proxy/f3b82f9d-b423-417e-8360-209d0d943dd7.mp4
+ Массив для additional_media репитера: Array(1)
+ Структура additional_media успешно сохранена
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-DMFJI7XL.js?v=11963b2f:338
+ Stories redirect logic: Object
+ [STORIES-IMAGE-GEN] Загружаем фоновое изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Используем прокси: /api/proxy-image?url=https%3A%2F%2F6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud%2Fimages%2Fupload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Изображение загружено успешно
+ [STORIES-IMAGE-GEN] Изображение нарисовано на canvas
+ [STORIES-IMAGE-GENERATOR] Размер изображения: 76KB
+ [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208733416-caj8j.jpg
+ [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+ Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208733416-caj8j.jpg
+ [STORY-PUBLISH-BUTTON] Начинаем публикацию: Object
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: Array(1)
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: Array(1)
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story object keys: Array(6)
+publishWithImageGeneration.ts:15 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:30 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:38 [PUBLISH-WITH-MEDIA] Найдены textOverlays, проверяем тип медиа: image
+publishWithImageGeneration.ts:89 [PUBLISH-WITH-MEDIA] Генерируем новое изображение...
+publishWithImageGeneration.ts:97 [PUBLISH-WITH-MEDIA] Story для генерации изображения: Object
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: Object
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: Object
+edit:1 Access to image at 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp' from origin 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp:1  Failed to load resource: net::ERR_FAILED
+storiesImageUtils.ts:146 Ошибка загрузки фонового изображения, используем градиент
+img.onerror @ storiesImageUtils.ts:146
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: Array(1)
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: Object
+storiesImageUtils.ts:112 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 3203
+publishWithImageGeneration.ts:101 [PUBLISH-WITH-MEDIA] Изображение сгенерировано, размер base64: 3203
+publishWithImageGeneration.ts:104 [PUBLISH-WITH-MEDIA] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:202 [STORIES-IMAGE-UPLOAD] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208743781-ygs9o7.jpg
+publishWithImageGeneration.ts:107 [PUBLISH-WITH-MEDIA] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208743781-ygs9o7.jpg
+publishWithImageGeneration.ts:145 [PUBLISH-WITH-MEDIA] additional_media обновлено
+publishWithImageGeneration.ts:162 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedImageUrl: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208743781-ygs9o7.jpg
+publishWithImageGeneration.ts:163 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedVideoUrl: null
+publishWithImageGeneration.ts:189 [PUBLISH-WITH-IMAGE] Результат публикации: Object
+StoryPublishButton.tsx:45 [STORY-PUBLISH-BUTTON] Результат публикации: Object
+StoryPublishButton.tsx:63 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Stories частично опубликована. Проверьте детали.
+    at handlePublish (StoryPublishButton.tsx:59:15)
+handlePublish @ StoryPublishButton.tsx:63
+auth.ts:42 Запущено обновление токена по расписанию
+ [STORIES-IMAGE-GEN] Загружаем фоновое изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Используем прокси: /api/proxy-image?url=https%3A%2F%2F6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud%2Fimages%2Fupload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Изображение загружено успешно
+ [STORIES-IMAGE-GEN] Изображение нарисовано на canvas
+ [STORIES-IMAGE-GENERATOR] Размер изображения: 76KB
+ [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208919146-1k7.jpg
+ [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+SimpleStoryEditor.tsx:785 Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208919146-1k7.jpg
+StoryPublishButton.tsx:33 [STORY-PUBLISH-BUTTON] Начинаем публикацию: Object
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: Array(1)
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: Array(1)
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story object keys: Array(6)
+publishWithImageGeneration.ts:15 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:30 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:38 [PUBLISH-WITH-MEDIA] Найдены textOverlays, проверяем тип медиа: image
+publishWithImageGeneration.ts:89 [PUBLISH-WITH-MEDIA] Генерируем новое изображение...
+publishWithImageGeneration.ts:97 [PUBLISH-WITH-MEDIA] Story для генерации изображения: Object
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: Object
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: Object
+edit:1 Access to image at 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp' from origin 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp:1  Failed to load resource: net::ERR_FAILED
+storiesImageUtils.ts:146 Ошибка загрузки фонового изображения, используем градиент
+img.onerror @ storiesImageUtils.ts:146
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: Array(1)
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: Object
+storiesImageUtils.ts:112 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 3203
+publishWithImageGeneration.ts:101 [PUBLISH-WITH-MEDIA] Изображение сгенерировано, размер base64: 3203
+publishWithImageGeneration.ts:104 [PUBLISH-WITH-MEDIA] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:202 [STORIES-IMAGE-UPLOAD] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208953988-dr7gc.jpg
+publishWithImageGeneration.ts:107 [PUBLISH-WITH-MEDIA] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208953988-dr7gc.jpg
+publishWithImageGeneration.ts:145 [PUBLISH-WITH-MEDIA] additional_media обновлено
+publishWithImageGeneration.ts:162 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedImageUrl: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756208953988-dr7gc.jpg
+publishWithImageGeneration.ts:163 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedVideoUrl: null
+publishWithImageGeneration.ts:189 [PUBLISH-WITH-IMAGE] Результат публикации: Object
+StoryPublishButton.tsx:45 [STORY-PUBLISH-BUTTON] Результат публикации: Object
+StoryPublishButton.tsx:63 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Stories частично опубликована. Проверьте детали.
+    at handlePublish (StoryPublishButton.tsx:59:15)
+handlePublish @ StoryPublishButton.tsx:63
+ [STORIES-IMAGE-GEN] Загружаем фоновое изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Используем прокси: /api/proxy-image?url=https%3A%2F%2F6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud%2Fimages%2Fupload-1756207239801-1756207234645-41586875-no.webp
+ [STORIES-IMAGE-GEN] Изображение загружено успешно
+ [STORIES-IMAGE-GEN] Изображение нарисовано на canvas
+ [STORIES-IMAGE-GENERATOR] Размер изображения: 76KB
+ [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209287366-sder8g.jpg
+ [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+SimpleStoryEditor.tsx:785 Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209287366-sder8g.jpg
+StoryPublishButton.tsx:33 [STORY-PUBLISH-BUTTON] Начинаем публикацию: Object
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: Array(1)
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: Array(1)
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story object keys: Array(6)
+publishWithImageGeneration.ts:15 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:30 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:38 [PUBLISH-WITH-MEDIA] Найдены textOverlays, проверяем тип медиа: image
+publishWithImageGeneration.ts:89 [PUBLISH-WITH-MEDIA] Генерируем новое изображение...
+publishWithImageGeneration.ts:97 [PUBLISH-WITH-MEDIA] Story для генерации изображения: Object
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: Object
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: Object
+edit:1 Access to image at 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp' from origin 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp:1  Failed to load resource: net::ERR_FAILED
+storiesImageUtils.ts:146 Ошибка загрузки фонового изображения, используем градиент
+img.onerror @ storiesImageUtils.ts:146
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: Array(1)
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: Object
+storiesImageUtils.ts:112 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 3203
+publishWithImageGeneration.ts:101 [PUBLISH-WITH-MEDIA] Изображение сгенерировано, размер base64: 3203
+publishWithImageGeneration.ts:104 [PUBLISH-WITH-MEDIA] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:202 [STORIES-IMAGE-UPLOAD] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209328168-z6qdih.jpg
+publishWithImageGeneration.ts:107 [PUBLISH-WITH-MEDIA] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209328168-z6qdih.jpg
+publishWithImageGeneration.ts:145 [PUBLISH-WITH-MEDIA] additional_media обновлено
+publishWithImageGeneration.ts:162 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedImageUrl: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209328168-z6qdih.jpg
+publishWithImageGeneration.ts:163 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedVideoUrl: null
+publishWithImageGeneration.ts:189 [PUBLISH-WITH-IMAGE] Результат публикации: Object
+StoryPublishButton.tsx:45 [STORY-PUBLISH-BUTTON] Результат публикации: Object
+StoryPublishButton.tsx:63 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Stories частично опубликована. Проверьте детали.
+    at handlePublish (StoryPublishButton.tsx:59:15)
+handlePublish @ StoryPublishButton.tsx:63
+StoryPublishButton.tsx:33 [STORY-PUBLISH-BUTTON] Начинаем публикацию: Object
+StoryPublishButton.tsx:34 [STORY-PUBLISH-BUTTON] textOverlays: Array(1)
+StoryPublishButton.tsx:35 [STORY-PUBLISH-BUTTON] platforms: Array(1)
+publishWithImageGeneration.ts:13 [PUBLISH-WITH-IMAGE] Начинаем публикацию с генерацией изображения: Object
+publishWithImageGeneration.ts:14 [PUBLISH-WITH-IMAGE] Story object keys: Array(6)
+publishWithImageGeneration.ts:15 [PUBLISH-WITH-IMAGE] Story metadata: undefined
+publishWithImageGeneration.ts:29 [PUBLISH-WITH-IMAGE] Final textOverlays: Array(1)
+publishWithImageGeneration.ts:30 [PUBLISH-WITH-IMAGE] textOverlays length: 1
+publishWithImageGeneration.ts:38 [PUBLISH-WITH-MEDIA] Найдены textOverlays, проверяем тип медиа: image
+publishWithImageGeneration.ts:89 [PUBLISH-WITH-MEDIA] Генерируем новое изображение...
+publishWithImageGeneration.ts:97 [PUBLISH-WITH-MEDIA] Story для генерации изображения: Object
+storiesImageUtils.ts:25 [GENERATE-STORIES-IMAGE] Начинаем генерацию изображения для story: Object
+storiesImageUtils.ts:43 [GENERATE-STORIES-IMAGE] Canvas создан: Object
+edit:1 Access to image at 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp' from origin 'https://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756207239801-1756207234645-41586875-no.webp:1  Failed to load resource: net::ERR_FAILED
+storiesImageUtils.ts:146 Ошибка загрузки фонового изображения, используем градиент
+img.onerror @ storiesImageUtils.ts:146
+storiesImageUtils.ts:46 [GENERATE-STORIES-IMAGE] Рисуем текстовые элементы: Array(1)
+storiesImageUtils.ts:51 [GENERATE-STORIES-IMAGE] Обрабатываем overlay: Object
+storiesImageUtils.ts:112 [GENERATE-STORIES-IMAGE] Изображение готово, размер base64: 3203
+publishWithImageGeneration.ts:101 [PUBLISH-WITH-MEDIA] Изображение сгенерировано, размер base64: 3203
+publishWithImageGeneration.ts:104 [PUBLISH-WITH-MEDIA] Загружаем изображение на ImgBB...
+storiesImageUtils.ts:202 [STORIES-IMAGE-UPLOAD] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209377213-dpzey.jpg
+publishWithImageGeneration.ts:107 [PUBLISH-WITH-MEDIA] Изображение загружено: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209377213-dpzey.jpg
+publishWithImageGeneration.ts:145 [PUBLISH-WITH-MEDIA] additional_media обновлено
+publishWithImageGeneration.ts:162 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedImageUrl: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756209377213-dpzey.jpg
+publishWithImageGeneration.ts:163 [PUBLISH-WITH-MEDIA] Отправляем на публикацию с generatedVideoUrl: null
+publishWithImageGeneration.ts:189 [PUBLISH-WITH-IMAGE] Результат публикации: Object
+StoryPublishButton.tsx:45 [STORY-PUBLISH-BUTTON] Результат публикации: Object
+StoryPublishButton.tsx:63 [STORY-PUBLISH-BUTTON] Ошибка публикации: Error: Stories частично опубликована. Проверьте детали.
+    at handlePublish (StoryPublishButton.tsx:59:15)
+handlePublish @ StoryPublishButton.tsx:63
