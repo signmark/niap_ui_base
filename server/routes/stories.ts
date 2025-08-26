@@ -434,12 +434,21 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
     const userId = req.user?.id;
     
     console.log(`[DEV] [stories] 🎬 Публикация Stories ID: ${id}`);
+    console.log(`[DEV] [stories] 🎬 Request body:`, JSON.stringify(req.body));
     console.log(`[DEV] [stories] 🎬 Платформы: ${JSON.stringify(platforms)}`);
     console.log(`[DEV] [stories] 🎬 Запланировано: ${scheduledAt}`);
     console.log(`[DEV] [stories] 🎬 UserID: ${userId}`);
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Ensure platforms is an array
+    const publishPlatforms = platforms && Array.isArray(platforms) ? platforms : ['instagram'];
+    console.log(`[DEV] [stories] 🎬 Используем платформы: ${JSON.stringify(publishPlatforms)}`);
+
+    if (!publishPlatforms || publishPlatforms.length === 0) {
+      return res.status(400).json({ error: 'At least one platform is required' });
     }
 
     // Get story с пользовательским токеном
@@ -457,7 +466,7 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
     const updateData = {
       status: scheduledAt ? 'scheduled' : 'published',
       scheduled_time: scheduledAt || new Date().toISOString(),
-      platforms: JSON.stringify(platforms),
+      platforms: JSON.stringify(publishPlatforms),
       updated_at: new Date().toISOString()
     };
 
@@ -473,8 +482,8 @@ router.post('/story/:id/publish', authMiddleware, async (req, res) => {
       const n8nUrl = process.env.N8N_URL || 'https://n8n.roboflow.space';
       
       // Разделяем платформы: Instagram Stories отдельно
-      const instagramPlatforms = platforms.filter((p: string) => p === 'instagram');
-      const otherPlatforms = platforms.filter((p: string) => p !== 'instagram');
+      const instagramPlatforms = publishPlatforms.filter((p: string) => p === 'instagram');
+      const otherPlatforms = publishPlatforms.filter((p: string) => p !== 'instagram');
 
       const webhookPromises = [];
 

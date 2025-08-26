@@ -56,7 +56,7 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
 
     // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
     if (overlays.length > 0) {
-      // ВАЖНО: Instagram Stories требует точно 1080x1920 для оптимального качества
+      // Генерируем видео в Instagram Stories формате 1080x1920 для качества
       let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
       overlays.forEach((overlay, index) => {
@@ -215,7 +215,7 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
 
     // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
     if (overlays.length > 0) {
-      // ВАЖНО: Instagram Stories требует точно 1080x1920 для оптимального качества
+      // Генерируем видео в Instagram Stories формате 1080x1920 для качества
       let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
       overlays.forEach((overlay, index) => {

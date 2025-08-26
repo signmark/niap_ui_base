@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2, Move, Type, Video } from 'lucide-react';
+import { Upload, Save, ArrowLeft, Play, Pause, Plus, Trash2, Move, Type, Video, Send } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import DraggableWrapper from './DraggableWrapper';
@@ -422,20 +422,20 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
         data: {
           videoUrl: story.backgroundVideoUrl,
           textOverlays: story.textOverlays.map(overlay => {
-            // Простое масштабирование: редактор 280x497 -> видео 1080x1920
-            const scaleX = 1080 / 280;  // 3.857
-            const scaleY = 1920 / 497;  // 3.864
+            // Масштабируем из превью 270x480 в видео 1080x1920 с коэффициентом x3
+            const scaleX = 3.0; // Попробуем x3 вместо x4
+            const scaleY = 3.0;
             
             const scaledX = Math.round(overlay.x * scaleX);
             const scaledY = Math.round(overlay.y * scaleY);
             const scaledFontSize = Math.round(overlay.fontSize * scaleX);
             
-            // Ограничиваем координаты границами видео
-            const finalX = Math.max(0, Math.min(scaledX, 1080 - 100)); // -100 отступ от края
-            const finalY = Math.max(50, Math.min(scaledY, 1920 - 50));  // отступы сверху и снизу
-            const finalFontSize = Math.max(20, Math.min(scaledFontSize, 200)); // ограничение размера шрифта
+            // Ограничиваем координаты границами видео 1080x1920
+            const finalX = Math.max(0, Math.min(scaledX, 1080 - 50)); 
+            const finalY = Math.max(30, Math.min(scaledY, 1920 - 30));  
+            const finalFontSize = Math.max(40, Math.min(scaledFontSize, 400));
             
-            console.log(`Текст "${overlay.text}": ${overlay.x},${overlay.y} -> ${finalX},${finalY}`);
+            console.log(`Текст "${overlay.text}": ${overlay.x},${overlay.y} -> ${finalX},${finalY} (масштаб x3.0)`);
             
             return {
               text: overlay.text,
@@ -606,7 +606,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-4 gap-6">
           {/* Панель настроек */}
           <div className="lg:col-span-1 space-y-6">
             {/* Загрузка видео */}
@@ -806,7 +806,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
               <CardContent>
                 <div 
                   className="relative mx-auto bg-gray-900 overflow-hidden"
-                  style={{ width: '400px', height: '711px' }}
+                  style={{ width: '250px', height: '444px' }}
                 >
                   {/* Видео */}
                   {story.backgroundVideoUrl && (
@@ -854,7 +854,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                             padding: overlay.padding ? `${overlay.padding}px` : undefined,
                             borderRadius: overlay.borderRadius ? `${overlay.borderRadius}px` : undefined,
                             whiteSpace: 'pre-wrap',
-                            maxWidth: '350px'
+                            maxWidth: '200px'
                           }}
                           onClick={() => setSelectedOverlay(index)}
                         >
@@ -908,55 +908,106 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
               </CardContent>
             </Card>
           </div>
+
+          {/* Превью сгенерированного видео */}
+          <div className="lg:col-span-1">
+            {generatedVideoUrl ? (
+              <Card className="bg-white/80 backdrop-blur-sm border border-gray-200">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <Play className="h-4 w-4 text-white" />
+                    </div>
+                    <CardTitle className="text-lg font-bold text-gray-800">
+                      Сгенерированное видео
+                    </CardTitle>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Готово к публикации
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative max-w-[200px] mx-auto">
+                    <div 
+                      className="relative w-[200px] h-[356px] bg-black rounded-lg overflow-hidden shadow-lg"
+                      style={{ aspectRatio: '9/16' }}
+                    >
+                      <video
+                        className="absolute inset-0 w-full h-full object-cover"
+                        src={generatedVideoUrl}
+                        controls
+                        muted
+                        playsInline
+                        onError={(e) => {
+                          console.error('Ошибка загрузки сгенерированного видео:', e);
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Информация о видео */}
+                    <div className="mt-3 text-center text-sm text-gray-600">
+                      <p>✅ Обработано</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        1080x1920 • H.264
+                      </p>
+                    </div>
+                    
+                    {/* Кнопка публикации */}
+                    <Button 
+                      className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      onClick={async () => {
+                        try {
+                          const result = await apiRequest(`/api/stories/story/${storyId}/publish`, {
+                            method: 'POST',
+                            data: {
+                              platforms: ['instagram']
+                            }
+                          });
+                          
+                          if (result.success) {
+                            toast({
+                              title: "Публикация запущена",
+                              description: "Видео отправлено на публикацию в Instagram Stories",
+                            });
+                          } else {
+                            toast({
+                              title: "Ошибка публикации",
+                              description: `Не удалось опубликовать: ${result.error || 'Неизвестная ошибка'}`,
+                              variant: "destructive"
+                            });
+                          }
+                        } catch (error) {
+                          console.error('Ошибка публикации Stories:', error);
+                          toast({
+                            title: "Ошибка",
+                            description: "Произошла ошибка при публикации видео",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Опубликовать
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-2 border-dashed border-gray-300">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <Video className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    Сгенерированное видео
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Нажмите "Сгенерировать видео" чтобы создать итоговое видео с текстами
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
-        {/* Превью сгенерированного видео */}
-        {generatedVideoUrl && (
-          <div className="mt-6">
-            <Card className="bg-white/80 backdrop-blur-sm border border-gray-200">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Play className="h-4 w-4 text-white" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-gray-800">
-                    Превью сгенерированного видео
-                  </CardTitle>
-                </div>
-                <p className="text-gray-600 text-sm">
-                  Видео с наложенными текстами готово и загружено на S3
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="relative max-w-[280px] mx-auto">
-                  <div 
-                    className="relative w-[280px] h-[497px] bg-black rounded-lg overflow-hidden shadow-lg"
-                    style={{ aspectRatio: '9/16' }}
-                  >
-                    <video
-                      className="absolute inset-0 w-full h-full object-cover"
-                      src={generatedVideoUrl}
-                      controls
-                      muted
-                      playsInline
-                      onError={(e) => {
-                        console.error('Ошибка загрузки сгенерированного видео:', e);
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Информация о видео */}
-                  <div className="mt-4 text-center text-sm text-gray-600">
-                    <p>✅ Видео обработано и сохранено</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Формат: 1080x1920 • MP4 • H.264
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </div>
   );
