@@ -100,11 +100,12 @@ export class ImgurUploaderService {
       formData.append('key', this.imgurApiKey);
       formData.append('image', fs.createReadStream(filePath));
 
-      // Отправляем запрос на Imgur API
+      // Отправляем запрос на Imgur API с быстрым таймаутом
       const response = await axios.post(this.uploadEndpoint, formData, {
         headers: {
           ...formData.getHeaders(),
         },
+        timeout: 8000, // 8 секунд таймаут - быстрое переключение на fallback
       });
 
       // Проверяем ответ
