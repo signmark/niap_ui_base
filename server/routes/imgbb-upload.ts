@@ -70,22 +70,54 @@ router.post('/upload', authMiddleware, async (req, res) => {
   } catch (error: any) {
     console.error('[IMGBB-UPLOAD] Ошибка загрузки на ImgBB:', error?.response?.data || error?.message);
     
-    if (error?.response?.status === 413) {
-      res.status(413).json({ 
-        error: 'Request entity too large',
-        message: 'Изображение слишком большое для загрузки' 
+    // Пробуем fallback на Beget S3 если ImgBB недоступен
+    try {
+      console.log('[IMGBB-UPLOAD] Пробуем Beget S3 как fallback');
+      
+      // Импортируем сервис Beget S3
+      const { BegetS3VideoService } = await import('../services/beget-s3-video-service');
+      const begetService = new BegetS3VideoService();
+      
+      // Конвертируем base64 в Buffer
+      const imageBuffer = Buffer.from(image, 'base64');
+      const fileName = `upload-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      
+      // Загружаем на Beget S3 в папку images
+      const s3Url = await begetService.uploadFileBuffer(imageBuffer, `images/${fileName}`, 'image/jpeg');
+      
+      console.log('[IMGBB-UPLOAD] Успешная загрузка на Beget S3 (fallback):', s3Url);
+      
+      res.json({
+        success: true,
+        data: {
+          url: s3Url,
+          fallback: 'beget-s3'
+        }
       });
-    } else if (error?.code === 'ECONNABORTED') {
-      res.status(408).json({ 
-        error: 'Upload timeout',
-        message: 'Превышено время ожидания загрузки' 
-      });
-    } else {
-      res.status(500).json({ 
-        error: 'Upload failed',
-        message: 'Ошибка загрузки изображения',
-        details: error?.response?.data || error?.message 
-      });
+      
+    } catch (fallbackError: any) {
+      console.error('[IMGBB-UPLOAD] Fallback на Beget S3 тоже не сработал:', fallbackError?.message);
+      
+      if (error?.response?.status === 413) {
+        res.status(413).json({ 
+          error: 'Request entity too large',
+          message: 'Изображение слишком большое для загрузки' 
+        });
+      } else if (error?.code === 'ECONNABORTED') {
+        res.status(408).json({ 
+          error: 'Upload timeout',
+          message: 'Превышено время ожидания загрузки' 
+        });
+      } else {
+        res.status(500).json({ 
+          error: 'Upload failed',
+          message: 'Ошибка загрузки изображения на все сервисы',
+          details: {
+            imgbb: error?.response?.data || error?.message,
+            beget: fallbackError?.message
+          }
+        });
+      }
     }
   }
 });

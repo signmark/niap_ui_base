@@ -36,9 +36,9 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         throw new Error('Не удалось создать контекст canvas');
       }
 
-      // Увеличенный размер для лучшего качества изображения
-      const width = 1080;  // Instagram Stories стандарт
-      const height = 1920; // Instagram Stories стандарт (9:16)
+      // Оптимальный размер для качества и совместимости с ImgBB
+      const width = 540;   // Средний размер для хорошего качества
+      const height = 960;  // Соотношение 9:16 для Instagram Stories
       canvas.width = width;
       canvas.height = height;
 
@@ -89,7 +89,7 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         
         // Используем точно те же координаты что и в превью
         // Масштабируем координаты под новый размер canvas
-        // Превью: 280x497 -> Canvas: 1080x1920 (масштаб ~3.86x)
+        // Превью: 280x497 -> Canvas: 540x960 (масштаб ~1.93x)
         const scale = width / 280; // Масштабирование координат
         const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 * scale : 2 * scale;
         const x = (overlay.x !== undefined ? overlay.x : 50) * scale + textPaddingX;
@@ -118,10 +118,10 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           ctx.fillStyle = overlay.backgroundColor;
           // Фон масштабируется под новый размер
           ctx.fillRect(
-            x - 10 * scale,                   // Масштабированный отступ слева
-            y - 5 * scale,                    // Масштабированный отступ сверху
-            textWidth + 20 * scale,           // Масштабированная ширина фона
-            textHeight + 10 * scale           // Масштабированная высота фона
+            x - 8 * scale,                    // Масштабированный отступ слева
+            y - 4 * scale,                    // Масштабированный отступ сверху
+            textWidth + 16 * scale,           // Масштабированная ширина фона
+            textHeight + 8 * scale            // Масштабированная высота фона
           );
         }
         
@@ -132,10 +132,10 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         ctx.textBaseline = 'top';   // Текст начинается СВЕРХУ координаты
         
         // Добавляем тень для лучшей читаемости (масштабированную)
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 4 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 2 * scale;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 3 * scale;
+        ctx.shadowOffsetX = 1.5 * scale;
+        ctx.shadowOffsetY = 1.5 * scale;
         
         // Рисуем текст
         ctx.fillText(overlay.text || 'Текст', x, y);
@@ -143,18 +143,20 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         ctx.restore();
       }
 
-      // Конвертируем в base64 с хорошим качеством для Instagram Stories
-      let finalImage = canvas.toDataURL('image/jpeg', 0.85); // Высокое качество 85%
+      // Конвертируем в base64 с оптимизированным качеством для ImgBB
+      let finalImage = canvas.toDataURL('image/jpeg', 0.8); // Хорошее качество 80%
       
-      // Проверяем размер и при необходимости немного сжимаем
-      if (finalImage.length > 500000) { // 500KB limit - разумный размер
-        finalImage = canvas.toDataURL('image/jpeg', 0.75); // Умеренное сжатие 75%
+      // ImgBB имеет лимит, поэтому проверяем размер и сжимаем при необходимости
+      if (finalImage.length > 300000) { // 300KB limit для стабильной работы ImgBB
+        finalImage = canvas.toDataURL('image/jpeg', 0.6); // Умеренное сжатие 60%
       }
       
-      // Крайний случай - дополнительное сжатие только если очень большой размер
-      if (finalImage.length > 1000000) { // 1MB limit
-        finalImage = canvas.toDataURL('image/jpeg', 0.6); // 60% качество
+      // Дополнительное сжатие для больших изображений
+      if (finalImage.length > 500000) { // 500KB - максимальный лимит
+        finalImage = canvas.toDataURL('image/jpeg', 0.4); // Сильное сжатие 40%
       }
+      
+      console.log(`[STORIES-IMAGE-GENERATOR] Размер изображения: ${Math.round(finalImage.length / 1024)}KB`);
       
       // Загружаем на ImgBB и сохраняем в Stories
       try {
