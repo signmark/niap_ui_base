@@ -1937,6 +1937,7 @@ export default function ContentPage() {
                   <SelectContent>
                     <SelectItem value="text">Текст</SelectItem>
                     <SelectItem value="text-image">Текст с картинкой</SelectItem>
+                    <SelectItem value="image">Только картинка</SelectItem>
                     <SelectItem value="video">Видео</SelectItem>
                     <SelectItem value="story">Instagram Stories</SelectItem>
                   </SelectContent>
@@ -1944,8 +1945,9 @@ export default function ContentPage() {
               </div>
               
               {currentContent.contentType !== "story" && (
-                {/* Поле контента только для типов кроме 'image' */}
-                {currentContent.contentType !== 'image' && (
+                <div>
+                  {/* Поле контента только для типов кроме 'image' */}
+                  {currentContent.contentType !== 'image' && (
                   <div className="space-y-2">
                     <Label htmlFor="content">
                       {currentContent.contentType === 'video' ? 'Описание' : 'Контент'}
@@ -1963,6 +1965,8 @@ export default function ContentPage() {
                       placeholder="Введите текст контента..."
                     />
                   </div>
+                  </div>
+                )}
                 </div>
               )}
 
