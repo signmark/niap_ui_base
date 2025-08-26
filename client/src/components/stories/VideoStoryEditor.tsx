@@ -469,10 +469,10 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
       
       // Структура для поля additional_media в Directus (массив для репитера)
       const mediaStructure = [{
-        URL: proxyUrl,  // Прокси URL в поле URL
-        Type: 'generated_video',  // Тип контента  
-        Title: 'Instagram Stories Video',  // Заголовок
-        Description: 'Generated video with text overlays for Instagram Stories'  // Описание
+        url: proxyUrl,  // Прокси URL в поле url
+        type: 'generated_video',  // Тип контента  
+        title: 'Instagram Stories Video',  // Заголовок
+        description: 'Generated video with text overlays for Instagram Stories'  // Описание
       }];
       
       console.log('Массив для additional_media репитера:', mediaStructure);
