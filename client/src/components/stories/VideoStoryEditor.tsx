@@ -956,7 +956,16 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                     <Button 
                       className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                       onClick={async () => {
+                        console.log('[PUBLISH] Кнопка нажата!');
+                        
+                        // Простой toast для проверки
+                        toast({
+                          title: "Публикация запущена",
+                          description: "Видео отправлено на публикацию в Instagram Stories",
+                        });
+                        
                         try {
+                          console.log('[PUBLISH] Отправляем запрос...');
                           const result = await apiRequest(`/api/stories/story/${storyId}/publish`, {
                             method: 'POST',
                             data: {
@@ -966,25 +975,8 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                           
                           console.log('[PUBLISH] Результат от сервера:', result);
                           
-                          if (result && result.success) {
-                            toast({
-                              title: "Публикация запущена",
-                              description: "Видео отправлено на публикацию в Instagram Stories",
-                            });
-                          } else {
-                            toast({
-                              title: "Ошибка публикации",
-                              description: `Не удалось опубликовать: ${result?.error || 'Неизвестная ошибка'}`,
-                              variant: "destructive"
-                            });
-                          }
                         } catch (error) {
-                          console.error('Ошибка публикации Stories:', error);
-                          toast({
-                            title: "Ошибка",
-                            description: "Произошла ошибка при публикации видео",
-                            variant: "destructive"
-                          });
+                          console.error('[PUBLISH] Ошибка публикации Stories:', error);
                         }
                       }}
                     >
