@@ -426,14 +426,45 @@ export function registerImgurRoutes(router: Router) {
       const filePath = req.file.path;
       console.log(`Файл успешно загружен: ${filePath}`);
       
-      // Загружаем файл на Imgur
-      const imgurUrl = await imgurUploaderService.uploadImageFromFile(filePath);
+      // Загружаем файл на Imgur с fallback на Beget S3
+      let uploadUrl;
+      let fallbackUsed = false;
       
-      if (!imgurUrl) {
-        return res.status(500).json({
-          success: false,
-          error: 'Не удалось загрузить изображение на Imgur'
-        });
+      try {
+        uploadUrl = await imgurUploaderService.uploadImageFromFile(filePath);
+        
+        if (!uploadUrl) {
+          throw new Error('Imgur вернул пустой URL');
+        }
+      } catch (imgurError) {
+        console.log('[IMGUR-FALLBACK] Imgur недоступен, переключаемся на Beget S3:', imgurError);
+        
+        try {
+          // Импортируем сервис Beget S3
+          const { BegetS3VideoService } = await import('../services/beget-s3-video-service');
+          const begetService = new BegetS3VideoService();
+          
+          // Читаем файл как Buffer
+          const fs = require('fs');
+          const imageBuffer = fs.readFileSync(filePath);
+          const fileName = `upload-${Date.now()}-${path.basename(filePath)}`;
+          
+          // Загружаем на Beget S3 в папку images
+          uploadUrl = await begetService.uploadFileBuffer(imageBuffer, `images/${fileName}`, req.file?.mimetype || 'image/jpeg');
+          fallbackUsed = true;
+          
+          console.log('[IMGUR-FALLBACK] Успешная загрузка на Beget S3:', uploadUrl);
+        } catch (fallbackError) {
+          console.error('[IMGUR-FALLBACK] Fallback на Beget S3 тоже не сработал:', fallbackError);
+          return res.status(500).json({
+            success: false,
+            error: 'Не удалось загрузить изображение ни на Imgur, ни на Beget S3',
+            details: {
+              imgur: imgurError?.message,
+              beget: fallbackError?.message
+            }
+          });
+        }
       }
       
       // Отправляем ответ в двух форматах для совместимости
@@ -445,11 +476,13 @@ export function registerImgurRoutes(router: Router) {
           mimetype: req.file.mimetype,
           size: req.file.size,
           path: filePath,
-          url: imgurUrl,
-          link: imgurUrl // Добавляем также поле link для совместимости
+          url: uploadUrl,
+          link: uploadUrl, // Добавляем также поле link для совместимости
+          fallback: fallbackUsed ? 'beget-s3' : 'imgur'
         },
-        url: imgurUrl,  // Дублируем URL в корне ответа
-        link: imgurUrl  // И также добавляем поле link для совместимости
+        url: uploadUrl,  // Дублируем URL в корне ответа
+        link: uploadUrl,  // И также добавляем поле link для совместимости
+        fallback: fallbackUsed ? 'beget-s3' : 'imgur'
       };
       
       console.log('Отправляем ответ на запрос загрузки файла:', JSON.stringify(responseData, null, 2));
