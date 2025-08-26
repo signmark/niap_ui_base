@@ -400,31 +400,30 @@ export default function ContentPage() {
       });
     },
     onSuccess: () => {
-      // Сначала обновляем данные, затем закрываем диалог
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
-        .then(() => {
-          // Показываем уведомление об успехе
-          toast({
-            description: "Контент успешно создан",
-          });
-          
-          // Сбрасываем форму
-          setNewContent({
-            title: "",
-            content: "",
-            contentType: "text",
-            imageUrl: "",
-            additionalImages: [],
-            videoUrl: "",
-            videoThumbnail: "",
-            additionalVideos: [], // Сбрасываем дополнительные видео
-            prompt: "", // Сохраняем поле prompt
-            keywords: []
-          });
-          
-          // Закрываем диалог
-          setIsCreateDialogOpen(false);
-        });
+      // Показываем уведомление об успехе
+      toast({
+        description: "Контент успешно создан",
+      });
+      
+      // Сбрасываем форму
+      setNewContent({
+        title: "",
+        content: "",
+        contentType: "text",
+        imageUrl: "",
+        additionalImages: [],
+        videoUrl: "",
+        videoThumbnail: "",
+        additionalVideos: [], // Сбрасываем дополнительные видео
+        prompt: "", // Сохраняем поле prompt
+        keywords: []
+      });
+      
+      // Закрываем диалог сразу
+      setIsCreateDialogOpen(false);
+      
+      // Обновляем данные в фоне
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
     },
     onError: (error: Error) => {
       toast({
@@ -455,23 +454,17 @@ export default function ContentPage() {
       });
     },
     onSuccess: (data) => {
-
+      // Показываем тост в любом случае, чтобы уведомить пользователя
+      toast({
+        description: "Контент успешно обновлен",
+      });
       
-      // Принудительное обновление
-      if (data?.data) {
-        // Показываем тост в любом случае, чтобы уведомить пользователя
-        toast({
-          description: "Контент успешно обновлен",
-        });
-      }
+      // Принудительно закрываем форму сразу
+      setIsEditDialogOpen(false);
+      setCurrentContent(null);
       
-      // Сначала обновляем данные, затем закрываем диалог
-      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] })
-        .then(() => {
-          // Принудительно закрываем форму
-          setIsEditDialogOpen(false);
-          setCurrentContent(null);
-        });
+      // Обновляем данные в фоне
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-content", selectedCampaignId] });
     },
     onError: (error: Error) => {
       console.error('Content update error:', error);
