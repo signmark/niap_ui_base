@@ -1,0 +1,29 @@
+chunk-RPCDYKBN.js?v=11963b2f:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+use-websocket.ts:19 WebSocket connection to 'wss://a936ef30-628d-4ec1-a61c-617be226a95d-00-m8pxe5e85z61.worf.replit.dev/' failed: 
+(anonymous) @ use-websocket.ts:19
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=11963b2f:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=11963b2f:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=11963b2f:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=11963b2f:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=11963b2f:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=11963b2f:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=11963b2f:19447
+(anonymous) @ chunk-RPCDYKBN.js?v=11963b2f:19328
+workLoop @ chunk-RPCDYKBN.js?v=11963b2f:197
+flushWork @ chunk-RPCDYKBN.js?v=11963b2f:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=11963b2f:384
+auth.ts:42 Запущено обновление токена по расписанию
+auth.ts:42 Запущено обновление токена по расписанию
+auth.ts:42 Запущено обновление токена по расписанию
+StoriesImageGenerator.tsx:49 [STORIES-IMAGE-GEN] Загружаем фоновое изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756210879235-1756210874213-251887236-Ð¯.jpg
+StoriesImageGenerator.tsx:60 [STORIES-IMAGE-GEN] Используем прокси для внешнего изображения: /api/proxy-image?url=https%3A%2F%2F6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud%2Fimages%2Fupload-1756210879235-1756210874213-251887236-%C3%90%C2%AF.jpg
+StoriesImageGenerator.tsx:67 [STORIES-IMAGE-GEN] Изображение загружено успешно
+StoriesImageGenerator.tsx:85 [STORIES-IMAGE-GEN] Изображение нарисовано на canvas
+StoriesImageGenerator.tsx:106 [STORIES-IMAGE-GEN] Рисуем текстовые элементы: (2) [{…}, {…}]
+StoriesImageGenerator.tsx:109 [STORIES-IMAGE-GEN] Обрабатываем overlay: {id: 'text_1756210884027', text: 'Молодой', x: 88.75, y: 521.25, fontSize: 24, …}
+StoriesImageGenerator.tsx:109 [STORIES-IMAGE-GEN] Обрабатываем overlay: {id: 'text_1756210896929', text: 'Где-то лет 25..,', x: 98.75, y: 427.5, fontSize: 24, …}
+StoriesImageGenerator.tsx:185 [STORIES-IMAGE-GENERATOR] Размер изображения: 71KB
+StoriesImageGenerator.tsx:214 [STORIES-IMAGE-GENERATOR] Изображение загружено на ImgBB: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756213641227-9y3v7p.jpg
+StoriesImageGenerator.tsx:236 [STORIES-IMAGE-GENERATOR] additional_media обновлено в Stories
+SimpleStoryEditor.tsx:785 Изображение: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756213641227-9y3v7p.jpg

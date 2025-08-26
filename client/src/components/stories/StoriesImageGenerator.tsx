@@ -114,13 +114,14 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         
         // Используем точно те же координаты что и в превью
         // Масштабируем координаты под новый размер canvas
-        // Превью: 280x497 -> Canvas: 540x960 (масштаб ~1.93x)
-        const scale = width / 280; // Масштабирование координат
-        const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 * scale : 2 * scale;
-        const x = (overlay.x !== undefined ? overlay.x : 50) * scale + textPaddingX;
-        const y = (overlay.y !== undefined ? overlay.y : 50) * scale;
+        // Превью: 280x497 -> Canvas: 540x960
+        const scaleX = width / 280;  // Масштабирование по X: 540/280 = 1.93
+        const scaleY = height / 497; // Масштабирование по Y: 960/497 = 1.93
+        const textPaddingX = overlay.backgroundColor !== 'transparent' ? 8 * scaleX : 2 * scaleX;
+        const x = (overlay.x !== undefined ? overlay.x : 50) * scaleX + textPaddingX;
+        const y = (overlay.y !== undefined ? overlay.y : 50) * scaleY;
         
-        const fontSize = (overlay.fontSize || 24) * scale;
+        const fontSize = (overlay.fontSize || 24) * scaleX;
         
         // Координаты готовы для рисования
         
@@ -143,10 +144,10 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           ctx.fillStyle = overlay.backgroundColor;
           // Фон масштабируется под новый размер
           ctx.fillRect(
-            x - 8 * scale,                    // Масштабированный отступ слева
-            y - 4 * scale,                    // Масштабированный отступ сверху
-            textWidth + 16 * scale,           // Масштабированная ширина фона
-            textHeight + 8 * scale            // Масштабированная высота фона
+            x - 8 * scaleX,                    // Масштабированный отступ слева
+            y - 4 * scaleY,                    // Масштабированный отступ сверху
+            textWidth + 16 * scaleX,           // Масштабированная ширина фона
+            textHeight + 8 * scaleY            // Масштабированная высота фона
           );
         }
         
@@ -158,9 +159,9 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
         
         // Добавляем тень для лучшей читаемости (масштабированную)
         ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-        ctx.shadowBlur = 3 * scale;
-        ctx.shadowOffsetX = 1.5 * scale;
-        ctx.shadowOffsetY = 1.5 * scale;
+        ctx.shadowBlur = 3 * scaleX;
+        ctx.shadowOffsetX = 1.5 * scaleX;
+        ctx.shadowOffsetY = 1.5 * scaleY;
         
         // Рисуем текст
         ctx.fillText(overlay.text || 'Текст', x, y);
