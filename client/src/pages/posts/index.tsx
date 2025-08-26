@@ -411,15 +411,23 @@ export default function Posts() {
                                   <CardContent className="p-3">
                                     <div className="flex items-start gap-3">
                                       {/* Миниатюра изображения */}
-                                      {content.imageUrl && (
-                                        <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                                          <img 
-                                            src={content.imageUrl}
-                                            alt={content.title}
-                                            className="object-cover w-full h-full"
-                                          />
-                                        </div>
-                                      )}
+                                      {(() => {
+                                        // Для Stories показываем сгенерированное изображение из additionalMedia
+                                        const generatedImage = content.contentType === 'story' && content.additionalMedia?.find(
+                                          item => item.type === 'generated_image' || (item as any).type === 'generated_image'
+                                        );
+                                        const displayImage = generatedImage ? generatedImage.url : content.imageUrl;
+                                        
+                                        return displayImage && (
+                                          <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                                            <img 
+                                              src={displayImage}
+                                              alt={content.title}
+                                              className="object-cover w-full h-full"
+                                            />
+                                          </div>
+                                        )
+                                      })()}
                                       
                                       {/* Контент */}
                                       <div className="flex-1 min-w-0">
@@ -490,15 +498,23 @@ export default function Posts() {
                                 
                                 <div className="space-y-4">
                                   {/* Изображение */}
-                                  {content.imageUrl && (
-                                    <div className="relative rounded-md overflow-hidden bg-muted">
-                                      <img 
-                                        src={content.imageUrl}
-                                        alt={content.title}
-                                        className="w-full h-auto max-h-96 object-contain"
-                                      />
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    // Для Stories показываем сгенерированное изображение из additionalMedia
+                                    const generatedImage = content.contentType === 'story' && content.additionalMedia?.find(
+                                      item => item.type === 'generated_image' || (item as any).type === 'generated_image'
+                                    );
+                                    const displayImage = generatedImage ? generatedImage.url : content.imageUrl;
+                                    
+                                    return displayImage && (
+                                      <div className="relative rounded-md overflow-hidden bg-muted">
+                                        <img 
+                                          src={displayImage}
+                                          alt={content.title}
+                                          className="w-full h-auto max-h-96 object-contain"
+                                        />
+                                      </div>
+                                    )
+                                  })()}
                                   
                                   {/* Текст контента */}
                                   <div className="prose prose-sm max-w-none">
