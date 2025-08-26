@@ -467,17 +467,17 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
       
       console.log('Создан прокси URL:', proxyUrl);
       
-      // Структура для поля additional_media в Directus
-      const mediaStructure = {
-        url: proxyUrl,  // Прокси URL в поле URL
-        type: 'generated_video',  // Тип контента
-        title: 'Instagram Stories Video',  // Заголовок
-        description: 'Generated video with text overlays for Instagram Stories'  // Описание
-      };
+      // Структура для поля additional_media в Directus (массив для репитера)
+      const mediaStructure = [{
+        URL: proxyUrl,  // Прокси URL в поле URL
+        Type: 'generated_video',  // Тип контента  
+        Title: 'Instagram Stories Video',  // Заголовок
+        Description: 'Generated video with text overlays for Instagram Stories'  // Описание
+      }];
       
-      console.log('Структура для additional_media:', mediaStructure);
+      console.log('Массив для additional_media репитера:', mediaStructure);
       
-      // Сохраняем структуру в additional_media
+      // Сохраняем массив в additional_media
       const response = await fetch(`/api/stories/simple/${storyId}`, {
         method: 'PATCH',
         headers: {
