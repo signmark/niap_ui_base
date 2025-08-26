@@ -1,0 +1,62 @@
+experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+ [POSTS-DEBUG] content: Херь для теста contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756214853109-1756214846973-199843263-3.png
+ [POSTS-DEBUG] content: Молодой contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756210879235-1756210874213-251887236-Ð¯.jpg
+ [POSTS-DEBUG] content: Красавчик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/xSZMw6hd/1756138669290-277686817.jpg
+ [POSTS-DEBUG] content: Кролик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: null
+ [POSTS-DEBUG] content: Одежда contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/N66v1TTb/1755868404810-838073607.jpg
+ [POSTS-DEBUG] content: Херь для теста contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756214853109-1756214846973-199843263-3.png
+ [POSTS-DEBUG] content: Молодой contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756210879235-1756210874213-251887236-Ð¯.jpg
+ [POSTS-DEBUG] content: Красавчик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/xSZMw6hd/1756138669290-277686817.jpg
+ [POSTS-DEBUG] content: Кролик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: null
+ [POSTS-DEBUG] content: Одежда contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/N66v1TTb/1755868404810-838073607.jpg
+ [POSTS-DEBUG] content: Херь для теста contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756214853109-1756214846973-199843263-3.png
+ [POSTS-DEBUG] content: Молодой contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756210879235-1756210874213-251887236-Ð¯.jpg
+ [POSTS-DEBUG] content: Красавчик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/xSZMw6hd/1756138669290-277686817.jpg
+ [POSTS-DEBUG] content: Кролик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: null
+ [POSTS-DEBUG] content: Одежда contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/N66v1TTb/1755868404810-838073607.jpg
+ [POSTS-DEBUG] content: Херь для теста contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756214853109-1756214846973-199843263-3.png
+ [POSTS-DEBUG] content: Молодой contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/images/upload-1756210879235-1756210874213-251887236-Ð¯.jpg
+ [POSTS-DEBUG] content: Красавчик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/xSZMw6hd/1756138669290-277686817.jpg
+ [POSTS-DEBUG] content: Кролик contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: null
+ [POSTS-DEBUG] content: Одежда contentType: story additionalMedia: undefined
+ [POSTS-DEBUG] generatedImage found: undefined
+ [POSTS-DEBUG] final displayImage: https://i.ibb.co/N66v1TTb/1755868404810-838073607.jpg

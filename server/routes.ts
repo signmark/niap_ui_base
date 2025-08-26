@@ -10026,6 +10026,7 @@ ${commentTexts}`;
             contentType: item.content_type,
             imageUrl: item.image_url,
             additionalImages: Array.isArray(item.additional_images) ? item.additional_images : [],
+            additionalMedia: item.additional_media || [], // Добавляем поддержку additionalMedia для Stories
             videoThumbnail: Array.isArray(item.additional_images) && item.additional_images.length > 0 && 
                             (item.content_type === 'video' || item.content_type === 'video-text') 
                             ? item.additional_images[0] : '', // Первое изображение как thumbnail видео
