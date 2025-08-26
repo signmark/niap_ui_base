@@ -678,6 +678,7 @@ const SimpleStoryEditor: React.FC<SimpleStoryEditorProps> = ({
             story={{ ...story, id: storyId }}
             contentId={storyId}
             platforms={['instagram']}
+            onSave={handleSave}
           />
         </div>
 

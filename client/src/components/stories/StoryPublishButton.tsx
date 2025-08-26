@@ -9,13 +9,15 @@ interface StoryPublishButtonProps {
   contentId: string;
   platforms?: string[];
   disabled?: boolean;
+  onSave?: () => Promise<void>; // Функция для автосохранения перед публикацией
 }
 
 export const StoryPublishButton: React.FC<StoryPublishButtonProps> = ({
   story,
   contentId,
   platforms = ['instagram'],
-  disabled = false
+  disabled = false,
+  onSave
 }) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const { toast } = useToast();
@@ -30,12 +32,18 @@ export const StoryPublishButton: React.FC<StoryPublishButtonProps> = ({
       return;
     }
 
-    console.log('[STORY-PUBLISH-BUTTON] Начинаем публикацию:', { contentId, story });
-    console.log('[STORY-PUBLISH-BUTTON] textOverlays:', story.textOverlays);
-    console.log('[STORY-PUBLISH-BUTTON] platforms:', platforms);
     setIsPublishing(true);
     
     try {
+      // Автоматически сохраняем перед публикацией
+      if (onSave) {
+        await onSave();
+        console.log('[STORY-PUBLISH-BUTTON] Story автоматически сохранена перед публикацией');
+      }
+      
+      console.log('[STORY-PUBLISH-BUTTON] Начинаем публикацию:', { contentId, story });
+      console.log('[STORY-PUBLISH-BUTTON] textOverlays:', story.textOverlays);
+      console.log('[STORY-PUBLISH-BUTTON] platforms:', platforms);
       const result = await publishWithImageGeneration({
         contentId,
         platforms,
