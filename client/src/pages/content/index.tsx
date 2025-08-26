@@ -706,7 +706,8 @@ export default function ContentPage() {
       return;
     }
 
-    if (!newContent.content) {
+    // Для типа "только картинка" контент не обязателен
+    if (!newContent.content && newContent.contentType !== "image") {
       toast({
         description: "Введите текст контента",
         variant: "destructive"
@@ -717,7 +718,8 @@ export default function ContentPage() {
     // Проверяем корректность URL для изображения или видео
     if (
       (newContent.contentType === "post" && !newContent.content) ||
-      (newContent.contentType === "video" && !newContent.videoUrl)
+      (newContent.contentType === "video" && !newContent.videoUrl) ||
+      (newContent.contentType === "image" && !newContent.imageUrl)
     ) {
       toast({
         description: "Добавьте URL изображения или видео",
@@ -980,6 +982,8 @@ export default function ContentPage() {
       case "text":
         return <FileText className="h-4 w-4" />;
       case "text-image":
+        return <ImageIcon className="h-4 w-4" />;
+      case "image":
         return <ImageIcon className="h-4 w-4" />;
       case "video":
         return <Video className="h-4 w-4" />;
@@ -1452,7 +1456,7 @@ export default function ContentPage() {
                                   </div>
                                   
                                   {/* Media content */}
-                                  {content.contentType === "text-image" && content.imageUrl && (
+                                  {(content.contentType === "text-image" || content.contentType === "image") && content.imageUrl && (
                                     <div className="w-20 h-20 flex-shrink-0">
                                       <img 
                                         src={content.imageUrl} 
@@ -1575,26 +1579,32 @@ export default function ContentPage() {
                 <SelectContent>
                   <SelectItem value="text">Текст</SelectItem>
                   <SelectItem value="text-image">Текст с картинкой</SelectItem>
+                  <SelectItem value="image">Только картинка</SelectItem>
                   <SelectItem value="video">Видео</SelectItem>
                   <SelectItem value="story">Instagram Stories</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {newContent.contentType !== "story" && (
-              <div className="space-y-2">
-                <Label htmlFor="content">
-                  {newContent.contentType === "video" ? "Описание" : "Контент"}
-                </Label>
-                <div>
-                  <RichTextEditor
-                    value={newContent.content || ''}
-                    onChange={(html: string) => setNewContent({...newContent, content: html})}
-                    minHeight={150}
-                    className="tiptap"
-                    enableResize={true}
-                    placeholder="Введите текст контента..."
-                  />
-                </div>
+              <div>
+                {/* Поле контента только для типов кроме 'image' */}
+                {newContent.contentType !== 'image' && (
+                <div className="space-y-2">
+                  <Label htmlFor="content">
+                    {newContent.contentType === "video" ? "Описание" : "Контент"}
+                  </Label>
+                  <div>
+                    <RichTextEditor
+                      value={newContent.content || ''}
+                      onChange={(html: string) => setNewContent({...newContent, content: html})}
+                      minHeight={150}
+                      className="tiptap"
+                      enableResize={true}
+                      placeholder="Введите текст контента..."
+                    />
+                  </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1625,7 +1635,7 @@ export default function ContentPage() {
                 </div>
               </div>
             )}
-            {(newContent.contentType === "text-image") && (
+            {(newContent.contentType === "text-image" || newContent.contentType === "image") && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -1934,17 +1944,19 @@ export default function ContentPage() {
               </div>
               
               {currentContent.contentType !== "story" && (
-                <div className="space-y-2">
-                  <Label htmlFor="content">
-                    {currentContent.contentType === 'video' ? 'Описание' : 'Контент'}
-                  </Label>
-                  <div>
-                    <RichTextEditor
-                      value={currentContent.content || ''}
-                      onChange={(html: string) => {
-                        const updatedContent = {...currentContent, content: html};
-                        setCurrentContentSafe(updatedContent);
-                      }}
+                {/* Поле контента только для типов кроме 'image' */}
+                {currentContent.contentType !== 'image' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="content">
+                      {currentContent.contentType === 'video' ? 'Описание' : 'Контент'}
+                    </Label>
+                    <div>
+                      <RichTextEditor
+                        value={currentContent.content || ''}
+                        onChange={(html: string) => {
+                          const updatedContent = {...currentContent, content: html};
+                          setCurrentContentSafe(updatedContent);
+                        }}
                       minHeight={150}
                       className="tiptap"
                       enableResize={true}
@@ -2011,7 +2023,7 @@ export default function ContentPage() {
                   </div>
                 </div>
               )}
-              {(currentContent.contentType === "text-image") && (
+              {(currentContent.contentType === "text-image" || currentContent.contentType === "image") && (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -2799,12 +2811,13 @@ export default function ContentPage() {
                 {/* Тип контента */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                   {previewContent?.contentType === "text" && <FileText size={16} />}
-                  {previewContent?.contentType === "text-image" && <ImageIcon size={16} />}
+                  {(previewContent?.contentType === "text-image" || previewContent?.contentType === "image") && <ImageIcon size={16} />}
                   {previewContent?.contentType === "video" && <Video size={16} />}
                   {previewContent?.contentType === "video-text" && <Video size={16} />}
                   <span>
                     {previewContent?.contentType === "text" && "Текстовый контент"}
                     {previewContent?.contentType === "text-image" && "Контент с изображением"}
+                    {previewContent?.contentType === "image" && "Только изображение"}
                     {previewContent?.contentType === "video" && "Видео контент"}
                     {previewContent?.contentType === "video-text" && "Видео с текстом"}
                   </span>
@@ -2825,7 +2838,7 @@ export default function ContentPage() {
               </div>
             )}
 
-            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && previewContent?.imageUrl && (
+            {previewContent?.contentType !== 'story' && (previewContent?.contentType === "text-image" || previewContent?.contentType === "image") && previewContent?.imageUrl && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Основное изображение</h4>
                 <img
@@ -2839,7 +2852,7 @@ export default function ContentPage() {
               </div>
             )}
             
-            {previewContent?.contentType !== 'story' && previewContent?.contentType === "text-image" && 
+            {previewContent?.contentType !== 'story' && (previewContent?.contentType === "text-image" || previewContent?.contentType === "image") && 
              Array.isArray(previewContent?.additionalImages) && 
              previewContent.additionalImages.filter(url => url && url.trim() !== '').length > 0 && (
               <div className="mt-6">

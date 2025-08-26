@@ -14,7 +14,7 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 interface ContentTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectType: (type: 'text' | 'text-image' | 'video' | 'story') => void;
+  onSelectType: (type: 'text' | 'text-image' | 'image' | 'video' | 'story') => void;
 }
 
 export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: ContentTypeDialogProps) {
@@ -36,6 +36,13 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
       color: 'bg-green-50 border-green-200 hover:bg-green-100'
     },
     {
+      id: 'image',
+      title: 'Только картинка',
+      description: 'Публикация только изображения без текста',
+      icon: Image,
+      color: 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+    },
+    {
       id: 'video',
       title: 'Видео',
       description: 'Видео контент для YouTube, VK, Telegram',
@@ -51,7 +58,7 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
     }
   ];
 
-  const handleSelect = (type: 'text' | 'text-image' | 'video' | 'story') => {
+  const handleSelect = (type: 'text' | 'text-image' | 'image' | 'video' | 'story') => {
     onSelectType(type);
     onClose();
   };
@@ -92,7 +99,7 @@ export default function ContentTypeDialog({ isOpen, onClose, onSelectType }: Con
               <Card 
                 key={type.id}
                 className={`cursor-pointer transition-colors ${type.color}`}
-                onClick={() => handleSelect(type.id as 'text' | 'text-image' | 'video' | 'story')}
+                onClick={() => handleSelect(type.id as 'text' | 'text-image' | 'image' | 'video' | 'story')}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
