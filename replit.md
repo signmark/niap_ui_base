@@ -9,6 +9,9 @@ Work approach: Thoughtful and deliberate implementation with minimal errors, pri
 Work schedule: Prefers working sessions on weekends when available.
 Task planning: Focus on achievable tasks that can be completed in 2-3 hours maximum.
 
+## Development Rules
+**CRITICAL**: Always restart the server workflow after making changes to server-side code. Server changes do not take effect until the workflow is restarted. This includes changes to routes, services, middleware, and any backend logic.
+
 ## System Architecture
 
 ### Technology Stack

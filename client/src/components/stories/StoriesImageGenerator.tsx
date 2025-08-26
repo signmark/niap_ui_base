@@ -45,13 +45,29 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
       // Заливаем фон
       if (story.backgroundImageUrl || story.image_url) {
         try {
+          const imageUrl = story.backgroundImageUrl || story.image_url;
+          console.log('[STORIES-IMAGE-GEN] Загружаем фоновое изображение:', imageUrl);
+          
           const img = new Image();
           img.crossOrigin = 'anonymous';
           
+          // Используем прокси для загрузки изображений с других доменов
+          let proxyUrl = imageUrl;
+          if (imageUrl.startsWith('http') && !imageUrl.includes(window.location.hostname)) {
+            proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+            console.log('[STORIES-IMAGE-GEN] Используем прокси:', proxyUrl);
+          }
+          
           await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = story.backgroundImageUrl || story.image_url;
+            img.onload = () => {
+              console.log('[STORIES-IMAGE-GEN] Изображение загружено успешно');
+              resolve(true);
+            };
+            img.onerror = (error) => {
+              console.error('[STORIES-IMAGE-GEN] Ошибка загрузки изображения:', error);
+              reject(error);
+            };
+            img.src = proxyUrl;
           });
           
           // Масштабируем изображение чтобы покрыть весь canvas
@@ -62,8 +78,9 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           const y = (height - scaledHeight) / 2;
           
           ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+          console.log('[STORIES-IMAGE-GEN] Изображение нарисовано на canvas');
         } catch (error) {
-          console.warn('Ошибка загрузки фонового изображения, используем градиент');
+          console.warn('[STORIES-IMAGE-GEN] Ошибка загрузки фонового изображения, используем градиент:', error);
           // Градиентный фон как fallback
           const gradient = ctx.createLinearGradient(0, 0, 0, height);
           gradient.addColorStop(0, '#667eea');
@@ -72,6 +89,7 @@ export const StoriesImageGenerator: React.FC<StoriesImageGeneratorProps> = ({
           ctx.fillRect(0, 0, width, height);
         }
       } else {
+        console.log('[STORIES-IMAGE-GEN] Используем градиентный фон по умолчанию');
         // Градиентный фон по умолчанию
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
         gradient.addColorStop(0, '#667eea');

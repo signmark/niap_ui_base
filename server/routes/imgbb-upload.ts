@@ -46,7 +46,7 @@ router.post('/upload', authMiddleware, async (req, res) => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 8000 // 8 секунд timeout - быстрое переключение на fallback
+      timeout: 5000 // 5 секунд timeout - очень быстрое переключение на fallback
     });
 
     if (imgbbResponse.data.success) {
@@ -74,16 +74,25 @@ router.post('/upload', authMiddleware, async (req, res) => {
     try {
       console.log('[IMGBB-UPLOAD] Пробуем Beget S3 как fallback');
       
-      // Импортируем сервис Beget S3
-      const { BegetS3VideoService } = await import('../services/beget-s3-video-service');
-      const begetService = new BegetS3VideoService();
+      // Импортируем готовый экземпляр Beget S3 (как в других частях проекта)
+      const { begetS3StorageAws } = await import('../services/beget-s3-storage-aws');
       
       // Конвертируем base64 в Buffer
-      const imageBuffer = Buffer.from(image, 'base64');
-      const fileName = `upload-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      const imageBuffer = Buffer.from(req.body.image, 'base64');
+      const fileName = `images/upload-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
       
-      // Загружаем на Beget S3 в папку images
-      const s3Url = await begetService.uploadFileBuffer(imageBuffer, `images/${fileName}`, 'image/jpeg');
+      // Загружаем на Beget S3 используя готовый экземпляр
+      const uploadResult = await begetS3StorageAws.uploadFile({
+        key: fileName,
+        fileData: imageBuffer,
+        contentType: 'image/jpeg'
+      });
+      
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || 'Beget S3 upload failed - no URL returned');
+      }
+      
+      const s3Url = uploadResult.url;
       
       console.log('[IMGBB-UPLOAD] Успешная загрузка на Beget S3 (fallback):', s3Url);
       

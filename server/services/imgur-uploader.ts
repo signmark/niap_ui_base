@@ -105,7 +105,7 @@ export class ImgurUploaderService {
         headers: {
           ...formData.getHeaders(),
         },
-        timeout: 8000, // 8 секунд таймаут - быстрое переключение на fallback
+        timeout: 5000, // 5 секунд таймаут - очень быстрое переключение на fallback
       });
 
       // Проверяем ответ
@@ -118,7 +118,36 @@ export class ImgurUploaderService {
       }
     } catch (error) {
       log(`Ошибка при загрузке изображения на Imgur из файла: ${error}`);
-      return null;
+      
+      // Пробуем fallback на Beget S3 если Imgur недоступен
+      try {
+        log('Imgur недоступен, переключаемся на Beget S3');
+        
+        // Импортируем готовый экземпляр Beget S3 (как в других частях проекта)
+        const { begetS3StorageAws } = await import('./beget-s3-storage-aws');
+        
+        // Читаем файл как Buffer
+        const imageBuffer = fs.readFileSync(filePath);
+        const fileName = `images/upload-${Date.now()}-${path.basename(filePath)}`;
+        
+        // Загружаем на Beget S3 используя готовый экземпляр
+        const uploadResult = await begetS3StorageAws.uploadFile({
+          key: fileName,
+          fileData: imageBuffer,
+          contentType: 'image/jpeg'
+        });
+        
+        if (uploadResult.success && uploadResult.url) {
+          log(`Успешная загрузка на Beget S3 (fallback): ${uploadResult.url}`);
+          return uploadResult.url;
+        } else {
+          throw new Error(uploadResult.error || 'Beget S3 upload failed - no URL returned');
+        }
+        
+      } catch (fallbackError) {
+        log(`Fallback на Beget S3 тоже не сработал: ${fallbackError}`);
+        return null;
+      }
     }
   }
 

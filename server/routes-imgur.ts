@@ -440,17 +440,25 @@ export function registerImgurRoutes(router: Router) {
         console.log('[IMGUR-FALLBACK] Imgur недоступен, переключаемся на Beget S3:', imgurError);
         
         try {
-          // Импортируем сервис Beget S3
-          const { BegetS3VideoService } = await import('../services/beget-s3-video-service');
-          const begetService = new BegetS3VideoService();
+          // Импортируем готовый экземпляр Beget S3 (как в других частях проекта)
+          const { begetS3StorageAws } = await import('./services/beget-s3-storage-aws');
           
           // Читаем файл как Buffer
-          const fs = require('fs');
           const imageBuffer = fs.readFileSync(filePath);
-          const fileName = `upload-${Date.now()}-${path.basename(filePath)}`;
+          const fileName = `images/upload-${Date.now()}-${path.basename(filePath)}`;
           
-          // Загружаем на Beget S3 в папку images
-          uploadUrl = await begetService.uploadFileBuffer(imageBuffer, `images/${fileName}`, req.file?.mimetype || 'image/jpeg');
+          // Загружаем на Beget S3 используя готовый экземпляр
+          const uploadResult = await begetS3StorageAws.uploadFile({
+            key: fileName,
+            fileData: imageBuffer,
+            contentType: req.file?.mimetype || 'image/jpeg'
+          });
+          
+          if (uploadResult.success && uploadResult.url) {
+            uploadUrl = uploadResult.url;
+          } else {
+            throw new Error(uploadResult.error || 'Beget S3 upload failed - no URL returned');
+          }
           fallbackUsed = true;
           
           console.log('[IMGUR-FALLBACK] Успешная загрузка на Beget S3:', uploadUrl);
@@ -476,12 +484,12 @@ export function registerImgurRoutes(router: Router) {
           mimetype: req.file.mimetype,
           size: req.file.size,
           path: filePath,
-          url: uploadUrl,
-          link: uploadUrl, // Добавляем также поле link для совместимости
+          url: uploadUrl || null,
+          link: uploadUrl || null, // Добавляем также поле link для совместимости
           fallback: fallbackUsed ? 'beget-s3' : 'imgur'
         },
-        url: uploadUrl,  // Дублируем URL в корне ответа
-        link: uploadUrl,  // И также добавляем поле link для совместимости
+        url: uploadUrl || null,  // Дублируем URL в корне ответа
+        link: uploadUrl || null,  // И также добавляем поле link для совместимости
         fallback: fallbackUsed ? 'beget-s3' : 'imgur'
       };
       
