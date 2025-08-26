@@ -10285,9 +10285,17 @@ ${commentTexts}`;
         });
       }
       
-      if (!content) {
+      // Для типа "image" content не обязателен, но требуется изображение
+      if (!content && content_type !== 'image') {
         return res.status(400).json({ 
           error: "Отсутствует обязательное поле: content" 
+        });
+      }
+      
+      // Для типа "image" проверяем наличие изображения
+      if (content_type === 'image' && !req.body.image_url && !req.body.imageUrl) {
+        return res.status(400).json({ 
+          error: "Для типа 'только картинка' требуется изображение" 
         });
       }
       
