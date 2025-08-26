@@ -1,0 +1,75 @@
+[IMGBB-UPLOAD] Ошибка загрузки на ImgBB: timeout of 30000ms exceeded
+10:54:39 AM [DEV] [express] POST /api/imgbb/upload 408 in 30003ms :: {"error":"Upload timeout","message":"П…
+[STORIES] POST /api/imgbb/upload - Path: /imgbb/upload
+[STORIES] Request received with auth: Present
+[DEV] [auth-middleware] User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[IMGBB-UPLOAD] Получен запрос на загрузку изображения: { nameLength: 26, imageSize: 13132, imageSizeKB: 13 }
+[IMGBB-UPLOAD] Ошибка загрузки на ImgBB: timeout of 30000ms exceeded
+10:55:09 AM [DEV] [express] POST /api/imgbb/upload 408 in 30004ms :: {"error":"Upload timeout","message":"П…
+[STORIES] PUT /api/stories/simple/944eaa62-0ae1-4ac5-a826-673bd51e787f - Path: /simple/944eaa62-0ae1-4ac5-a826-673bd51e787f
+[STORIES] Request received with auth: Present
+[DEV] [auth-middleware] User authenticated: 53921f16-f51d-4591-80b9-8caa4fde4d13
+[DEV] [stories] Updating simple story: 944eaa62-0ae1-4ac5-a826-673bd51e787f {
+  title: 'Ошибка',
+  image_url: 'https://i.ibb.co/SXp4RycK/1756202201064-923317540.png',
+  metadata: 'provided',
+  additional_media: 'not provided'
+}
+[DEV] [stories] Final updateData being sent to Directus: {
+  "updated_at": "2025-08-26T10:55:20.070Z",
+  "title": "Ошибка",
+  "image_url": "https://i.ibb.co/SXp4RycK/1756202201064-923317540.png",
+  "metadata": "{\"textOverlays\":[{\"id\":\"text_1756205563806\",\"text\":\"Херата ну\",\"x\":115,\"y\":317.5,\"fontSize\":24,\"color\":\"#3c1515\",\"fontFamily\":\"Arial\",\"fontWeight\":\"bold\",\"textAlign\":\"center\",\"backgroundColor\":\"#ad4343\",\"rotation\":0}],\"type\":\"instagram\",\"format\":\"9:16\",\"version\":\"1.0\"}"
+}
+[DEV] [stories] Directus response: {
+  "data": {
+    "id": "944eaa62-0ae1-4ac5-a826-673bd51e787f",
+    "campaign_id": "46868c44-c6a4-4bed-accf-9ad07bba790e",
+    "user_id": "53921f16-f51d-4591-80b9-8caa4fde4d13",
+    "content": "",
+    "content_type": "image",
+    "image_url": "https://i.ibb.co/SXp4RycK/1756202201064-923317540.png",
+    "video_url": null,
+    "prompt": "photographic style. A shattered screen erupts in glitching static, unnatural colors bleeding across the surface. Jagged lines claw at a distorted image, a digital nightmare blooming from the glass. The feeling is visceral, repulsive, a technological abomination.",
+    "keywords": "[]",
+    "created_at": "2025-08-26T10:00:09",
+    "scheduled_at": null,
+    "published_at": null,
+    "status": "error",
+    "social_platforms": {
+      "instagram": {
+        "error": "Контент не найден или отсутствует изображение",
+        "status": "failed",
+        "platform": "instagram",
+        "updatedAt": "2025-08-26T13:42:16.222+03:00"
+      }
+    },
+    "title": "Ошибка",
+    "additional_images": [
+      "https://v3.fal.media/files/tiger/pw-G3ebnxuqHDEvE3ztQR.jpeg"
+    ],
+    "additional_media": null,
+    "metadata": {
+      "textOverlays": [
+        {
+          "id": "text_1756205563806",
+          "text": "Херата ну",
+          "x": 115,
+          "y": 317.5,
+          "fontSize": 24,
+          "color": "#3c1515",
+          "fontFamily": "Arial",
+          "fontWeight": "bold",
+          "textAlign": "center",
+          "backgroundColor": "#ad4343",
+          "rotation": 0
+        }
+      ],
+      "type": "instagram",
+      "format": "9:16",
+      "version": "1.0"
+    }
+  }
+}
+[DEV] [stories] Simple story updated successfully
+10:55:20 AM [DEV] [express] PUT /api/stories/simple/944eaa62-0ae1-4ac5-a826-673bd51e787f 200 in 444ms :: {"…
