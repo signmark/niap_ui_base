@@ -922,9 +922,6 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                       Превью
                     </CardTitle>
                   </div>
-                  <p className="text-gray-600 text-sm">
-                    Готово к публикации
-                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="relative max-w-[250px] mx-auto">
