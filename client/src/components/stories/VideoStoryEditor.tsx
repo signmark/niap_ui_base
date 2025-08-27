@@ -422,9 +422,9 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
         data: {
           videoUrl: story.backgroundVideoUrl,
           textOverlays: story.textOverlays.map(overlay => {
-            // Масштабируем из превью 270x480 в видео 1080x1920 с коэффициентом x3
-            const scaleX = 3.0; // Попробуем x3 вместо x4
-            const scaleY = 3.0;
+            // Точное масштабирование из превью 250x444px в видео 1080x1920px
+            const scaleX = 1080 / 250; // = 4.32
+            const scaleY = 1920 / 444; // = 4.32
             
             const scaledX = Math.round(overlay.x * scaleX);
             const scaledY = Math.round(overlay.y * scaleY);
@@ -435,7 +435,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
             const finalY = Math.max(30, Math.min(scaledY, 1920 - 30));  
             const finalFontSize = Math.max(40, Math.min(scaledFontSize, 400));
             
-            console.log(`Текст "${overlay.text}": ${overlay.x},${overlay.y} -> ${finalX},${finalY} (масштаб x3.0)`);
+            console.log(`Текст "${overlay.text}": ${overlay.x},${overlay.y} -> ${finalX},${finalY} (масштаб x${scaleX.toFixed(2)})`);
             
             return {
               text: overlay.text,
