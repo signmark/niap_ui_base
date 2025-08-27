@@ -800,7 +800,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Move className="h-4 w-4" />
-                  Превью видео Stories
+                  Редактор
                 </CardTitle>
               </CardHeader>
               <CardContent>
