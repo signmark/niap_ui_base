@@ -1,0 +1,46 @@
+chunk-RPCDYKBN.js?v=e3e5cf58:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+multi-tabs.js:4806 Injected CSS loaded successfully
+VideoStoryEditor.tsx:231 Загруженные данные Stories: {id: '929c8934-a8d5-45d5-acfe-db8d3f094065', title: 'Жук', video_url: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/04105194-0ca8-4a39-8385-4be4c8262e1f.mp4', backgroundVideoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/04105194-0ca8-4a39-8385-4be4c8262e1f.mp4', hasVideoUrl: true}
+VideoStoryEditor.tsx:825 Начало загрузки видео: https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/04105194-0ca8-4a39-8385-4be4c8262e1f.mp4
+VideoStoryEditor.tsx:415 Начинаем генерацию видео с данными: {backgroundVideoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storag…d/videos/04105194-0ca8-4a39-8385-4be4c8262e1f.mp4', textOverlays: Array(2)}
+VideoStoryEditor.tsx:438 Текст "Низкий старт": 24,360 -> 72,1080 (масштаб x3.0)
+VideoStoryEditor.tsx:438 Текст "Пошел-пошел!": 20,30 -> 60,90 (масштаб x3.0)
+queryClient.ts:92  POST https://smm.roboflow.space/api/video-processing/process-video-from-url 500 (Internal Server Error)
+apiRequest @ queryClient.ts:92
+handleGenerateVideo @ VideoStoryEditor.tsx:420
+callCallback2 @ chunk-RPCDYKBN.js?v=e3e5cf58:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e3e5cf58:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e3e5cf58:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=e3e5cf58:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=e3e5cf58:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=e3e5cf58:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=e3e5cf58:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=e3e5cf58:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=e3e5cf58:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=e3e5cf58:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=e3e5cf58:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=e3e5cf58:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=e3e5cf58:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=e3e5cf58:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=e3e5cf58:5449
+VideoStoryEditor.tsx:461 Ошибка генерации видео: Error: 500: {"error":"Ошибка обработки видео","details":"ffmpeg exited with code 254: Error opening output file uploads/processed/processed_1756280661224.mp4.\nError opening output files: No such file or directory\n"}
+    at throwIfResNotOk (queryClient.ts:34:19)
+    at async apiRequest (queryClient.ts:99:3)
+    at async handleGenerateVideo (VideoStoryEditor.tsx:420:24)
+handleGenerateVideo @ VideoStoryEditor.tsx:461
+await in handleGenerateVideo
+callCallback2 @ chunk-RPCDYKBN.js?v=e3e5cf58:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=e3e5cf58:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=e3e5cf58:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=e3e5cf58:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=e3e5cf58:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=e3e5cf58:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=e3e5cf58:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=e3e5cf58:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=e3e5cf58:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=e3e5cf58:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=e3e5cf58:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=e3e5cf58:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=e3e5cf58:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=e3e5cf58:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=e3e5cf58:5449
