@@ -919,7 +919,7 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                       <Play className="h-4 w-4 text-white" />
                     </div>
                     <CardTitle className="text-lg font-bold text-gray-800">
-                      Сгенерированное видео
+                      Превью
                     </CardTitle>
                   </div>
                   <p className="text-gray-600 text-sm">
