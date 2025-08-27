@@ -927,9 +927,9 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <div className="relative max-w-[200px] mx-auto">
+                  <div className="relative max-w-[250px] mx-auto">
                     <div 
-                      className="relative w-[200px] h-[356px] bg-black rounded-lg overflow-hidden shadow-lg"
+                      className="relative w-[250px] h-[444px] bg-black rounded-lg overflow-hidden shadow-lg"
                       style={{ aspectRatio: '9/16' }}
                     >
                       <video
