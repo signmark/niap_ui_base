@@ -73,19 +73,20 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
         const scaleX = 1080 / 280; // ~3.86
         const scaleY = 1920 / 497;  // ~3.86
         
-        const scaledX = Math.round(overlay.x * scaleX);
-        const scaledY = Math.round(overlay.y * scaleY);
-        const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+        // НЕ МАСШТАБИРУЕМ! Координаты из редактора уже подходят для 9:16
+        // Используем координаты напрямую, только корректируем под разрешение
+        const finalX = Math.round(overlay.x * 2); // Умеренное масштабирование
+        const finalY = Math.round(overlay.y * 2); // Умеренное масштабирование  
+        const finalFontSize = Math.round(overlay.fontSize * 1.2); // Небольшое увеличение шрифта
         
         console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
           original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
-          scaled: { x: scaledX, y: scaledY, fontSize: scaledFontSize },
-          scales: { x: scaleX, y: scaleY }
+          final: { x: finalX, y: finalY, fontSize: finalFontSize }
         });
         
         videoFilter += `,drawtext=text='${escapedText}':` +
-          `x=${scaledX}:y=${scaledY}:` +
-          `fontsize=${scaledFontSize}:` +
+          `x=${finalX}:y=${finalY}:` +
+          `fontsize=${finalFontSize}:` +
           `fontcolor=0x${fontColor}:` +
           `enable='between(t\\,${startTime}\\,${endTime})'`;
       });
@@ -268,19 +269,20 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
         const scaleX = 1080 / 280; // ~3.86
         const scaleY = 1920 / 497;  // ~3.86
         
-        const scaledX = Math.round(overlay.x * scaleX);
-        const scaledY = Math.round(overlay.y * scaleY);
-        const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+        // НЕ МАСШТАБИРУЕМ! Координаты из редактора уже подходят для 9:16
+        // Используем координаты напрямую, только корректируем под разрешение
+        const finalX = Math.round(overlay.x * 2); // Умеренное масштабирование
+        const finalY = Math.round(overlay.y * 2); // Умеренное масштабирование  
+        const finalFontSize = Math.round(overlay.fontSize * 1.2); // Небольшое увеличение шрифта
         
         console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
           original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
-          scaled: { x: scaledX, y: scaledY, fontSize: scaledFontSize },
-          scales: { x: scaleX, y: scaleY }
+          final: { x: finalX, y: finalY, fontSize: finalFontSize }
         });
         
         videoFilter += `,drawtext=text='${escapedText}':` +
-          `x=${scaledX}:y=${scaledY}:` +
-          `fontsize=${scaledFontSize}:` +
+          `x=${finalX}:y=${finalY}:` +
+          `fontsize=${finalFontSize}:` +
           `fontcolor=0x${fontColor}:` +
           `enable='between(t\\,${startTime}\\,${endTime})'`;
       });
