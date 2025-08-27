@@ -204,31 +204,10 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
     fs.writeFileSync(inputPath, Buffer.from(videoBuffer));
 
     const outputFileName = `processed_${Date.now()}.mp4`;
-    const outputPath = path.resolve(process.cwd(), 'uploads/processed/', outputFileName);
+    const outputPath = path.resolve('/tmp', outputFileName);
 
-    // Ensure output directory exists
-    const processedDir = path.resolve(process.cwd(), 'uploads/processed/');
-    console.log('[VIDEO] Processed directory path:', processedDir);
-    console.log('[VIDEO] Directory exists check:', fs.existsSync(processedDir));
-    
-    try {
-      if (!fs.existsSync(processedDir)) {
-        console.log('[VIDEO] Creating processed directory...');
-        fs.mkdirSync(processedDir, { recursive: true });
-        console.log('[VIDEO] Directory created successfully');
-      }
-      
-      // Проверяем права доступа
-      console.log('[VIDEO] Testing write access...');
-      const testFile = path.join(processedDir, 'test.txt');
-      fs.writeFileSync(testFile, 'test');
-      fs.unlinkSync(testFile);
-      console.log('[VIDEO] Write access OK');
-      
-    } catch (dirError) {
-      console.error('[VIDEO] Directory creation/access error:', dirError);
-      throw new Error(`Cannot create or access output directory: ${dirError.message}`);
-    }
+    // Используем /tmp для выходного файла (более надежно в Docker)
+    console.log('[VIDEO] Using /tmp for output file for better Docker compatibility');
     
     console.log('[VIDEO] Output file will be:', outputPath);
 
