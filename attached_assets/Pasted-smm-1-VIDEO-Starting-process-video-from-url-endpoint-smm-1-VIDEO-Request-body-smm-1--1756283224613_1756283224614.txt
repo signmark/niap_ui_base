@@ -1,0 +1,53 @@
+smm-1  | [VIDEO] Starting process-video-from-url endpoint
+smm-1  | [VIDEO] Request body: {
+smm-1  |   videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/04105
+194-0ca8-4a39-8385-4be4c8262e1f.mp4',
+smm-1  |   textOverlays: [
+smm-1  |     {
+smm-1  |       text: 'Низкий старт',
+smm-1  |       x: 72,
+smm-1  |       y: 1080,
+smm-1  |       fontSize: 96,
+smm-1  |       color: '#ff0000',
+smm-1  |       fontFamily: 'Arial',
+smm-1  |       startTime: 0,
+smm-1  |       endTime: 3
+smm-1  |     },
+smm-1  |     {
+smm-1  |       text: 'Пошел-пошел!',
+smm-1  |       x: 60,
+smm-1  |       y: 90,
+smm-1  |       fontSize: 96,
+smm-1  |       color: '#f0e800',
+smm-1  |       fontFamily: 'Arial',
+smm-1  |       startTime: 4.257027,
+smm-1  |       endTime: 5.318333
+smm-1  |     }
+smm-1  |   ],
+smm-1  |   campaignId: '929c8934-a8d5-45d5-acfe-db8d3f094065',
+smm-1  |   progressId: '1756283208893'
+smm-1  | }
+smm-1  | [VIDEO] Processing video from URL with text overlays: {
+smm-1  |   videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/04105
+194-0ca8-4a39-8385-4be4c8262e1f.mp4',
+smm-1  |   overlaysCount: 2
+smm-1  | }
+smm-1  | [VIDEO] Temp directory path: /app/uploads/temp
+smm-1  | [VIDEO] Writing input file to: /app/uploads/temp/temp_input_1756283208976.mp4
+smm-1  | [VIDEO] Using /tmp for output file for better Docker compatibility
+smm-1  | [VIDEO] Output file will be: /tmp/processed_1756283208980.mp4
+smm-1  | [VIDEO] FFmpeg command: ffmpeg -i /app/uploads/temp/temp_input_1756283208976.mp4 -y -acod
+ec aac -vcodec libx264 -r 30 -filter:v scale=1080:1920:force_original_aspect_ratio=increase,crop=1
+080:1920,drawtext=text='Низкий старт':x=72:y=1080:fontsize=96:fontcolor=0xff0000:enable='between(t
+\,0\,3)',drawtext=text='Пошел-пошел!':x=60:y=90:fontsize=96:fontcolor=0xf0e800:enable='between(t\,
+4.257027\,5.318333)' -f mp4 /tmp/processed_1756283208980.mp4
+smm-1  | [VIDEO] FFmpeg error: Error: ffmpeg exited with code 254: Error opening output file /tmp/
+processed_1756283208980.mp4.
+smm-1  | Error opening output files: No such file or directory
+smm-1  | 
+smm-1  |     at ChildProcess.<anonymous> (/app/node_modules/fluent-ffmpeg/lib/processor.js:180:22)
+smm-1  |     at ChildProcess.emit (node:events:517:28)
+smm-1  |     at ChildProcess._handle.onexit (node:internal/child_process:292:12)
+smm-1  | 8:26:49 AM [DEV] [express] GET /api/video-processing/progress/1756283208893 200 in 341ms
+smm-1  | 8:26:49 AM [DEV] [express] POST /api/video-processing/process-video-from-url 500 in 355ms
+ :: {"error":"Оши…
