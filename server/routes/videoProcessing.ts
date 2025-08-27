@@ -68,9 +68,24 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
         const startTime = overlay.startTime || 0;
         const endTime = overlay.endTime || 60;
         
+        // Пересчитываем координаты для Instagram Stories формата (1080x1920)
+        // Превью: 280x497px -> FFmpeg: 1080x1920px
+        const scaleX = 1080 / 280; // ~3.86
+        const scaleY = 1920 / 497;  // ~3.86
+        
+        const scaledX = Math.round(overlay.x * scaleX);
+        const scaledY = Math.round(overlay.y * scaleY);
+        const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+        
+        console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
+          original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
+          scaled: { x: scaledX, y: scaledY, fontSize: scaledFontSize },
+          scales: { x: scaleX, y: scaleY }
+        });
+        
         videoFilter += `,drawtext=text='${escapedText}':` +
-          `x=${overlay.x}:y=${overlay.y}:` +
-          `fontsize=${overlay.fontSize}:` +
+          `x=${scaledX}:y=${scaledY}:` +
+          `fontsize=${scaledFontSize}:` +
           `fontcolor=0x${fontColor}:` +
           `enable='between(t\\,${startTime}\\,${endTime})'`;
       });
@@ -248,9 +263,24 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
         const startTime = overlay.startTime || 0;
         const endTime = overlay.endTime || 60;
         
+        // Пересчитываем координаты для Instagram Stories формата (1080x1920)
+        // Превью: 280x497px -> FFmpeg: 1080x1920px
+        const scaleX = 1080 / 280; // ~3.86
+        const scaleY = 1920 / 497;  // ~3.86
+        
+        const scaledX = Math.round(overlay.x * scaleX);
+        const scaledY = Math.round(overlay.y * scaleY);
+        const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+        
+        console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
+          original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
+          scaled: { x: scaledX, y: scaledY, fontSize: scaledFontSize },
+          scales: { x: scaleX, y: scaleY }
+        });
+        
         videoFilter += `,drawtext=text='${escapedText}':` +
-          `x=${overlay.x}:y=${overlay.y}:` +
-          `fontsize=${overlay.fontSize}:` +
+          `x=${scaledX}:y=${scaledY}:` +
+          `fontsize=${scaledFontSize}:` +
           `fontcolor=0x${fontColor}:` +
           `enable='between(t\\,${startTime}\\,${endTime})'`;
       });
