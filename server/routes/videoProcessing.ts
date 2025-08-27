@@ -192,7 +192,8 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
     
     console.log('[VIDEO] Processing video from URL with text overlays:', {
       videoUrl,
-      overlaysCount: overlays.length
+      overlaysCount: overlays.length,
+      overlays: overlays
     });
 
     // Скачиваем видео с сервера
