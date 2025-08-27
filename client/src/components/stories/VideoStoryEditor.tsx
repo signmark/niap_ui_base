@@ -426,9 +426,21 @@ export default function VideoStoryEditor({ storyId }: VideoStoryEditorProps) {
             const scaleX = 1080 / 250; // = 4.32
             const scaleY = 1920 / 444; // = 4.32
             
-            const scaledX = Math.round(overlay.x * scaleX);
-            const scaledY = Math.round(overlay.y * scaleY);
+            let scaledX = Math.round(overlay.x * scaleX);
+            let scaledY = Math.round(overlay.y * scaleY);
             const scaledFontSize = Math.round(overlay.fontSize * scaleX);
+            
+            // Корректировки для компенсации различий в масштабировании превью
+            // Различные корректировки в зависимости от позиции текста
+            if (overlay.y > 300) {
+              // Для текста в нижней части (как "Низкий старт")
+              scaledX = Math.round(scaledX * 0.50); // Максимально левее
+              scaledY = Math.round(scaledY * 0.78); // Немного выше
+            } else if (overlay.y < 100) {
+              // Для текста в верхней части (как "Пошел-пошел!")
+              scaledX = Math.round(scaledX * 0.95); // Небольшая корректировка влево
+              scaledY = Math.round(scaledY * 1.05); // Немного ниже
+            }
             
             // Ограничиваем координаты границами видео 1080x1920
             const finalX = Math.max(0, Math.min(scaledX, 1080 - 50)); 
