@@ -55,8 +55,8 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
       .fps(30);
 
     // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
-    // ВРЕМЕННО: отключаем overlays для тестирования
-    if (false && overlays.length > 0) {
+    // Добавляем текстовые overlays с поддержкой UTF-8
+    if (overlays.length > 0) {
       // Генерируем видео в Instagram Stories формате 1080x1920 для качества
       let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
@@ -235,8 +235,8 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
       .fps(30);
 
     // Добавляем текстовые overlays с правильным разрешением для Instagram Stories
-    // ВРЕМЕННО: отключаем overlays для тестирования
-    if (false && overlays.length > 0) {
+    // Добавляем текстовые overlays с поддержкой UTF-8
+    if (overlays.length > 0) {
       // Генерируем видео в Instagram Stories формате 1080x1920 для качества
       let videoFilter = 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
       
