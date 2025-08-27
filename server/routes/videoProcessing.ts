@@ -201,7 +201,23 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
     
     // Записываем видео во временный файл
     console.log('[VIDEO] Writing input file to:', inputPath);
-    fs.writeFileSync(inputPath, Buffer.from(videoBuffer));
+    console.log('[VIDEO] Video buffer size:', videoBuffer.byteLength);
+    
+    try {
+      fs.writeFileSync(inputPath, Buffer.from(videoBuffer));
+      console.log('[VIDEO] File written successfully');
+      
+      // Проверяем что файл действительно создан
+      if (fs.existsSync(inputPath)) {
+        const stats = fs.statSync(inputPath);
+        console.log('[VIDEO] File size on disk:', stats.size, 'bytes');
+      } else {
+        throw new Error('File was not created');
+      }
+    } catch (writeError) {
+      console.error('[VIDEO] Error writing input file:', writeError);
+      throw new Error(`Failed to save input video: ${writeError.message}`);
+    }
 
     const outputFileName = `processed_${Date.now()}.mp4`;
     const outputPath = path.resolve('/tmp', outputFileName);
