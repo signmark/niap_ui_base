@@ -189,23 +189,31 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
     
     // Создаем временный файл для входного видео
     const inputFileName = `temp_input_${Date.now()}.mp4`;
-    const inputPath = path.join('uploads/temp/', inputFileName);
+    const inputPath = path.resolve(process.cwd(), 'uploads/temp/', inputFileName);
     
     // Ensure temp directory exists
-    if (!fs.existsSync('uploads/temp/')) {
-      fs.mkdirSync('uploads/temp/', { recursive: true });
+    const tempDir = path.resolve(process.cwd(), 'uploads/temp/');
+    console.log('[VIDEO] Temp directory path:', tempDir);
+    if (!fs.existsSync(tempDir)) {
+      console.log('[VIDEO] Creating temp directory...');
+      fs.mkdirSync(tempDir, { recursive: true });
     }
     
     // Записываем видео во временный файл
+    console.log('[VIDEO] Writing input file to:', inputPath);
     fs.writeFileSync(inputPath, Buffer.from(videoBuffer));
 
     const outputFileName = `processed_${Date.now()}.mp4`;
-    const outputPath = path.join('uploads/processed/', outputFileName);
+    const outputPath = path.resolve(process.cwd(), 'uploads/processed/', outputFileName);
 
     // Ensure output directory exists
-    if (!fs.existsSync('uploads/processed/')) {
-      fs.mkdirSync('uploads/processed/', { recursive: true });
+    const processedDir = path.resolve(process.cwd(), 'uploads/processed/');
+    console.log('[VIDEO] Processed directory path:', processedDir);
+    if (!fs.existsSync(processedDir)) {
+      console.log('[VIDEO] Creating processed directory...');
+      fs.mkdirSync(processedDir, { recursive: true });
     }
+    console.log('[VIDEO] Output file will be:', outputPath);
 
     let command = ffmpeg(inputPath)
       .videoCodec('libx264')
