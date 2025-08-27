@@ -1,0 +1,64 @@
+smm-1  | [VIDEO] Request body: {
+smm-1  |   videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/04105194-0ca8-4
+a39-8385-4be4c8262e1f.mp4',
+smm-1  |   textOverlays: [
+smm-1  |     {
+smm-1  |       text: 'Низкий старт',
+smm-1  |       x: 72,
+smm-1  |       y: 1080,
+smm-1  |       fontSize: 96,
+smm-1  |       color: '#ff0000',
+smm-1  |       fontFamily: 'Arial',
+smm-1  |       startTime: 0,
+smm-1  |       endTime: 3
+smm-1  |     },
+smm-1  |     {
+smm-1  |       text: 'Пошел-пошел!',
+smm-1  |       x: 60,
+smm-1  |       y: 90,
+smm-1  |       fontSize: 96,
+smm-1  |       color: '#f0e800',
+smm-1  |       fontFamily: 'Arial',
+smm-1  |       startTime: 4.257027,
+smm-1  |       endTime: 5.318333
+smm-1  |     }
+smm-1  |   ],
+smm-1  |   campaignId: '929c8934-a8d5-45d5-acfe-db8d3f094065',
+smm-1  |   progressId: '1756283859174'
+smm-1  | }
+smm-1  | [VIDEO] Processing video from URL with text overlays: {
+smm-1  |   videoUrl: 'https://6e679636ae90-ridiculous-seth.s3.ru1.storage.beget.cloud/videos/04105194-0ca8-4
+a39-8385-4be4c8262e1f.mp4',
+smm-1  |   overlaysCount: 2
+smm-1  | }
+smm-1  | [VIDEO] Temp directory path: /app/uploads/temp
+smm-1  | [VIDEO] Writing input file to: /app/uploads/temp/temp_input_1756283859251.mp4
+smm-1  | [VIDEO] Video buffer size: 351858
+smm-1  | [VIDEO] File written successfully
+smm-1  | [VIDEO] File size on disk: 351858 bytes
+smm-1  | [VIDEO] Using /tmp for output file for better Docker compatibility
+smm-1  | [VIDEO] Output file will be: /tmp/processed_1756283859269.mp4
+smm-1  | [VIDEO] FFmpeg command: ffmpeg -i /app/uploads/temp/temp_input_1756283859251.mp4 -y -acodec aac -vc
+odec libx264 -r 30 -filter:v scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920 -f mp4 /tmp
+/processed_1756283859269.mp4
+smm-1  | [VIDEO] Processing: 0%
+smm-1  | [VIDEO] Processing: 0%
+smm-1  | [VIDEO] Processing: 0%
+smm-1  | 8:37:41 AM [DEV] [status-validator] Запуск валидатора статусов публикаций
+smm-1  | [VIDEO] Processing: 5%
+smm-1  | [VIDEO] Processing: 14%
+smm-1  | [VIDEO] Processing: 23%
+smm-1  | [VIDEO] Processing: 33%
+smm-1  | [VIDEO] Processing: 41%
+smm-1  | [VIDEO] Processing: 52%
+smm-1  | [VIDEO] Processing: 60%
+smm-1  | [VIDEO] Processing: 67%
+smm-1  | 8:37:46 AM [DEV] [scheduler] Запуск планировщика публикаций с поддержкой N8N
+smm-1  | 8:37:46 AM [DEV] [scheduler] ✅ Планировщик публикаций инициализирован через синглтон
+smm-1  | 8:37:46 AM [DEV] [scheduler] ✅ Запуск планировщика публикаций с поддержкой индивидуального времени
+ платформ
+smm-1  | 8:37:46 AM [DEV] [scheduler] ✅ Планировщик запущен с интервалом 30000мс
+smm-1  | 8:37:46 AM [DEV] [scheduler] ✅ Планировщик публикаций успешно запущен
+smm-1  | [VIDEO] Processing: 98%
+smm-1  | [VIDEO] Processing finished successfully
+smm-1  | [VIDEO] Uploading processed video to S3...
