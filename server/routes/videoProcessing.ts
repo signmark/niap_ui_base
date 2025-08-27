@@ -75,9 +75,10 @@ router.post('/process-video', authMiddleware, upload.single('video'), async (req
         
         // НЕ МАСШТАБИРУЕМ! Координаты из редактора уже подходят для 9:16
         // Используем координаты напрямую, только корректируем под разрешение
-        const finalX = Math.round(overlay.x * 2); // Умеренное масштабирование
-        const finalY = Math.round(overlay.y * 2); // Умеренное масштабирование  
-        const finalFontSize = Math.round(overlay.fontSize * 1.2); // Небольшое увеличение шрифта
+        // Координаты уже масштабированы в редакторе (x3), используем их напрямую!
+        const finalX = Math.round(overlay.x * 1.3); // Легкое увеличение для 1080p
+        const finalY = Math.round(overlay.y * 1.3); // Легкое увеличение для 1080p  
+        const finalFontSize = Math.round(overlay.fontSize * 1.0); // Размер шрифта как есть
         
         console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
           original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
@@ -272,9 +273,10 @@ router.post('/process-video-from-url', authMiddleware, async (req, res) => {
         
         // НЕ МАСШТАБИРУЕМ! Координаты из редактора уже подходят для 9:16
         // Используем координаты напрямую, только корректируем под разрешение
-        const finalX = Math.round(overlay.x * 2); // Умеренное масштабирование
-        const finalY = Math.round(overlay.y * 2); // Умеренное масштабирование  
-        const finalFontSize = Math.round(overlay.fontSize * 1.2); // Небольшое увеличение шрифта
+        // Координаты уже масштабированы в редакторе (x3), используем их напрямую!
+        const finalX = Math.round(overlay.x * 1.3); // Легкое увеличение для 1080p
+        const finalY = Math.round(overlay.y * 1.3); // Легкое увеличение для 1080p  
+        const finalFontSize = Math.round(overlay.fontSize * 1.0); // Размер шрифта как есть
         
         console.log(`[VIDEO] Overlay ${index + 1} coordinates:`, {
           original: { x: overlay.x, y: overlay.y, fontSize: overlay.fontSize },
