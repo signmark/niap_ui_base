@@ -1,0 +1,74 @@
+# SMM Manager - Social Media Content Management Platform
+
+## Overview
+SMM Manager is an intelligent social media content management platform designed for content creators. It provides AI-powered content generation, analytics, and multi-platform publishing strategies. The application offers adaptive workflows for content creation, intelligent scheduling, multi-language AI-driven content generation, and direct social media publishing capabilities. The project aims to streamline social media content management and enhance content creator efficiency, offering significant market potential for content creators seeking efficiency and broader reach.
+
+## User Preferences
+Preferred communication style: Simple, everyday language.
+Work approach: Thoughtful and deliberate implementation with minimal errors, prioritizing quality over speed.
+Work schedule: Prefers working sessions on weekends when available.
+Task planning: Focus on achievable tasks that can be completed in 2-3 hours maximum.
+
+## Development Rules
+**CRITICAL**: Always restart the server workflow after making changes to server-side code. Server changes do not take effect until the workflow is restarted. This includes changes to routes, services, middleware, and any backend logic.
+
+## System Architecture
+
+### Technology Stack
+- **Frontend**: React with TypeScript
+- **Backend**: Node.js/Express
+- **Content Management**: Directus headless CMS
+- **State Management**: React Query
+- **Authentication**: Custom token refresh middleware
+- **AI Integration**: Gemini (primary), FAL AI Proxy
+- **Automation**: N8N workflow automation
+- **Deployment**: Docker with Traefik reverse proxy
+
+### Core Architectural Decisions
+- **Monolithic Refactoring**: Ongoing effort to clean up and standardize API responses, remove redundant code, and improve overall system efficiency.
+- **Console Logging Cleanup**: Minimized console output to essential system logs for a quieter and cleaner operational environment.
+- **Sentiment Analysis**: Robust integration with Vertex AI for accurate sentiment analysis of social media comments, including token limit management and proper JSON response parsing.
+- **Memory Management**: Comprehensive measures implemented to prevent Out of Memory (OOM) errors, including memory limits for caches, automatic cache cleanup, graceful shutdown handlers, and proper cleanup for `setInterval` operations.
+- **Source Collection & Analysis**: Corrected payload structures for source collection and enhanced AI analysis for generating detailed audience insights (sentiment, behavior patterns, thematic analysis) from social media comments.
+- **AI Integration**: Successfully integrated Gemini 2.5 via Vertex AI for keyword analysis, website content analysis, and business questionnaire features.
+- **Authentication & Authorization**: Robust JWT token management with automatic refresh and role-based access control (SMM User, SMM Admin). Crucially, UI uses user tokens for all API requests; system tokens are exclusively for backend operations.
+- **Social Media API Wizards**: Guided setup wizards automate complex API configurations, including OAuth flows.
+- **Dynamic Environment Detection**: Automatic configuration of API endpoints and credentials based on development, staging, or production environments.
+- **Centralized API Key Management**: Global API keys stored in the database for central administration.
+- **Stories Editor**: **MAJOR STABILITY FIXES (Aug 25, 2025)** - Fixed critical page reload issue (3x reloads) by replacing React Router anonymous functions with memoized wrapper components. Restored complete text styling controls: font family dropdown, background color picker with transparency, rotation slider (-45° to +45°), and font size controls. Implemented modern gradient-based UI design with professional styling, icons, and visual indicators for all controls.
+- **Stories Image Generation**: **COORDINATE SYNC PERFECTED (Aug 25, 2025)** - Achieved perfect coordinate synchronization between editor preview and image generator. **FINAL SOLUTION**: Canvas size changed from 540x960px to 280x497px (same as preview) eliminating scaling issues. Fixed JavaScript `|| 50` operator bug that converted `x=0` to `x=50` using proper `!== undefined` checks. Resolved text positioning by changing canvas `textAlign` from 'center' to 'left' and `textBaseline` from 'middle' to 'top' to match CSS positioning in preview. Added preview debugging to compare real DOM element positions with Draggable coordinates. Canvas now uses identical 1:1 coordinate system: `(overlay.x/y) * 0.8 + textPadding`. ImgBB hosting stable with JPEG compression optimization. Generated images now exactly match editor preview positioning without any offset issues.
+- **Stories UI Enhancement**: **COMPACT INTERFACE (Aug 25, 2025)** - Redesigned interface to be more compact and accessible. Replaced large file upload area with compact icon button next to URL field. Reduced padding, card spacing, and overall interface height to minimize scrolling. Maintained beautiful gradient design while improving usability and accessibility of all controls.
+- **Instagram Stories Video Conversion**: **BREAKTHROUGH**: Instagram Graph API accepts H.264 Main profile videos successfully. After extensive testing with Baseline, High, and Constrained Baseline profiles (all rejected with ERROR status), discovered that H.264 Main profile with Level 4.0, 1080x1920 resolution, 30 FPS, yuv420p format works perfectly. Key requirements: proper S3 hosting with Accept-Ranges: bytes headers, video/mp4 content-type, and H.264 Main profile encoding. Complete workflow: Main profile conversion → S3 upload → Directus URL update → N8N publication through Instagram Graph API.
+- **Stories Video Editor Enhancement (Aug 28, 2025)**: **COMPLETE STABILITY** - Unified interface with clear "Редактор" and "Превью" titles, removing unnecessary subtitles. Achieved precise coordinate synchronization using 4.32x scaling factor (preview 250x444px → final video 1080x1920px). Implemented adaptive text positioning corrections for different screen positions. Stable FFmpeg video processing with UTF-8/Cyrillic support, real-time progress tracking, and reliable S3 upload integration. Complete coordinate mathematical precision eliminates all positioning offsets between preview and final generated video.
+- **Trend Collection Configuration**: Users can configure the number of days for trend analysis data collection (1-30 days).
+- **Duplicate Prevention**: A 4-level system ensures no duplicate posts across platforms using `postUrl` checks, caching, Publication Tracker, and Lock Manager.
+- **Website Analysis**: Multi-tier fallback system for website analysis prioritizes Gemini AI for content extraction and business questionnaire auto-filling, with intelligent content-based classification as a fallback.
+- **UI/UX Decisions**: Clean, professional interface with automatic localStorage clearing and state reset for new Stories creation.
+
+### Feature Specifications
+- **AI-Powered Content Generation**: Multi-language content creation based on campaign context.
+- **Intelligent Scheduling**: Automated content publishing with duplicate prevention and status validation.
+- **Multi-Platform Publishing**: Supports Facebook, Instagram, VK, Telegram, and YouTube. All publishing occurs exclusively through N8N webhooks. **Stories have dedicated publication architecture** separate from regular content, using platform-specific routes and webhooks.
+- **Comment Collection & Sentiment Analysis**: Collects comments and performs AI-driven sentiment analysis, storing results in Directus.
+- **Stories Editor**: Enhanced functionality for creating and editing Instagram Stories, including interactive elements (polls, questions, music stickers, location stickers, countdown timers) rendered as static graphics to bypass Instagram API limitations.
+- **Website Analysis for Business Questionnaire**: Automatically populates business questionnaire fields by analyzing website content.
+- **Keyword Analysis**: AI-powered website keyword analysis using Gemini 2.5 via Vertex AI (with SOCKS5 proxy fallback) to extract SEO-relevant keywords from any website URL.
+
+## External Dependencies
+
+### AI Services
+- **Gemini API (Google)**: Primary for content generation, research, trend analysis, sentiment analysis, website analysis, and keyword analysis, utilizing Vertex AI (Gemini 2.5).
+- **FAL AI**: Used for image and video generation.
+
+### Social Media APIs (via N8N)
+- **Facebook Graph API**: For direct posting and page management.
+- **Instagram Basic Display API**: For content publishing and account management.
+- **VK API**: For publishing and comment collection.
+- **Telegram Bot API**: For publishing and comment collection.
+- **YouTube Data API**: For video uploads, metadata management, and token refresh.
+
+### Infrastructure Services
+- **Directus**: Headless CMS serving as the primary database.
+- **N8N**: Workflow automation tool for all social media publishing and backend flows.
+- **Beget S3**: File storage for media assets.
+- **PostgreSQL**: Database used by Directus.
